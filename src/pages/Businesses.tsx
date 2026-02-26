@@ -1,19 +1,30 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Building2, Ban, CheckCircle } from "lucide-react";
+import { Building2, Ban, CheckCircle, Pencil, X, Check } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Business = Tables<"businesses">;
 
 const Businesses = () => {
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, profile } = useAuth();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editBiz, setEditBiz] = useState<Business | null>(null);
+  const [editName, setEditName] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const fetchBusinesses = async () => {
     const { data, error } = await supabase
@@ -42,8 +53,52 @@ const Businesses = () => {
       toast.error("Failed to update status");
     } else {
       toast.success(`Business ${newStatus}`);
+      // Audit log
+      if (profile) {
+        await supabase.from("audit_logs").insert({
+          business_id: biz.id,
+          actor_user_id: profile.user_id,
+          action_type: newStatus === "suspended" ? "SUSPEND_BUSINESS" : "REACTIVATE_BUSINESS",
+          entity_type: "business",
+          entity_id: biz.id,
+          new_value_json: { status: newStatus },
+        });
+      }
       fetchBusinesses();
     }
+  };
+
+  const openEdit = (biz: Business) => {
+    setEditBiz(biz);
+    setEditName(biz.name);
+  };
+
+  const saveEdit = async () => {
+    if (!editBiz || !editName.trim()) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("businesses")
+      .update({ name: editName.trim() })
+      .eq("id", editBiz.id);
+    if (error) {
+      toast.error("Failed to update business");
+    } else {
+      toast.success("Business updated");
+      if (profile) {
+        await supabase.from("audit_logs").insert({
+          business_id: editBiz.id,
+          actor_user_id: profile.user_id,
+          action_type: "UPDATE_BUSINESS",
+          entity_type: "business",
+          entity_id: editBiz.id,
+          old_value_json: { name: editBiz.name },
+          new_value_json: { name: editName.trim() },
+        });
+      }
+      setEditBiz(null);
+      fetchBusinesses();
+    }
+    setSaving(false);
   };
 
   if (!isSuperAdmin) return <p className="text-muted-foreground">Access denied</p>;
@@ -83,10 +138,17 @@ const Businesses = () => {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <Badge variant={biz.status === "active" ? "default" : "destructive"}>
                     {biz.status}
                   </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openEdit(biz)}
+                  >
+                    <Pencil className="mr-1 h-3 w-3" /> Edit
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -104,6 +166,31 @@ const Businesses = () => {
           ))}
         </div>
       )}
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editBiz} onOpenChange={(open) => !open && setEditBiz(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Business</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Business Name</Label>
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Business name"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditBiz(null)}>Cancel</Button>
+              <Button onClick={saveEdit} disabled={saving || !editName.trim()}>
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -3,8 +3,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { User } from "lucide-react";
+import { User, Pencil, Ban, CheckCircle, Shield } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { Database } from "@/integrations/supabase/types";
+
+type AppRole = Database["public"]["Enums"]["app_role"];
 
 interface ProfileWithRole {
   id: string;
@@ -13,45 +32,144 @@ interface ProfileWithRole {
   email: string;
   business_id: string | null;
   created_at: string;
-  roles: string[];
+  roles: AppRole[];
 }
 
+const AVAILABLE_ROLES: AppRole[] = ["super_admin", "business_admin", "manager", "employee", "client"];
+
 const UsersPage = () => {
-  const { isSuperAdmin, isBusinessAdmin } = useAuth();
+  const { isSuperAdmin, isBusinessAdmin, profile } = useAuth();
   const [users, setUsers] = useState<ProfileWithRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editUser, setEditUser] = useState<ProfileWithRole | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editRole, setEditRole] = useState<AppRole | "">("");
+  const [saving, setSaving] = useState(false);
+
+  const fetchUsers = async () => {
+    const { data: profiles, error } = await supabase
+      .from("profiles")
+      .select("id, user_id, full_name, email, business_id, created_at")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      toast.error("Failed to load users");
+      setLoading(false);
+      return;
+    }
+
+    const userIds = profiles?.map((p) => p.user_id) || [];
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("user_id, role")
+      .in("user_id", userIds);
+
+    const usersWithRoles: ProfileWithRole[] = (profiles || []).map((p) => ({
+      ...p,
+      roles: (roleData?.filter((r) => r.user_id === p.user_id).map((r) => r.role) || []) as AppRole[],
+    }));
+
+    setUsers(usersWithRoles);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      const { data: profiles, error } = await supabase
-        .from("profiles")
-        .select("id, user_id, full_name, email, business_id, created_at")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        toast.error("Failed to load users");
-        setLoading(false);
-        return;
-      }
-
-      // Fetch roles for all users
-      const userIds = profiles?.map((p) => p.user_id) || [];
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("user_id, role")
-        .in("user_id", userIds);
-
-      const usersWithRoles: ProfileWithRole[] = (profiles || []).map((p) => ({
-        ...p,
-        roles: roleData?.filter((r) => r.user_id === p.user_id).map((r) => r.role) || [],
-      }));
-
-      setUsers(usersWithRoles);
-      setLoading(false);
-    };
-
     fetchUsers();
   }, []);
+
+  const openEdit = (u: ProfileWithRole) => {
+    setEditUser(u);
+    setEditName(u.full_name);
+    setEditRole(u.roles[0] || "");
+  };
+
+  const saveEdit = async () => {
+    if (!editUser) return;
+    setSaving(true);
+
+    // Update name
+    if (editName.trim() !== editUser.full_name) {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ full_name: editName.trim() })
+        .eq("user_id", editUser.user_id);
+      if (error) {
+        toast.error("Failed to update name");
+        setSaving(false);
+        return;
+      }
+    }
+
+    // Update role if changed and super_admin
+    if (isSuperAdmin && editRole && !editUser.roles.includes(editRole as AppRole)) {
+      // Remove old roles
+      await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", editUser.user_id);
+      // Add new role
+      const { error } = await supabase
+        .from("user_roles")
+        .insert({ user_id: editUser.user_id, role: editRole as AppRole });
+      if (error) {
+        toast.error("Failed to update role");
+        setSaving(false);
+        return;
+      }
+    }
+
+    if (profile) {
+      await supabase.from("audit_logs").insert({
+        business_id: editUser.business_id,
+        actor_user_id: profile.user_id,
+        action_type: "UPDATE_USER",
+        entity_type: "user",
+        entity_id: editUser.user_id,
+        new_value_json: { full_name: editName.trim(), role: editRole },
+      });
+    }
+
+    toast.success("User updated");
+    setEditUser(null);
+    setSaving(false);
+    fetchUsers();
+  };
+
+  const suspendUser = async (u: ProfileWithRole) => {
+    // Remove all roles to effectively suspend
+    const { error } = await supabase
+      .from("user_roles")
+      .delete()
+      .eq("user_id", u.user_id);
+    if (error) {
+      toast.error("Failed to suspend user");
+      return;
+    }
+    if (profile) {
+      await supabase.from("audit_logs").insert({
+        business_id: u.business_id,
+        actor_user_id: profile.user_id,
+        action_type: "SUSPEND_USER",
+        entity_type: "user",
+        entity_id: u.user_id,
+      });
+    }
+    toast.success("User suspended (roles removed)");
+    fetchUsers();
+  };
+
+  const reactivateUser = async (u: ProfileWithRole) => {
+    // Re-add employee role as default
+    const { error } = await supabase
+      .from("user_roles")
+      .insert({ user_id: u.user_id, role: "employee" as AppRole });
+    if (error) {
+      toast.error("Failed to reactivate user");
+      return;
+    }
+    toast.success("User reactivated with employee role");
+    fetchUsers();
+  };
 
   if (!isSuperAdmin && !isBusinessAdmin) return <p className="text-muted-foreground">Access denied</p>;
 
@@ -59,7 +177,7 @@ const UsersPage = () => {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold">Users</h1>
-        <p className="text-muted-foreground">Manage team members</p>
+        <p className="text-muted-foreground">Manage team members and permissions</p>
       </div>
 
       {loading ? (
@@ -87,17 +205,78 @@ const UsersPage = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {u.roles.map((r) => (
-                    <Badge key={r} variant="secondary" className="capitalize text-xs">
-                      {r.replace(/_/g, " ")}
-                    </Badge>
-                  ))}
+                  {u.roles.length > 0 ? (
+                    u.roles.map((r) => (
+                      <Badge key={r} variant="secondary" className="capitalize text-xs">
+                        {r.replace(/_/g, " ")}
+                      </Badge>
+                    ))
+                  ) : (
+                    <Badge variant="destructive" className="text-xs">Suspended</Badge>
+                  )}
+                  {isSuperAdmin && (
+                    <>
+                      <Button variant="outline" size="sm" onClick={() => openEdit(u)}>
+                        <Pencil className="mr-1 h-3 w-3" /> Edit
+                      </Button>
+                      {u.roles.length > 0 ? (
+                        <Button variant="outline" size="sm" onClick={() => suspendUser(u)}>
+                          <Ban className="mr-1 h-3 w-3" /> Suspend
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" onClick={() => reactivateUser(u)}>
+                          <CheckCircle className="mr-1 h-3 w-3" /> Reactivate
+                        </Button>
+                      )}
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editUser} onOpenChange={(open) => !open && setEditUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Full Name</Label>
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+              />
+            </div>
+            {isSuperAdmin && (
+              <div className="space-y-2">
+                <Label>Role</Label>
+                <Select value={editRole} onValueChange={(v) => setEditRole(v as AppRole)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AVAILABLE_ROLES.map((r) => (
+                      <SelectItem key={r} value={r} className="capitalize">
+                        {r.replace(/_/g, " ")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditUser(null)}>Cancel</Button>
+              <Button onClick={saveEdit} disabled={saving}>
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
