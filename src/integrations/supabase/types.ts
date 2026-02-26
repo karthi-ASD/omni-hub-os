@@ -62,6 +62,85 @@ export type Database = {
           },
         ]
       }
+      ai_sales_forecasts: {
+        Row: {
+          business_id: string
+          confidence: number | null
+          created_at: string
+          factors_json: Json | null
+          id: string
+          period: string
+          projected_revenue: number
+        }
+        Insert: {
+          business_id: string
+          confidence?: number | null
+          created_at?: string
+          factors_json?: Json | null
+          id?: string
+          period: string
+          projected_revenue?: number
+        }
+        Update: {
+          business_id?: string
+          confidence?: number | null
+          created_at?: string
+          factors_json?: Json | null
+          id?: string
+          period?: string
+          projected_revenue?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_sales_forecasts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_tasks: {
+        Row: {
+          business_id: string
+          confidence_score: number | null
+          created_at: string
+          id: string
+          input_json: Json | null
+          output_json: Json | null
+          status: string
+          task_type: string
+        }
+        Insert: {
+          business_id: string
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          input_json?: Json | null
+          output_json?: Json | null
+          status?: string
+          task_type: string
+        }
+        Update: {
+          business_id?: string
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          input_json?: Json | null
+          output_json?: Json | null
+          status?: string
+          task_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_tasks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       analytics_events: {
         Row: {
           business_id: string
@@ -422,6 +501,53 @@ export type Database = {
           {
             foreignKeyName: "billing_products_business_id_fkey"
             columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brands: {
+        Row: {
+          brand_name: string
+          created_at: string
+          custom_css: string | null
+          domain: string | null
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          owner_business_id: string
+          primary_color: string | null
+          secondary_color: string | null
+        }
+        Insert: {
+          brand_name: string
+          created_at?: string
+          custom_css?: string | null
+          domain?: string | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          owner_business_id: string
+          primary_color?: string | null
+          secondary_color?: string | null
+        }
+        Update: {
+          brand_name?: string
+          created_at?: string
+          custom_css?: string | null
+          domain?: string | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          owner_business_id?: string
+          primary_color?: string | null
+          secondary_color?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brands_owner_business_id_fkey"
+            columns: ["owner_business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
@@ -1151,6 +1277,39 @@ export type Database = {
           },
         ]
       }
+      external_api_registry: {
+        Row: {
+          created_at: string
+          id: string
+          is_configured: boolean
+          last_tested_at: string | null
+          provider_name: string
+          purpose: string
+          required_keys: string[] | null
+          webhook_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_configured?: boolean
+          last_tested_at?: string | null
+          provider_name: string
+          purpose: string
+          required_keys?: string[] | null
+          webhook_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_configured?: boolean
+          last_tested_at?: string | null
+          provider_name?: string
+          purpose?: string
+          required_keys?: string[] | null
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
       gateway_events: {
         Row: {
           business_id: string | null
@@ -1601,6 +1760,9 @@ export type Database = {
       }
       leads: {
         Row: {
+          ai_priority: string | null
+          ai_recommended_action: string | null
+          ai_score: number | null
           assigned_to_user_id: string | null
           business_id: string
           business_name: string | null
@@ -1622,6 +1784,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ai_priority?: string | null
+          ai_recommended_action?: string | null
+          ai_score?: number | null
           assigned_to_user_id?: string | null
           business_id: string
           business_name?: string | null
@@ -1643,6 +1808,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ai_priority?: string | null
+          ai_recommended_action?: string | null
+          ai_score?: number | null
           assigned_to_user_id?: string | null
           business_id?: string
           business_name?: string | null
@@ -2404,6 +2572,51 @@ export type Database = {
           },
         ]
       }
+      seo_ai_recommendations: {
+        Row: {
+          business_id: string
+          campaign_id: string | null
+          created_at: string
+          id: string
+          page_url: string | null
+          recommendation_type: string
+          recommendations_json: Json | null
+        }
+        Insert: {
+          business_id: string
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          page_url?: string | null
+          recommendation_type: string
+          recommendations_json?: Json | null
+        }
+        Update: {
+          business_id?: string
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          page_url?: string | null
+          recommendation_type?: string
+          recommendations_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_ai_recommendations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_ai_recommendations_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "seo_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_campaigns: {
         Row: {
           business_id: string
@@ -2962,6 +3175,48 @@ export type Database = {
           },
         ]
       }
+      subscription_packages: {
+        Row: {
+          ai_enabled: boolean
+          created_at: string
+          features_json: Json | null
+          id: string
+          is_active: boolean
+          max_campaigns: number
+          max_users: number
+          monthly_price: number
+          name: string
+          white_label_enabled: boolean
+          yearly_price: number
+        }
+        Insert: {
+          ai_enabled?: boolean
+          created_at?: string
+          features_json?: Json | null
+          id?: string
+          is_active?: boolean
+          max_campaigns?: number
+          max_users?: number
+          monthly_price?: number
+          name: string
+          white_label_enabled?: boolean
+          yearly_price?: number
+        }
+        Update: {
+          ai_enabled?: boolean
+          created_at?: string
+          features_json?: Json | null
+          id?: string
+          is_active?: boolean
+          max_campaigns?: number
+          max_users?: number
+          monthly_price?: number
+          name?: string
+          white_label_enabled?: boolean
+          yearly_price?: number
+        }
+        Relationships: []
+      }
       system_events: {
         Row: {
           business_id: string | null
@@ -3140,6 +3395,51 @@ export type Database = {
           },
         ]
       }
+      tenant_subscriptions: {
+        Row: {
+          business_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          package_id: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          package_id: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          package_id?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_subscriptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_subscriptions_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           business_id: string | null
@@ -3165,6 +3465,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "user_roles_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_sessions: {
+        Row: {
+          business_id: string
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          provider: string | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+          sentiment_score: number | null
+          status: string
+          summary: string | null
+          transcript: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          provider?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          sentiment_score?: number | null
+          status?: string
+          summary?: string | null
+          transcript?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          provider?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          sentiment_score?: number | null
+          status?: string
+          summary?: string | null
+          transcript?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_sessions_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"

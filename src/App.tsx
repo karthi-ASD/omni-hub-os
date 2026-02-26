@@ -37,6 +37,9 @@ import SeoCampaignDetailPage from "./pages/SeoCampaignDetailPage";
 import CommunicationsPage from "./pages/CommunicationsPage";
 import SystemMonitorPage from "./pages/SystemMonitorPage";
 import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
+import AIInsightsPage from "./pages/AIInsightsPage";
+import WhiteLabelPage from "./pages/WhiteLabelPage";
+import InvestorDashboardPage from "./pages/InvestorDashboardPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -86,6 +89,13 @@ const App = () => (
               <Route path="/seo/:campaignId" element={<SeoCampaignDetailPage />} />
               <Route path="/communications" element={<CommunicationsPage />} />
               <Route path="/analytics" element={<AnalyticsDashboardPage />} />
+              <Route path="/ai-insights" element={<AIInsightsPage />} />
+              <Route path="/white-label" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><WhiteLabelPage /></ProtectedRoute>
+              } />
+              <Route path="/investor-dashboard" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><InvestorDashboardPage /></ProtectedRoute>
+              } />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route
                 path="/businesses"
