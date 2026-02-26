@@ -35,6 +35,8 @@ import GatewayConfigPage from "./pages/GatewayConfigPage";
 import SeoDashboardPage from "./pages/SeoDashboardPage";
 import SeoCampaignDetailPage from "./pages/SeoCampaignDetailPage";
 import CommunicationsPage from "./pages/CommunicationsPage";
+import SystemMonitorPage from "./pages/SystemMonitorPage";
+import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -83,6 +85,7 @@ const App = () => (
               <Route path="/seo" element={<SeoDashboardPage />} />
               <Route path="/seo/:campaignId" element={<SeoCampaignDetailPage />} />
               <Route path="/communications" element={<CommunicationsPage />} />
+              <Route path="/analytics" element={<AnalyticsDashboardPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route
                 path="/businesses"
@@ -113,6 +116,14 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}>
                     <AuditLogs />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/system-monitor"
+                element={
+                  <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}>
+                    <SystemMonitorPage />
                   </ProtectedRoute>
                 }
               />
