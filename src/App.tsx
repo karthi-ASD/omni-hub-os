@@ -61,6 +61,8 @@ import IncidentsPage from "./pages/IncidentsPage";
 import BackupsPage from "./pages/BackupsPage";
 import CompliancePage from "./pages/CompliancePage";
 import ReleasesPage from "./pages/ReleasesPage";
+import GeoEnginePage from "./pages/GeoEnginePage";
+import AnalyticsIntegrationsPage from "./pages/AnalyticsIntegrationsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -176,6 +178,8 @@ const App = () => (
               <Route path="/releases" element={
                 <ProtectedRoute requiredRoles={["super_admin"]}><ReleasesPage /></ProtectedRoute>
               } />
+              <Route path="/geo-engine" element={<GeoEnginePage />} />
+              <Route path="/analytics-integrations" element={<AnalyticsIntegrationsPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route
                 path="/businesses"
