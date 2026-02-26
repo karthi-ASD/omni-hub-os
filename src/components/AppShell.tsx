@@ -53,12 +53,12 @@ const mainNav = [
   { label: "AI Agents", icon: Bot, to: "/ai-agents", enabled: true },
   { label: "Marketplace", icon: Store, to: "/marketplace", enabled: true },
   { label: "Job CRM", icon: Briefcase, to: "/job-crm", enabled: true },
-  { label: "Tasks", icon: ClipboardList, to: "/tasks", enabled: false },
-  { label: "Tickets", icon: Ticket, to: "/tickets", enabled: false },
+  { label: "Tasks", icon: ClipboardList, to: "/tasks", enabled: true },
+  { label: "Tickets", icon: Ticket, to: "/tickets", enabled: true },
   { label: "Workforce", icon: UserCog, to: "/workforce", enabled: true },
   { label: "Leave", icon: CalendarDays, to: "/leave", enabled: true },
-  { label: "Reports", icon: PieChart, to: "/reports", enabled: false },
-  { label: "Marketing", icon: Megaphone, to: "/marketing", enabled: false },
+  { label: "Reports", icon: PieChart, to: "/reports", enabled: true },
+  { label: "Marketing", icon: Megaphone, to: "/marketing", enabled: true },
 ];
 
 const adminNav = [
