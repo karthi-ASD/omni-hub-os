@@ -52,51 +52,13 @@ const Signup = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error("Signup failed");
 
-      // 2. Create business
-      const { data: business, error: bizError } = await supabase
-        .from("businesses")
-        .insert({ name: form.businessName.trim() })
-        .select()
-        .single();
-      if (bizError) throw bizError;
-
-      // 3. Update profile with business_id
-      await supabase
-        .from("profiles")
-        .update({ business_id: business.id })
-        .eq("user_id", authData.user.id);
-
-      // 4. Create business_admin role
-      await supabase.from("user_roles").insert({
-        user_id: authData.user.id,
-        role: "business_admin",
-        business_id: business.id,
+      // 2. Use atomic signup function (handles business, profile, role, settings, events)
+      const { error: rpcError } = await supabase.rpc("handle_signup", {
+        _user_id: authData.user.id,
+        _business_name: form.businessName.trim(),
+        _email: form.email.trim(),
       });
-
-      // 5. Insert default settings
-      const defaultSettings = [
-        { business_id: business.id, key: "timezone", value: "Australia/Sydney" },
-        { business_id: business.id, key: "currency", value: "AUD" },
-        { business_id: business.id, key: "date_format", value: "DD/MM/YYYY" },
-      ];
-      await supabase.from("settings").insert(defaultSettings);
-
-      // 6. Log system event
-      await supabase.from("system_events").insert({
-        business_id: business.id,
-        event_type: "SIGNUP",
-        payload_json: { email: form.email.trim(), business_name: form.businessName.trim() },
-      });
-
-      // 7. Audit log
-      await supabase.from("audit_logs").insert({
-        business_id: business.id,
-        actor_user_id: authData.user.id,
-        action_type: "CREATE_BUSINESS",
-        entity_type: "business",
-        entity_id: business.id,
-        new_value_json: { name: form.businessName.trim() },
-      });
+      if (rpcError) throw rpcError;
 
       toast.success("Account created! Please check your email to verify.");
       navigate("/login");
