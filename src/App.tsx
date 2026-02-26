@@ -50,6 +50,12 @@ import CorporateStructurePage from "./pages/CorporateStructurePage";
 import FundraisingPage from "./pages/FundraisingPage";
 import GovernancePage from "./pages/GovernancePage";
 import RiskManagementPage from "./pages/RiskManagementPage";
+import ExpansionEnginePage from "./pages/ExpansionEnginePage";
+import AcquisitionsPage from "./pages/AcquisitionsPage";
+import IPOReadinessPage from "./pages/IPOReadinessPage";
+import FranchiseBlueprintPage from "./pages/FranchiseBlueprintPage";
+import CompetitiveIntelPage from "./pages/CompetitiveIntelPage";
+import CapitalAllocationPage from "./pages/CapitalAllocationPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -131,6 +137,24 @@ const App = () => (
               } />
               <Route path="/risk-management" element={
                 <ProtectedRoute requiredRoles={["super_admin"]}><RiskManagementPage /></ProtectedRoute>
+              } />
+              <Route path="/expansion-engine" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><ExpansionEnginePage /></ProtectedRoute>
+              } />
+              <Route path="/acquisitions" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><AcquisitionsPage /></ProtectedRoute>
+              } />
+              <Route path="/ipo-readiness" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><IPOReadinessPage /></ProtectedRoute>
+              } />
+              <Route path="/franchise-blueprint" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><FranchiseBlueprintPage /></ProtectedRoute>
+              } />
+              <Route path="/competitive-intel" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><CompetitiveIntelPage /></ProtectedRoute>
+              } />
+              <Route path="/capital-allocation" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><CapitalAllocationPage /></ProtectedRoute>
               } />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route

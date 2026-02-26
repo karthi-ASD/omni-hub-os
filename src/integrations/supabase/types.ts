@@ -62,6 +62,86 @@ export type Database = {
           },
         ]
       }
+      acquisition_scenarios: {
+        Row: {
+          cost_savings: number
+          created_at: string
+          id: string
+          integration_plan_json: Json | null
+          projected_synergy: number
+          purchase_price: number
+          roi_projection: number
+          target_id: string | null
+        }
+        Insert: {
+          cost_savings?: number
+          created_at?: string
+          id?: string
+          integration_plan_json?: Json | null
+          projected_synergy?: number
+          purchase_price?: number
+          roi_projection?: number
+          target_id?: string | null
+        }
+        Update: {
+          cost_savings?: number
+          created_at?: string
+          id?: string
+          integration_plan_json?: Json | null
+          projected_synergy?: number
+          purchase_price?: number
+          roi_projection?: number
+          target_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acquisition_scenarios_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "acquisition_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acquisition_targets: {
+        Row: {
+          acquisition_score: number
+          arr: number
+          churn_rate: number
+          company_name: string
+          created_at: string
+          id: string
+          integration_complexity_score: number
+          margin: number
+          status: string
+          tech_stack: string | null
+        }
+        Insert: {
+          acquisition_score?: number
+          arr?: number
+          churn_rate?: number
+          company_name: string
+          created_at?: string
+          id?: string
+          integration_complexity_score?: number
+          margin?: number
+          status?: string
+          tech_stack?: string | null
+        }
+        Update: {
+          acquisition_score?: number
+          arr?: number
+          churn_rate?: number
+          company_name?: string
+          created_at?: string
+          id?: string
+          integration_complexity_score?: number
+          margin?: number
+          status?: string
+          tech_stack?: string | null
+        }
+        Relationships: []
+      }
       agent_interactions: {
         Row: {
           context_json: Json | null
@@ -267,6 +347,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ai_expansion_strategies: {
+        Row: {
+          confidence: number
+          created_at: string
+          id: string
+          projected_roi: number
+          recommended_action: string
+          target_region: string
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          projected_roi?: number
+          recommended_action?: string
+          target_region: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          id?: string
+          projected_roi?: number
+          recommended_action?: string
+          target_region?: string
+        }
+        Relationships: []
       }
       ai_sales_forecasts: {
         Row: {
@@ -1055,6 +1162,36 @@ export type Database = {
           },
         ]
       }
+      capital_allocation_models: {
+        Row: {
+          created_at: string
+          id: string
+          investment_amount: number
+          projected_roi: number
+          risk_score: number
+          scenario_type: string
+          time_horizon: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          investment_amount?: number
+          projected_roi?: number
+          risk_score?: number
+          scenario_type?: string
+          time_horizon?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          investment_amount?: number
+          projected_roi?: number
+          risk_score?: number
+          scenario_type?: string
+          time_horizon?: number
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null
@@ -1285,6 +1422,77 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      competitive_benchmarks: {
+        Row: {
+          competitor_id: string | null
+          competitor_value: number
+          created_at: string
+          delta: number
+          id: string
+          metric: string
+          nextweb_value: number
+        }
+        Insert: {
+          competitor_id?: string | null
+          competitor_value?: number
+          created_at?: string
+          delta?: number
+          id?: string
+          metric: string
+          nextweb_value?: number
+        }
+        Update: {
+          competitor_id?: string | null
+          competitor_value?: number
+          created_at?: string
+          delta?: number
+          id?: string
+          metric?: string
+          nextweb_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitive_benchmarks_competitor_id_fkey"
+            columns: ["competitor_id"]
+            isOneToOne: false
+            referencedRelation: "competitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      competitors: {
+        Row: {
+          company_name: string
+          created_at: string
+          estimated_arr: number
+          feature_overlap_score: number
+          id: string
+          pricing_comparison: string | null
+          strength_score: number
+          threat_level: string
+        }
+        Insert: {
+          company_name: string
+          created_at?: string
+          estimated_arr?: number
+          feature_overlap_score?: number
+          id?: string
+          pricing_comparison?: string | null
+          strength_score?: number
+          threat_level?: string
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          estimated_arr?: number
+          feature_overlap_score?: number
+          id?: string
+          pricing_comparison?: string | null
+          strength_score?: number
+          threat_level?: string
+        }
+        Relationships: []
       }
       compliance_requests: {
         Row: {
@@ -1790,6 +1998,39 @@ export type Database = {
           },
         ]
       }
+      expansion_targets: {
+        Row: {
+          created_at: string
+          demand_score: number
+          id: string
+          industry: string | null
+          partner_gap_score: number
+          region: string
+          sales_density: number
+          seo_opportunity_score: number
+        }
+        Insert: {
+          created_at?: string
+          demand_score?: number
+          id?: string
+          industry?: string | null
+          partner_gap_score?: number
+          region: string
+          sales_density?: number
+          seo_opportunity_score?: number
+        }
+        Update: {
+          created_at?: string
+          demand_score?: number
+          id?: string
+          industry?: string | null
+          partner_gap_score?: number
+          region?: string
+          sales_density?: number
+          seo_opportunity_score?: number
+        }
+        Relationships: []
+      }
       external_api_registry: {
         Row: {
           created_at: string
@@ -1898,6 +2139,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      franchise_models: {
+        Row: {
+          created_at: string
+          entry_fee: number
+          id: string
+          projected_break_even_month: number
+          region: string
+          required_team_size: number
+          revenue_share_percentage: number
+          support_cost: number
+        }
+        Insert: {
+          created_at?: string
+          entry_fee?: number
+          id?: string
+          projected_break_even_month?: number
+          region: string
+          required_team_size?: number
+          revenue_share_percentage?: number
+          support_cost?: number
+        }
+        Update: {
+          created_at?: string
+          entry_fee?: number
+          id?: string
+          projected_break_even_month?: number
+          region?: string
+          required_team_size?: number
+          revenue_share_percentage?: number
+          support_cost?: number
+        }
+        Relationships: []
+      }
+      franchise_pipeline: {
+        Row: {
+          candidate_name: string
+          capital_available: number
+          created_at: string
+          experience_score: number
+          fit_score: number
+          id: string
+          region: string
+          status: string
+        }
+        Insert: {
+          candidate_name: string
+          capital_available?: number
+          created_at?: string
+          experience_score?: number
+          fit_score?: number
+          id?: string
+          region: string
+          status?: string
+        }
+        Update: {
+          candidate_name?: string
+          capital_available?: number
+          created_at?: string
+          experience_score?: number
+          fit_score?: number
+          id?: string
+          region?: string
+          status?: string
+        }
+        Relationships: []
       }
       fundraising_rounds: {
         Row: {
@@ -2452,6 +2759,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ipo_readiness: {
+        Row: {
+          assessed_at: string
+          audit_compliance_score: number
+          board_independence_score: number
+          governance_score: number
+          id: string
+          overall_readiness_score: number
+          revenue_stability_score: number
+          scalability_score: number
+        }
+        Insert: {
+          assessed_at?: string
+          audit_compliance_score?: number
+          board_independence_score?: number
+          governance_score?: number
+          id?: string
+          overall_readiness_score?: number
+          revenue_stability_score?: number
+          scalability_score?: number
+        }
+        Update: {
+          assessed_at?: string
+          audit_compliance_score?: number
+          board_independence_score?: number
+          governance_score?: number
+          id?: string
+          overall_readiness_score?: number
+          revenue_stability_score?: number
+          scalability_score?: number
+        }
+        Relationships: []
       }
       lead_activities: {
         Row: {

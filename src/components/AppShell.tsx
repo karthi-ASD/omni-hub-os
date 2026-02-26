@@ -7,6 +7,7 @@ import {
   LayoutDashboard, Menu, Calendar, Clock, Globe, Mail,
   Activity, TrendingUp, Brain, Palette, Bot, Handshake, PresentationIcon,
   Store, Smartphone, Server, Landmark, Banknote, Gavel, ShieldAlert,
+  Rocket, Building, BarChartBig, Map, Eye, Coins,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
@@ -69,6 +70,12 @@ const adminNav = [
   { label: "Fundraising", icon: Banknote, to: "/fundraising", roles: ["super_admin"] as const },
   { label: "Governance", icon: Gavel, to: "/governance", roles: ["super_admin"] as const },
   { label: "Risk Management", icon: ShieldAlert, to: "/risk-management", roles: ["super_admin"] as const },
+  { label: "Expansion Engine", icon: Rocket, to: "/expansion-engine", roles: ["super_admin"] as const },
+  { label: "Acquisitions", icon: Building, to: "/acquisitions", roles: ["super_admin"] as const },
+  { label: "IPO Readiness", icon: BarChartBig, to: "/ipo-readiness", roles: ["super_admin"] as const },
+  { label: "Franchise Blueprint", icon: Map, to: "/franchise-blueprint", roles: ["super_admin"] as const },
+  { label: "Competitive Intel", icon: Eye, to: "/competitive-intel", roles: ["super_admin"] as const },
+  { label: "Capital Allocation", icon: Coins, to: "/capital-allocation", roles: ["super_admin"] as const },
 ];
 
 const AppShell = () => {
