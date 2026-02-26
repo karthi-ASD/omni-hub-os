@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff, Building2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
-const Login = () => {
+const Login: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
