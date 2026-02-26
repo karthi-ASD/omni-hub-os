@@ -231,6 +231,98 @@ export type Database = {
           },
         ]
       }
+      inquiries: {
+        Row: {
+          assigned_to_user_id: string | null
+          business_id: string
+          channel: Database["public"]["Enums"]["inquiry_channel"]
+          created_at: string
+          deleted_at: string | null
+          email: string
+          id: string
+          landing_page_url: string | null
+          lead_id: string | null
+          message: string | null
+          name: string
+          phone: string | null
+          preferred_contact_method:
+            | Database["public"]["Enums"]["preferred_contact"]
+            | null
+          service_interest: string | null
+          source: Database["public"]["Enums"]["inquiry_source"]
+          status: Database["public"]["Enums"]["inquiry_status"]
+          suburb: string | null
+          updated_at: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          assigned_to_user_id?: string | null
+          business_id: string
+          channel?: Database["public"]["Enums"]["inquiry_channel"]
+          created_at?: string
+          deleted_at?: string | null
+          email: string
+          id?: string
+          landing_page_url?: string | null
+          lead_id?: string | null
+          message?: string | null
+          name: string
+          phone?: string | null
+          preferred_contact_method?:
+            | Database["public"]["Enums"]["preferred_contact"]
+            | null
+          service_interest?: string | null
+          source?: Database["public"]["Enums"]["inquiry_source"]
+          status?: Database["public"]["Enums"]["inquiry_status"]
+          suburb?: string | null
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          assigned_to_user_id?: string | null
+          business_id?: string
+          channel?: Database["public"]["Enums"]["inquiry_channel"]
+          created_at?: string
+          deleted_at?: string | null
+          email?: string
+          id?: string
+          landing_page_url?: string | null
+          lead_id?: string | null
+          message?: string | null
+          name?: string
+          phone?: string | null
+          preferred_contact_method?:
+            | Database["public"]["Enums"]["preferred_contact"]
+            | null
+          service_interest?: string | null
+          source?: Database["public"]["Enums"]["inquiry_source"]
+          status?: Database["public"]["Enums"]["inquiry_status"]
+          suburb?: string | null
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiries_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       integrations: {
         Row: {
           business_id: string
@@ -268,6 +360,145 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_activities: {
+        Row: {
+          actor_user_id: string
+          business_id: string
+          created_at: string
+          details_json: Json | null
+          id: string
+          inquiry_id: string | null
+          lead_id: string | null
+          summary: string
+          type: Database["public"]["Enums"]["lead_activity_type"]
+        }
+        Insert: {
+          actor_user_id: string
+          business_id: string
+          created_at?: string
+          details_json?: Json | null
+          id?: string
+          inquiry_id?: string | null
+          lead_id?: string | null
+          summary: string
+          type?: Database["public"]["Enums"]["lead_activity_type"]
+        }
+        Update: {
+          actor_user_id?: string
+          business_id?: string
+          created_at?: string
+          details_json?: Json | null
+          id?: string
+          inquiry_id?: string | null
+          lead_id?: string | null
+          summary?: string
+          type?: Database["public"]["Enums"]["lead_activity_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_activities_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_activities_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_activities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          assigned_to_user_id: string | null
+          business_id: string
+          business_name: string | null
+          created_at: string
+          email: string
+          estimated_budget: number | null
+          id: string
+          inquiry_id: string | null
+          last_contacted_at: string | null
+          name: string
+          next_follow_up_at: string | null
+          notes: string | null
+          phone: string | null
+          services_needed: string | null
+          source: Database["public"]["Enums"]["lead_source"]
+          stage: Database["public"]["Enums"]["lead_stage"]
+          status: Database["public"]["Enums"]["lead_status"]
+          suburb: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_to_user_id?: string | null
+          business_id: string
+          business_name?: string | null
+          created_at?: string
+          email: string
+          estimated_budget?: number | null
+          id?: string
+          inquiry_id?: string | null
+          last_contacted_at?: string | null
+          name: string
+          next_follow_up_at?: string | null
+          notes?: string | null
+          phone?: string | null
+          services_needed?: string | null
+          source?: Database["public"]["Enums"]["lead_source"]
+          stage?: Database["public"]["Enums"]["lead_stage"]
+          status?: Database["public"]["Enums"]["lead_status"]
+          suburb?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_to_user_id?: string | null
+          business_id?: string
+          business_name?: string | null
+          created_at?: string
+          email?: string
+          estimated_budget?: number | null
+          id?: string
+          inquiry_id?: string | null
+          last_contacted_at?: string | null
+          name?: string
+          next_follow_up_at?: string | null
+          notes?: string | null
+          phone?: string | null
+          services_needed?: string | null
+          source?: Database["public"]["Enums"]["lead_source"]
+          stage?: Database["public"]["Enums"]["lead_stage"]
+          status?: Database["public"]["Enums"]["lead_status"]
+          suburb?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiries"
             referencedColumns: ["id"]
           },
         ]
@@ -362,6 +593,72 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reminders: {
+        Row: {
+          assigned_to_user_id: string
+          business_id: string
+          calendar_event_id: string | null
+          created_at: string
+          created_by_user_id: string
+          due_at: string
+          entity_id: string
+          entity_type: Database["public"]["Enums"]["reminder_entity_type"]
+          id: string
+          priority: Database["public"]["Enums"]["reminder_priority"]
+          snoozed_until: string | null
+          status: Database["public"]["Enums"]["reminder_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to_user_id: string
+          business_id: string
+          calendar_event_id?: string | null
+          created_at?: string
+          created_by_user_id: string
+          due_at: string
+          entity_id: string
+          entity_type: Database["public"]["Enums"]["reminder_entity_type"]
+          id?: string
+          priority?: Database["public"]["Enums"]["reminder_priority"]
+          snoozed_until?: string | null
+          status?: Database["public"]["Enums"]["reminder_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to_user_id?: string
+          business_id?: string
+          calendar_event_id?: string | null
+          created_at?: string
+          created_by_user_id?: string
+          due_at?: string
+          entity_id?: string
+          entity_type?: Database["public"]["Enums"]["reminder_entity_type"]
+          id?: string
+          priority?: Database["public"]["Enums"]["reminder_priority"]
+          snoozed_until?: string | null
+          status?: Database["public"]["Enums"]["reminder_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminders_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reminders_calendar_event_id_fkey"
+            columns: ["calendar_event_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
             referencedColumns: ["id"]
           },
         ]
@@ -492,6 +789,22 @@ export type Database = {
         | "client"
       business_status: "active" | "suspended" | "cancelled"
       calendar_visibility: "private" | "tenant"
+      inquiry_channel:
+        | "organic"
+        | "google_ads"
+        | "meta_ads"
+        | "referral"
+        | "direct"
+        | "unknown"
+      inquiry_source: "website_form" | "mobile_app" | "manual" | "other"
+      inquiry_status:
+        | "new"
+        | "assigned"
+        | "contacted"
+        | "qualified"
+        | "converted_to_lead"
+        | "closed"
+        | "spam"
       integration_provider:
         | "xero"
         | "stripe"
@@ -500,7 +813,28 @@ export type Database = {
         | "sms"
         | "google"
       integration_status: "active" | "inactive" | "error"
+      lead_activity_type:
+        | "call"
+        | "email"
+        | "whatsapp"
+        | "note"
+        | "meeting"
+        | "status_change"
+      lead_source: "inquiry" | "cold_call" | "referral" | "manual" | "other"
+      lead_stage:
+        | "new"
+        | "contacted"
+        | "meeting_booked"
+        | "proposal_requested"
+        | "negotiation"
+        | "won"
+        | "lost"
+      lead_status: "active" | "archived"
       notification_type: "info" | "warning" | "system" | "reminder"
+      preferred_contact: "call" | "email" | "whatsapp"
+      reminder_entity_type: "inquiry" | "lead"
+      reminder_priority: "low" | "medium" | "high"
+      reminder_status: "pending" | "done" | "snoozed" | "cancelled" | "overdue"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -637,6 +971,24 @@ export const Constants = {
       ],
       business_status: ["active", "suspended", "cancelled"],
       calendar_visibility: ["private", "tenant"],
+      inquiry_channel: [
+        "organic",
+        "google_ads",
+        "meta_ads",
+        "referral",
+        "direct",
+        "unknown",
+      ],
+      inquiry_source: ["website_form", "mobile_app", "manual", "other"],
+      inquiry_status: [
+        "new",
+        "assigned",
+        "contacted",
+        "qualified",
+        "converted_to_lead",
+        "closed",
+        "spam",
+      ],
       integration_provider: [
         "xero",
         "stripe",
@@ -646,7 +998,30 @@ export const Constants = {
         "google",
       ],
       integration_status: ["active", "inactive", "error"],
+      lead_activity_type: [
+        "call",
+        "email",
+        "whatsapp",
+        "note",
+        "meeting",
+        "status_change",
+      ],
+      lead_source: ["inquiry", "cold_call", "referral", "manual", "other"],
+      lead_stage: [
+        "new",
+        "contacted",
+        "meeting_booked",
+        "proposal_requested",
+        "negotiation",
+        "won",
+        "lost",
+      ],
+      lead_status: ["active", "archived"],
       notification_type: ["info", "warning", "system", "reminder"],
+      preferred_contact: ["call", "email", "whatsapp"],
+      reminder_entity_type: ["inquiry", "lead"],
+      reminder_priority: ["low", "medium", "high"],
+      reminder_status: ["pending", "done", "snoozed", "cancelled", "overdue"],
     },
   },
 } as const
