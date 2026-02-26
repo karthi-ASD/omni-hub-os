@@ -76,6 +76,7 @@ import VaultPage from "./pages/VaultPage";
 import JobCRMPage from "./pages/JobCRMPage";
 import UsageAnalyticsPage from "./pages/UsageAnalyticsPage";
 import DemoModePage from "./pages/DemoModePage";
+import RevenueIntelligencePage from "./pages/RevenueIntelligencePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -226,6 +227,9 @@ const App = () => (
               } />
               <Route path="/demo-mode" element={
                 <ProtectedRoute requiredRoles={["super_admin"]}><DemoModePage /></ProtectedRoute>
+              } />
+              <Route path="/revenue-intelligence" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><RevenueIntelligencePage /></ProtectedRoute>
               } />
               <Route
                 path="/businesses"

@@ -904,6 +904,56 @@ export type Database = {
           },
         ]
       }
+      attribution_events: {
+        Row: {
+          adgroup: string | null
+          business_id: string
+          campaign: string | null
+          channel: string | null
+          created_at: string
+          event_type: string
+          id: string
+          keyword: string | null
+          meta_json: Json | null
+          person_id: string | null
+          person_type: string
+        }
+        Insert: {
+          adgroup?: string | null
+          business_id: string
+          campaign?: string | null
+          channel?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          keyword?: string | null
+          meta_json?: Json | null
+          person_id?: string | null
+          person_type?: string
+        }
+        Update: {
+          adgroup?: string | null
+          business_id?: string
+          campaign?: string | null
+          channel?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          keyword?: string | null
+          meta_json?: Json | null
+          person_id?: string | null
+          person_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attribution_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action_type: string
@@ -1543,6 +1593,44 @@ export type Database = {
         }
         Relationships: []
       }
+      churn_signals: {
+        Row: {
+          business_id: string
+          client_id: string
+          created_at: string
+          id: string
+          reasons_json: Json | null
+          risk_score: number
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          client_id: string
+          created_at?: string
+          id?: string
+          reasons_json?: Json | null
+          risk_score?: number
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          reasons_json?: Json | null
+          risk_score?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "churn_signals_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_profiles: {
         Row: {
           address_json: Json | null
@@ -1671,6 +1759,44 @@ export type Database = {
             columns: ["deal_id"]
             isOneToOne: false
             referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cohort_memberships: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          cohort_month: string
+          cohort_type: string
+          created_at: string
+          id: string
+          service_id: string | null
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          cohort_month: string
+          cohort_type?: string
+          created_at?: string
+          id?: string
+          service_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          cohort_month?: string
+          cohort_type?: string
+          created_at?: string
+          id?: string
+          service_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cohort_memberships_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
@@ -2132,6 +2258,53 @@ export type Database = {
             columns: ["parent_entity_id"]
             isOneToOne: false
             referencedRelation: "corporate_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cost_entries: {
+        Row: {
+          amount: number
+          business_id: string
+          cost_type: string
+          created_at: string
+          currency: string
+          date: string
+          id: string
+          linked_entity_id: string | null
+          linked_entity_type: string | null
+          notes: string | null
+        }
+        Insert: {
+          amount?: number
+          business_id: string
+          cost_type?: string
+          created_at?: string
+          currency?: string
+          date?: string
+          id?: string
+          linked_entity_id?: string | null
+          linked_entity_type?: string | null
+          notes?: string | null
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          cost_type?: string
+          created_at?: string
+          currency?: string
+          date?: string
+          id?: string
+          linked_entity_id?: string | null
+          linked_entity_type?: string | null
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_entries_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
@@ -2662,6 +2835,41 @@ export type Database = {
           },
         ]
       }
+      employee_cost_rates: {
+        Row: {
+          business_id: string
+          created_at: string
+          effective_from: string
+          hourly_rate: number
+          id: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          effective_from?: string
+          hourly_rate?: number
+          id?: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          effective_from?: string
+          hourly_rate?: number
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_cost_rates_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_documents: {
         Row: {
           business_id: string
@@ -3075,6 +3283,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "feature_flags_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forecast_snapshots: {
+        Row: {
+          business_id: string
+          created_at: string
+          expected_close_30d: number
+          expected_close_60d: number
+          expected_close_90d: number
+          id: string
+          notes: string | null
+          snapshot_date: string
+          weighted_pipeline_value: number
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          expected_close_30d?: number
+          expected_close_60d?: number
+          expected_close_90d?: number
+          id?: string
+          notes?: string | null
+          snapshot_date?: string
+          weighted_pipeline_value?: number
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          expected_close_30d?: number
+          expected_close_60d?: number
+          expected_close_90d?: number
+          id?: string
+          notes?: string | null
+          snapshot_date?: string
+          weighted_pipeline_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forecast_snapshots_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -5814,6 +6066,127 @@ export type Database = {
           },
         ]
       }
+      revenue_alert_rules: {
+        Row: {
+          business_id: string
+          created_at: string
+          enabled: boolean
+          id: string
+          recipients_json: Json | null
+          rule_type: string
+          threshold_json: Json | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          recipients_json?: Json | null
+          rule_type?: string
+          threshold_json?: Json | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          recipients_json?: Json | null
+          rule_type?: string
+          threshold_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_alert_rules_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revenue_ledger_entries: {
+        Row: {
+          amount_gross: number
+          amount_net: number
+          business_id: string
+          created_at: string
+          currency: string
+          customer_id: string | null
+          customer_type: string
+          due_date: string | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          invoice_date: string | null
+          is_demo: boolean
+          job_id: string | null
+          ledger_scope: string
+          paid_at: string | null
+          project_id: string | null
+          provider: string | null
+          service_id: string | null
+          status: string
+          tax_amount: number
+          transaction_reference: string | null
+        }
+        Insert: {
+          amount_gross?: number
+          amount_net?: number
+          business_id: string
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          customer_type?: string
+          due_date?: string | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          invoice_date?: string | null
+          is_demo?: boolean
+          job_id?: string | null
+          ledger_scope?: string
+          paid_at?: string | null
+          project_id?: string | null
+          provider?: string | null
+          service_id?: string | null
+          status?: string
+          tax_amount?: number
+          transaction_reference?: string | null
+        }
+        Update: {
+          amount_gross?: number
+          amount_net?: number
+          business_id?: string
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          customer_type?: string
+          due_date?: string | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          invoice_date?: string | null
+          is_demo?: boolean
+          job_id?: string | null
+          ledger_scope?: string
+          paid_at?: string | null
+          project_id?: string | null
+          provider?: string | null
+          service_id?: string | null
+          status?: string
+          tax_amount?: number
+          transaction_reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_ledger_entries_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       review_requests: {
         Row: {
           business_id: string
@@ -6784,6 +7157,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "sla_policies_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_metrics_daily: {
+        Row: {
+          arr: number
+          business_id: string
+          churned_mrr: number
+          contraction_mrr: number
+          created_at: string
+          date: string
+          expansion_mrr: number
+          id: string
+          mrr: number
+          net_mrr_change: number
+          new_mrr: number
+        }
+        Insert: {
+          arr?: number
+          business_id: string
+          churned_mrr?: number
+          contraction_mrr?: number
+          created_at?: string
+          date: string
+          expansion_mrr?: number
+          id?: string
+          mrr?: number
+          net_mrr_change?: number
+          new_mrr?: number
+        }
+        Update: {
+          arr?: number
+          business_id?: string
+          churned_mrr?: number
+          contraction_mrr?: number
+          created_at?: string
+          date?: string
+          expansion_mrr?: number
+          id?: string
+          mrr?: number
+          net_mrr_change?: number
+          new_mrr?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_metrics_daily_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
