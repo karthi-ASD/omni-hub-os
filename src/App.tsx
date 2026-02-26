@@ -29,6 +29,9 @@ import ProjectsPage from "./pages/ProjectsPage";
 import InvoicesPage from "./pages/InvoicesPage";
 import PaymentsPage from "./pages/PaymentsPage";
 import BillingDashboard from "./pages/BillingDashboard";
+import PlatformBillingPage from "./pages/PlatformBillingPage";
+import TenantBillingPage from "./pages/TenantBillingPage";
+import GatewayConfigPage from "./pages/GatewayConfigPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -69,6 +72,11 @@ const App = () => (
               <Route path="/invoices" element={<InvoicesPage />} />
               <Route path="/payments" element={<PaymentsPage />} />
               <Route path="/billing" element={<BillingDashboard />} />
+              <Route path="/platform-billing" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><PlatformBillingPage /></ProtectedRoute>
+              } />
+              <Route path="/tenant-billing" element={<TenantBillingPage />} />
+              <Route path="/gateways" element={<GatewayConfigPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route
                 path="/businesses"

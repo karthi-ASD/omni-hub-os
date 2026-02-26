@@ -849,6 +849,50 @@ export type Database = {
           },
         ]
       }
+      gateway_events: {
+        Row: {
+          business_id: string | null
+          created_at: string
+          event_type: string | null
+          gateway_type: string
+          id: string
+          mode: string
+          payload_json: Json | null
+          processed_at: string | null
+          status: string
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string
+          event_type?: string | null
+          gateway_type: string
+          id?: string
+          mode?: string
+          payload_json?: Json | null
+          processed_at?: string | null
+          status?: string
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string
+          event_type?: string | null
+          gateway_type?: string
+          id?: string
+          mode?: string
+          payload_json?: Json | null
+          processed_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gateway_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gateway_transactions: {
         Row: {
           amount: number
@@ -1375,6 +1419,50 @@ export type Database = {
           },
         ]
       }
+      payment_gateways: {
+        Row: {
+          business_id: string | null
+          created_at: string
+          credentials_json: string | null
+          gateway_type: string
+          id: string
+          is_active: boolean
+          mode: string
+          updated_at: string
+          webhook_secret: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string
+          credentials_json?: string | null
+          gateway_type?: string
+          id?: string
+          is_active?: boolean
+          mode?: string
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string
+          credentials_json?: string | null
+          gateway_type?: string
+          id?: string
+          is_active?: boolean
+          mode?: string
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_gateways_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -1441,6 +1529,122 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_invoices: {
+        Row: {
+          amount: number
+          client_business_id: string
+          created_at: string
+          currency: string
+          description: string | null
+          due_date: string | null
+          gateway_invoice_reference: string | null
+          id: string
+          invoice_number: number
+          status: string
+          tax: number
+          total: number
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          client_business_id: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          due_date?: string | null
+          gateway_invoice_reference?: string | null
+          id?: string
+          invoice_number?: number
+          status?: string
+          tax?: number
+          total?: number
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_business_id?: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          due_date?: string | null
+          gateway_invoice_reference?: string | null
+          id?: string
+          invoice_number?: number
+          status?: string
+          tax?: number
+          total?: number
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_invoices_client_business_id_fkey"
+            columns: ["client_business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_payments: {
+        Row: {
+          amount: number
+          client_business_id: string
+          created_at: string
+          currency: string
+          gateway_transaction_id: string | null
+          gateway_type: string
+          id: string
+          invoice_id: string | null
+          paid_at: string | null
+          receipt_url: string | null
+          status: string
+        }
+        Insert: {
+          amount?: number
+          client_business_id: string
+          created_at?: string
+          currency?: string
+          gateway_transaction_id?: string | null
+          gateway_type?: string
+          id?: string
+          invoice_id?: string | null
+          paid_at?: string | null
+          receipt_url?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          client_business_id?: string
+          created_at?: string
+          currency?: string
+          gateway_transaction_id?: string | null
+          gateway_type?: string
+          id?: string
+          invoice_id?: string | null
+          paid_at?: string | null
+          receipt_url?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_payments_client_business_id_fkey"
+            columns: ["client_business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "platform_invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -1918,6 +2122,122 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_invoices: {
+        Row: {
+          amount: number
+          business_id: string
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          description: string | null
+          due_date: string | null
+          gateway_invoice_reference: string | null
+          id: string
+          status: string
+          tax: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          business_id: string
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          description?: string | null
+          due_date?: string | null
+          gateway_invoice_reference?: string | null
+          id?: string
+          status?: string
+          tax?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          description?: string | null
+          due_date?: string | null
+          gateway_invoice_reference?: string | null
+          id?: string
+          status?: string
+          tax?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_invoices_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_payments: {
+        Row: {
+          amount: number
+          business_id: string
+          created_at: string
+          currency: string
+          gateway_transaction_id: string | null
+          gateway_type: string
+          id: string
+          invoice_id: string | null
+          paid_at: string | null
+          status: string
+        }
+        Insert: {
+          amount?: number
+          business_id: string
+          created_at?: string
+          currency?: string
+          gateway_transaction_id?: string | null
+          gateway_type?: string
+          id?: string
+          invoice_id?: string | null
+          paid_at?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          created_at?: string
+          currency?: string
+          gateway_transaction_id?: string | null
+          gateway_type?: string
+          id?: string
+          invoice_id?: string | null
+          paid_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_payments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_invoices"
             referencedColumns: ["id"]
           },
         ]
