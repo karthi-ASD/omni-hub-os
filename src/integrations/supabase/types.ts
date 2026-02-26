@@ -810,6 +810,59 @@ export type Database = {
           },
         ]
       }
+      approval_requests: {
+        Row: {
+          approver_user_id: string | null
+          business_id: string
+          created_at: string
+          decided_at: string | null
+          decision_comment: string | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          reason: string | null
+          request_type: string
+          requested_by: string | null
+          status: string
+        }
+        Insert: {
+          approver_user_id?: string | null
+          business_id: string
+          created_at?: string
+          decided_at?: string | null
+          decision_comment?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          reason?: string | null
+          request_type?: string
+          requested_by?: string | null
+          status?: string
+        }
+        Update: {
+          approver_user_id?: string | null
+          business_id?: string
+          created_at?: string
+          decided_at?: string | null
+          decision_comment?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          reason?: string | null
+          request_type?: string
+          requested_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance_checkins: {
         Row: {
           business_id: string
@@ -1624,6 +1677,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "churn_signals_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_health_scores: {
+        Row: {
+          business_id: string
+          client_id: string
+          created_at: string
+          id: string
+          reasons_json: Json | null
+          risk_level: string
+          score: number
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          client_id: string
+          created_at?: string
+          id?: string
+          reasons_json?: Json | null
+          risk_level?: string
+          score?: number
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          reasons_json?: Json | null
+          risk_level?: string
+          score?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_health_scores_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -2835,6 +2929,50 @@ export type Database = {
           },
         ]
       }
+      duplicate_candidates: {
+        Row: {
+          business_id: string
+          candidate_entity_id: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          match_reasons_json: Json | null
+          match_score: number
+          status: string
+        }
+        Insert: {
+          business_id: string
+          candidate_entity_id: string
+          created_at?: string
+          entity_id: string
+          entity_type?: string
+          id?: string
+          match_reasons_json?: Json | null
+          match_score?: number
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          candidate_entity_id?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          match_reasons_json?: Json | null
+          match_score?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "duplicate_candidates_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_cost_rates: {
         Row: {
           business_id: string
@@ -3145,6 +3283,47 @@ export type Database = {
           seo_opportunity_score?: number
         }
         Relationships: []
+      }
+      export_jobs: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string | null
+          export_type: string
+          file_url: string | null
+          filters_json: Json | null
+          id: string
+          status: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          export_type?: string
+          file_url?: string | null
+          filters_json?: Json | null
+          id?: string
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          export_type?: string
+          file_url?: string | null
+          filters_json?: Json | null
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "export_jobs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       external_api_registry: {
         Row: {
@@ -3682,6 +3861,56 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      import_jobs: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string | null
+          error_report_url: string | null
+          failed_rows: number | null
+          file_url: string | null
+          id: string
+          job_type: string
+          status: string
+          success_rows: number | null
+          total_rows: number | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          error_report_url?: string | null
+          failed_rows?: number | null
+          file_url?: string | null
+          id?: string
+          job_type?: string
+          status?: string
+          success_rows?: number | null
+          total_rows?: number | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          error_report_url?: string | null
+          failed_rows?: number | null
+          file_url?: string | null
+          id?: string
+          job_type?: string
+          status?: string
+          success_rows?: number | null
+          total_rows?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_jobs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       incident_updates: {
         Row: {
@@ -4566,6 +4795,47 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_scores: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          lead_id: string
+          reasons_json: Json | null
+          score: number
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          lead_id: string
+          reasons_json?: Json | null
+          score?: number
+          tier?: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          lead_id?: string
+          reasons_json?: Json | null
+          score?: number
+          tier?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_scores_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
@@ -7589,6 +7859,47 @@ export type Database = {
           },
         ]
       }
+      theme_settings: {
+        Row: {
+          accent_color: string
+          business_id: string
+          created_at: string
+          id: string
+          mode: string
+          primary_color: string
+          secondary_color: string
+          theme_name: string
+        }
+        Insert: {
+          accent_color?: string
+          business_id: string
+          created_at?: string
+          id?: string
+          mode?: string
+          primary_color?: string
+          secondary_color?: string
+          theme_name?: string
+        }
+        Update: {
+          accent_color?: string
+          business_id?: string
+          created_at?: string
+          id?: string
+          mode?: string
+          primary_color?: string
+          secondary_color?: string
+          theme_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "theme_settings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       uptime_checks: {
         Row: {
           checked_at: string
@@ -7867,6 +8178,41 @@ export type Database = {
             foreignKeyName: "vault_items_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_policy_settings: {
+        Row: {
+          allowed_roles_json: Json | null
+          business_id: string
+          created_at: string
+          id: string
+          max_views_per_day: number | null
+          require_reauth_on_view: boolean
+        }
+        Insert: {
+          allowed_roles_json?: Json | null
+          business_id: string
+          created_at?: string
+          id?: string
+          max_views_per_day?: number | null
+          require_reauth_on_view?: boolean
+        }
+        Update: {
+          allowed_roles_json?: Json | null
+          business_id?: string
+          created_at?: string
+          id?: string
+          max_views_per_day?: number | null
+          require_reauth_on_view?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_policy_settings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },

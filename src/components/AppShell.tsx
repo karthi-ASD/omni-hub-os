@@ -99,6 +99,8 @@ const adminNav = [
   { label: "Usage Analytics", icon: Activity, to: "/usage-analytics", roles: ["super_admin", "business_admin"] as const },
   { label: "Demo Mode", icon: PlayCircle, to: "/demo-mode", roles: ["super_admin"] as const },
   { label: "Revenue Intelligence", icon: TrendingUp, to: "/revenue-intelligence", roles: ["super_admin", "business_admin"] as const },
+  { label: "Activity Timeline", icon: Clock, to: "/activity-timeline", roles: ["super_admin", "business_admin"] as const },
+  { label: "Governance Controls", icon: Gavel, to: "/governance-controls", roles: ["super_admin", "business_admin"] as const },
 ];
 
 const AppShell = () => {
