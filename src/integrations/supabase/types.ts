@@ -62,6 +62,170 @@ export type Database = {
           },
         ]
       }
+      ai_agent_actions: {
+        Row: {
+          action_type: string
+          approved_by_user_id: string | null
+          created_at: string
+          executed_at: string | null
+          id: string
+          payload_json: Json | null
+          result_json: Json | null
+          task_id: string
+        }
+        Insert: {
+          action_type: string
+          approved_by_user_id?: string | null
+          created_at?: string
+          executed_at?: string | null
+          id?: string
+          payload_json?: Json | null
+          result_json?: Json | null
+          task_id: string
+        }
+        Update: {
+          action_type?: string
+          approved_by_user_id?: string | null
+          created_at?: string
+          executed_at?: string | null
+          id?: string
+          payload_json?: Json | null
+          result_json?: Json | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_actions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agent_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agent_goals: {
+        Row: {
+          agent_id: string
+          created_at: string
+          end_date: string | null
+          goal_type: string
+          id: string
+          start_date: string | null
+          status: string
+          target_metrics_json: Json | null
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          end_date?: string | null
+          goal_type: string
+          id?: string
+          start_date?: string | null
+          status?: string
+          target_metrics_json?: Json | null
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          end_date?: string | null
+          goal_type?: string
+          id?: string
+          start_date?: string | null
+          status?: string
+          target_metrics_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_goals_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agent_tasks: {
+        Row: {
+          agent_id: string
+          approval_required: boolean
+          created_at: string
+          id: string
+          related_entity_id: string | null
+          related_entity_type: string | null
+          status: string
+          task_plan_json: Json | null
+          task_title: string
+        }
+        Insert: {
+          agent_id: string
+          approval_required?: boolean
+          created_at?: string
+          id?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          status?: string
+          task_plan_json?: Json | null
+          task_title: string
+        }
+        Update: {
+          agent_id?: string
+          approval_required?: boolean
+          created_at?: string
+          id?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          status?: string
+          task_plan_json?: Json | null
+          task_title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_tasks_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agents: {
+        Row: {
+          agent_name: string
+          autonomy_level: string
+          business_id: string | null
+          created_at: string
+          enabled: boolean
+          id: string
+          scope: string
+        }
+        Insert: {
+          agent_name: string
+          autonomy_level?: string
+          business_id?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          scope: string
+        }
+        Update: {
+          agent_name?: string
+          autonomy_level?: string
+          business_id?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          scope?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agents_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_sales_forecasts: {
         Row: {
           business_id: string
@@ -1544,6 +1708,66 @@ export type Database = {
           },
         ]
       }
+      investor_assumptions: {
+        Row: {
+          assumption_key: string
+          id: string
+          period: string | null
+          updated_at: string
+          updated_by: string | null
+          value: number
+        }
+        Insert: {
+          assumption_key: string
+          id?: string
+          period?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          value?: number
+        }
+        Update: {
+          assumption_key?: string
+          id?: string
+          period?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          value?: number
+        }
+        Relationships: []
+      }
+      investor_decks: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deck_version: string
+          file_url: string | null
+          generated_at: string
+          id: string
+          narrative_type: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deck_version?: string
+          file_url?: string | null
+          generated_at?: string
+          id?: string
+          narrative_type?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deck_version?: string
+          file_url?: string | null
+          generated_at?: string
+          id?: string
+          narrative_type?: string
+          status?: string
+        }
+        Relationships: []
+      }
       invoice_items: {
         Row: {
           amount: number
@@ -1885,6 +2109,210 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_attribution: {
+        Row: {
+          attribution_source: string
+          created_at: string
+          deal_id: string | null
+          id: string
+          lead_id: string | null
+          partner_id: string
+          tenant_business_id: string | null
+        }
+        Insert: {
+          attribution_source?: string
+          created_at?: string
+          deal_id?: string | null
+          id?: string
+          lead_id?: string | null
+          partner_id: string
+          tenant_business_id?: string | null
+        }
+        Update: {
+          attribution_source?: string
+          created_at?: string
+          deal_id?: string | null
+          id?: string
+          lead_id?: string | null
+          partner_id?: string
+          tenant_business_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_attribution_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_attribution_tenant_business_id_fkey"
+            columns: ["tenant_business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_commission_plans: {
+        Row: {
+          commission_type: string
+          created_at: string
+          id: string
+          partner_type: string
+          payout_schedule: string
+          plan_name: string
+          rules_json: Json | null
+        }
+        Insert: {
+          commission_type?: string
+          created_at?: string
+          id?: string
+          partner_type: string
+          payout_schedule?: string
+          plan_name: string
+          rules_json?: Json | null
+        }
+        Update: {
+          commission_type?: string
+          created_at?: string
+          id?: string
+          partner_type?: string
+          payout_schedule?: string
+          plan_name?: string
+          rules_json?: Json | null
+        }
+        Relationships: []
+      }
+      partner_commissions: {
+        Row: {
+          amount: number
+          approved_by_user_id: string | null
+          created_at: string
+          id: string
+          partner_id: string
+          payout_batch_id: string | null
+          platform_invoice_id: string | null
+          status: string
+          tenant_business_id: string | null
+        }
+        Insert: {
+          amount?: number
+          approved_by_user_id?: string | null
+          created_at?: string
+          id?: string
+          partner_id: string
+          payout_batch_id?: string | null
+          platform_invoice_id?: string | null
+          status?: string
+          tenant_business_id?: string | null
+        }
+        Update: {
+          amount?: number
+          approved_by_user_id?: string | null
+          created_at?: string
+          id?: string
+          partner_id?: string
+          payout_batch_id?: string | null
+          platform_invoice_id?: string | null
+          status?: string
+          tenant_business_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_commissions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_commissions_tenant_business_id_fkey"
+            columns: ["tenant_business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_payout_batches: {
+        Row: {
+          created_at: string
+          id: string
+          payout_date: string
+          status: string
+          total_amount: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payout_date?: string
+          status?: string
+          total_amount?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payout_date?: string
+          status?: string
+          total_amount?: number
+        }
+        Relationships: []
+      }
+      partners: {
+        Row: {
+          business_id: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          parent_partner_id: string | null
+          partner_type: string
+          phone: string | null
+          region: string | null
+          status: string
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          parent_partner_id?: string | null
+          partner_type: string
+          phone?: string | null
+          region?: string | null
+          status?: string
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          parent_partner_id?: string | null
+          partner_type?: string
+          phone?: string | null
+          region?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partners_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partners_parent_partner_id_fkey"
+            columns: ["parent_partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
             referencedColumns: ["id"]
           },
         ]
@@ -3471,6 +3899,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      valuation_models: {
+        Row: {
+          generated_at: string
+          id: string
+          inputs_json: Json | null
+          model_type: string
+          outputs_json: Json | null
+        }
+        Insert: {
+          generated_at?: string
+          id?: string
+          inputs_json?: Json | null
+          model_type?: string
+          outputs_json?: Json | null
+        }
+        Update: {
+          generated_at?: string
+          id?: string
+          inputs_json?: Json | null
+          model_type?: string
+          outputs_json?: Json | null
+        }
+        Relationships: []
       }
       voice_sessions: {
         Row: {
