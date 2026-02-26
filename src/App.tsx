@@ -43,6 +43,9 @@ import InvestorDashboardPage from "./pages/InvestorDashboardPage";
 import PartnersPage from "./pages/PartnersPage";
 import AIAgentsPage from "./pages/AIAgentsPage";
 import InvestorPitchPage from "./pages/InvestorPitchPage";
+import MarketplacePage from "./pages/MarketplacePage";
+import AppFactoryPage from "./pages/AppFactoryPage";
+import InfraMonitorPage from "./pages/InfraMonitorPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -105,6 +108,13 @@ const App = () => (
               <Route path="/ai-agents" element={<AIAgentsPage />} />
               <Route path="/investor-pitch" element={
                 <ProtectedRoute requiredRoles={["super_admin"]}><InvestorPitchPage /></ProtectedRoute>
+              } />
+              <Route path="/marketplace" element={<MarketplacePage />} />
+              <Route path="/app-factory" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AppFactoryPage /></ProtectedRoute>
+              } />
+              <Route path="/infrastructure" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><InfraMonitorPage /></ProtectedRoute>
               } />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route

@@ -6,6 +6,7 @@ import {
   Settings, Shield, LogOut, ChevronLeft, ChevronRight,
   LayoutDashboard, Menu, Calendar, Clock, Globe, Mail,
   Activity, TrendingUp, Brain, Palette, Bot, Handshake, PresentationIcon,
+  Store, Smartphone, Server,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
@@ -43,6 +44,7 @@ const mainNav = [
   { label: "Analytics", icon: TrendingUp, to: "/analytics", enabled: true },
   { label: "AI Insights", icon: Brain, to: "/ai-insights", enabled: true },
   { label: "AI Agents", icon: Bot, to: "/ai-agents", enabled: true },
+  { label: "Marketplace", icon: Store, to: "/marketplace", enabled: true },
   { label: "Tasks", icon: ClipboardList, to: "/tasks", enabled: false },
   { label: "Tickets", icon: Ticket, to: "/tickets", enabled: false },
   { label: "Reports", icon: PieChart, to: "/reports", enabled: false },
@@ -61,6 +63,8 @@ const adminNav = [
   { label: "Investor Dashboard", icon: TrendingUp, to: "/investor-dashboard", roles: ["super_admin"] as const },
   { label: "Investor Pitch", icon: PresentationIcon, to: "/investor-pitch", roles: ["super_admin"] as const },
   { label: "Partners", icon: Handshake, to: "/partners", roles: ["super_admin"] as const },
+  { label: "App Factory", icon: Smartphone, to: "/app-factory", roles: ["super_admin", "business_admin"] as const },
+  { label: "Infrastructure", icon: Server, to: "/infrastructure", roles: ["super_admin"] as const },
 ];
 
 const AppShell = () => {
