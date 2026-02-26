@@ -1,17 +1,53 @@
 import { useEmployeeProfiles, useAttendance, useCheckins, useEmployeeSessions } from "@/hooks/useWorkforce";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Clock, LogIn, LogOut } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Users, Clock, LogIn, LogOut, UserPlus } from "lucide-react";
 import { format } from "date-fns";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const WorkforcePage = () => {
-  const { employees, loading: empLoading } = useEmployeeProfiles();
+  const { isSuperAdmin, isBusinessAdmin } = useAuth();
+  const { employees, loading: empLoading, create } = useEmployeeProfiles();
   const { records: attendance, loading: attLoading } = useAttendance();
   const { sessions, loading: sessLoading } = useEmployeeSessions();
   const { checkin } = useCheckins();
+
+  const [addOpen, setAddOpen] = useState(false);
+  const [form, setForm] = useState({
+    employee_code: "",
+    employment_type: "full_time",
+    work_location_type: "office",
+    status: "onboarding",
+    date_of_joining: format(new Date(), "yyyy-MM-dd"),
+  });
+
+  const canManage = isSuperAdmin || isBusinessAdmin;
+
+  const handleAdd = async () => {
+    if (!form.employee_code) {
+      toast.error("Employee code is required");
+      return;
+    }
+    await create(form);
+    toast.success("Employee added successfully");
+    setAddOpen(false);
+    setForm({
+      employee_code: "",
+      employment_type: "full_time",
+      work_location_type: "office",
+      status: "onboarding",
+      date_of_joining: format(new Date(), "yyyy-MM-dd"),
+    });
+  };
 
   const statusColor = (s: string) => {
     switch (s) {
@@ -30,7 +66,63 @@ const WorkforcePage = () => {
           <p className="text-muted-foreground">Employee profiles, attendance & session tracking</p>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" onClick={() => checkin("in")}>
+          {canManage && (
+            <Dialog open={addOpen} onOpenChange={setAddOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <UserPlus className="h-4 w-4 mr-1" /> Add Employee
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Employee</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-2">
+                  <div className="space-y-2">
+                    <Label>Employee Code *</Label>
+                    <Input
+                      value={form.employee_code}
+                      onChange={(e) => setForm({ ...form, employee_code: e.target.value })}
+                      placeholder="e.g. EMP-001"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Employment Type</Label>
+                    <Select value={form.employment_type} onValueChange={(v) => setForm({ ...form, employment_type: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="full_time">Full Time</SelectItem>
+                        <SelectItem value="part_time">Part Time</SelectItem>
+                        <SelectItem value="contract">Contract</SelectItem>
+                        <SelectItem value="intern">Intern</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Work Location</Label>
+                    <Select value={form.work_location_type} onValueChange={(v) => setForm({ ...form, work_location_type: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="office">Office</SelectItem>
+                        <SelectItem value="remote">Remote</SelectItem>
+                        <SelectItem value="hybrid">Hybrid</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Date of Joining</Label>
+                    <Input
+                      type="date"
+                      value={form.date_of_joining}
+                      onChange={(e) => setForm({ ...form, date_of_joining: e.target.value })}
+                    />
+                  </div>
+                  <Button onClick={handleAdd} className="w-full">Add Employee</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+          <Button size="sm" variant="outline" onClick={() => checkin("in")}>
             <LogIn className="h-4 w-4 mr-1" /> Check In
           </Button>
           <Button size="sm" variant="outline" onClick={() => checkin("out")}>
