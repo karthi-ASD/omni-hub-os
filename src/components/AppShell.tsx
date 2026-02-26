@@ -35,6 +35,8 @@ const mainNav = [
   { label: "Invoices", icon: Receipt, to: "/invoices", enabled: true },
   { label: "Payments", icon: BarChart3, to: "/payments", enabled: true },
   { label: "Billing", icon: PieChart, to: "/billing", enabled: true },
+  { label: "Customer Billing", icon: Receipt, to: "/tenant-billing", enabled: true },
+  { label: "Gateways", icon: Settings, to: "/gateways", enabled: true },
   { label: "Tasks", icon: ClipboardList, to: "/tasks", enabled: false },
   { label: "Tickets", icon: Ticket, to: "/tickets", enabled: false },
   { label: "Reports", icon: PieChart, to: "/reports", enabled: false },
@@ -43,6 +45,7 @@ const mainNav = [
 ];
 
 const adminNav = [
+  { label: "Platform Billing", icon: Receipt, to: "/platform-billing", roles: ["super_admin"] as const },
   { label: "Businesses", icon: Building2, to: "/businesses", roles: ["super_admin"] as const },
   { label: "Users", icon: Users, to: "/users", roles: ["super_admin", "business_admin"] as const },
   { label: "Settings", icon: Settings, to: "/settings", roles: ["super_admin", "business_admin"] as const },
