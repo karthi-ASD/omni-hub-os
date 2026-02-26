@@ -56,6 +56,11 @@ import IPOReadinessPage from "./pages/IPOReadinessPage";
 import FranchiseBlueprintPage from "./pages/FranchiseBlueprintPage";
 import CompetitiveIntelPage from "./pages/CompetitiveIntelPage";
 import CapitalAllocationPage from "./pages/CapitalAllocationPage";
+import ObservabilityPage from "./pages/ObservabilityPage";
+import IncidentsPage from "./pages/IncidentsPage";
+import BackupsPage from "./pages/BackupsPage";
+import CompliancePage from "./pages/CompliancePage";
+import ReleasesPage from "./pages/ReleasesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -155,6 +160,21 @@ const App = () => (
               } />
               <Route path="/capital-allocation" element={
                 <ProtectedRoute requiredRoles={["super_admin"]}><CapitalAllocationPage /></ProtectedRoute>
+              } />
+              <Route path="/observability" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><ObservabilityPage /></ProtectedRoute>
+              } />
+              <Route path="/incidents" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><IncidentsPage /></ProtectedRoute>
+              } />
+              <Route path="/backups" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><BackupsPage /></ProtectedRoute>
+              } />
+              <Route path="/compliance" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><CompliancePage /></ProtectedRoute>
+              } />
+              <Route path="/releases" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><ReleasesPage /></ProtectedRoute>
               } />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route
