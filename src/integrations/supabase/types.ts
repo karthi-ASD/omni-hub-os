@@ -2423,6 +2423,138 @@ export type Database = {
           },
         ]
       }
+      demo_configurations: {
+        Row: {
+          business_id: string
+          created_at: string
+          demo_email: string | null
+          demo_enabled: boolean
+          demo_phone: string | null
+          demo_profile_type: string
+          demo_whatsapp: string | null
+          expiry_at: string | null
+          id: string
+          reset_allowed: boolean
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          demo_email?: string | null
+          demo_enabled?: boolean
+          demo_phone?: string | null
+          demo_profile_type?: string
+          demo_whatsapp?: string | null
+          expiry_at?: string | null
+          id?: string
+          reset_allowed?: boolean
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          demo_email?: string | null
+          demo_enabled?: boolean
+          demo_phone?: string | null
+          demo_profile_type?: string
+          demo_whatsapp?: string | null
+          expiry_at?: string | null
+          id?: string
+          reset_allowed?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_configurations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      demo_inquiry_simulations: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          inquiry_id: string | null
+          is_demo: boolean
+          simulated_email: string | null
+          simulated_name: string
+          simulated_phone: string | null
+          simulated_service: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          inquiry_id?: string | null
+          is_demo?: boolean
+          simulated_email?: string | null
+          simulated_name: string
+          simulated_phone?: string | null
+          simulated_service?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          inquiry_id?: string | null
+          is_demo?: boolean
+          simulated_email?: string | null
+          simulated_name?: string
+          simulated_phone?: string | null
+          simulated_service?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_inquiry_simulations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      demo_jobs: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          is_demo: boolean
+          job_title: string
+          simulated_customer: string
+          status: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          is_demo?: boolean
+          job_title?: string
+          simulated_customer: string
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          is_demo?: boolean
+          job_title?: string
+          simulated_customer?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_jobs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dependency_registry: {
         Row: {
           category: string
@@ -3482,6 +3614,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "inquiries_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inquiry_analytics_daily: {
+        Row: {
+          average_response_time_minutes: number | null
+          business_id: string
+          converted_count: number
+          created_at: string
+          date: string
+          demo_inquiries: number
+          id: string
+          responded_count: number
+          total_inquiries: number
+        }
+        Insert: {
+          average_response_time_minutes?: number | null
+          business_id: string
+          converted_count?: number
+          created_at?: string
+          date: string
+          demo_inquiries?: number
+          id?: string
+          responded_count?: number
+          total_inquiries?: number
+        }
+        Update: {
+          average_response_time_minutes?: number | null
+          business_id?: string
+          converted_count?: number
+          created_at?: string
+          date?: string
+          demo_inquiries?: number
+          id?: string
+          responded_count?: number
+          total_inquiries?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiry_analytics_daily_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
