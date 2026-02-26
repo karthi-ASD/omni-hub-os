@@ -5,6 +5,7 @@ import {
   UserCog, MessageSquare, FolderKanban, Target,
   Settings, Shield, LogOut, ChevronLeft, ChevronRight,
   LayoutDashboard, Menu, Calendar, Clock, Globe, Mail,
+  Activity, TrendingUp,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
@@ -39,6 +40,7 @@ const mainNav = [
   { label: "Gateways", icon: Settings, to: "/gateways", enabled: true },
   { label: "SEO", icon: Globe, to: "/seo", enabled: true },
   { label: "Communications", icon: Mail, to: "/communications", enabled: true },
+  { label: "Analytics", icon: TrendingUp, to: "/analytics", enabled: true },
   { label: "Tasks", icon: ClipboardList, to: "/tasks", enabled: false },
   { label: "Tickets", icon: Ticket, to: "/tickets", enabled: false },
   { label: "Reports", icon: PieChart, to: "/reports", enabled: false },
@@ -52,6 +54,7 @@ const adminNav = [
   { label: "Users", icon: Users, to: "/users", roles: ["super_admin", "business_admin"] as const },
   { label: "Settings", icon: Settings, to: "/settings", roles: ["super_admin", "business_admin"] as const },
   { label: "Audit Logs", icon: Shield, to: "/audit-logs", roles: ["super_admin", "business_admin"] as const },
+  { label: "System Monitor", icon: Activity, to: "/system-monitor", roles: ["super_admin", "business_admin"] as const },
 ];
 
 const AppShell = () => {

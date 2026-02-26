@@ -62,6 +62,91 @@ export type Database = {
           },
         ]
       }
+      analytics_events: {
+        Row: {
+          business_id: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          event_type: string
+          id: string
+          metadata_json: Json | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type: string
+          id?: string
+          metadata_json?: Json | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type?: string
+          id?: string
+          metadata_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_keys: {
+        Row: {
+          business_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          key_hash: string
+          key_name: string
+          key_prefix: string
+          last_used_at: string | null
+          scopes: string[] | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          key_hash: string
+          key_name: string
+          key_prefix: string
+          last_used_at?: string | null
+          scopes?: string[] | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          key_hash?: string
+          key_name?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          scopes?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_keys_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action_type: string
@@ -198,6 +283,56 @@ export type Database = {
             columns: ["rule_id"]
             isOneToOne: false
             referencedRelation: "automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      background_jobs: {
+        Row: {
+          business_id: string | null
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          job_type: string
+          max_retries: number
+          payload_json: Json | null
+          retries: number
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          business_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_type: string
+          max_retries?: number
+          payload_json?: Json | null
+          retries?: number
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          business_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_type?: string
+          max_retries?: number
+          payload_json?: Json | null
+          retries?: number
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "background_jobs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
@@ -927,6 +1062,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "dunning_rules_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      error_logs: {
+        Row: {
+          business_id: string | null
+          created_at: string
+          error_type: string
+          id: string
+          message: string
+          metadata_json: Json | null
+          request_path: string | null
+          stack_trace: string | null
+          user_id: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string
+          error_type?: string
+          id?: string
+          message: string
+          metadata_json?: Json | null
+          request_path?: string | null
+          stack_trace?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string
+          error_type?: string
+          id?: string
+          message?: string
+          metadata_json?: Json | null
+          request_path?: string | null
+          stack_trace?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "error_logs_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -2005,6 +2184,36 @@ export type Database = {
           },
         ]
       }
+      rate_limits: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          identifier: string
+          max_requests: number
+          request_count: number
+          window_start: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          identifier: string
+          max_requests?: number
+          request_count?: number
+          window_start?: string
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          identifier?: string
+          max_requests?: number
+          request_count?: number
+          window_start?: string
+        }
+        Relationships: []
+      }
       recurring_profiles: {
         Row: {
           amount: number
@@ -2784,6 +2993,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      system_health: {
+        Row: {
+          created_at: string
+          details_json: Json | null
+          id: string
+          last_checked: string
+          response_time_ms: number | null
+          service_name: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          details_json?: Json | null
+          id?: string
+          last_checked?: string
+          response_time_ms?: number | null
+          service_name: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          details_json?: Json | null
+          id?: string
+          last_checked?: string
+          response_time_ms?: number | null
+          service_name?: string
+          status?: string
+        }
+        Relationships: []
       }
       tenant_invoices: {
         Row: {
