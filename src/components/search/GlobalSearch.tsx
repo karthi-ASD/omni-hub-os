@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useGlobalSearch } from "@/hooks/useGlobalSearch";
 import { Input } from "@/components/ui/input";
-import { Search, Users, Building2, Calendar, X } from "lucide-react";
+import { Search, Users, Building2, Calendar, X, MessageSquare, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export function GlobalSearch() {
@@ -31,6 +31,8 @@ export function GlobalSearch() {
       case "user": return Users;
       case "business": return Building2;
       case "event": return Calendar;
+      case "inquiry": return MessageSquare;
+      case "lead": return Target;
       default: return Search;
     }
   };
@@ -43,6 +45,8 @@ export function GlobalSearch() {
       case "user": navigate("/users"); break;
       case "business": navigate("/businesses"); break;
       case "event": navigate("/calendar"); break;
+      case "inquiry": navigate("/inquiries"); break;
+      case "lead": navigate("/leads"); break;
     }
   };
 

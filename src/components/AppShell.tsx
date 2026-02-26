@@ -4,7 +4,7 @@ import {
   ClipboardList, Ticket, Receipt, PieChart, Megaphone,
   UserCog, MessageSquare, FolderKanban, Target,
   Settings, Shield, LogOut, ChevronLeft, ChevronRight,
-  LayoutDashboard, Menu, Calendar,
+  LayoutDashboard, Menu, Calendar, Clock,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
@@ -24,8 +24,9 @@ import {
 const mainNav = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard", enabled: true },
   { label: "Calendar", icon: Calendar, to: "/calendar", enabled: true },
-  { label: "Leads", icon: Target, to: "/leads", enabled: false },
-  { label: "Inquiries", icon: MessageSquare, to: "/inquiries", enabled: false },
+  { label: "Leads", icon: Target, to: "/leads", enabled: true },
+  { label: "Inquiries", icon: MessageSquare, to: "/inquiries", enabled: true },
+  { label: "Reminders", icon: Clock, to: "/reminders", enabled: true },
   { label: "Pipeline", icon: FolderKanban, to: "/pipeline", enabled: false },
   { label: "Proposals", icon: FileText, to: "/proposals", enabled: false },
   { label: "Clients", icon: Users, to: "/clients", enabled: false },
