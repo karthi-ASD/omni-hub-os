@@ -107,13 +107,13 @@ const Dashboard = () => {
           title="Open Invoices"
           value={stats.openInvoices}
           icon={Receipt}
-          subtitle="Awaiting payment"
+          subtitle="Platform — awaiting payment"
         />
         <StatCard
-          title="Revenue"
+          title="Platform Revenue"
           value={`$${stats.revenueThisMonth.toFixed(0)}`}
           icon={DollarSign}
-          subtitle="This month"
+          subtitle="NextWeb collections this month"
         />
       </div>
 
