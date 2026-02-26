@@ -71,6 +71,10 @@ import LeaveManagementPage from "./pages/LeaveManagementPage";
 import PayrollPage from "./pages/PayrollPage";
 import SLAPage from "./pages/SLAPage";
 import OrgChartPage from "./pages/OrgChartPage";
+import Client360Page from "./pages/Client360Page";
+import VaultPage from "./pages/VaultPage";
+import JobCRMPage from "./pages/JobCRMPage";
+import UsageAnalyticsPage from "./pages/UsageAnalyticsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -208,6 +212,16 @@ const App = () => (
               } />
               <Route path="/org-chart" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><OrgChartPage /></ProtectedRoute>
+              } />
+              <Route path="/client-360" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><Client360Page /></ProtectedRoute>
+              } />
+              <Route path="/vault" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><VaultPage /></ProtectedRoute>
+              } />
+              <Route path="/job-crm" element={<JobCRMPage />} />
+              <Route path="/usage-analytics" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><UsageAnalyticsPage /></ProtectedRoute>
               } />
               <Route
                 path="/businesses"

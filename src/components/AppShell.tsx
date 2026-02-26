@@ -10,7 +10,7 @@ import {
   Rocket, Building, BarChartBig, Map, Eye, Coins,
   Gauge, Siren, Database, FileCheck, GitBranch,
   PlayCircle, Plug, ClipboardCheck,
-  CalendarDays, DollarSign, Network,
+  CalendarDays, DollarSign, Network, KeyRound,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
@@ -51,6 +51,7 @@ const mainNav = [
   { label: "AI Insights", icon: Brain, to: "/ai-insights", enabled: true },
   { label: "AI Agents", icon: Bot, to: "/ai-agents", enabled: true },
   { label: "Marketplace", icon: Store, to: "/marketplace", enabled: true },
+  { label: "Job CRM", icon: Briefcase, to: "/job-crm", enabled: true },
   { label: "Tasks", icon: ClipboardList, to: "/tasks", enabled: false },
   { label: "Tickets", icon: Ticket, to: "/tickets", enabled: false },
   { label: "Workforce", icon: UserCog, to: "/workforce", enabled: true },
@@ -93,6 +94,9 @@ const adminNav = [
   { label: "Payroll", icon: DollarSign, to: "/payroll", roles: ["super_admin", "business_admin"] as const },
   { label: "SLA Policies", icon: ShieldAlert, to: "/sla", roles: ["super_admin", "business_admin"] as const },
   { label: "Org Chart", icon: Network, to: "/org-chart", roles: ["super_admin", "business_admin"] as const },
+  { label: "Client 360", icon: Users, to: "/client-360", roles: ["super_admin", "business_admin"] as const },
+  { label: "Secure Vault", icon: KeyRound, to: "/vault", roles: ["super_admin", "business_admin"] as const },
+  { label: "Usage Analytics", icon: Activity, to: "/usage-analytics", roles: ["super_admin", "business_admin"] as const },
 ];
 
 const AppShell = () => {
