@@ -1,9 +1,15 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, Shield, BarChart3, Clock, Activity } from "lucide-react";
+import { Building2, Users, Shield, Activity, Clock, Bell, Calendar, ArrowRight, BarChart3 } from "lucide-react";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
+import { UpcomingEvents } from "@/components/dashboard/UpcomingEvents";
+import { QuickActions } from "@/components/dashboard/QuickActions";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = () => {
   const { profile, roles, isSuperAdmin, isBusinessAdmin } = useAuth();
+  const { stats, loading } = useDashboardStats();
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -11,6 +17,28 @@ const Dashboard = () => {
     if (hour < 17) return "Good afternoon";
     return "Good evening";
   };
+
+  const StatCard = ({ title, value, icon: Icon, subtitle }: {
+    title: string;
+    value: string | number;
+    icon: React.ElementType;
+    subtitle: string;
+  }) => (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+        <Icon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <Skeleton className="h-8 w-16" />
+        ) : (
+          <p className="text-2xl font-bold">{value}</p>
+        )}
+        <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -23,78 +51,59 @@ const Dashboard = () => {
             ? "Super Admin — Global overview"
             : isBusinessAdmin
             ? "Business Admin — Your tenant overview"
-            : `Welcome to NextWeb OS`}
+            : "Welcome to NextWeb OS"}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {isSuperAdmin && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Businesses</CardTitle>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">—</p>
-              <p className="text-xs text-muted-foreground mt-1">Total tenants</p>
-            </CardContent>
-          </Card>
+          <>
+            <StatCard
+              title="Businesses"
+              value={stats.totalBusinesses}
+              icon={Building2}
+              subtitle={`${stats.activeBusinesses} active · ${stats.suspendedBusinesses} suspended`}
+            />
+          </>
         )}
+        <StatCard
+          title="Users"
+          value={stats.totalUsers}
+          icon={Users}
+          subtitle="Active users"
+        />
+        <StatCard
+          title="Events Today"
+          value={stats.recentEventsCount}
+          icon={Activity}
+          subtitle="System events"
+        />
+        <StatCard
+          title="Notifications"
+          value={stats.unreadNotifications}
+          icon={Bell}
+          subtitle="Unread"
+        />
+        <StatCard
+          title="Upcoming"
+          value={stats.upcomingEvents}
+          icon={Calendar}
+          subtitle="Calendar events"
+        />
+      </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">—</p>
-            <p className="text-xs text-muted-foreground mt-1">Active users</p>
-          </CardContent>
-        </Card>
+      {/* Quick Actions */}
+      <QuickActions />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Activity</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">—</p>
-            <p className="text-xs text-muted-foreground mt-1">Events today</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Audit Logs</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">—</p>
-            <p className="text-xs text-muted-foreground mt-1">Recent actions</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Uptime</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">99.9%</p>
-            <p className="text-xs text-muted-foreground mt-1">System health</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Reports</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">—</p>
-            <p className="text-xs text-muted-foreground mt-1">Coming in Stage 2</p>
-          </CardContent>
-        </Card>
+      {/* Activity Feed + Upcoming Events */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <ActivityFeed />
+        </div>
+        <div>
+          <UpcomingEvents />
+        </div>
       </div>
 
       {/* Role info card */}

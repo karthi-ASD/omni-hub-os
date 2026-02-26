@@ -184,6 +184,53 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_events: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by_user_id: string
+          description: string | null
+          end_datetime: string
+          id: string
+          start_datetime: string
+          title: string
+          updated_at: string
+          visibility: Database["public"]["Enums"]["calendar_visibility"]
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by_user_id: string
+          description?: string | null
+          end_datetime: string
+          id?: string
+          start_datetime: string
+          title: string
+          updated_at?: string
+          visibility?: Database["public"]["Enums"]["calendar_visibility"]
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by_user_id?: string
+          description?: string | null
+          end_datetime?: string
+          id?: string
+          start_datetime?: string
+          title?: string
+          updated_at?: string
+          visibility?: Database["public"]["Enums"]["calendar_visibility"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       integrations: {
         Row: {
           business_id: string
@@ -218,6 +265,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "integrations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          business_id: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          title: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -399,6 +487,7 @@ export type Database = {
         | "employee"
         | "client"
       business_status: "active" | "suspended" | "cancelled"
+      calendar_visibility: "private" | "tenant"
       integration_provider:
         | "xero"
         | "stripe"
@@ -407,6 +496,7 @@ export type Database = {
         | "sms"
         | "google"
       integration_status: "active" | "inactive" | "error"
+      notification_type: "info" | "warning" | "system" | "reminder"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -542,6 +632,7 @@ export const Constants = {
         "client",
       ],
       business_status: ["active", "suspended", "cancelled"],
+      calendar_visibility: ["private", "tenant"],
       integration_provider: [
         "xero",
         "stripe",
@@ -551,6 +642,7 @@ export const Constants = {
         "google",
       ],
       integration_status: ["active", "inactive", "error"],
+      notification_type: ["info", "warning", "system", "reminder"],
     },
   },
 } as const
