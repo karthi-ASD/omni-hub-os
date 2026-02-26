@@ -75,6 +75,7 @@ import Client360Page from "./pages/Client360Page";
 import VaultPage from "./pages/VaultPage";
 import JobCRMPage from "./pages/JobCRMPage";
 import UsageAnalyticsPage from "./pages/UsageAnalyticsPage";
+import DemoModePage from "./pages/DemoModePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -222,6 +223,9 @@ const App = () => (
               <Route path="/job-crm" element={<JobCRMPage />} />
               <Route path="/usage-analytics" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><UsageAnalyticsPage /></ProtectedRoute>
+              } />
+              <Route path="/demo-mode" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><DemoModePage /></ProtectedRoute>
               } />
               <Route
                 path="/businesses"
