@@ -82,7 +82,7 @@ export function useDeals() {
   useEffect(() => { fetchDeals(); }, [fetchDeals]);
 
   const createDeal = async (deal: Partial<Deal>) => {
-    if (!profile?.business_id) return null;
+    if (!profile?.business_id) { toast.error("Select a tenant first"); return null; }
     const { data, error } = await supabase
       .from("deals")
       .insert({
@@ -105,7 +105,6 @@ export function useDeals() {
 
     if (error) { toast.error("Failed to create deal"); return null; }
 
-    // System event + audit
     await Promise.all([
       supabase.from("system_events").insert({
         business_id: profile.business_id,
@@ -134,7 +133,6 @@ export function useDeals() {
     if (!profile) return;
     await supabase.from("deals").update({ stage: toStage as any, status: (toStage === "won" ? "won" : toStage === "lost" ? "lost" : "open") as any } as any).eq("id", dealId);
 
-    // Stage history
     await supabase.from("deal_stage_history").insert({
       business_id: profile.business_id,
       deal_id: dealId,

@@ -14,6 +14,12 @@ interface Profile {
   avatar_url: string | null;
 }
 
+interface TenantBusiness {
+  id: string;
+  name: string;
+  status: string;
+}
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
@@ -24,6 +30,11 @@ interface AuthContextType {
   hasRole: (role: AppRole) => boolean;
   isSuperAdmin: boolean;
   isBusinessAdmin: boolean;
+  /** All businesses — only populated for super_admin */
+  allBusinesses: TenantBusiness[];
+  /** Selected tenant for super_admin context switching */
+  selectedTenantId: string | null;
+  selectTenant: (id: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,9 +42,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [rawProfile, setRawProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [allBusinesses, setAllBusinesses] = useState<TenantBusiness[]>([]);
+  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
@@ -41,7 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .select("id, user_id, business_id, full_name, email, avatar_url")
       .eq("user_id", userId)
       .single();
-    setProfile(data);
+    setRawProfile(data);
   };
 
   const fetchRoles = async (userId: string) => {
@@ -49,7 +62,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .from("user_roles")
       .select("role")
       .eq("user_id", userId);
-    setRoles(data?.map((r) => r.role) ?? []);
+    const userRoles = data?.map((r) => r.role) ?? [];
+    setRoles(userRoles);
+    return userRoles;
+  };
+
+  const fetchBusinesses = async () => {
+    const { data } = await supabase
+      .from("businesses")
+      .select("id, name, status")
+      .order("name");
+    setAllBusinesses(data || []);
+    return data || [];
   };
 
   useEffect(() => {
@@ -58,17 +82,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          // Use setTimeout to avoid deadlock with Supabase auth
           setTimeout(async () => {
-            await Promise.all([
+            const [, userRoles] = await Promise.all([
               fetchProfile(session.user.id),
               fetchRoles(session.user.id),
             ]);
+            // If super_admin, fetch all businesses for tenant selector
+            if (userRoles.includes("super_admin")) {
+              const biz = await fetchBusinesses();
+              if (biz.length > 0 && !selectedTenantId) {
+                const active = biz.find((b) => b.status === "active");
+                setSelectedTenantId(active?.id || biz[0].id);
+              }
+            }
             setLoading(false);
           }, 0);
         } else {
-          setProfile(null);
+          setRawProfile(null);
           setRoles([]);
+          setAllBusinesses([]);
+          setSelectedTenantId(null);
           setLoading(false);
         }
       }
@@ -81,7 +114,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         Promise.all([
           fetchProfile(session.user.id),
           fetchRoles(session.user.id),
-        ]).then(() => setLoading(false));
+        ]).then(async ([, userRoles]) => {
+          if (userRoles.includes("super_admin")) {
+            const biz = await fetchBusinesses();
+            if (biz.length > 0) {
+              const active = biz.find((b) => b.status === "active");
+              setSelectedTenantId(active?.id || biz[0].id);
+            }
+          }
+          setLoading(false);
+        });
       } else {
         setLoading(false);
       }
@@ -94,18 +136,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
-    setProfile(null);
+    setRawProfile(null);
     setRoles([]);
+    setAllBusinesses([]);
+    setSelectedTenantId(null);
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
   const isSuperAdmin = hasRole("super_admin");
   const isBusinessAdmin = hasRole("business_admin");
 
+  // KEY FIX: For super_admin, override profile.business_id with selected tenant
+  // This makes ALL hooks that use profile.business_id work automatically
+  const profile: Profile | null = rawProfile
+    ? {
+        ...rawProfile,
+        business_id: isSuperAdmin && selectedTenantId
+          ? selectedTenantId
+          : rawProfile.business_id,
+      }
+    : null;
+
   return (
     <AuthContext.Provider value={{
       session, user, profile, roles, loading, signOut,
       hasRole, isSuperAdmin, isBusinessAdmin,
+      allBusinesses, selectedTenantId, selectTenant: setSelectedTenantId,
     }}>
       {children}
     </AuthContext.Provider>

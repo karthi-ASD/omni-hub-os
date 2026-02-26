@@ -15,6 +15,7 @@ import {
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { TenantSelector } from "@/components/TenantSelector";
 import { NavLink as RouterNavLink, Outlet, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -135,9 +136,11 @@ const AppShell = () => {
         <p className={`text-xs uppercase tracking-wider text-sidebar-foreground/50 mb-2 ${collapsed ? "text-center" : "px-3"}`}>
           {collapsed ? "•" : "Main"}
         </p>
-        {mainNav.map((item) => (
+        {mainNav.map((item) => {
+          const isEnabled = item.enabled || isSuperAdmin;
+          return (
           <div key={item.label}>
-            {item.enabled ? (
+            {isEnabled ? (
               <RouterNavLink
                 to={item.to}
                 onClick={() => setMobileOpen(false)}
@@ -163,7 +166,8 @@ const AppShell = () => {
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
 
         {visibleAdminNav.length > 0 && (
           <>
@@ -241,6 +245,7 @@ const AppShell = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            <TenantSelector />
             <ThemeToggle />
             <NotificationBell />
 

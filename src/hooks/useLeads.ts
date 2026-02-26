@@ -29,7 +29,7 @@ export function useLeads() {
   useEffect(() => { fetchLeads(); }, [fetchLeads]);
 
   const createLead = async (lead: Omit<LeadInsert, "business_id">) => {
-    if (!profile?.business_id) return null;
+    if (!profile?.business_id) { toast.error("Select a tenant first"); return null; }
     const { data, error } = await supabase
       .from("leads")
       .insert({ ...lead, business_id: profile.business_id })
