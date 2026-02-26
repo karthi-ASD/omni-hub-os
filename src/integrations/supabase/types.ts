@@ -492,6 +492,42 @@ export type Database = {
           },
         ]
       }
+      alert_rules: {
+        Row: {
+          channel: string
+          condition_type: string
+          created_at: string
+          enabled: boolean
+          id: string
+          last_triggered_at: string | null
+          rule_name: string
+          threshold: number
+          window_minutes: number
+        }
+        Insert: {
+          channel?: string
+          condition_type: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_triggered_at?: string | null
+          rule_name: string
+          threshold?: number
+          window_minutes?: number
+        }
+        Update: {
+          channel?: string
+          condition_type?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_triggered_at?: string | null
+          rule_name?: string
+          threshold?: number
+          window_minutes?: number
+        }
+        Relationships: []
+      }
       analytics_connections: {
         Row: {
           auth_type: string
@@ -2139,6 +2175,45 @@ export type Database = {
           },
         ]
       }
+      dependency_registry: {
+        Row: {
+          category: string
+          created_at: string
+          credential_type: string | null
+          id: string
+          is_required: boolean
+          label: string
+          notes: string | null
+          provider: string
+          scope_level: string
+          status: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          credential_type?: string | null
+          id?: string
+          is_required?: boolean
+          label: string
+          notes?: string | null
+          provider: string
+          scope_level?: string
+          status?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          credential_type?: string | null
+          id?: string
+          is_required?: boolean
+          label?: string
+          notes?: string | null
+          provider?: string
+          scope_level?: string
+          status?: string
+        }
+        Relationships: []
+      }
       deployment_logs: {
         Row: {
           created_at: string
@@ -2781,6 +2856,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      go_live_checklist: {
+        Row: {
+          category: string
+          id: string
+          is_checked: boolean
+          is_required: boolean
+          item_key: string
+          label: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          id?: string
+          is_checked?: boolean
+          is_required?: boolean
+          item_key: string
+          label: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          id?: string
+          is_checked?: boolean
+          is_required?: boolean
+          item_key?: string
+          label?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       incident_updates: {
         Row: {

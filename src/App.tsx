@@ -63,6 +63,9 @@ import CompliancePage from "./pages/CompliancePage";
 import ReleasesPage from "./pages/ReleasesPage";
 import GeoEnginePage from "./pages/GeoEnginePage";
 import AnalyticsIntegrationsPage from "./pages/AnalyticsIntegrationsPage";
+import GoLivePlaybookPage from "./pages/GoLivePlaybookPage";
+import DependenciesWizardPage from "./pages/DependenciesWizardPage";
+import QAChecklistPage from "./pages/QAChecklistPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -180,6 +183,15 @@ const App = () => (
               } />
               <Route path="/geo-engine" element={<GeoEnginePage />} />
               <Route path="/analytics-integrations" element={<AnalyticsIntegrationsPage />} />
+              <Route path="/go-live" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><GoLivePlaybookPage /></ProtectedRoute>
+              } />
+              <Route path="/dependencies" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><DependenciesWizardPage /></ProtectedRoute>
+              } />
+              <Route path="/qa-checklist" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><QAChecklistPage /></ProtectedRoute>
+              } />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route
                 path="/businesses"
