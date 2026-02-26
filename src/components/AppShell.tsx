@@ -4,7 +4,7 @@ import {
   ClipboardList, Ticket, Receipt, PieChart, Megaphone,
   UserCog, MessageSquare, FolderKanban, Target,
   Settings, Shield, LogOut, ChevronLeft, ChevronRight,
-  LayoutDashboard, Menu, Calendar, Clock,
+  LayoutDashboard, Menu, Calendar, Clock, Globe, Mail,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
@@ -37,6 +37,8 @@ const mainNav = [
   { label: "Billing", icon: PieChart, to: "/billing", enabled: true },
   { label: "Customer Billing", icon: Receipt, to: "/tenant-billing", enabled: true },
   { label: "Gateways", icon: Settings, to: "/gateways", enabled: true },
+  { label: "SEO", icon: Globe, to: "/seo", enabled: true },
+  { label: "Communications", icon: Mail, to: "/communications", enabled: true },
   { label: "Tasks", icon: ClipboardList, to: "/tasks", enabled: false },
   { label: "Tickets", icon: Ticket, to: "/tickets", enabled: false },
   { label: "Reports", icon: PieChart, to: "/reports", enabled: false },

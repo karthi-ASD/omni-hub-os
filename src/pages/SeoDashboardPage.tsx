@@ -1,0 +1,188 @@
+import { useState } from "react";
+import { useSeoCampaigns } from "@/hooks/useSeo";
+import { useClients } from "@/hooks/useClients";
+import { useProjects } from "@/hooks/useProjects";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Plus, Globe, Search, TrendingUp, FileText } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate } from "react-router-dom";
+
+const statusColors: Record<string, string> = {
+  onboarding: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+  active: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  paused: "bg-muted text-muted-foreground",
+  completed: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+};
+
+const SeoDashboardPage = () => {
+  const { campaigns, loading, createCampaign, updateStatus } = useSeoCampaigns();
+  const { clients } = useClients();
+  const { projects } = useProjects();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    client_id: "",
+    project_id: "",
+    primary_domain: "",
+    service_areas: "",
+    target_services: "",
+  });
+
+  const handleCreate = async () => {
+    if (!form.primary_domain) return;
+    await createCampaign({
+      client_id: form.client_id || undefined,
+      project_id: form.project_id || undefined,
+      primary_domain: form.primary_domain,
+      service_areas: form.service_areas ? form.service_areas.split(",").map((s) => s.trim()) : [],
+      target_services: form.target_services ? form.target_services.split(",").map((s) => s.trim()) : [],
+    });
+    setOpen(false);
+    setForm({ client_id: "", project_id: "", primary_domain: "", service_areas: "", target_services: "" });
+  };
+
+  const getClientName = (id: string | null) => {
+    if (!id) return "—";
+    return clients.find((c) => c.id === id)?.contact_name || "Unknown";
+  };
+
+  const activeCampaigns = campaigns.filter((c) => c.status === "active").length;
+  const onboardingCampaigns = campaigns.filter((c) => c.status === "onboarding").length;
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">SEO Operations</h1>
+          <p className="text-muted-foreground">Manage SEO campaigns, keywords, rankings & content</p>
+        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button><Plus className="mr-2 h-4 w-4" /> New Campaign</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Create SEO Campaign</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Primary Domain</Label>
+                <Input value={form.primary_domain} onChange={(e) => setForm({ ...form, primary_domain: e.target.value })} placeholder="example.com.au" />
+              </div>
+              <div>
+                <Label>Client</Label>
+                <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
+                  <SelectContent>
+                    {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.contact_name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Project</Label>
+                <Select value={form.project_id} onValueChange={(v) => setForm({ ...form, project_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select project" /></SelectTrigger>
+                  <SelectContent>
+                    {projects.map((p) => <SelectItem key={p.id} value={p.id}>{p.project_name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Service Areas (comma-separated)</Label>
+                <Input value={form.service_areas} onChange={(e) => setForm({ ...form, service_areas: e.target.value })} placeholder="Sydney, Melbourne, Brisbane" />
+              </div>
+              <div>
+                <Label>Target Services (comma-separated)</Label>
+                <Input value={form.target_services} onChange={(e) => setForm({ ...form, target_services: e.target.value })} placeholder="Web Design, SEO, PPC" />
+              </div>
+              <Button onClick={handleCreate} className="w-full">Create Campaign</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* KPI cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Campaigns</CardTitle>
+            <Globe className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent><p className="text-2xl font-bold">{campaigns.length}</p></CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Active</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent><p className="text-2xl font-bold">{activeCampaigns}</p></CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Onboarding</CardTitle>
+            <Search className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent><p className="text-2xl font-bold">{onboardingCampaigns}</p></CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Completed</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent><p className="text-2xl font-bold">{campaigns.filter((c) => c.status === "completed").length}</p></CardContent>
+        </Card>
+      </div>
+
+      {/* Campaign List */}
+      {loading ? (
+        <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
+      ) : campaigns.length === 0 ? (
+        <Card><CardContent className="py-12 text-center text-muted-foreground">No SEO campaigns yet. Create one to get started.</CardContent></Card>
+      ) : (
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Domain</TableHead>
+                <TableHead>Client</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Started</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {campaigns.map((c) => (
+                <TableRow key={c.id} className="cursor-pointer" onClick={() => navigate(`/seo/${c.id}`)}>
+                  <TableCell className="font-medium">{c.primary_domain || "—"}</TableCell>
+                  <TableCell>{getClientName(c.client_id)}</TableCell>
+                  <TableCell><Badge className={statusColors[c.status] || ""} variant="secondary">{c.status}</Badge></TableCell>
+                  <TableCell>{c.start_date ? new Date(c.start_date).toLocaleDateString() : "—"}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                      {c.status === "onboarding" && (
+                        <Button size="sm" variant="outline" onClick={() => updateStatus(c.id, "active")}>Activate</Button>
+                      )}
+                      {c.status === "active" && (
+                        <Button size="sm" variant="outline" onClick={() => updateStatus(c.id, "paused")}>Pause</Button>
+                      )}
+                      {c.status === "paused" && (
+                        <Button size="sm" variant="outline" onClick={() => updateStatus(c.id, "active")}>Resume</Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
+    </div>
+  );
+};
+
+export default SeoDashboardPage;

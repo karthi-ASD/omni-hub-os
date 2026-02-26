@@ -32,6 +32,9 @@ import BillingDashboard from "./pages/BillingDashboard";
 import PlatformBillingPage from "./pages/PlatformBillingPage";
 import TenantBillingPage from "./pages/TenantBillingPage";
 import GatewayConfigPage from "./pages/GatewayConfigPage";
+import SeoDashboardPage from "./pages/SeoDashboardPage";
+import SeoCampaignDetailPage from "./pages/SeoCampaignDetailPage";
+import CommunicationsPage from "./pages/CommunicationsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -77,6 +80,9 @@ const App = () => (
               } />
               <Route path="/tenant-billing" element={<TenantBillingPage />} />
               <Route path="/gateways" element={<GatewayConfigPage />} />
+              <Route path="/seo" element={<SeoDashboardPage />} />
+              <Route path="/seo/:campaignId" element={<SeoCampaignDetailPage />} />
+              <Route path="/communications" element={<CommunicationsPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route
                 path="/businesses"
