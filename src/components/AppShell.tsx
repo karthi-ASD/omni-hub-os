@@ -98,6 +98,7 @@ const adminNav = [
   { label: "Secure Vault", icon: KeyRound, to: "/vault", roles: ["super_admin", "business_admin"] as const },
   { label: "Usage Analytics", icon: Activity, to: "/usage-analytics", roles: ["super_admin", "business_admin"] as const },
   { label: "Demo Mode", icon: PlayCircle, to: "/demo-mode", roles: ["super_admin"] as const },
+  { label: "Revenue Intelligence", icon: TrendingUp, to: "/revenue-intelligence", roles: ["super_admin", "business_admin"] as const },
 ];
 
 const AppShell = () => {
