@@ -846,6 +846,71 @@ export type Database = {
           },
         ]
       }
+      backup_jobs: {
+        Row: {
+          backup_type: string
+          created_at: string
+          frequency: string
+          id: string
+          last_run_at: string | null
+          retention_days: number
+          status: string
+        }
+        Insert: {
+          backup_type?: string
+          created_at?: string
+          frequency?: string
+          id?: string
+          last_run_at?: string | null
+          retention_days?: number
+          status?: string
+        }
+        Update: {
+          backup_type?: string
+          created_at?: string
+          frequency?: string
+          id?: string
+          last_run_at?: string | null
+          retention_days?: number
+          status?: string
+        }
+        Relationships: []
+      }
+      backup_runs: {
+        Row: {
+          backup_job_id: string
+          backup_location: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          status: string
+        }
+        Insert: {
+          backup_job_id: string
+          backup_location?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          status?: string
+        }
+        Update: {
+          backup_job_id?: string
+          backup_location?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backup_runs_backup_job_id_fkey"
+            columns: ["backup_job_id"]
+            isOneToOne: false
+            referencedRelation: "backup_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       billing_accounts: {
         Row: {
           business_id: string
@@ -1637,6 +1702,82 @@ export type Database = {
           },
         ]
       }
+      data_requests: {
+        Row: {
+          business_id: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          request_type: string
+          requester_user_id: string | null
+          status: string
+        }
+        Insert: {
+          business_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          request_type?: string
+          requester_user_id?: string | null
+          status?: string
+        }
+        Update: {
+          business_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          request_type?: string
+          requester_user_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_retention_policies: {
+        Row: {
+          analytics_retention_days: number
+          business_id: string | null
+          created_at: string
+          id: string
+          logs_retention_days: number
+          scope_level: string
+          ticket_retention_days: number
+        }
+        Insert: {
+          analytics_retention_days?: number
+          business_id?: string | null
+          created_at?: string
+          id?: string
+          logs_retention_days?: number
+          scope_level?: string
+          ticket_retention_days?: number
+        }
+        Update: {
+          analytics_retention_days?: number
+          business_id?: string | null
+          created_at?: string
+          id?: string
+          logs_retention_days?: number
+          scope_level?: string
+          ticket_retention_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_retention_policies_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       data_room_documents: {
         Row: {
           access_level: string
@@ -2140,6 +2281,41 @@ export type Database = {
           },
         ]
       }
+      feature_flags: {
+        Row: {
+          business_id: string | null
+          created_at: string
+          enabled: boolean
+          flag_key: string
+          id: string
+          scope_level: string
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string
+          enabled?: boolean
+          flag_key: string
+          id?: string
+          scope_level?: string
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string
+          enabled?: boolean
+          flag_key?: string
+          id?: string
+          scope_level?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_flags_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       franchise_models: {
         Row: {
           created_at: string
@@ -2333,6 +2509,74 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      incident_updates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          incident_id: string
+          message: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          incident_id: string
+          message: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          incident_id?: string
+          message?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_updates_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incidents: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          owner_user_id: string | null
+          resolved_at: string | null
+          severity: string
+          started_at: string
+          status: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          owner_user_id?: string | null
+          resolved_at?: string | null
+          severity?: string
+          started_at?: string
+          status?: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          owner_user_id?: string | null
+          resolved_at?: string | null
+          severity?: string
+          started_at?: string
+          status?: string
+          title?: string
+        }
+        Relationships: []
       }
       infrastructure_nodes: {
         Row: {
@@ -2793,6 +3037,44 @@ export type Database = {
         }
         Relationships: []
       }
+      job_run_logs: {
+        Row: {
+          business_id: string | null
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          job_name: string
+          run_at: string
+          status: string
+        }
+        Insert: {
+          business_id?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          job_name: string
+          run_at?: string
+          status?: string
+        }
+        Update: {
+          business_id?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          job_name?: string
+          run_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_run_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_activities: {
         Row: {
           actor_user_id: string
@@ -2937,6 +3219,41 @@ export type Database = {
             columns: ["inquiry_id"]
             isOneToOne: false
             referencedRelation: "inquiries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      migration_runs: {
+        Row: {
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          release_id: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          release_id: string
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          release_id?: string
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "migration_runs_release_id_fkey"
+            columns: ["release_id"]
+            isOneToOne: false
+            referencedRelation: "releases"
             referencedColumns: ["id"]
           },
         ]
@@ -3830,6 +4147,36 @@ export type Database = {
         }
         Relationships: []
       }
+      releases: {
+        Row: {
+          created_at: string
+          deployed_at: string | null
+          deployed_by: string | null
+          environment: string
+          id: string
+          status: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          deployed_at?: string | null
+          deployed_by?: string | null
+          environment?: string
+          id?: string
+          status?: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          deployed_at?: string | null
+          deployed_by?: string | null
+          environment?: string
+          id?: string
+          status?: string
+          version?: string
+        }
+        Relationships: []
+      }
       reminders: {
         Row: {
           assigned_to_user_id: string
@@ -3960,6 +4307,47 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      secrets_registry: {
+        Row: {
+          business_id: string | null
+          created_at: string
+          id: string
+          last_rotated_at: string | null
+          provider: string
+          scope_level: string
+          secret_type: string
+          status: string
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string
+          id?: string
+          last_rotated_at?: string | null
+          provider: string
+          scope_level?: string
+          secret_type: string
+          status?: string
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string
+          id?: string
+          last_rotated_at?: string | null
+          provider?: string
+          scope_level?: string
+          secret_type?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secrets_registry_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       security_audit_logs: {
         Row: {
@@ -4750,6 +5138,33 @@ export type Database = {
           id?: string
           last_checked?: string
           response_time_ms?: number | null
+          service_name?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      system_health_checks: {
+        Row: {
+          error_message: string | null
+          id: string
+          last_checked_at: string
+          latency_ms: number | null
+          service_name: string
+          status: string
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          last_checked_at?: string
+          latency_ms?: number | null
+          service_name: string
+          status?: string
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          last_checked_at?: string
+          latency_ms?: number | null
           service_name?: string
           status?: string
         }
