@@ -27,7 +27,7 @@ const mainNav = [
   { label: "Leads", icon: Target, to: "/leads", enabled: true },
   { label: "Inquiries", icon: MessageSquare, to: "/inquiries", enabled: true },
   { label: "Reminders", icon: Clock, to: "/reminders", enabled: true },
-  { label: "Pipeline", icon: FolderKanban, to: "/pipeline", enabled: false },
+  { label: "Deals", icon: FolderKanban, to: "/deals", enabled: true },
   { label: "Proposals", icon: FileText, to: "/proposals", enabled: false },
   { label: "Clients", icon: Users, to: "/clients", enabled: false },
   { label: "Projects", icon: Briefcase, to: "/projects", enabled: false },

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLeads } from "@/hooks/useLeads";
+import { useDeals } from "@/hooks/useDeals";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,9 +12,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Search, Target, Filter, Archive, Phone, Mail } from "lucide-react";
+import { Plus, Search, Target, Filter, Archive, Phone, Mail, FolderKanban } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
+import { useNavigate } from "react-router-dom";
 
 type LeadStage = Database["public"]["Enums"]["lead_stage"];
 
@@ -29,7 +31,9 @@ const stageColors: Record<string, string> = {
 
 const LeadsPage = () => {
   const { leads, loading, createLead, updateStage, logActivity, archiveLead } = useLeads();
+  const { createDeal } = useDeals();
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [createOpen, setCreateOpen] = useState(false);
@@ -161,6 +165,21 @@ const LeadsPage = () => {
                         </Button>
                         <Button variant="ghost" size="sm" onClick={() => archiveLead(lead.id)} title="Archive">
                           <Archive className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" title="Convert to Deal" onClick={async () => {
+                          await createDeal({
+                            deal_name: `${lead.name} – ${lead.services_needed || "New Deal"}`,
+                            contact_name: lead.name,
+                            email: lead.email,
+                            phone: lead.phone,
+                            business_name: lead.business_name,
+                            service_interest: lead.services_needed,
+                            estimated_budget: lead.estimated_budget,
+                            lead_id: lead.id,
+                          } as any);
+                          navigate("/deals");
+                        }}>
+                          <FolderKanban className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
