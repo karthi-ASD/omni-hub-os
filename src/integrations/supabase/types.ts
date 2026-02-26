@@ -62,6 +62,48 @@ export type Database = {
           },
         ]
       }
+      agent_interactions: {
+        Row: {
+          context_json: Json | null
+          created_at: string
+          id: string
+          interaction_type: string
+          source_agent_id: string | null
+          target_agent_id: string | null
+        }
+        Insert: {
+          context_json?: Json | null
+          created_at?: string
+          id?: string
+          interaction_type: string
+          source_agent_id?: string | null
+          target_agent_id?: string | null
+        }
+        Update: {
+          context_json?: Json | null
+          created_at?: string
+          id?: string
+          interaction_type?: string
+          source_agent_id?: string | null
+          target_agent_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_interactions_source_agent_id_fkey"
+            columns: ["source_agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_interactions_target_agent_id_fkey"
+            columns: ["target_agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_agent_actions: {
         Row: {
           action_type: string
@@ -257,6 +299,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ai_sales_forecasts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_strategy_engine: {
+        Row: {
+          autonomy_level: string
+          business_id: string | null
+          created_at: string
+          goal_metrics_json: Json | null
+          id: string
+          status: string
+          strategy_type: string
+        }
+        Insert: {
+          autonomy_level?: string
+          business_id?: string | null
+          created_at?: string
+          goal_metrics_json?: Json | null
+          id?: string
+          status?: string
+          strategy_type?: string
+        }
+        Update: {
+          autonomy_level?: string
+          business_id?: string | null
+          created_at?: string
+          goal_metrics_json?: Json | null
+          id?: string
+          status?: string
+          strategy_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_strategy_engine_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -749,6 +829,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      board_meetings: {
+        Row: {
+          agenda: string | null
+          created_at: string
+          id: string
+          meeting_date: string
+          minutes: string | null
+          resolution_summary: string | null
+        }
+        Insert: {
+          agenda?: string | null
+          created_at?: string
+          id?: string
+          meeting_date: string
+          minutes?: string | null
+          resolution_summary?: string | null
+        }
+        Update: {
+          agenda?: string | null
+          created_at?: string
+          id?: string
+          meeting_date?: string
+          minutes?: string | null
+          resolution_summary?: string | null
+        }
+        Relationships: []
+      }
+      board_members: {
+        Row: {
+          appointed_at: string
+          id: string
+          name: string
+          role: string
+          voting_power: number
+        }
+        Insert: {
+          appointed_at?: string
+          id?: string
+          name: string
+          role?: string
+          voting_power?: number
+        }
+        Update: {
+          appointed_at?: string
+          id?: string
+          name?: string
+          role?: string
+          voting_power?: number
+        }
+        Relationships: []
       }
       brands: {
         Row: {
@@ -1260,6 +1391,74 @@ export type Database = {
           },
         ]
       }
+      corporate_entities: {
+        Row: {
+          created_at: string
+          entity_name: string
+          entity_type: string
+          id: string
+          jurisdiction: string | null
+          parent_entity_id: string | null
+          tax_structure_notes: string | null
+        }
+        Insert: {
+          created_at?: string
+          entity_name: string
+          entity_type?: string
+          id?: string
+          jurisdiction?: string | null
+          parent_entity_id?: string | null
+          tax_structure_notes?: string | null
+        }
+        Update: {
+          created_at?: string
+          entity_name?: string
+          entity_type?: string
+          id?: string
+          jurisdiction?: string | null
+          parent_entity_id?: string | null
+          tax_structure_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "corporate_entities_parent_entity_id_fkey"
+            columns: ["parent_entity_id"]
+            isOneToOne: false
+            referencedRelation: "corporate_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_room_documents: {
+        Row: {
+          access_level: string
+          category: string
+          file_url: string | null
+          id: string
+          title: string
+          uploaded_at: string
+          version: string | null
+        }
+        Insert: {
+          access_level?: string
+          category?: string
+          file_url?: string | null
+          id?: string
+          title: string
+          uploaded_at?: string
+          version?: string | null
+        }
+        Update: {
+          access_level?: string
+          category?: string
+          file_url?: string | null
+          id?: string
+          title?: string
+          uploaded_at?: string
+          version?: string | null
+        }
+        Relationships: []
+      }
       deal_notes: {
         Row: {
           author_user_id: string
@@ -1700,6 +1899,33 @@ export type Database = {
           },
         ]
       }
+      fundraising_rounds: {
+        Row: {
+          id: string
+          opened_at: string
+          round_type: string
+          status: string
+          target_amount: number
+          valuation_target: number
+        }
+        Insert: {
+          id?: string
+          opened_at?: string
+          round_type?: string
+          status?: string
+          target_amount?: number
+          valuation_target?: number
+        }
+        Update: {
+          id?: string
+          opened_at?: string
+          round_type?: string
+          status?: string
+          target_amount?: number
+          valuation_target?: number
+        }
+        Relationships: []
+      }
       gateway_events: {
         Row: {
           business_id: string | null
@@ -1990,6 +2216,53 @@ export type Database = {
           value?: number
         }
         Relationships: []
+      }
+      investor_contacts: {
+        Row: {
+          contact_name: string
+          created_at: string
+          email: string | null
+          firm_name: string
+          id: string
+          next_followup_date: string | null
+          notes: string | null
+          probability: number | null
+          round_id: string | null
+          stage: string
+        }
+        Insert: {
+          contact_name: string
+          created_at?: string
+          email?: string | null
+          firm_name: string
+          id?: string
+          next_followup_date?: string | null
+          notes?: string | null
+          probability?: number | null
+          round_id?: string | null
+          stage?: string
+        }
+        Update: {
+          contact_name?: string
+          created_at?: string
+          email?: string | null
+          firm_name?: string
+          id?: string
+          next_followup_date?: string | null
+          notes?: string | null
+          probability?: number | null
+          round_id?: string | null
+          stage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investor_contacts_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "fundraising_rounds"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       investor_decks: {
         Row: {
@@ -3184,6 +3457,39 @@ export type Database = {
           },
         ]
       }
+      regional_pricing_rules: {
+        Row: {
+          created_at: string
+          currency: string
+          id: string
+          monthly_price: number
+          package_id: string | null
+          region: string
+          tax_rate: number
+          yearly_price: number
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          id?: string
+          monthly_price?: number
+          package_id?: string | null
+          region: string
+          tax_rate?: number
+          yearly_price?: number
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: string
+          monthly_price?: number
+          package_id?: string | null
+          region?: string
+          tax_rate?: number
+          yearly_price?: number
+        }
+        Relationships: []
+      }
       reminders: {
         Row: {
           assigned_to_user_id: string
@@ -3249,6 +3555,71 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      resolutions: {
+        Row: {
+          created_at: string
+          id: string
+          meeting_id: string | null
+          resolution_text: string
+          vote_result: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meeting_id?: string | null
+          resolution_text: string
+          vote_result?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meeting_id?: string | null
+          resolution_text?: string
+          vote_result?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resolutions_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "board_meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      risk_register: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          impact_level: string
+          mitigation_plan: string | null
+          owner: string | null
+          risk_category: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          impact_level?: string
+          mitigation_plan?: string | null
+          owner?: string | null
+          risk_category?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          impact_level?: string
+          mitigation_plan?: string | null
+          owner?: string | null
+          risk_category?: string
+          status?: string
+        }
+        Relationships: []
       }
       security_audit_logs: {
         Row: {
@@ -4327,6 +4698,33 @@ export type Database = {
           inputs_json?: Json | null
           model_type?: string
           outputs_json?: Json | null
+        }
+        Relationships: []
+      }
+      valuation_scenarios: {
+        Row: {
+          buyer_type: string
+          created_at: string
+          id: string
+          multiple: number
+          projected_exit_value: number
+          sensitivity_analysis_json: Json | null
+        }
+        Insert: {
+          buyer_type?: string
+          created_at?: string
+          id?: string
+          multiple?: number
+          projected_exit_value?: number
+          sensitivity_analysis_json?: Json | null
+        }
+        Update: {
+          buyer_type?: string
+          created_at?: string
+          id?: string
+          multiple?: number
+          projected_exit_value?: number
+          sensitivity_analysis_json?: Json | null
         }
         Relationships: []
       }
