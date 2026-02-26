@@ -5,7 +5,7 @@ import {
   UserCog, MessageSquare, FolderKanban, Target,
   Settings, Shield, LogOut, ChevronLeft, ChevronRight,
   LayoutDashboard, Menu, Calendar, Clock, Globe, Mail,
-  Activity, TrendingUp, Brain, Palette,
+  Activity, TrendingUp, Brain, Palette, Bot, Handshake, PresentationIcon,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
@@ -42,6 +42,7 @@ const mainNav = [
   { label: "Communications", icon: Mail, to: "/communications", enabled: true },
   { label: "Analytics", icon: TrendingUp, to: "/analytics", enabled: true },
   { label: "AI Insights", icon: Brain, to: "/ai-insights", enabled: true },
+  { label: "AI Agents", icon: Bot, to: "/ai-agents", enabled: true },
   { label: "Tasks", icon: ClipboardList, to: "/tasks", enabled: false },
   { label: "Tickets", icon: Ticket, to: "/tickets", enabled: false },
   { label: "Reports", icon: PieChart, to: "/reports", enabled: false },
@@ -58,6 +59,8 @@ const adminNav = [
   { label: "System Monitor", icon: Activity, to: "/system-monitor", roles: ["super_admin", "business_admin"] as const },
   { label: "White-Label", icon: Palette, to: "/white-label", roles: ["super_admin", "business_admin"] as const },
   { label: "Investor Dashboard", icon: TrendingUp, to: "/investor-dashboard", roles: ["super_admin"] as const },
+  { label: "Investor Pitch", icon: PresentationIcon, to: "/investor-pitch", roles: ["super_admin"] as const },
+  { label: "Partners", icon: Handshake, to: "/partners", roles: ["super_admin"] as const },
 ];
 
 const AppShell = () => {

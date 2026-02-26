@@ -40,6 +40,9 @@ import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
 import AIInsightsPage from "./pages/AIInsightsPage";
 import WhiteLabelPage from "./pages/WhiteLabelPage";
 import InvestorDashboardPage from "./pages/InvestorDashboardPage";
+import PartnersPage from "./pages/PartnersPage";
+import AIAgentsPage from "./pages/AIAgentsPage";
+import InvestorPitchPage from "./pages/InvestorPitchPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -95,6 +98,13 @@ const App = () => (
               } />
               <Route path="/investor-dashboard" element={
                 <ProtectedRoute requiredRoles={["super_admin"]}><InvestorDashboardPage /></ProtectedRoute>
+              } />
+              <Route path="/partners" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><PartnersPage /></ProtectedRoute>
+              } />
+              <Route path="/ai-agents" element={<AIAgentsPage />} />
+              <Route path="/investor-pitch" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><InvestorPitchPage /></ProtectedRoute>
               } />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route
