@@ -66,6 +66,11 @@ import AnalyticsIntegrationsPage from "./pages/AnalyticsIntegrationsPage";
 import GoLivePlaybookPage from "./pages/GoLivePlaybookPage";
 import DependenciesWizardPage from "./pages/DependenciesWizardPage";
 import QAChecklistPage from "./pages/QAChecklistPage";
+import WorkforcePage from "./pages/WorkforcePage";
+import LeaveManagementPage from "./pages/LeaveManagementPage";
+import PayrollPage from "./pages/PayrollPage";
+import SLAPage from "./pages/SLAPage";
+import OrgChartPage from "./pages/OrgChartPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -193,6 +198,17 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["super_admin"]}><QAChecklistPage /></ProtectedRoute>
               } />
               <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/workforce" element={<WorkforcePage />} />
+              <Route path="/leave" element={<LeaveManagementPage />} />
+              <Route path="/payroll" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><PayrollPage /></ProtectedRoute>
+              } />
+              <Route path="/sla" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><SLAPage /></ProtectedRoute>
+              } />
+              <Route path="/org-chart" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><OrgChartPage /></ProtectedRoute>
+              } />
               <Route
                 path="/businesses"
                 element={
