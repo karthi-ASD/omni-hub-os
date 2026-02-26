@@ -10,6 +10,8 @@ interface DashboardStats {
   recentEventsCount: number;
   unreadNotifications: number;
   upcomingEvents: number;
+  openDeals: number;
+  todayCalls: number;
 }
 
 export function useDashboardStats() {
@@ -22,6 +24,8 @@ export function useDashboardStats() {
     recentEventsCount: 0,
     unreadNotifications: 0,
     upcomingEvents: 0,
+    openDeals: 0,
+    todayCalls: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -70,6 +74,20 @@ export function useDashboardStats() {
         .select("id", { count: "exact", head: true })
         .gte("start_datetime", new Date().toISOString());
       result.upcomingEvents = calCount ?? 0;
+
+      // Open deals
+      const { count: dealsCount } = await supabase
+        .from("deals")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "open");
+      result.openDeals = dealsCount ?? 0;
+
+      // Calls today
+      const { count: callsCount } = await supabase
+        .from("call_logs")
+        .select("id", { count: "exact", head: true })
+        .gte("call_time", today.toISOString());
+      result.todayCalls = callsCount ?? 0;
 
       setStats(result);
       setLoading(false);

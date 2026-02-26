@@ -231,6 +231,237 @@ export type Database = {
           },
         ]
       }
+      call_logs: {
+        Row: {
+          business_id: string
+          call_time: string
+          call_type: Database["public"]["Enums"]["call_type"]
+          caller_user_id: string
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          notes: string | null
+          outcome: Database["public"]["Enums"]["call_outcome"]
+          related_entity_id: string
+          related_entity_type: string
+        }
+        Insert: {
+          business_id: string
+          call_time?: string
+          call_type?: Database["public"]["Enums"]["call_type"]
+          caller_user_id: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          notes?: string | null
+          outcome: Database["public"]["Enums"]["call_outcome"]
+          related_entity_id: string
+          related_entity_type: string
+        }
+        Update: {
+          business_id?: string
+          call_time?: string
+          call_type?: Database["public"]["Enums"]["call_type"]
+          caller_user_id?: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          notes?: string | null
+          outcome?: Database["public"]["Enums"]["call_outcome"]
+          related_entity_id?: string
+          related_entity_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_notes: {
+        Row: {
+          author_user_id: string
+          business_id: string
+          created_at: string
+          deal_id: string
+          id: string
+          note: string
+        }
+        Insert: {
+          author_user_id: string
+          business_id: string
+          created_at?: string
+          deal_id: string
+          id?: string
+          note: string
+        }
+        Update: {
+          author_user_id?: string
+          business_id?: string
+          created_at?: string
+          deal_id?: string
+          id?: string
+          note?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_notes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_notes_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_stage_history: {
+        Row: {
+          business_id: string
+          changed_by_user_id: string
+          created_at: string
+          deal_id: string
+          from_stage: Database["public"]["Enums"]["deal_stage"] | null
+          id: string
+          notes: string | null
+          to_stage: Database["public"]["Enums"]["deal_stage"]
+        }
+        Insert: {
+          business_id: string
+          changed_by_user_id: string
+          created_at?: string
+          deal_id: string
+          from_stage?: Database["public"]["Enums"]["deal_stage"] | null
+          id?: string
+          notes?: string | null
+          to_stage: Database["public"]["Enums"]["deal_stage"]
+        }
+        Update: {
+          business_id?: string
+          changed_by_user_id?: string
+          created_at?: string
+          deal_id?: string
+          from_stage?: Database["public"]["Enums"]["deal_stage"] | null
+          id?: string
+          notes?: string | null
+          to_stage?: Database["public"]["Enums"]["deal_stage"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_stage_history_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_stage_history_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deals: {
+        Row: {
+          business_id: string
+          business_name: string | null
+          contact_name: string
+          created_at: string
+          created_by_user_id: string
+          currency: string
+          deal_name: string
+          email: string
+          estimated_value: number | null
+          expected_close_date: string | null
+          id: string
+          inquiry_id: string | null
+          lead_id: string | null
+          lost_reason: string | null
+          owner_user_id: string | null
+          phone: string | null
+          service_interest: string | null
+          stage: Database["public"]["Enums"]["deal_stage"]
+          status: Database["public"]["Enums"]["deal_status"]
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          business_name?: string | null
+          contact_name: string
+          created_at?: string
+          created_by_user_id: string
+          currency?: string
+          deal_name: string
+          email: string
+          estimated_value?: number | null
+          expected_close_date?: string | null
+          id?: string
+          inquiry_id?: string | null
+          lead_id?: string | null
+          lost_reason?: string | null
+          owner_user_id?: string | null
+          phone?: string | null
+          service_interest?: string | null
+          stage?: Database["public"]["Enums"]["deal_stage"]
+          status?: Database["public"]["Enums"]["deal_status"]
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          business_name?: string | null
+          contact_name?: string
+          created_at?: string
+          created_by_user_id?: string
+          currency?: string
+          deal_name?: string
+          email?: string
+          estimated_value?: number | null
+          expected_close_date?: string | null
+          id?: string
+          inquiry_id?: string | null
+          lead_id?: string | null
+          lost_reason?: string | null
+          owner_user_id?: string | null
+          phone?: string | null
+          service_interest?: string | null
+          stage?: Database["public"]["Enums"]["deal_stage"]
+          status?: Database["public"]["Enums"]["deal_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deals_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deals_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deals_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inquiries: {
         Row: {
           assigned_to_user_id: string | null
@@ -789,6 +1020,24 @@ export type Database = {
         | "client"
       business_status: "active" | "suspended" | "cancelled"
       calendar_visibility: "private" | "tenant"
+      call_outcome:
+        | "no_answer"
+        | "left_voicemail"
+        | "spoke"
+        | "follow_up_required"
+        | "not_interested"
+        | "qualified"
+      call_type: "outbound" | "inbound"
+      deal_stage:
+        | "new"
+        | "contacted"
+        | "meeting_booked"
+        | "needs_analysis"
+        | "proposal_requested"
+        | "negotiation"
+        | "won"
+        | "lost"
+      deal_status: "open" | "won" | "lost" | "archived"
       inquiry_channel:
         | "organic"
         | "google_ads"
@@ -971,6 +1220,26 @@ export const Constants = {
       ],
       business_status: ["active", "suspended", "cancelled"],
       calendar_visibility: ["private", "tenant"],
+      call_outcome: [
+        "no_answer",
+        "left_voicemail",
+        "spoke",
+        "follow_up_required",
+        "not_interested",
+        "qualified",
+      ],
+      call_type: ["outbound", "inbound"],
+      deal_stage: [
+        "new",
+        "contacted",
+        "meeting_booked",
+        "needs_analysis",
+        "proposal_requested",
+        "negotiation",
+        "won",
+        "lost",
+      ],
+      deal_status: ["open", "won", "lost", "archived"],
       inquiry_channel: [
         "organic",
         "google_ads",

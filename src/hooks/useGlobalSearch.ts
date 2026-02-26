@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface SearchResult {
-  type: "user" | "business" | "event" | "inquiry" | "lead";
+  type: "user" | "business" | "event" | "inquiry" | "lead" | "deal";
   id: string;
   title: string;
   subtitle: string;
@@ -102,6 +102,22 @@ export function useGlobalSearch() {
         id: l.id,
         title: l.name,
         subtitle: `${l.stage} · ${l.email}`,
+      })
+    );
+
+    // Search deals
+    const { data: deals2 } = await supabase
+      .from("deals")
+      .select("id, deal_name, contact_name, stage")
+      .or(`deal_name.ilike.%${query}%,contact_name.ilike.%${query}%,email.ilike.%${query}%`)
+      .limit(5);
+
+    deals2?.forEach((d: any) =>
+      allResults.push({
+        type: "deal",
+        id: d.id,
+        title: d.deal_name,
+        subtitle: `${d.stage} · ${d.contact_name}`,
       })
     );
 
