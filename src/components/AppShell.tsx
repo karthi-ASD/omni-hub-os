@@ -9,6 +9,7 @@ import {
   Store, Smartphone, Server, Landmark, Banknote, Gavel, ShieldAlert,
   Rocket, Building, BarChartBig, Map, Eye, Coins,
   Gauge, Siren, Database, FileCheck, GitBranch,
+  PlayCircle, Plug, ClipboardCheck,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
@@ -84,6 +85,9 @@ const adminNav = [
   { label: "Backups & DR", icon: Database, to: "/backups", roles: ["super_admin"] as const },
   { label: "Compliance", icon: FileCheck, to: "/compliance", roles: ["super_admin"] as const },
   { label: "Releases", icon: GitBranch, to: "/releases", roles: ["super_admin"] as const },
+  { label: "Go-Live Playbook", icon: PlayCircle, to: "/go-live", roles: ["super_admin"] as const },
+  { label: "Dependencies", icon: Plug, to: "/dependencies", roles: ["super_admin"] as const },
+  { label: "QA Checklist", icon: ClipboardCheck, to: "/qa-checklist", roles: ["super_admin"] as const },
 ];
 
 const AppShell = () => {
