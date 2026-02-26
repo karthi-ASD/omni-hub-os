@@ -390,6 +390,85 @@ export type Database = {
           },
         ]
       }
+      api_usage_logs: {
+        Row: {
+          api_key_id: string | null
+          cost: number | null
+          created_at: string
+          endpoint: string
+          id: string
+          request_count: number
+        }
+        Insert: {
+          api_key_id?: string | null
+          cost?: number | null
+          created_at?: string
+          endpoint: string
+          id?: string
+          request_count?: number
+        }
+        Update: {
+          api_key_id?: string | null
+          cost?: number | null
+          created_at?: string
+          endpoint?: string
+          id?: string
+          request_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_usage_logs_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_builds: {
+        Row: {
+          build_log: string | null
+          build_status: string
+          bundle_id: string | null
+          business_id: string
+          created_at: string
+          id: string
+          platform: string
+          store_status: string
+          version: string
+        }
+        Insert: {
+          build_log?: string | null
+          build_status?: string
+          bundle_id?: string | null
+          business_id: string
+          created_at?: string
+          id?: string
+          platform: string
+          store_status?: string
+          version?: string
+        }
+        Update: {
+          build_log?: string | null
+          build_status?: string
+          bundle_id?: string | null
+          business_id?: string
+          created_at?: string
+          id?: string
+          platform?: string
+          store_status?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_builds_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action_type: string
@@ -1076,6 +1155,47 @@ export type Database = {
           },
         ]
       }
+      compliance_requests: {
+        Row: {
+          business_id: string | null
+          completed_at: string | null
+          created_at: string
+          file_url: string | null
+          id: string
+          request_type: string
+          requested_by: string | null
+          status: string
+        }
+        Insert: {
+          business_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          request_type: string
+          requested_by?: string | null
+          status?: string
+        }
+        Update: {
+          business_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          request_type?: string
+          requested_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           business_id: string
@@ -1321,6 +1441,36 @@ export type Database = {
           },
         ]
       }
+      deployment_logs: {
+        Row: {
+          created_at: string
+          deployed_by: string | null
+          environment: string
+          id: string
+          notes: string | null
+          status: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          deployed_by?: string | null
+          environment?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          deployed_by?: string | null
+          environment?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          version?: string
+        }
+        Relationships: []
+      }
       dunning_rules: {
         Row: {
           action: Database["public"]["Enums"]["dunning_action"]
@@ -1474,6 +1624,82 @@ export type Database = {
         }
         Relationships: []
       }
+      fact_leads: {
+        Row: {
+          business_id: string | null
+          conversion_rate: number | null
+          converted: number | null
+          created_at: string
+          id: string
+          period: string
+          total_leads: number | null
+        }
+        Insert: {
+          business_id?: string | null
+          conversion_rate?: number | null
+          converted?: number | null
+          created_at?: string
+          id?: string
+          period: string
+          total_leads?: number | null
+        }
+        Update: {
+          business_id?: string | null
+          conversion_rate?: number | null
+          converted?: number | null
+          created_at?: string
+          id?: string
+          period?: string
+          total_leads?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fact_leads_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fact_revenue: {
+        Row: {
+          business_id: string | null
+          created_at: string
+          id: string
+          invoice_count: number | null
+          paid_count: number | null
+          period: string
+          revenue: number
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string
+          id?: string
+          invoice_count?: number | null
+          paid_count?: number | null
+          period: string
+          revenue?: number
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string
+          id?: string
+          invoice_count?: number | null
+          paid_count?: number | null
+          period?: string
+          revenue?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fact_revenue_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gateway_events: {
         Row: {
           business_id: string | null
@@ -1574,6 +1800,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      infrastructure_nodes: {
+        Row: {
+          created_at: string
+          id: string
+          last_sync: string | null
+          latency_ms: number | null
+          region: string
+          role: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_sync?: string | null
+          latency_ms?: number | null
+          region: string
+          role?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_sync?: string | null
+          latency_ms?: number | null
+          region?: string
+          role?: string
+          status?: string
+        }
+        Relationships: []
       }
       inquiries: {
         Row: {
@@ -2547,6 +2803,54 @@ export type Database = {
           },
         ]
       }
+      plugins: {
+        Row: {
+          created_at: string
+          description: string | null
+          developer_name: string
+          entry_point: string | null
+          id: string
+          install_count: number | null
+          name: string
+          permissions_required: string[] | null
+          price: number | null
+          pricing_type: string
+          rating_avg: number | null
+          status: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          developer_name?: string
+          entry_point?: string | null
+          id?: string
+          install_count?: number | null
+          name: string
+          permissions_required?: string[] | null
+          price?: number | null
+          pricing_type?: string
+          rating_avg?: number | null
+          status?: string
+          version?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          developer_name?: string
+          entry_point?: string | null
+          id?: string
+          install_count?: number | null
+          name?: string
+          permissions_required?: string[] | null
+          price?: number | null
+          pricing_type?: string
+          rating_avg?: number | null
+          status?: string
+          version?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -2945,6 +3249,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      security_audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          metadata_json: Json | null
+          risk_level: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata_json?: Json | null
+          risk_level?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata_json?: Json | null
+          risk_level?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       seo_access_checklist: {
         Row: {
@@ -3823,6 +4160,48 @@ export type Database = {
           },
         ]
       }
+      tenant_plugins: {
+        Row: {
+          business_id: string
+          configuration_json: Json | null
+          enabled: boolean
+          id: string
+          installed_at: string
+          plugin_id: string
+        }
+        Insert: {
+          business_id: string
+          configuration_json?: Json | null
+          enabled?: boolean
+          id?: string
+          installed_at?: string
+          plugin_id: string
+        }
+        Update: {
+          business_id?: string
+          configuration_json?: Json | null
+          enabled?: boolean
+          id?: string
+          installed_at?: string
+          plugin_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_plugins_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_plugins_plugin_id_fkey"
+            columns: ["plugin_id"]
+            isOneToOne: false
+            referencedRelation: "plugins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_subscriptions: {
         Row: {
           business_id: string
@@ -3867,6 +4246,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      uptime_checks: {
+        Row: {
+          checked_at: string
+          endpoint: string
+          id: string
+          response_time_ms: number | null
+          service_name: string
+          status: string
+        }
+        Insert: {
+          checked_at?: string
+          endpoint: string
+          id?: string
+          response_time_ms?: number | null
+          service_name: string
+          status?: string
+        }
+        Update: {
+          checked_at?: string
+          endpoint?: string
+          id?: string
+          response_time_ms?: number | null
+          service_name?: string
+          status?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
