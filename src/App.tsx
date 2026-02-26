@@ -16,6 +16,8 @@ import Businesses from "./pages/Businesses";
 import UsersPage from "./pages/UsersPage";
 import SettingsPage from "./pages/SettingsPage";
 import AuditLogs from "./pages/AuditLogs";
+import NotificationsPage from "./pages/NotificationsPage";
+import CalendarPage from "./pages/CalendarPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +46,8 @@ const App = () => (
               }
             >
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/calendar" element={<CalendarPage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
               <Route
                 path="/businesses"
                 element={

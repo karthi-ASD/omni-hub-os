@@ -2,10 +2,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   Building2, Users, BarChart3, FileText, Briefcase,
   ClipboardList, Ticket, Receipt, PieChart, Megaphone,
-  UserCog, Search, MessageSquare, FolderKanban, Target,
-  Settings, Shield, Bell, LogOut, ChevronLeft, ChevronRight,
-  LayoutDashboard, Menu,
+  UserCog, MessageSquare, FolderKanban, Target,
+  Settings, Shield, LogOut, ChevronLeft, ChevronRight,
+  LayoutDashboard, Menu, Calendar,
 } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { NavLink as RouterNavLink, Outlet, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +22,7 @@ import {
 
 const mainNav = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard", enabled: true },
+  { label: "Calendar", icon: Calendar, to: "/calendar", enabled: true },
   { label: "Leads", icon: Target, to: "/leads", enabled: false },
   { label: "Inquiries", icon: MessageSquare, to: "/inquiries", enabled: false },
   { label: "Pipeline", icon: FolderKanban, to: "/pipeline", enabled: false },
@@ -175,16 +178,11 @@ const AppShell = () => {
             >
               <Menu className="h-5 w-5" />
             </Button>
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted text-muted-foreground text-sm cursor-not-allowed">
-              <Search className="h-4 w-4" />
-              <span>Search... (coming soon)</span>
-            </div>
+            <GlobalSearch />
           </div>
 
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="relative" disabled>
-              <Bell className="h-5 w-5" />
-            </Button>
+            <NotificationBell />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
