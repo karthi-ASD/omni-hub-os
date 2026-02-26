@@ -77,6 +77,8 @@ import JobCRMPage from "./pages/JobCRMPage";
 import UsageAnalyticsPage from "./pages/UsageAnalyticsPage";
 import DemoModePage from "./pages/DemoModePage";
 import RevenueIntelligencePage from "./pages/RevenueIntelligencePage";
+import ActivityTimelinePage from "./pages/ActivityTimelinePage";
+import GovernanceDashboardPage from "./pages/GovernanceDashboardPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -230,6 +232,12 @@ const App = () => (
               } />
               <Route path="/revenue-intelligence" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><RevenueIntelligencePage /></ProtectedRoute>
+              } />
+              <Route path="/activity-timeline" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><ActivityTimelinePage /></ProtectedRoute>
+              } />
+              <Route path="/governance-controls" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><GovernanceDashboardPage /></ProtectedRoute>
               } />
               <Route
                 path="/businesses"
