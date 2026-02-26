@@ -121,6 +121,54 @@ export function useGlobalSearch() {
       })
     );
 
+    // Search proposals
+    const { data: proposals2 } = await supabase
+      .from("proposals")
+      .select("id, title, status")
+      .ilike("title", `%${query}%`)
+      .limit(5);
+
+    proposals2?.forEach((p: any) =>
+      allResults.push({
+        type: "deal" as any,
+        id: p.id,
+        title: p.title,
+        subtitle: `Proposal · ${p.status}`,
+      })
+    );
+
+    // Search clients
+    const { data: clients2 } = await supabase
+      .from("clients")
+      .select("id, contact_name, email, company_name")
+      .or(`contact_name.ilike.%${query}%,email.ilike.%${query}%,company_name.ilike.%${query}%`)
+      .limit(5);
+
+    clients2?.forEach((c: any) =>
+      allResults.push({
+        type: "user" as any,
+        id: c.id,
+        title: c.contact_name,
+        subtitle: `Client · ${c.email}`,
+      })
+    );
+
+    // Search projects
+    const { data: projects2 } = await supabase
+      .from("projects")
+      .select("id, project_name, status")
+      .ilike("project_name", `%${query}%`)
+      .limit(5);
+
+    projects2?.forEach((p: any) =>
+      allResults.push({
+        type: "event" as any,
+        id: p.id,
+        title: p.project_name,
+        subtitle: `Project · ${p.status}`,
+      })
+    );
+
     setResults(allResults);
     setLoading(false);
   }, [isSuperAdmin]);

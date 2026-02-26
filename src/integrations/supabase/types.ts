@@ -281,6 +281,130 @@ export type Database = {
           },
         ]
       }
+      clients: {
+        Row: {
+          address: string | null
+          business_id: string
+          company_name: string | null
+          contact_name: string
+          created_at: string
+          deal_id: string | null
+          email: string
+          id: string
+          onboarding_status: Database["public"]["Enums"]["onboarding_status"]
+          phone: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          business_id: string
+          company_name?: string | null
+          contact_name: string
+          created_at?: string
+          deal_id?: string | null
+          email: string
+          id?: string
+          onboarding_status?: Database["public"]["Enums"]["onboarding_status"]
+          phone?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          business_id?: string
+          company_name?: string | null
+          contact_name?: string
+          created_at?: string
+          deal_id?: string | null
+          email?: string
+          id?: string
+          onboarding_status?: Database["public"]["Enums"]["onboarding_status"]
+          phone?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contracts: {
+        Row: {
+          business_id: string
+          contract_content: string | null
+          contract_number: number
+          created_at: string
+          created_by_user_id: string
+          deal_id: string
+          id: string
+          proposal_id: string | null
+          signed_at: string | null
+          status: Database["public"]["Enums"]["contract_status"]
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          contract_content?: string | null
+          contract_number?: number
+          created_at?: string
+          created_by_user_id: string
+          deal_id: string
+          id?: string
+          proposal_id?: string | null
+          signed_at?: string | null
+          status?: Database["public"]["Enums"]["contract_status"]
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          contract_content?: string | null
+          contract_number?: number
+          created_at?: string
+          created_by_user_id?: string
+          deal_id?: string
+          id?: string
+          proposal_id?: string | null
+          signed_at?: string | null
+          status?: Database["public"]["Enums"]["contract_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deal_notes: {
         Row: {
           author_user_id: string
@@ -828,6 +952,186 @@ export type Database = {
           },
         ]
       }
+      projects: {
+        Row: {
+          assigned_manager_user_id: string | null
+          business_id: string
+          client_id: string | null
+          created_at: string
+          deal_id: string | null
+          description: string | null
+          id: string
+          project_name: string
+          start_date: string | null
+          status: Database["public"]["Enums"]["project_status"]
+          target_end_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_manager_user_id?: string | null
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          description?: string | null
+          id?: string
+          project_name: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["project_status"]
+          target_end_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_manager_user_id?: string | null
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          deal_id?: string | null
+          description?: string | null
+          id?: string
+          project_name?: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["project_status"]
+          target_end_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposal_views: {
+        Row: {
+          id: string
+          proposal_id: string
+          user_agent: string | null
+          viewed_at: string
+          viewer_ip: string | null
+        }
+        Insert: {
+          id?: string
+          proposal_id: string
+          user_agent?: string | null
+          viewed_at?: string
+          viewer_ip?: string | null
+        }
+        Update: {
+          id?: string
+          proposal_id?: string
+          user_agent?: string | null
+          viewed_at?: string
+          viewer_ip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_views_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposals: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by_user_id: string
+          currency: string
+          deal_id: string
+          description: string | null
+          discount_amount: number | null
+          id: string
+          payment_required: boolean
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          pricing_breakdown_json: Json | null
+          proposal_number: number
+          services_json: Json | null
+          status: Database["public"]["Enums"]["proposal_status"]
+          tax_amount: number | null
+          title: string
+          total_amount: number | null
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by_user_id: string
+          currency?: string
+          deal_id: string
+          description?: string | null
+          discount_amount?: number | null
+          id?: string
+          payment_required?: boolean
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          pricing_breakdown_json?: Json | null
+          proposal_number?: number
+          services_json?: Json | null
+          status?: Database["public"]["Enums"]["proposal_status"]
+          tax_amount?: number | null
+          title: string
+          total_amount?: number | null
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by_user_id?: string
+          currency?: string
+          deal_id?: string
+          description?: string | null
+          discount_amount?: number | null
+          id?: string
+          payment_required?: boolean
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          pricing_breakdown_json?: Json | null
+          proposal_number?: number
+          services_json?: Json | null
+          status?: Database["public"]["Enums"]["proposal_status"]
+          tax_amount?: number | null
+          title?: string
+          total_amount?: number | null
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposals_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reminders: {
         Row: {
           assigned_to_user_id: string
@@ -925,6 +1229,47 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signatures: {
+        Row: {
+          contract_id: string
+          id: string
+          ip_address: string | null
+          sign_token: string
+          signature_data: string | null
+          signed_at: string
+          signer_email: string
+          signer_name: string
+        }
+        Insert: {
+          contract_id: string
+          id?: string
+          ip_address?: string | null
+          sign_token?: string
+          signature_data?: string | null
+          signed_at?: string
+          signer_email: string
+          signer_name: string
+        }
+        Update: {
+          contract_id?: string
+          id?: string
+          ip_address?: string | null
+          sign_token?: string
+          signature_data?: string | null
+          signed_at?: string
+          signer_email?: string
+          signer_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signatures_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
         ]
@@ -1028,6 +1373,7 @@ export type Database = {
         | "not_interested"
         | "qualified"
       call_type: "outbound" | "inbound"
+      contract_status: "draft" | "sent" | "signed" | "rejected"
       deal_stage:
         | "new"
         | "contacted"
@@ -1080,7 +1426,17 @@ export type Database = {
         | "lost"
       lead_status: "active" | "archived"
       notification_type: "info" | "warning" | "system" | "reminder"
+      onboarding_status: "pending" | "in_progress" | "completed"
+      payment_status: "unpaid" | "paid"
       preferred_contact: "call" | "email" | "whatsapp"
+      project_status: "new" | "in_progress" | "on_hold" | "completed"
+      proposal_status:
+        | "draft"
+        | "sent"
+        | "viewed"
+        | "accepted"
+        | "rejected"
+        | "expired"
       reminder_entity_type: "inquiry" | "lead"
       reminder_priority: "low" | "medium" | "high"
       reminder_status: "pending" | "done" | "snoozed" | "cancelled" | "overdue"
@@ -1229,6 +1585,7 @@ export const Constants = {
         "qualified",
       ],
       call_type: ["outbound", "inbound"],
+      contract_status: ["draft", "sent", "signed", "rejected"],
       deal_stage: [
         "new",
         "contacted",
@@ -1287,7 +1644,18 @@ export const Constants = {
       ],
       lead_status: ["active", "archived"],
       notification_type: ["info", "warning", "system", "reminder"],
+      onboarding_status: ["pending", "in_progress", "completed"],
+      payment_status: ["unpaid", "paid"],
       preferred_contact: ["call", "email", "whatsapp"],
+      project_status: ["new", "in_progress", "on_hold", "completed"],
+      proposal_status: [
+        "draft",
+        "sent",
+        "viewed",
+        "accepted",
+        "rejected",
+        "expired",
+      ],
       reminder_entity_type: ["inquiry", "lead"],
       reminder_priority: ["low", "medium", "high"],
       reminder_status: ["pending", "done", "snoozed", "cancelled", "overdue"],
