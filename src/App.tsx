@@ -46,6 +46,10 @@ import InvestorPitchPage from "./pages/InvestorPitchPage";
 import MarketplacePage from "./pages/MarketplacePage";
 import AppFactoryPage from "./pages/AppFactoryPage";
 import InfraMonitorPage from "./pages/InfraMonitorPage";
+import CorporateStructurePage from "./pages/CorporateStructurePage";
+import FundraisingPage from "./pages/FundraisingPage";
+import GovernancePage from "./pages/GovernancePage";
+import RiskManagementPage from "./pages/RiskManagementPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -115,6 +119,18 @@ const App = () => (
               } />
               <Route path="/infrastructure" element={
                 <ProtectedRoute requiredRoles={["super_admin"]}><InfraMonitorPage /></ProtectedRoute>
+              } />
+              <Route path="/corporate-structure" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><CorporateStructurePage /></ProtectedRoute>
+              } />
+              <Route path="/fundraising" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><FundraisingPage /></ProtectedRoute>
+              } />
+              <Route path="/governance" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><GovernancePage /></ProtectedRoute>
+              } />
+              <Route path="/risk-management" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><RiskManagementPage /></ProtectedRoute>
               } />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route
