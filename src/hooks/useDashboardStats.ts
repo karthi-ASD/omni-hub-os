@@ -12,6 +12,8 @@ interface DashboardStats {
   upcomingEvents: number;
   openDeals: number;
   todayCalls: number;
+  openInvoices: number;
+  revenueThisMonth: number;
 }
 
 export function useDashboardStats() {
@@ -26,6 +28,8 @@ export function useDashboardStats() {
     upcomingEvents: 0,
     openDeals: 0,
     todayCalls: 0,
+    openInvoices: 0,
+    revenueThisMonth: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -88,6 +92,22 @@ export function useDashboardStats() {
         .select("id", { count: "exact", head: true })
         .gte("call_time", today.toISOString());
       result.todayCalls = callsCount ?? 0;
+
+      // Open invoices
+      const { count: invoiceCount } = await supabase
+        .from("invoices")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["open", "overdue"]);
+      result.openInvoices = invoiceCount ?? 0;
+
+      // Revenue this month
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+      const { data: paidPayments } = await supabase
+        .from("payments")
+        .select("amount")
+        .eq("status", "approved")
+        .gte("paid_at", monthStart);
+      result.revenueThisMonth = paidPayments?.reduce((s, p) => s + Number((p as any).amount), 0) || 0;
 
       setStats(result);
       setLoading(false);

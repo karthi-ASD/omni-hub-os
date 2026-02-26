@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_suspensions: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          reason: string | null
+          reinstated_at: string | null
+          suspended_at: string
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          reinstated_at?: string | null
+          suspended_at?: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          reinstated_at?: string | null
+          suspended_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_suspensions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_suspensions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action_type: string
@@ -150,6 +198,97 @@ export type Database = {
             columns: ["rule_id"]
             isOneToOne: false
             referencedRelation: "automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_accounts: {
+        Row: {
+          business_id: string
+          created_at: string
+          environment: Database["public"]["Enums"]["gateway_environment"]
+          eway_api_key: string | null
+          eway_customer_id: string | null
+          eway_password: string | null
+          gateway_provider: string
+          id: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          environment?: Database["public"]["Enums"]["gateway_environment"]
+          eway_api_key?: string | null
+          eway_customer_id?: string | null
+          eway_password?: string | null
+          gateway_provider?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          environment?: Database["public"]["Enums"]["gateway_environment"]
+          eway_api_key?: string | null
+          eway_customer_id?: string | null
+          eway_password?: string | null
+          gateway_provider?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_accounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_products: {
+        Row: {
+          billing_type: Database["public"]["Enums"]["billing_type"]
+          business_id: string | null
+          category: Database["public"]["Enums"]["product_category"]
+          created_at: string
+          currency: string
+          default_price: number
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          billing_type?: Database["public"]["Enums"]["billing_type"]
+          business_id?: string | null
+          category?: Database["public"]["Enums"]["product_category"]
+          created_at?: string
+          currency?: string
+          default_price?: number
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          billing_type?: Database["public"]["Enums"]["billing_type"]
+          business_id?: string | null
+          category?: Database["public"]["Enums"]["product_category"]
+          created_at?: string
+          currency?: string
+          default_price?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_products_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
@@ -337,6 +476,54 @@ export type Database = {
             columns: ["deal_id"]
             isOneToOne: false
             referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communications_log: {
+        Row: {
+          body: string | null
+          business_id: string
+          channel: string
+          client_id: string | null
+          created_at: string
+          id: string
+          sent_at: string
+          subject: string | null
+        }
+        Insert: {
+          body?: string | null
+          business_id: string
+          channel?: string
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          sent_at?: string
+          subject?: string | null
+        }
+        Update: {
+          body?: string | null
+          business_id?: string
+          channel?: string
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          sent_at?: string
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communications_log_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communications_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -586,6 +773,139 @@ export type Database = {
           },
         ]
       }
+      dunning_rules: {
+        Row: {
+          action: Database["public"]["Enums"]["dunning_action"]
+          business_id: string
+          created_at: string
+          days_offset: number
+          id: string
+          is_active: boolean
+          message_template: string | null
+        }
+        Insert: {
+          action?: Database["public"]["Enums"]["dunning_action"]
+          business_id: string
+          created_at?: string
+          days_offset?: number
+          id?: string
+          is_active?: boolean
+          message_template?: string | null
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["dunning_action"]
+          business_id?: string
+          created_at?: string
+          days_offset?: number
+          id?: string
+          is_active?: boolean
+          message_template?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dunning_rules_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      eway_events: {
+        Row: {
+          business_id: string | null
+          created_at: string
+          eway_reference: string | null
+          id: string
+          payload_json: Json | null
+          processed_at: string | null
+          status: string
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string
+          eway_reference?: string | null
+          id?: string
+          payload_json?: Json | null
+          processed_at?: string | null
+          status?: string
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string
+          eway_reference?: string | null
+          id?: string
+          payload_json?: Json | null
+          processed_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eway_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gateway_transactions: {
+        Row: {
+          amount: number
+          business_id: string
+          created_at: string
+          currency: string
+          eway_response_code: string | null
+          eway_response_message: string | null
+          eway_transaction_id: string | null
+          id: string
+          invoice_id: string | null
+          raw_payload: Json | null
+          status: Database["public"]["Enums"]["payment_gateway_status"]
+        }
+        Insert: {
+          amount?: number
+          business_id: string
+          created_at?: string
+          currency?: string
+          eway_response_code?: string | null
+          eway_response_message?: string | null
+          eway_transaction_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          raw_payload?: Json | null
+          status?: Database["public"]["Enums"]["payment_gateway_status"]
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          created_at?: string
+          currency?: string
+          eway_response_code?: string | null
+          eway_response_message?: string | null
+          eway_transaction_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          raw_payload?: Json | null
+          status?: Database["public"]["Enums"]["payment_gateway_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gateway_transactions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gateway_transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inquiries: {
         Row: {
           assigned_to_user_id: string | null
@@ -715,6 +1035,162 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_items: {
+        Row: {
+          amount: number
+          billing_product_id: string | null
+          business_id: string
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          quantity: number
+          unit_amount: number
+        }
+        Insert: {
+          amount?: number
+          billing_product_id?: string | null
+          business_id: string
+          created_at?: string
+          description: string
+          id?: string
+          invoice_id: string
+          quantity?: number
+          unit_amount?: number
+        }
+        Update: {
+          amount?: number
+          billing_product_id?: string | null
+          business_id?: string
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          quantity?: number
+          unit_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_billing_product_id_fkey"
+            columns: ["billing_product_id"]
+            isOneToOne: false
+            referencedRelation: "billing_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount_due: number
+          amount_paid: number
+          business_id: string
+          client_id: string | null
+          created_at: string
+          created_by_user_id: string | null
+          currency: string
+          deal_id: string | null
+          discount: number
+          due_date: string | null
+          id: string
+          invoice_number: number
+          invoice_type: Database["public"]["Enums"]["invoice_type"]
+          pdf_url: string | null
+          project_id: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          subtotal: number
+          tax: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          amount_due?: number
+          amount_paid?: number
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          currency?: string
+          deal_id?: string | null
+          discount?: number
+          due_date?: string | null
+          id?: string
+          invoice_number?: number
+          invoice_type?: Database["public"]["Enums"]["invoice_type"]
+          pdf_url?: string | null
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          amount_due?: number
+          amount_paid?: number
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          currency?: string
+          deal_id?: string | null
+          discount?: number
+          due_date?: string | null
+          id?: string
+          invoice_number?: number
+          invoice_type?: Database["public"]["Enums"]["invoice_type"]
+          pdf_url?: string | null
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -895,6 +1371,76 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          business_id: string
+          client_id: string | null
+          created_at: string
+          currency: string
+          eway_transaction_id: string | null
+          gateway_provider: string
+          id: string
+          invoice_id: string | null
+          paid_at: string | null
+          receipt_url: string | null
+          status: Database["public"]["Enums"]["payment_gateway_status"]
+          subscription_id: string | null
+        }
+        Insert: {
+          amount?: number
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          currency?: string
+          eway_transaction_id?: string | null
+          gateway_provider?: string
+          id?: string
+          invoice_id?: string | null
+          paid_at?: string | null
+          receipt_url?: string | null
+          status?: Database["public"]["Enums"]["payment_gateway_status"]
+          subscription_id?: string | null
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          currency?: string
+          eway_transaction_id?: string | null
+          gateway_provider?: string
+          id?: string
+          invoice_id?: string | null
+          paid_at?: string | null
+          receipt_url?: string | null
+          status?: Database["public"]["Enums"]["payment_gateway_status"]
+          subscription_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -1132,6 +1678,76 @@ export type Database = {
           },
         ]
       }
+      recurring_profiles: {
+        Row: {
+          amount: number
+          billing_product_id: string | null
+          business_id: string
+          client_id: string | null
+          created_at: string
+          currency: string
+          eway_customer_token: string | null
+          eway_recurring_id: string | null
+          frequency: Database["public"]["Enums"]["billing_frequency"]
+          id: string
+          next_billing_date: string | null
+          status: Database["public"]["Enums"]["recurring_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          billing_product_id?: string | null
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          currency?: string
+          eway_customer_token?: string | null
+          eway_recurring_id?: string | null
+          frequency?: Database["public"]["Enums"]["billing_frequency"]
+          id?: string
+          next_billing_date?: string | null
+          status?: Database["public"]["Enums"]["recurring_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          billing_product_id?: string | null
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          currency?: string
+          eway_customer_token?: string | null
+          eway_recurring_id?: string | null
+          frequency?: Database["public"]["Enums"]["billing_frequency"]
+          id?: string
+          next_billing_date?: string | null
+          status?: Database["public"]["Enums"]["recurring_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_profiles_billing_product_id_fkey"
+            columns: ["billing_product_id"]
+            isOneToOne: false
+            referencedRelation: "billing_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_profiles_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reminders: {
         Row: {
           assigned_to_user_id: string
@@ -1363,6 +1979,8 @@ export type Database = {
         | "manager"
         | "employee"
         | "client"
+      billing_frequency: "monthly" | "yearly"
+      billing_type: "one_time" | "recurring" | "prepaid" | "milestone"
       business_status: "active" | "suspended" | "cancelled"
       calendar_visibility: "private" | "tenant"
       call_outcome:
@@ -1384,6 +2002,8 @@ export type Database = {
         | "won"
         | "lost"
       deal_status: "open" | "won" | "lost" | "archived"
+      dunning_action: "email" | "notification" | "task" | "suspend"
+      gateway_environment: "sandbox" | "live"
       inquiry_channel:
         | "organic"
         | "google_ads"
@@ -1408,6 +2028,14 @@ export type Database = {
         | "sms"
         | "google"
       integration_status: "active" | "inactive" | "error"
+      invoice_status:
+        | "draft"
+        | "open"
+        | "paid"
+        | "void"
+        | "overdue"
+        | "canceled"
+      invoice_type: "one_time" | "recurring" | "milestone" | "prepaid"
       lead_activity_type:
         | "call"
         | "email"
@@ -1427,8 +2055,10 @@ export type Database = {
       lead_status: "active" | "archived"
       notification_type: "info" | "warning" | "system" | "reminder"
       onboarding_status: "pending" | "in_progress" | "completed"
+      payment_gateway_status: "approved" | "declined" | "failed" | "pending"
       payment_status: "unpaid" | "paid"
       preferred_contact: "call" | "email" | "whatsapp"
+      product_category: "website" | "seo" | "ppc" | "hosting" | "crm" | "other"
       project_status: "new" | "in_progress" | "on_hold" | "completed"
       proposal_status:
         | "draft"
@@ -1437,6 +2067,7 @@ export type Database = {
         | "accepted"
         | "rejected"
         | "expired"
+      recurring_status: "active" | "failed" | "paused" | "canceled"
       reminder_entity_type: "inquiry" | "lead"
       reminder_priority: "low" | "medium" | "high"
       reminder_status: "pending" | "done" | "snoozed" | "cancelled" | "overdue"
@@ -1574,6 +2205,8 @@ export const Constants = {
         "employee",
         "client",
       ],
+      billing_frequency: ["monthly", "yearly"],
+      billing_type: ["one_time", "recurring", "prepaid", "milestone"],
       business_status: ["active", "suspended", "cancelled"],
       calendar_visibility: ["private", "tenant"],
       call_outcome: [
@@ -1597,6 +2230,8 @@ export const Constants = {
         "lost",
       ],
       deal_status: ["open", "won", "lost", "archived"],
+      dunning_action: ["email", "notification", "task", "suspend"],
+      gateway_environment: ["sandbox", "live"],
       inquiry_channel: [
         "organic",
         "google_ads",
@@ -1624,6 +2259,8 @@ export const Constants = {
         "google",
       ],
       integration_status: ["active", "inactive", "error"],
+      invoice_status: ["draft", "open", "paid", "void", "overdue", "canceled"],
+      invoice_type: ["one_time", "recurring", "milestone", "prepaid"],
       lead_activity_type: [
         "call",
         "email",
@@ -1645,8 +2282,10 @@ export const Constants = {
       lead_status: ["active", "archived"],
       notification_type: ["info", "warning", "system", "reminder"],
       onboarding_status: ["pending", "in_progress", "completed"],
+      payment_gateway_status: ["approved", "declined", "failed", "pending"],
       payment_status: ["unpaid", "paid"],
       preferred_contact: ["call", "email", "whatsapp"],
+      product_category: ["website", "seo", "ppc", "hosting", "crm", "other"],
       project_status: ["new", "in_progress", "on_hold", "completed"],
       proposal_status: [
         "draft",
@@ -1656,6 +2295,7 @@ export const Constants = {
         "rejected",
         "expired",
       ],
+      recurring_status: ["active", "failed", "paused", "canceled"],
       reminder_entity_type: ["inquiry", "lead"],
       reminder_priority: ["low", "medium", "high"],
       reminder_status: ["pending", "done", "snoozed", "cancelled", "overdue"],
