@@ -137,7 +137,7 @@ const AppShell = () => {
           {collapsed ? "•" : "Main"}
         </p>
         {mainNav.map((item) => {
-          const isEnabled = item.enabled || isSuperAdmin;
+          const isEnabled = item.enabled || isSuperAdmin || isBusinessAdmin;
           return (
           <div key={item.label}>
             {isEnabled ? (
