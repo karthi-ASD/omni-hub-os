@@ -810,6 +810,100 @@ export type Database = {
           },
         ]
       }
+      attendance_checkins: {
+        Row: {
+          business_id: string
+          checkin_type: string
+          created_at: string
+          id: string
+          latitude: number | null
+          location_label: string | null
+          longitude: number | null
+          source: string
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          checkin_type: string
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          location_label?: string | null
+          longitude?: number | null
+          source?: string
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          checkin_type?: string
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          location_label?: string | null
+          longitude?: number | null
+          source?: string
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_checkins_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_daily: {
+        Row: {
+          business_id: string
+          created_at: string
+          date: string
+          first_login_at: string | null
+          id: string
+          last_logout_at: string | null
+          notes: string | null
+          status: string
+          total_work_minutes: number | null
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          date: string
+          first_login_at?: string | null
+          id?: string
+          last_logout_at?: string | null
+          notes?: string | null
+          status?: string
+          total_work_minutes?: number | null
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          date?: string
+          first_login_at?: string | null
+          id?: string
+          last_logout_at?: string | null
+          notes?: string | null
+          status?: string
+          total_work_minutes?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_daily_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action_type: string
@@ -1713,6 +1807,50 @@ export type Database = {
         }
         Relationships: []
       }
+      completion_notifications: {
+        Row: {
+          business_id: string
+          channel: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          recipient_type: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          business_id: string
+          channel?: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          recipient_type: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          channel?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          recipient_type?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "completion_notifications_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compliance_requests: {
         Row: {
           business_id: string | null
@@ -2275,6 +2413,167 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "dunning_rules_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_documents: {
+        Row: {
+          business_id: string
+          created_at: string
+          document_meta_json: Json | null
+          document_type: string
+          file_url: string
+          id: string
+          user_id: string
+          verified_at: string | null
+          verified_by_user_id: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          document_meta_json?: Json | null
+          document_type: string
+          file_url: string
+          id?: string
+          user_id: string
+          verified_at?: string | null
+          verified_by_user_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          document_meta_json?: Json | null
+          document_type?: string
+          file_url?: string
+          id?: string
+          user_id?: string
+          verified_at?: string | null
+          verified_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_documents_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_profiles: {
+        Row: {
+          business_id: string
+          created_at: string
+          date_of_joining: string | null
+          department_id: string | null
+          emergency_contact_json: Json | null
+          employee_code: string | null
+          employment_type: string
+          id: string
+          manager_user_id: string | null
+          status: string
+          team_id: string | null
+          user_id: string
+          work_location_type: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          date_of_joining?: string | null
+          department_id?: string | null
+          emergency_contact_json?: Json | null
+          employee_code?: string | null
+          employment_type?: string
+          id?: string
+          manager_user_id?: string | null
+          status?: string
+          team_id?: string | null
+          user_id: string
+          work_location_type?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          date_of_joining?: string | null
+          department_id?: string | null
+          emergency_contact_json?: Json | null
+          employee_code?: string | null
+          employment_type?: string
+          id?: string
+          manager_user_id?: string | null
+          status?: string
+          team_id?: string | null
+          user_id?: string
+          work_location_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_profiles_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_employee_department"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "org_structure_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_employee_team"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "org_structure_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_sessions: {
+        Row: {
+          business_id: string
+          created_at: string
+          device_info_json: Json | null
+          id: string
+          ip_address: string | null
+          login_at: string
+          login_method: string
+          logout_at: string | null
+          session_duration_minutes: number | null
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          device_info_json?: Json | null
+          id?: string
+          ip_address?: string | null
+          login_at?: string
+          login_method?: string
+          logout_at?: string | null
+          session_duration_minutes?: number | null
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          device_info_json?: Json | null
+          id?: string
+          ip_address?: string | null
+          login_at?: string
+          login_method?: string
+          logout_at?: string | null
+          session_duration_minutes?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_sessions_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -3630,6 +3929,104 @@ export type Database = {
           },
         ]
       }
+      leave_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by_user_id: string | null
+          business_id: string
+          created_at: string
+          end_date: string
+          id: string
+          leave_type_id: string
+          reason: string | null
+          requested_at: string
+          start_date: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by_user_id?: string | null
+          business_id: string
+          created_at?: string
+          end_date: string
+          id?: string
+          leave_type_id: string
+          reason?: string | null
+          requested_at?: string
+          start_date: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by_user_id?: string | null
+          business_id?: string
+          created_at?: string
+          end_date?: string
+          id?: string
+          leave_type_id?: string
+          reason?: string | null
+          requested_at?: string
+          start_date?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_requests_leave_type_id_fkey"
+            columns: ["leave_type_id"]
+            isOneToOne: false
+            referencedRelation: "leave_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leave_types: {
+        Row: {
+          annual_quota_days: number
+          business_id: string
+          carry_forward_rules_json: Json | null
+          created_at: string
+          id: string
+          name: string
+          requires_documents: boolean
+        }
+        Insert: {
+          annual_quota_days?: number
+          business_id: string
+          carry_forward_rules_json?: Json | null
+          created_at?: string
+          id?: string
+          name: string
+          requires_documents?: boolean
+        }
+        Update: {
+          annual_quota_days?: number
+          business_id?: string
+          carry_forward_rules_json?: Json | null
+          created_at?: string
+          id?: string
+          name?: string
+          requires_documents?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_types_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       migration_runs: {
         Row: {
           error_message: string | null
@@ -3702,6 +4099,48 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_structure_nodes: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          name: string
+          node_type: string
+          parent_node_id: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          name: string
+          node_type: string
+          parent_node_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          node_type?: string
+          parent_node_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_structure_nodes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_structure_nodes_parent_node_id_fkey"
+            columns: ["parent_node_id"]
+            isOneToOne: false
+            referencedRelation: "org_structure_nodes"
             referencedColumns: ["id"]
           },
         ]
@@ -4047,6 +4486,50 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payslips: {
+        Row: {
+          business_id: string
+          created_at: string
+          generated_at: string
+          gross_amount: number
+          id: string
+          net_amount: number
+          payslip_file_url: string | null
+          period_month: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          generated_at?: string
+          gross_amount?: number
+          id?: string
+          net_amount?: number
+          payslip_file_url?: string | null
+          period_month: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          generated_at?: string
+          gross_amount?: number
+          id?: string
+          net_amount?: number
+          payslip_file_url?: string | null
+          period_month?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payslips_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
@@ -4741,6 +5224,50 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      salary_profiles: {
+        Row: {
+          allowances_json: Json | null
+          bank_details_json: Json | null
+          base_salary: number
+          business_id: string
+          created_at: string
+          deductions_json: Json | null
+          id: string
+          pay_frequency: string
+          user_id: string
+        }
+        Insert: {
+          allowances_json?: Json | null
+          bank_details_json?: Json | null
+          base_salary?: number
+          business_id: string
+          created_at?: string
+          deductions_json?: Json | null
+          id?: string
+          pay_frequency?: string
+          user_id: string
+        }
+        Update: {
+          allowances_json?: Json | null
+          bank_details_json?: Json | null
+          base_salary?: number
+          business_id?: string
+          created_at?: string
+          deductions_json?: Json | null
+          id?: string
+          pay_frequency?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salary_profiles_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       schema_items: {
         Row: {
@@ -5504,6 +6031,88 @@ export type Database = {
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sla_events: {
+        Row: {
+          business_id: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          event_type: string
+          id: string
+          triggered_at: string
+          triggered_to_user_id: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          event_type: string
+          id?: string
+          triggered_at?: string
+          triggered_to_user_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          event_type?: string
+          id?: string
+          triggered_at?: string
+          triggered_to_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sla_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sla_policies: {
+        Row: {
+          business_id: string
+          created_at: string
+          entity_type: string
+          escalation_levels_json: Json | null
+          first_response_minutes: number
+          id: string
+          priority: string
+          resolution_minutes: number
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          entity_type: string
+          escalation_levels_json?: Json | null
+          first_response_minutes?: number
+          id?: string
+          priority?: string
+          resolution_minutes?: number
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          entity_type?: string
+          escalation_levels_json?: Json | null
+          first_response_minutes?: number
+          id?: string
+          priority?: string
+          resolution_minutes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sla_policies_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]

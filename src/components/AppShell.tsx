@@ -10,6 +10,7 @@ import {
   Rocket, Building, BarChartBig, Map, Eye, Coins,
   Gauge, Siren, Database, FileCheck, GitBranch,
   PlayCircle, Plug, ClipboardCheck,
+  CalendarDays, DollarSign, Network,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
@@ -52,9 +53,10 @@ const mainNav = [
   { label: "Marketplace", icon: Store, to: "/marketplace", enabled: true },
   { label: "Tasks", icon: ClipboardList, to: "/tasks", enabled: false },
   { label: "Tickets", icon: Ticket, to: "/tickets", enabled: false },
+  { label: "Workforce", icon: UserCog, to: "/workforce", enabled: true },
+  { label: "Leave", icon: CalendarDays, to: "/leave", enabled: true },
   { label: "Reports", icon: PieChart, to: "/reports", enabled: false },
   { label: "Marketing", icon: Megaphone, to: "/marketing", enabled: false },
-  { label: "HR", icon: UserCog, to: "/hr", enabled: false },
 ];
 
 const adminNav = [
@@ -88,6 +90,9 @@ const adminNav = [
   { label: "Go-Live Playbook", icon: PlayCircle, to: "/go-live", roles: ["super_admin"] as const },
   { label: "Dependencies", icon: Plug, to: "/dependencies", roles: ["super_admin"] as const },
   { label: "QA Checklist", icon: ClipboardCheck, to: "/qa-checklist", roles: ["super_admin"] as const },
+  { label: "Payroll", icon: DollarSign, to: "/payroll", roles: ["super_admin", "business_admin"] as const },
+  { label: "SLA Policies", icon: ShieldAlert, to: "/sla", roles: ["super_admin", "business_admin"] as const },
+  { label: "Org Chart", icon: Network, to: "/org-chart", roles: ["super_admin", "business_admin"] as const },
 ];
 
 const AppShell = () => {
