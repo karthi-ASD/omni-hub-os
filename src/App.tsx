@@ -79,6 +79,10 @@ import DemoModePage from "./pages/DemoModePage";
 import RevenueIntelligencePage from "./pages/RevenueIntelligencePage";
 import ActivityTimelinePage from "./pages/ActivityTimelinePage";
 import GovernanceDashboardPage from "./pages/GovernanceDashboardPage";
+import TasksPage from "./pages/TasksPage";
+import TicketsPage from "./pages/TicketsPage";
+import ReportsPage from "./pages/ReportsPage";
+import MarketingPage from "./pages/MarketingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -206,6 +210,10 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["super_admin"]}><QAChecklistPage /></ProtectedRoute>
               } />
               <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/tasks" element={<TasksPage />} />
+              <Route path="/tickets" element={<TicketsPage />} />
+              <Route path="/reports" element={<ReportsPage />} />
+              <Route path="/marketing" element={<MarketingPage />} />
               <Route path="/workforce" element={<WorkforcePage />} />
               <Route path="/leave" element={<LeaveManagementPage />} />
               <Route path="/payroll" element={
