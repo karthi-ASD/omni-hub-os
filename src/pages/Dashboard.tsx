@@ -1,6 +1,6 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, Shield, Activity, Clock, Bell, Calendar, ArrowRight, BarChart3, FolderKanban, Phone } from "lucide-react";
+import { Building2, Users, Shield, Activity, Clock, Bell, Calendar, ArrowRight, BarChart3, FolderKanban, Phone, Receipt, DollarSign } from "lucide-react";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { UpcomingEvents } from "@/components/dashboard/UpcomingEvents";
@@ -102,6 +102,18 @@ const Dashboard = () => {
           value={stats.todayCalls}
           icon={Phone}
           subtitle="Logged calls"
+        />
+        <StatCard
+          title="Open Invoices"
+          value={stats.openInvoices}
+          icon={Receipt}
+          subtitle="Awaiting payment"
+        />
+        <StatCard
+          title="Revenue"
+          value={`$${stats.revenueThisMonth.toFixed(0)}`}
+          icon={DollarSign}
+          subtitle="This month"
         />
       </div>
 
