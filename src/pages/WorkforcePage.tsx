@@ -15,7 +15,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 const WorkforcePage = () => {
-  const { isSuperAdmin, isBusinessAdmin } = useAuth();
+  const { isSuperAdmin, isBusinessAdmin, loading: authLoading } = useAuth();
   const { employees, loading: empLoading, create } = useEmployeeProfiles();
   const { records: attendance, loading: attLoading } = useAttendance();
   const { sessions, loading: sessLoading } = useEmployeeSessions();
@@ -30,7 +30,7 @@ const WorkforcePage = () => {
     date_of_joining: format(new Date(), "yyyy-MM-dd"),
   });
 
-  const canManage = isSuperAdmin || isBusinessAdmin;
+  const canManage = !authLoading && (isSuperAdmin || isBusinessAdmin);
 
   const handleAdd = async () => {
     if (!form.employee_code) {
