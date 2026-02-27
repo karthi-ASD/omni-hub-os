@@ -1,41 +1,65 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useSeoKeywords, useSeoOnpageTasks, useSeoOffpageItems, useSeoContent } from "@/hooks/useSeo";
+import { useSeoKeywords, useSeoOnpageTasks, useSeoOffpageItems, useSeoContent, useSeoCampaigns } from "@/hooks/useSeo";
+import { useSeoGbp } from "@/hooks/useSeoGbp";
+import { useSeoTechnical } from "@/hooks/useSeoTechnical";
+import { useSeoReports } from "@/hooks/useSeoReports";
+import { useSeoComms } from "@/hooks/useSeoComms";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, ArrowLeft, Key, FileText, Link, Globe } from "lucide-react";
+import { Plus, ArrowLeft, Key, FileText, Link, Globe, Settings, BarChart3, MessageSquare, MapPin, Wrench } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const SeoCampaignDetailPage = () => {
   const { campaignId } = useParams<{ campaignId: string }>();
   const navigate = useNavigate();
+  const { campaigns } = useSeoCampaigns();
+  const campaign = campaigns.find((c) => c.id === campaignId);
   const { keywords, loading: kwLoading, addKeyword, updateKeywordStatus } = useSeoKeywords(campaignId);
   const { tasks, loading: taskLoading, addTask, updateTaskStatus } = useSeoOnpageTasks(campaignId);
   const { items: offpageItems, loading: offLoading, addItem, updateItemStatus } = useSeoOffpageItems(campaignId);
   const { content, loading: contentLoading, addContent, updateContentStatus } = useSeoContent(campaignId);
+  const { gbp, loading: gbpLoading, upsert: upsertGbp } = useSeoGbp(campaignId);
+  const { audit, loading: techLoading, upsert: upsertTech } = useSeoTechnical(campaignId);
+  const { reports, loading: reportLoading, addReport } = useSeoReports(campaignId);
+  const { logs: commLogs, loading: commLoading, addLog: addComm } = useSeoComms(campaignId);
 
-  // Keyword form
+  // Form states
   const [kwOpen, setKwOpen] = useState(false);
-  const [kwForm, setKwForm] = useState({ keyword: "", keyword_type: "primary", priority: "medium", target_url: "" });
-
-  // Task form
+  const [kwForm, setKwForm] = useState({ keyword: "", keyword_type: "primary", priority: "medium", target_url: "", location: "" });
   const [taskOpen, setTaskOpen] = useState(false);
   const [taskForm, setTaskForm] = useState({ page_url: "", checklist_item: "" });
-
-  // Offpage form
   const [offOpen, setOffOpen] = useState(false);
-  const [offForm, setOffForm] = useState({ type: "citation", source_url: "", target_url: "" });
-
-  // Content form
+  const [offForm, setOffForm] = useState({ type: "citation", source_url: "", target_url: "", website_name: "", da_score: "", anchor_text: "", follow_type: "dofollow" });
   const [contentOpen, setContentOpen] = useState(false);
-  const [contentForm, setContentForm] = useState({ type: "blog", title: "", brief: "", target_url: "" });
+  const [contentForm, setContentForm] = useState({ type: "blog", title: "", brief: "", target_url: "", target_keyword: "", word_count: "" });
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportForm, setReportForm] = useState({ report_month: "", traffic_current: 0, traffic_previous: 0, keywords_improved: 0, keywords_dropped: 0, backlinks_built: 0, tasks_completed: 0, conversions: 0 });
+  const [commOpen, setCommOpen] = useState(false);
+  const [commForm, setCommForm] = useState({ communication_type: "email", summary: "", follow_up_date: "" });
+
+  // GBP form
+  const [gbpForm, setGbpForm] = useState({
+    existing_listing: false, listing_url: "", verification_status: "not_started",
+    nap_consistency_check: false, reviews_count: 0, rating_avg: 0, gmb_posts_count: 0,
+  });
+  const [gbpEditing, setGbpEditing] = useState(false);
+
+  // Technical form
+  const [techForm, setTechForm] = useState({
+    desktop_speed: 0, mobile_speed: 0, ssl_active: false, sitemap_submitted: false,
+    robots_txt_checked: false, schema_added: false, broken_links_count: 0, notes: "",
+  });
+  const [techEditing, setTechEditing] = useState(false);
 
   const statusBadge = (status: string) => {
     const colors: Record<string, string> = {
@@ -60,8 +84,11 @@ const SeoCampaignDetailPage = () => {
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate("/seo")}><ArrowLeft className="h-4 w-4" /></Button>
         <div>
-          <h1 className="text-2xl font-bold">Campaign Detail</h1>
-          <p className="text-muted-foreground font-mono text-sm">{campaignId?.slice(0, 8)}…</p>
+          <h1 className="text-2xl font-bold">{(campaign as any)?.primary_domain || "Campaign Detail"}</h1>
+          <p className="text-muted-foreground text-sm">
+            {(campaign as any)?.package_type && <Badge variant="outline" className="mr-2 capitalize">{(campaign as any).package_type}</Badge>}
+            {(campaign as any)?.payment_status && <Badge variant="secondary" className="capitalize">{(campaign as any).payment_status}</Badge>}
+          </p>
         </div>
       </div>
 
@@ -71,6 +98,10 @@ const SeoCampaignDetailPage = () => {
           <TabsTrigger value="onpage"><FileText className="h-3 w-3 mr-1" /> On-Page</TabsTrigger>
           <TabsTrigger value="offpage"><Link className="h-3 w-3 mr-1" /> Off-Page</TabsTrigger>
           <TabsTrigger value="content"><Globe className="h-3 w-3 mr-1" /> Content</TabsTrigger>
+          <TabsTrigger value="gbp"><MapPin className="h-3 w-3 mr-1" /> GBP</TabsTrigger>
+          <TabsTrigger value="technical"><Wrench className="h-3 w-3 mr-1" /> Technical</TabsTrigger>
+          <TabsTrigger value="reports"><BarChart3 className="h-3 w-3 mr-1" /> Reports</TabsTrigger>
+          <TabsTrigger value="comms"><MessageSquare className="h-3 w-3 mr-1" /> Comms</TabsTrigger>
         </TabsList>
 
         {/* Keywords Tab */}
@@ -86,21 +117,18 @@ const SeoCampaignDetailPage = () => {
                   <div><Label>Type</Label>
                     <Select value={kwForm.keyword_type} onValueChange={(v) => setKwForm({ ...kwForm, keyword_type: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {["primary", "service", "location", "blog"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                      </SelectContent>
+                      <SelectContent>{["primary", "secondary", "service", "location", "blog"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
+                  <div><Label>Location</Label><Input value={kwForm.location} onChange={(e) => setKwForm({ ...kwForm, location: e.target.value })} placeholder="e.g. Sydney" /></div>
                   <div><Label>Priority</Label>
                     <Select value={kwForm.priority} onValueChange={(v) => setKwForm({ ...kwForm, priority: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {["low", "medium", "high"].map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                      </SelectContent>
+                      <SelectContent>{["low", "medium", "high"].map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div><Label>Target URL</Label><Input value={kwForm.target_url} onChange={(e) => setKwForm({ ...kwForm, target_url: e.target.value })} /></div>
-                  <Button className="w-full" onClick={async () => { await addKeyword(kwForm); setKwOpen(false); setKwForm({ keyword: "", keyword_type: "primary", priority: "medium", target_url: "" }); }}>Add Keyword</Button>
+                  <Button className="w-full" onClick={async () => { await addKeyword(kwForm as any); setKwOpen(false); setKwForm({ keyword: "", keyword_type: "primary", priority: "medium", target_url: "", location: "" }); }}>Add Keyword</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -109,14 +137,26 @@ const SeoCampaignDetailPage = () => {
             <Card><CardContent className="py-8 text-center text-muted-foreground">No keywords yet</CardContent></Card>
           ) : (
             <Card><Table><TableHeader><TableRow>
-              <TableHead>Keyword</TableHead><TableHead>Type</TableHead><TableHead>Priority</TableHead><TableHead>Target</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead>
+              <TableHead>Keyword</TableHead><TableHead>Type</TableHead><TableHead>Location</TableHead><TableHead>Ranking</TableHead><TableHead>Priority</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead>
             </TableRow></TableHeader><TableBody>
-              {keywords.map((kw) => (
+              {keywords.map((kw: any) => (
                 <TableRow key={kw.id}>
                   <TableCell className="font-medium">{kw.keyword}</TableCell>
                   <TableCell className="capitalize">{kw.keyword_type}</TableCell>
+                  <TableCell>{kw.location || "—"}</TableCell>
+                  <TableCell>
+                    {kw.current_ranking != null ? (
+                      <span className="font-mono">
+                        #{kw.current_ranking}
+                        {kw.previous_ranking != null && (
+                          <span className={kw.current_ranking < kw.previous_ranking ? "text-green-600 ml-1" : kw.current_ranking > kw.previous_ranking ? "text-destructive ml-1" : "text-muted-foreground ml-1"}>
+                            ({kw.current_ranking < kw.previous_ranking ? "↑" : kw.current_ranking > kw.previous_ranking ? "↓" : "="}{Math.abs(kw.current_ranking - kw.previous_ranking)})
+                          </span>
+                        )}
+                      </span>
+                    ) : "—"}
+                  </TableCell>
                   <TableCell className="capitalize">{kw.priority}</TableCell>
-                  <TableCell className="truncate max-w-[150px]">{kw.target_url || "—"}</TableCell>
                   <TableCell>{statusBadge(kw.status)}</TableCell>
                   <TableCell>
                     <Select value={kw.status} onValueChange={(v) => updateKeywordStatus(kw.id, v)}>
@@ -179,11 +219,11 @@ const SeoCampaignDetailPage = () => {
         {/* Off-Page Tab */}
         <TabsContent value="offpage" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold">Off-Page ({offpageItems.length})</h2>
+            <h2 className="text-lg font-semibold">Off-Page / Backlinks ({offpageItems.length})</h2>
             <Dialog open={offOpen} onOpenChange={setOffOpen}>
               <DialogTrigger asChild><Button size="sm"><Plus className="h-3 w-3 mr-1" /> Add</Button></DialogTrigger>
               <DialogContent>
-                <DialogHeader><DialogTitle>Add Off-Page Item</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle>Add Backlink / Off-Page</DialogTitle></DialogHeader>
                 <div className="space-y-3">
                   <div><Label>Type</Label>
                     <Select value={offForm.type} onValueChange={(v) => setOffForm({ ...offForm, type: v })}>
@@ -191,9 +231,24 @@ const SeoCampaignDetailPage = () => {
                       <SelectContent>{["citation", "backlink", "guest_post", "profile", "directory"].map((t) => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
+                  <div><Label>Website Name</Label><Input value={offForm.website_name} onChange={(e) => setOffForm({ ...offForm, website_name: e.target.value })} /></div>
                   <div><Label>Source URL</Label><Input value={offForm.source_url} onChange={(e) => setOffForm({ ...offForm, source_url: e.target.value })} /></div>
                   <div><Label>Target URL</Label><Input value={offForm.target_url} onChange={(e) => setOffForm({ ...offForm, target_url: e.target.value })} /></div>
-                  <Button className="w-full" onClick={async () => { await addItem(offForm); setOffOpen(false); setOffForm({ type: "citation", source_url: "", target_url: "" }); }}>Add Item</Button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><Label>DA Score</Label><Input type="number" value={offForm.da_score} onChange={(e) => setOffForm({ ...offForm, da_score: e.target.value })} /></div>
+                    <div><Label>Follow Type</Label>
+                      <Select value={offForm.follow_type} onValueChange={(v) => setOffForm({ ...offForm, follow_type: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent><SelectItem value="dofollow">DoFollow</SelectItem><SelectItem value="nofollow">NoFollow</SelectItem></SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div><Label>Anchor Text</Label><Input value={offForm.anchor_text} onChange={(e) => setOffForm({ ...offForm, anchor_text: e.target.value })} /></div>
+                  <Button className="w-full" onClick={async () => {
+                    await addItem({ ...offForm, da_score: offForm.da_score ? Number(offForm.da_score) : undefined } as any);
+                    setOffOpen(false);
+                    setOffForm({ type: "citation", source_url: "", target_url: "", website_name: "", da_score: "", anchor_text: "", follow_type: "dofollow" });
+                  }}>Add Item</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -202,13 +257,15 @@ const SeoCampaignDetailPage = () => {
             <Card><CardContent className="py-8 text-center text-muted-foreground">No off-page items yet</CardContent></Card>
           ) : (
             <Card><Table><TableHeader><TableRow>
-              <TableHead>Type</TableHead><TableHead>Source</TableHead><TableHead>Target</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead>
+              <TableHead>Type</TableHead><TableHead>Website</TableHead><TableHead>DA</TableHead><TableHead>Anchor</TableHead><TableHead>Follow</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead>
             </TableRow></TableHeader><TableBody>
-              {offpageItems.map((item) => (
+              {offpageItems.map((item: any) => (
                 <TableRow key={item.id}>
                   <TableCell className="capitalize">{item.type.replace(/_/g, " ")}</TableCell>
-                  <TableCell className="truncate max-w-[150px]">{item.source_url || "—"}</TableCell>
-                  <TableCell className="truncate max-w-[150px]">{item.target_url || "—"}</TableCell>
+                  <TableCell>{item.website_name || item.source_url?.substring(0, 30) || "—"}</TableCell>
+                  <TableCell>{item.da_score || "—"}</TableCell>
+                  <TableCell className="truncate max-w-[100px]">{item.anchor_text || "—"}</TableCell>
+                  <TableCell><Badge variant="outline" className="text-xs">{item.follow_type || "dofollow"}</Badge></TableCell>
                   <TableCell>{statusBadge(item.status)}</TableCell>
                   <TableCell>
                     <Select value={item.status} onValueChange={(v) => updateItemStatus(item.id, v)}>
@@ -234,13 +291,20 @@ const SeoCampaignDetailPage = () => {
                   <div><Label>Type</Label>
                     <Select value={contentForm.type} onValueChange={(v) => setContentForm({ ...contentForm, type: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{["service_page", "location_page", "blog", "landing_page"].map((t) => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}</SelectContent>
+                      <SelectContent>{["service_page", "location_page", "blog", "landing_page", "homepage"].map((t) => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div><Label>Title</Label><Input value={contentForm.title} onChange={(e) => setContentForm({ ...contentForm, title: e.target.value })} /></div>
+                  <div><Label>Target Keyword</Label><Input value={contentForm.target_keyword} onChange={(e) => setContentForm({ ...contentForm, target_keyword: e.target.value })} /></div>
+                  <div><Label>Word Count</Label><Input type="number" value={contentForm.word_count} onChange={(e) => setContentForm({ ...contentForm, word_count: e.target.value })} /></div>
                   <div><Label>Brief</Label><Input value={contentForm.brief} onChange={(e) => setContentForm({ ...contentForm, brief: e.target.value })} /></div>
                   <div><Label>Target URL</Label><Input value={contentForm.target_url} onChange={(e) => setContentForm({ ...contentForm, target_url: e.target.value })} /></div>
-                  <Button className="w-full" onClick={async () => { if (!contentForm.title) return; await addContent(contentForm); setContentOpen(false); setContentForm({ type: "blog", title: "", brief: "", target_url: "" }); }}>Add Content</Button>
+                  <Button className="w-full" onClick={async () => {
+                    if (!contentForm.title) return;
+                    await addContent({ ...contentForm, word_count: contentForm.word_count ? Number(contentForm.word_count) : undefined } as any);
+                    setContentOpen(false);
+                    setContentForm({ type: "blog", title: "", brief: "", target_url: "", target_keyword: "", word_count: "" });
+                  }}>Add Content</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -249,13 +313,14 @@ const SeoCampaignDetailPage = () => {
             <Card><CardContent className="py-8 text-center text-muted-foreground">No content items yet</CardContent></Card>
           ) : (
             <Card><Table><TableHeader><TableRow>
-              <TableHead>Title</TableHead><TableHead>Type</TableHead><TableHead>Target URL</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead>
+              <TableHead>Title</TableHead><TableHead>Type</TableHead><TableHead>Keyword</TableHead><TableHead>Words</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead>
             </TableRow></TableHeader><TableBody>
-              {content.map((c) => (
+              {content.map((c: any) => (
                 <TableRow key={c.id}>
                   <TableCell className="font-medium">{c.title}</TableCell>
                   <TableCell className="capitalize">{c.type.replace(/_/g, " ")}</TableCell>
-                  <TableCell className="truncate max-w-[150px]">{c.target_url || "—"}</TableCell>
+                  <TableCell>{c.target_keyword || "—"}</TableCell>
+                  <TableCell>{c.word_count || "—"}</TableCell>
                   <TableCell>{statusBadge(c.status)}</TableCell>
                   <TableCell>
                     <Select value={c.status} onValueChange={(v) => updateContentStatus(c.id, v)}>
@@ -263,6 +328,191 @@ const SeoCampaignDetailPage = () => {
                       <SelectContent>{["briefed", "writing", "review", "client_approval", "published"].map((s) => <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>)}</SelectContent>
                     </Select>
                   </TableCell>
+                </TableRow>
+              ))}
+            </TableBody></Table></Card>
+          )}
+        </TabsContent>
+
+        {/* GBP Tab */}
+        <TabsContent value="gbp" className="space-y-4">
+          <h2 className="text-lg font-semibold">Google Business Profile</h2>
+          {gbpLoading ? <Skeleton className="h-48 w-full" /> : (
+            <Card>
+              <CardContent className="pt-6 space-y-4">
+                {!gbpEditing && gbp ? (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div><Label className="text-muted-foreground text-xs">Existing Listing</Label><p>{gbp.existing_listing ? "Yes" : "No"}</p></div>
+                      <div><Label className="text-muted-foreground text-xs">Verification</Label><p className="capitalize">{gbp.verification_status.replace(/_/g, " ")}</p></div>
+                      <div><Label className="text-muted-foreground text-xs">Reviews</Label><p>{gbp.reviews_count} ({gbp.rating_avg}★)</p></div>
+                      <div><Label className="text-muted-foreground text-xs">NAP Check</Label><p>{gbp.nap_consistency_check ? "✅ Done" : "❌ Pending"}</p></div>
+                      <div><Label className="text-muted-foreground text-xs">GMB Posts</Label><p>{gbp.gmb_posts_count}</p></div>
+                      <div><Label className="text-muted-foreground text-xs">Listing URL</Label><p className="truncate text-sm">{gbp.listing_url || "—"}</p></div>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => { setGbpForm({ existing_listing: gbp.existing_listing, listing_url: gbp.listing_url || "", verification_status: gbp.verification_status, nap_consistency_check: gbp.nap_consistency_check, reviews_count: gbp.reviews_count, rating_avg: gbp.rating_avg, gmb_posts_count: gbp.gmb_posts_count }); setGbpEditing(true); }}>Edit</Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2"><Switch checked={gbpForm.existing_listing} onCheckedChange={(v) => setGbpForm({ ...gbpForm, existing_listing: v })} /><Label>Existing Listing</Label></div>
+                    <div><Label>Listing URL</Label><Input value={gbpForm.listing_url} onChange={(e) => setGbpForm({ ...gbpForm, listing_url: e.target.value })} /></div>
+                    <div><Label>Verification Status</Label>
+                      <Select value={gbpForm.verification_status} onValueChange={(v) => setGbpForm({ ...gbpForm, verification_status: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>{["not_started", "pending_video", "verified"].map((s) => <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center gap-2"><Switch checked={gbpForm.nap_consistency_check} onCheckedChange={(v) => setGbpForm({ ...gbpForm, nap_consistency_check: v })} /><Label>NAP Consistency Checked</Label></div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div><Label>Reviews</Label><Input type="number" value={gbpForm.reviews_count} onChange={(e) => setGbpForm({ ...gbpForm, reviews_count: Number(e.target.value) })} /></div>
+                      <div><Label>Rating</Label><Input type="number" step="0.1" value={gbpForm.rating_avg} onChange={(e) => setGbpForm({ ...gbpForm, rating_avg: Number(e.target.value) })} /></div>
+                      <div><Label>Posts</Label><Input type="number" value={gbpForm.gmb_posts_count} onChange={(e) => setGbpForm({ ...gbpForm, gmb_posts_count: Number(e.target.value) })} /></div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={async () => { await upsertGbp(gbpForm as any); setGbpEditing(false); }}>Save</Button>
+                      {gbp && <Button variant="outline" onClick={() => setGbpEditing(false)}>Cancel</Button>}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Technical SEO Tab */}
+        <TabsContent value="technical" className="space-y-4">
+          <h2 className="text-lg font-semibold">Technical SEO Audit</h2>
+          {techLoading ? <Skeleton className="h-48 w-full" /> : (
+            <Card>
+              <CardContent className="pt-6 space-y-4">
+                {!techEditing && audit ? (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div><Label className="text-muted-foreground text-xs">Desktop Speed</Label><p>{audit.desktop_speed ?? "—"}</p></div>
+                      <div><Label className="text-muted-foreground text-xs">Mobile Speed</Label><p>{audit.mobile_speed ?? "—"}</p></div>
+                      <div><Label className="text-muted-foreground text-xs">SSL</Label><p>{audit.ssl_active ? "✅" : "❌"}</p></div>
+                      <div><Label className="text-muted-foreground text-xs">Sitemap</Label><p>{audit.sitemap_submitted ? "✅" : "❌"}</p></div>
+                      <div><Label className="text-muted-foreground text-xs">Robots.txt</Label><p>{audit.robots_txt_checked ? "✅" : "❌"}</p></div>
+                      <div><Label className="text-muted-foreground text-xs">Schema</Label><p>{audit.schema_added ? "✅" : "❌"}</p></div>
+                      <div><Label className="text-muted-foreground text-xs">Broken Links</Label><p>{audit.broken_links_count}</p></div>
+                      <div><Label className="text-muted-foreground text-xs">Last Audit</Label><p>{audit.last_audit_date || "—"}</p></div>
+                    </div>
+                    {audit.notes && <p className="text-sm text-muted-foreground">{audit.notes}</p>}
+                    <Button variant="outline" size="sm" onClick={() => { setTechForm({ desktop_speed: audit.desktop_speed ?? 0, mobile_speed: audit.mobile_speed ?? 0, ssl_active: audit.ssl_active, sitemap_submitted: audit.sitemap_submitted, robots_txt_checked: audit.robots_txt_checked, schema_added: audit.schema_added, broken_links_count: audit.broken_links_count, notes: audit.notes || "" }); setTechEditing(true); }}>Edit</Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div><Label>Desktop Speed</Label><Input type="number" value={techForm.desktop_speed} onChange={(e) => setTechForm({ ...techForm, desktop_speed: Number(e.target.value) })} /></div>
+                      <div><Label>Mobile Speed</Label><Input type="number" value={techForm.mobile_speed} onChange={(e) => setTechForm({ ...techForm, mobile_speed: Number(e.target.value) })} /></div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex items-center gap-2"><Switch checked={techForm.ssl_active} onCheckedChange={(v) => setTechForm({ ...techForm, ssl_active: v })} /><Label>SSL Active</Label></div>
+                      <div className="flex items-center gap-2"><Switch checked={techForm.sitemap_submitted} onCheckedChange={(v) => setTechForm({ ...techForm, sitemap_submitted: v })} /><Label>Sitemap Submitted</Label></div>
+                      <div className="flex items-center gap-2"><Switch checked={techForm.robots_txt_checked} onCheckedChange={(v) => setTechForm({ ...techForm, robots_txt_checked: v })} /><Label>Robots.txt Checked</Label></div>
+                      <div className="flex items-center gap-2"><Switch checked={techForm.schema_added} onCheckedChange={(v) => setTechForm({ ...techForm, schema_added: v })} /><Label>Schema Added</Label></div>
+                    </div>
+                    <div><Label>Broken Links Count</Label><Input type="number" value={techForm.broken_links_count} onChange={(e) => setTechForm({ ...techForm, broken_links_count: Number(e.target.value) })} /></div>
+                    <div><Label>Notes</Label><Textarea value={techForm.notes} onChange={(e) => setTechForm({ ...techForm, notes: e.target.value })} /></div>
+                    <div className="flex gap-2">
+                      <Button onClick={async () => { await upsertTech({ ...techForm, last_audit_date: new Date().toISOString().split("T")[0] } as any); setTechEditing(false); }}>Save Audit</Button>
+                      {audit && <Button variant="outline" onClick={() => setTechEditing(false)}>Cancel</Button>}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Reports Tab */}
+        <TabsContent value="reports" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-semibold">Monthly Reports ({reports.length})</h2>
+            <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+              <DialogTrigger asChild><Button size="sm"><Plus className="h-3 w-3 mr-1" /> Add Report</Button></DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Add Monthly Report</DialogTitle></DialogHeader>
+                <div className="space-y-3">
+                  <div><Label>Report Month (e.g. 2026-02)</Label><Input value={reportForm.report_month} onChange={(e) => setReportForm({ ...reportForm, report_month: e.target.value })} placeholder="YYYY-MM" /></div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><Label>Traffic (Current)</Label><Input type="number" value={reportForm.traffic_current} onChange={(e) => setReportForm({ ...reportForm, traffic_current: Number(e.target.value) })} /></div>
+                    <div><Label>Traffic (Previous)</Label><Input type="number" value={reportForm.traffic_previous} onChange={(e) => setReportForm({ ...reportForm, traffic_previous: Number(e.target.value) })} /></div>
+                    <div><Label>Keywords Improved</Label><Input type="number" value={reportForm.keywords_improved} onChange={(e) => setReportForm({ ...reportForm, keywords_improved: Number(e.target.value) })} /></div>
+                    <div><Label>Keywords Dropped</Label><Input type="number" value={reportForm.keywords_dropped} onChange={(e) => setReportForm({ ...reportForm, keywords_dropped: Number(e.target.value) })} /></div>
+                    <div><Label>Backlinks Built</Label><Input type="number" value={reportForm.backlinks_built} onChange={(e) => setReportForm({ ...reportForm, backlinks_built: Number(e.target.value) })} /></div>
+                    <div><Label>Tasks Completed</Label><Input type="number" value={reportForm.tasks_completed} onChange={(e) => setReportForm({ ...reportForm, tasks_completed: Number(e.target.value) })} /></div>
+                  </div>
+                  <div><Label>Conversions</Label><Input type="number" value={reportForm.conversions} onChange={(e) => setReportForm({ ...reportForm, conversions: Number(e.target.value) })} /></div>
+                  <Button className="w-full" onClick={async () => {
+                    if (!reportForm.report_month) return;
+                    await addReport(reportForm as any);
+                    setReportOpen(false);
+                    setReportForm({ report_month: "", traffic_current: 0, traffic_previous: 0, keywords_improved: 0, keywords_dropped: 0, backlinks_built: 0, tasks_completed: 0, conversions: 0 });
+                  }}>Add Report</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+          {reportLoading ? <Skeleton className="h-24 w-full" /> : reports.length === 0 ? (
+            <Card><CardContent className="py-8 text-center text-muted-foreground">No reports yet</CardContent></Card>
+          ) : (
+            <Card><Table><TableHeader><TableRow>
+              <TableHead>Month</TableHead><TableHead>Traffic</TableHead><TableHead>KW ↑</TableHead><TableHead>KW ↓</TableHead><TableHead>Backlinks</TableHead><TableHead>Tasks</TableHead><TableHead>Conversions</TableHead>
+            </TableRow></TableHeader><TableBody>
+              {reports.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell className="font-medium">{r.report_month}</TableCell>
+                  <TableCell>{r.traffic_current} <span className="text-xs text-muted-foreground">(prev: {r.traffic_previous})</span></TableCell>
+                  <TableCell className="text-green-600">{r.keywords_improved}</TableCell>
+                  <TableCell className="text-destructive">{r.keywords_dropped}</TableCell>
+                  <TableCell>{r.backlinks_built}</TableCell>
+                  <TableCell>{r.tasks_completed}</TableCell>
+                  <TableCell>{r.conversions}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody></Table></Card>
+          )}
+        </TabsContent>
+
+        {/* Communications Tab */}
+        <TabsContent value="comms" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-semibold">Communication Log ({commLogs.length})</h2>
+            <Dialog open={commOpen} onOpenChange={setCommOpen}>
+              <DialogTrigger asChild><Button size="sm"><Plus className="h-3 w-3 mr-1" /> Log</Button></DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Log Communication</DialogTitle></DialogHeader>
+                <div className="space-y-3">
+                  <div><Label>Type</Label>
+                    <Select value={commForm.communication_type} onValueChange={(v) => setCommForm({ ...commForm, communication_type: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>{["email", "call", "whatsapp", "sms", "meeting"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div><Label>Summary</Label><Textarea value={commForm.summary} onChange={(e) => setCommForm({ ...commForm, summary: e.target.value })} /></div>
+                  <div><Label>Follow-up Date</Label><Input type="date" value={commForm.follow_up_date} onChange={(e) => setCommForm({ ...commForm, follow_up_date: e.target.value })} /></div>
+                  <Button className="w-full" onClick={async () => {
+                    await addComm(commForm);
+                    setCommOpen(false);
+                    setCommForm({ communication_type: "email", summary: "", follow_up_date: "" });
+                  }}>Log Communication</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+          {commLoading ? <Skeleton className="h-24 w-full" /> : commLogs.length === 0 ? (
+            <Card><CardContent className="py-8 text-center text-muted-foreground">No communication logs yet</CardContent></Card>
+          ) : (
+            <Card><Table><TableHeader><TableRow>
+              <TableHead>Type</TableHead><TableHead>Summary</TableHead><TableHead>Follow-up</TableHead><TableHead>Date</TableHead>
+            </TableRow></TableHeader><TableBody>
+              {commLogs.map((log) => (
+                <TableRow key={log.id}>
+                  <TableCell className="capitalize">{log.communication_type}</TableCell>
+                  <TableCell className="max-w-[300px] truncate">{log.summary || "—"}</TableCell>
+                  <TableCell>{log.follow_up_date || "—"}</TableCell>
+                  <TableCell>{new Date(log.created_at).toLocaleDateString()}</TableCell>
                 </TableRow>
               ))}
             </TableBody></Table></Card>
