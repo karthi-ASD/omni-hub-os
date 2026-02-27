@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Globe, Search, TrendingUp, FileText } from "lucide-react";
+import { Plus, Globe, Search, TrendingUp, FileText, DollarSign } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 
@@ -19,6 +19,8 @@ const statusColors: Record<string, string> = {
   active: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
   paused: "bg-muted text-muted-foreground",
   completed: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  on_hold: "bg-muted text-muted-foreground",
+  cancelled: "bg-destructive/10 text-destructive",
 };
 
 const SeoDashboardPage = () => {
@@ -31,6 +33,11 @@ const SeoDashboardPage = () => {
     client_id: "",
     project_id: "",
     primary_domain: "",
+    business_name: "",
+    package_type: "basic",
+    monthly_fee: "",
+    contract_duration_months: "12",
+    billing_type: "recurring",
     service_areas: "",
     target_services: "",
   });
@@ -45,7 +52,7 @@ const SeoDashboardPage = () => {
       target_services: form.target_services ? form.target_services.split(",").map((s) => s.trim()) : [],
     });
     setOpen(false);
-    setForm({ client_id: "", project_id: "", primary_domain: "", service_areas: "", target_services: "" });
+    setForm({ client_id: "", project_id: "", primary_domain: "", business_name: "", package_type: "basic", monthly_fee: "", contract_duration_months: "12", billing_type: "recurring", service_areas: "", target_services: "" });
   };
 
   const getClientName = (id: string | null) => {
@@ -55,6 +62,7 @@ const SeoDashboardPage = () => {
 
   const activeCampaigns = campaigns.filter((c) => c.status === "active").length;
   const onboardingCampaigns = campaigns.filter((c) => c.status === "onboarding").length;
+  const totalRevenue = (campaigns as any[]).reduce((sum, c) => sum + (Number(c.monthly_fee) || 0), 0);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -67,12 +75,16 @@ const SeoDashboardPage = () => {
           <DialogTrigger asChild>
             <Button><Plus className="mr-2 h-4 w-4" /> New Campaign</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Create SEO Campaign</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label>Primary Domain</Label>
+                <Label>Primary Domain *</Label>
                 <Input value={form.primary_domain} onChange={(e) => setForm({ ...form, primary_domain: e.target.value })} placeholder="example.com.au" />
+              </div>
+              <div>
+                <Label>Business Name</Label>
+                <Input value={form.business_name} onChange={(e) => setForm({ ...form, business_name: e.target.value })} placeholder="Client Business Name" />
               </div>
               <div>
                 <Label>Client</Label>
@@ -92,6 +104,37 @@ const SeoDashboardPage = () => {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Package Type</Label>
+                  <Select value={form.package_type} onValueChange={(v) => setForm({ ...form, package_type: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {["basic", "standard", "premium", "custom"].map((p) => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Monthly Fee</Label>
+                  <Input type="number" value={form.monthly_fee} onChange={(e) => setForm({ ...form, monthly_fee: e.target.value })} placeholder="0" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Contract (Months)</Label>
+                  <Input type="number" value={form.contract_duration_months} onChange={(e) => setForm({ ...form, contract_duration_months: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Billing Type</Label>
+                  <Select value={form.billing_type} onValueChange={(v) => setForm({ ...form, billing_type: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="recurring">Recurring</SelectItem>
+                      <SelectItem value="one-time">One-time</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div>
                 <Label>Service Areas (comma-separated)</Label>
                 <Input value={form.service_areas} onChange={(e) => setForm({ ...form, service_areas: e.target.value })} placeholder="Sydney, Melbourne, Brisbane" />
@@ -107,7 +150,7 @@ const SeoDashboardPage = () => {
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Campaigns</CardTitle>
@@ -136,6 +179,13 @@ const SeoDashboardPage = () => {
           </CardHeader>
           <CardContent><p className="text-2xl font-bold">{campaigns.filter((c) => c.status === "completed").length}</p></CardContent>
         </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Monthly Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent><p className="text-2xl font-bold">${totalRevenue.toLocaleString()}</p></CardContent>
+        </Card>
       </div>
 
       {/* Campaign List */}
@@ -150,18 +200,22 @@ const SeoDashboardPage = () => {
               <TableRow>
                 <TableHead>Domain</TableHead>
                 <TableHead>Client</TableHead>
+                <TableHead>Package</TableHead>
+                <TableHead>Fee/mo</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Started</TableHead>
+                <TableHead>Payment</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {campaigns.map((c) => (
+              {campaigns.map((c: any) => (
                 <TableRow key={c.id} className="cursor-pointer" onClick={() => navigate(`/seo/${c.id}`)}>
                   <TableCell className="font-medium">{c.primary_domain || "—"}</TableCell>
                   <TableCell>{getClientName(c.client_id)}</TableCell>
+                  <TableCell><Badge variant="outline" className="capitalize">{c.package_type || "basic"}</Badge></TableCell>
+                  <TableCell>${Number(c.monthly_fee || 0).toLocaleString()}</TableCell>
                   <TableCell><Badge className={statusColors[c.status] || ""} variant="secondary">{c.status}</Badge></TableCell>
-                  <TableCell>{c.start_date ? new Date(c.start_date).toLocaleDateString() : "—"}</TableCell>
+                  <TableCell><Badge variant="secondary" className="capitalize">{c.payment_status || "pending"}</Badge></TableCell>
                   <TableCell>
                     <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                       {c.status === "onboarding" && (
