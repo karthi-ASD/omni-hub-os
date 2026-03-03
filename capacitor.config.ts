@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.acf5812e0b4d4ba0a2eab88f9594ede8',
+  appId: 'com.nextweb.os',
   appName: 'NextWeb OS',
   webDir: 'dist',
   server: {
