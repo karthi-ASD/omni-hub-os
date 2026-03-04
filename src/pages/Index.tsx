@@ -536,56 +536,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-[#d4a853]/10 bg-[#080b16] py-16">
-        <div className="container mx-auto px-4 md:px-8">
-          <div className="grid md:grid-cols-4 gap-8 mb-12">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#d4a853] to-[#b8902e] flex items-center justify-center">
-                  <Building2 className="h-4 w-4 text-[#0a0e1a]" />
-                </div>
-                <span className="text-lg font-bold bg-gradient-to-r from-[#d4a853] to-[#f0d48a] bg-clip-text text-transparent">
-                  NextWeb OS
-                </span>
-              </div>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                The complete business operating system for modern digital agencies and enterprises.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-white mb-4">Product</h4>
-              <ul className="space-y-2 text-sm text-gray-500">
-                <li><a href="#features" className="hover:text-[#d4a853] transition-colors">Features</a></li>
-                <li><a href="#modules" className="hover:text-[#d4a853] transition-colors">Modules</a></li>
-                <li><a href="#ai" className="hover:text-[#d4a853] transition-colors">AI Engine</a></li>
-                <li><Link to="/login" className="hover:text-[#d4a853] transition-colors">Sign In</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-white mb-4">Company</h4>
-              <ul className="space-y-2 text-sm text-gray-500">
-                <li><a href="#" className="hover:text-[#d4a853] transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-[#d4a853] transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-[#d4a853] transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-[#d4a853] transition-colors">Contact</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-white mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-gray-500">
-                <li><a href="#" className="hover:text-[#d4a853] transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-[#d4a853] transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-[#d4a853] transition-colors">Security</a></li>
-                <li><a href="#" className="hover:text-[#d4a853] transition-colors">GDPR</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-[#1e2a4a] pt-8 text-center text-sm text-gray-600">
-            © {new Date().getFullYear()} NextWeb OS. All rights reserved. Built with ❤️ for agencies that dream big.
-          </div>
-        </div>
-      </footer>
+      <PremiumFooter />
     </div>
   );
 };
