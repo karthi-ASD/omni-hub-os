@@ -42,6 +42,7 @@ import WhiteLabelPage from "./pages/WhiteLabelPage";
 import InvestorDashboardPage from "./pages/InvestorDashboardPage";
 import PartnersPage from "./pages/PartnersPage";
 import AIAgentsPage from "./pages/AIAgentsPage";
+import AIVoiceAgentsPage from "./pages/AIVoiceAgentsPage";
 import InvestorPitchPage from "./pages/InvestorPitchPage";
 import MarketplacePage from "./pages/MarketplacePage";
 import AppFactoryPage from "./pages/AppFactoryPage";
