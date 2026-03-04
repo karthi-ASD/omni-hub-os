@@ -613,6 +613,56 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_landing_pages: {
+        Row: {
+          business_id: string
+          content_json: Json | null
+          created_at: string | null
+          export_format: string | null
+          headline: string | null
+          id: string
+          keyword: string
+          meta_description: string | null
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          content_json?: Json | null
+          created_at?: string | null
+          export_format?: string | null
+          headline?: string | null
+          id?: string
+          keyword: string
+          meta_description?: string | null
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          content_json?: Json | null
+          created_at?: string | null
+          export_format?: string | null
+          headline?: string | null
+          id?: string
+          keyword?: string
+          meta_description?: string | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_landing_pages_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_lead_qualifications: {
         Row: {
           ai_summary: string | null
@@ -4923,6 +4973,124 @@ export type Database = {
         }
         Relationships: []
       }
+      growth_campaigns: {
+        Row: {
+          adjustment_history_json: Json | null
+          auto_adjust: boolean | null
+          budget: number | null
+          business_id: string
+          channel: string
+          conversion_rate: number | null
+          created_at: string | null
+          current_spend: number | null
+          id: string
+          last_adjustment: string | null
+          leads_generated: number | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          adjustment_history_json?: Json | null
+          auto_adjust?: boolean | null
+          budget?: number | null
+          business_id: string
+          channel?: string
+          conversion_rate?: number | null
+          created_at?: string | null
+          current_spend?: number | null
+          id?: string
+          last_adjustment?: string | null
+          leads_generated?: number | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          adjustment_history_json?: Json | null
+          auto_adjust?: boolean | null
+          budget?: number | null
+          business_id?: string
+          channel?: string
+          conversion_rate?: number | null
+          created_at?: string | null
+          current_spend?: number | null
+          id?: string
+          last_adjustment?: string | null
+          leads_generated?: number | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_campaigns_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      growth_experiments: {
+        Row: {
+          business_id: string
+          conversion_rate_a: number | null
+          conversion_rate_b: number | null
+          created_at: string | null
+          ended_at: string | null
+          experiment_name: string
+          experiment_type: string
+          id: string
+          impressions_a: number | null
+          impressions_b: number | null
+          started_at: string | null
+          status: string
+          variant_a: string | null
+          variant_b: string | null
+          winner: string | null
+        }
+        Insert: {
+          business_id: string
+          conversion_rate_a?: number | null
+          conversion_rate_b?: number | null
+          created_at?: string | null
+          ended_at?: string | null
+          experiment_name: string
+          experiment_type?: string
+          id?: string
+          impressions_a?: number | null
+          impressions_b?: number | null
+          started_at?: string | null
+          status?: string
+          variant_a?: string | null
+          variant_b?: string | null
+          winner?: string | null
+        }
+        Update: {
+          business_id?: string
+          conversion_rate_a?: number | null
+          conversion_rate_b?: number | null
+          created_at?: string | null
+          ended_at?: string | null
+          experiment_name?: string
+          experiment_type?: string
+          id?: string
+          impressions_a?: number | null
+          impressions_b?: number | null
+          started_at?: string | null
+          status?: string
+          variant_a?: string | null
+          variant_b?: string | null
+          winner?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_experiments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       import_jobs: {
         Row: {
           business_id: string
@@ -7105,6 +7273,53 @@ export type Database = {
           },
         ]
       }
+      proposal_automations: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          id: string
+          lead_id: string | null
+          lead_name: string | null
+          proposal_content_json: Json | null
+          proposed_price: number | null
+          sent_at: string | null
+          service_type: string | null
+          status: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          id?: string
+          lead_id?: string | null
+          lead_name?: string | null
+          proposal_content_json?: Json | null
+          proposed_price?: number | null
+          sent_at?: string | null
+          service_type?: string | null
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          lead_id?: string | null
+          lead_name?: string | null
+          proposal_content_json?: Json | null
+          proposed_price?: number | null
+          sent_at?: string | null
+          service_type?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_automations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposal_views: {
         Row: {
           id: string
@@ -8076,6 +8291,53 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "seo_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_autopilot_tasks: {
+        Row: {
+          business_id: string
+          campaign_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          keyword: string | null
+          output_json: Json | null
+          status: string
+          task_type: string
+          title: string | null
+        }
+        Insert: {
+          business_id: string
+          campaign_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          keyword?: string | null
+          output_json?: Json | null
+          status?: string
+          task_type?: string
+          title?: string | null
+        }
+        Update: {
+          business_id?: string
+          campaign_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          keyword?: string | null
+          output_json?: Json | null
+          status?: string
+          task_type?: string
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_autopilot_tasks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]

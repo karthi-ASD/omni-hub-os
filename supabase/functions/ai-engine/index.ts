@@ -256,6 +256,154 @@ serve(async (req) => {
       }];
       toolChoice = { type: "function", function: { name: "recommend_pricing" } };
 
+    } else if (task_type === "budget_optimizer") {
+      systemPrompt = `You are a marketing budget optimization AI for a digital agency. Analyze campaign performance data and recommend budget adjustments to maximize ROI. Consider: conversion rates, cost per lead, channel saturation, seasonal trends.`;
+      userPrompt = `Optimize budgets for these campaigns:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "optimize_budgets",
+          description: "Return budget adjustment recommendations per channel",
+          parameters: {
+            type: "object",
+            properties: {
+              adjustments: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    channel: { type: "string" },
+                    current_budget: { type: "number" },
+                    recommended_budget: { type: "number" },
+                    change_percent: { type: "number" },
+                    reasoning: { type: "string" },
+                    expected_roi_improvement: { type: "number" },
+                  },
+                  required: ["channel", "recommended_budget", "change_percent", "reasoning"],
+                  additionalProperties: false,
+                },
+              },
+              summary: { type: "string" },
+            },
+            required: ["adjustments", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "optimize_budgets" } };
+
+    } else if (task_type === "generate_landing_page") {
+      systemPrompt = `You are a conversion-focused landing page copywriter for a digital agency. Generate compelling landing page content optimized for the given keyword, industry, and location. Include headline, subheadline, key benefits, service sections, FAQ items, testimonials placeholders, and a strong CTA.`;
+      userPrompt = `Generate landing page content for:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "create_landing_page",
+          description: "Return structured landing page content",
+          parameters: {
+            type: "object",
+            properties: {
+              headline: { type: "string" },
+              subheadline: { type: "string" },
+              meta_description: { type: "string" },
+              hero_cta: { type: "string" },
+              benefits: { type: "array", items: { type: "object", properties: { title: { type: "string" }, description: { type: "string" } }, required: ["title", "description"], additionalProperties: false } },
+              service_sections: { type: "array", items: { type: "object", properties: { heading: { type: "string" }, body: { type: "string" } }, required: ["heading", "body"], additionalProperties: false } },
+              faqs: { type: "array", items: { type: "object", properties: { question: { type: "string" }, answer: { type: "string" } }, required: ["question", "answer"], additionalProperties: false } },
+              cta_text: { type: "string" },
+            },
+            required: ["headline", "subheadline", "meta_description", "benefits", "service_sections", "faqs", "cta_text"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "create_landing_page" } };
+
+    } else if (task_type === "seo_autopilot") {
+      systemPrompt = `You are an SEO strategist AI for a digital agency. Given a primary keyword, location, and industry, generate a list of SEO tasks including suburb pages, blog article titles, FAQ content, and internal linking suggestions.`;
+      userPrompt = `Generate SEO tasks for:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "generate_seo_tasks",
+          description: "Return a list of SEO content tasks",
+          parameters: {
+            type: "object",
+            properties: {
+              tasks: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    task_type: { type: "string", enum: ["suburb_page", "blog_article", "faq_content", "service_page", "internal_linking"] },
+                    keyword: { type: "string" },
+                    title: { type: "string" },
+                    description: { type: "string" },
+                  },
+                  required: ["task_type", "keyword", "title", "description"],
+                  additionalProperties: false,
+                },
+              },
+              summary: { type: "string" },
+            },
+            required: ["tasks", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "generate_seo_tasks" } };
+
+    } else if (task_type === "auto_proposal") {
+      systemPrompt = `You are a proposal writing AI for a digital agency. Based on the lead data, service type, and pricing guidelines, generate a professional proposal with scope, deliverables, timeline, and pricing.`;
+      userPrompt = `Generate a proposal for this lead:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "generate_proposal",
+          description: "Return a structured proposal",
+          parameters: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              service_type: { type: "string" },
+              scope_summary: { type: "string" },
+              deliverables: { type: "array", items: { type: "string" } },
+              timeline_weeks: { type: "number" },
+              proposed_price: { type: "number" },
+              payment_terms: { type: "string" },
+              value_proposition: { type: "string" },
+            },
+            required: ["title", "service_type", "scope_summary", "deliverables", "timeline_weeks", "proposed_price"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "generate_proposal" } };
+
+    } else if (task_type === "ab_experiment") {
+      systemPrompt = `You are a conversion rate optimization AI. Analyze A/B test results and determine a statistical winner. Consider sample size, conversion rates, and statistical significance.`;
+      userPrompt = `Analyze this A/B experiment:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "analyze_experiment",
+          description: "Return experiment analysis with winner",
+          parameters: {
+            type: "object",
+            properties: {
+              winner: { type: "string", enum: ["A", "B", "inconclusive"] },
+              confidence_level: { type: "number" },
+              uplift_percent: { type: "number" },
+              recommendation: { type: "string" },
+              summary: { type: "string" },
+            },
+            required: ["winner", "confidence_level", "recommendation", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "analyze_experiment" } };
+
     } else {
       return new Response(JSON.stringify({ error: "Unknown task_type" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
