@@ -1,6 +1,7 @@
 import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { PremiumFooter } from "@/components/PremiumFooter";
 import {
   Building2, ArrowRight, Shield, Zap, BarChart3, Users, Globe, Brain,
   FileText, Phone, Calendar, Target, TrendingUp, Lock, Layers, Star,
