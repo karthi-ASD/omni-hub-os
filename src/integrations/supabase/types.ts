@@ -688,6 +688,153 @@ export type Database = {
           },
         ]
       }
+      ai_lead_scores: {
+        Row: {
+          business_id: string
+          confidence_score: number | null
+          conversion_probability: number | null
+          created_at: string | null
+          factors_json: Json | null
+          id: string
+          last_updated: string | null
+          lead_id: string | null
+          lead_score: number | null
+        }
+        Insert: {
+          business_id: string
+          confidence_score?: number | null
+          conversion_probability?: number | null
+          created_at?: string | null
+          factors_json?: Json | null
+          id?: string
+          last_updated?: string | null
+          lead_id?: string | null
+          lead_score?: number | null
+        }
+        Update: {
+          business_id?: string
+          confidence_score?: number | null
+          conversion_probability?: number | null
+          created_at?: string | null
+          factors_json?: Json | null
+          id?: string
+          last_updated?: string | null
+          lead_id?: string | null
+          lead_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_lead_scores_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_marketing_insights: {
+        Row: {
+          business_id: string
+          channel: string
+          conversion_rate: number | null
+          created_at: string | null
+          id: string
+          leads_generated: number | null
+          period: string | null
+          recommendations_json: Json | null
+          revenue_attributed: number | null
+          roi_score: number | null
+          spend: number | null
+        }
+        Insert: {
+          business_id: string
+          channel?: string
+          conversion_rate?: number | null
+          created_at?: string | null
+          id?: string
+          leads_generated?: number | null
+          period?: string | null
+          recommendations_json?: Json | null
+          revenue_attributed?: number | null
+          roi_score?: number | null
+          spend?: number | null
+        }
+        Update: {
+          business_id?: string
+          channel?: string
+          conversion_rate?: number | null
+          created_at?: string | null
+          id?: string
+          leads_generated?: number | null
+          period?: string | null
+          recommendations_json?: Json | null
+          revenue_attributed?: number | null
+          roi_score?: number | null
+          spend?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_marketing_insights_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_recommendations: {
+        Row: {
+          action_url: string | null
+          business_id: string
+          created_at: string | null
+          description: string | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          impact_score: number | null
+          priority: string
+          recommendation_type: string
+          status: string
+          title: string
+        }
+        Insert: {
+          action_url?: string | null
+          business_id: string
+          created_at?: string | null
+          description?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          impact_score?: number | null
+          priority?: string
+          recommendation_type?: string
+          status?: string
+          title: string
+        }
+        Update: {
+          action_url?: string | null
+          business_id?: string
+          created_at?: string | null
+          description?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          impact_score?: number | null
+          priority?: string
+          recommendation_type?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_recommendations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_sales_forecasts: {
         Row: {
           business_id: string
