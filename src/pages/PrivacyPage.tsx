@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PremiumFooter } from "@/components/PremiumFooter";
-import { Building2, Shield, Lock, Eye, Database, Globe, CheckCircle2, ArrowRight } from "lucide-react";
+import { Shield, Lock, Eye, Database, Globe, CheckCircle2, ArrowRight } from "lucide-react";
+import { NWLogo } from "@/components/NWLogo";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const sections = [
   { title: "1. Information We Collect", content: "We collect information you provide directly (name, email, phone, business details) when you create an account, make a purchase, or contact us. We also automatically collect usage data including IP addresses, browser type, device information, and interaction patterns with our platform." },
