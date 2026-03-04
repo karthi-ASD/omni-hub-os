@@ -38,6 +38,7 @@ import CommunicationsPage from "./pages/CommunicationsPage";
 import SystemMonitorPage from "./pages/SystemMonitorPage";
 import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
 import AIInsightsPage from "./pages/AIInsightsPage";
+import AIBusinessIntelligencePage from "./pages/AIBusinessIntelligencePage";
 import WhiteLabelPage from "./pages/WhiteLabelPage";
 import InvestorDashboardPage from "./pages/InvestorDashboardPage";
 import PartnersPage from "./pages/PartnersPage";
