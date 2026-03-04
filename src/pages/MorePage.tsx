@@ -59,6 +59,7 @@ const menuSections: { title: string; items: MenuItem[]; roles?: string[] }[] = [
       { label: "AI Agents", icon: Bot, to: "/ai-agents" },
       { label: "AI Voice Agents", icon: Phone, to: "/ai-voice-agents" },
       { label: "Agent Factory", icon: Factory, to: "/agent-factory" },
+      { label: "Voice Agent", icon: PhoneCall, to: "/voice-agent" },
       { label: "Reports", icon: PieChart, to: "/reports" },
     ],
   },
