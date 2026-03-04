@@ -110,6 +110,7 @@ import AutopilotSequencesPage from "./pages/AutopilotSequencesPage";
 import AutopilotInboxPage from "./pages/AutopilotInboxPage";
 import AIBrainPage from "./pages/AIBrainPage";
 import AILearningPage from "./pages/AILearningPage";
+import AutonomousAgentsPage from "./pages/AutonomousAgentsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
