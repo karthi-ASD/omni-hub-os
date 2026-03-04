@@ -16,14 +16,13 @@ const posts = [
   { title: "From Startup to Government Supplier: Our Journey", excerpt: "The story of how Nextweb became an approved IT supplier for 4 Australian state governments.", category: "Company", author: "Rajeev Kumar", date: "Jan 15, 2026", readTime: "5 min" },
 ];
 
-const BlogPage = () => (
+const BlogPage = () => {
+  usePageTitle("Blog & Insights", "Industry insights, product updates, and best practices for running a modern digital agency with NextWeb OS.");
+  return (
   <div className="min-h-screen bg-[#0a0e1a] text-white">
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a0e1a]/90 backdrop-blur-xl border-b border-[#d4a853]/20">
       <div className="container mx-auto flex items-center justify-between h-16 px-4 md:px-8">
-        <Link to="/" className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-[#d4a853] to-[#b8902e] flex items-center justify-center"><Building2 className="h-5 w-5 text-[#0a0e1a]" /></div>
-          <span className="text-xl font-bold bg-gradient-to-r from-[#d4a853] to-[#f0d48a] bg-clip-text text-transparent">NextWeb OS</span>
-        </Link>
+        <Link to="/"><NWLogo /></Link>
         <Link to="/signup"><Button className="bg-gradient-to-r from-[#d4a853] to-[#b8902e] text-[#0a0e1a] font-semibold">Get Started</Button></Link>
       </div>
     </nav>
