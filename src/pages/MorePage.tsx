@@ -54,6 +54,7 @@ const menuSections: { title: string; items: MenuItem[]; roles?: string[] }[] = [
   {
     title: "Intelligence & AI",
     items: [
+      { label: "AI Brain", icon: Brain, to: "/ai-brain" },
       { label: "AI Intelligence", icon: Brain, to: "/ai-intelligence" },
       { label: "Growth Engine", icon: Sparkles, to: "/growth-engine" },
       { label: "Analytics", icon: TrendingUp, to: "/analytics" },

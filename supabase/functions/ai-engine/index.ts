@@ -404,6 +404,71 @@ serve(async (req) => {
       }];
       toolChoice = { type: "function", function: { name: "analyze_experiment" } };
 
+    } else if (task_type === "business_health") {
+      systemPrompt = `You are a business health analysis AI for a digital agency CRM. Evaluate the overall health of the business based on revenue trends, lead generation, customer churn, marketing ROI, and team productivity. Return a health score, growth score, and risk score (each 0-100), plus a summary.`;
+      userPrompt = `Analyze business health:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "assess_health",
+          description: "Return business health scores",
+          parameters: {
+            type: "object",
+            properties: {
+              health_score: { type: "number", description: "Overall business health 0-100" },
+              growth_score: { type: "number", description: "Growth trajectory 0-100" },
+              risk_score: { type: "number", description: "Overall risk level 0-100 (higher=riskier)" },
+              summary: { type: "string" },
+              key_strengths: { type: "array", items: { type: "string" } },
+              key_risks: { type: "array", items: { type: "string" } },
+            },
+            required: ["health_score", "growth_score", "risk_score", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "assess_health" } };
+
+    } else if (task_type === "team_analysis") {
+      systemPrompt = `You are a team performance analysis AI for a digital agency. Analyze employee productivity, lead handling, deal conversion rates, and response times. Generate performance scores for each team member and recommendations.`;
+      userPrompt = `Analyze team performance:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "analyze_team",
+          description: "Return team performance analysis",
+          parameters: {
+            type: "object",
+            properties: {
+              team_members: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    name: { type: "string" },
+                    performance_score: { type: "number" },
+                    conversion_rate: { type: "number" },
+                    task_completion_rate: { type: "number" },
+                    response_time_minutes: { type: "number" },
+                    recommendation: { type: "string" },
+                  },
+                  required: ["name", "performance_score"],
+                  additionalProperties: false,
+                },
+              },
+              summary: { type: "string" },
+            },
+            required: ["team_members", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "analyze_team" } };
+
+    } else if (task_type === "ai_advisor") {
+      systemPrompt = `You are a senior business advisor AI for a digital agency CRM platform. Answer the user's business question using your knowledge of CRM best practices, sales optimization, marketing strategy, and team management. Be specific, actionable, and data-driven in your response.`;
+      userPrompt = `Business question: ${payload?.question || "How can I grow my business?"}\n\nContext: ${JSON.stringify(payload)}`;
+
     } else {
       return new Response(JSON.stringify({ error: "Unknown task_type" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
