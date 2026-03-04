@@ -25,9 +25,9 @@ const priorityIcon = (p: string) => {
 
 const riskColor = (level: string) => {
   if (level === "CRITICAL") return "bg-destructive/10 text-destructive border-destructive/30";
-  if (level === "HIGH") return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300";
-  if (level === "MEDIUM") return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300";
-  return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300";
+  if (level === "HIGH") return "bg-destructive/10 text-destructive";
+  if (level === "MEDIUM") return "bg-accent text-accent-foreground";
+  return "bg-primary/10 text-primary";
 };
 
 const AIBusinessIntelligencePage = () => {
