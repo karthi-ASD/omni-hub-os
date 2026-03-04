@@ -1,12 +1,12 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, Target, ClipboardList, Users, MoreHorizontal } from "lucide-react";
+import { Home, Target, ClipboardList, MessageCircle, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { label: "Home", icon: Home, to: "/dashboard" },
   { label: "Leads", icon: Target, to: "/leads" },
+  { label: "Inbox", icon: MessageCircle, to: "/autopilot/inbox" },
   { label: "Tasks", icon: ClipboardList, to: "/tasks" },
-  { label: "Clients", icon: Users, to: "/clients" },
   { label: "More", icon: MoreHorizontal, to: "/more" },
 ];
 
