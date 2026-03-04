@@ -108,6 +108,7 @@ import VoiceAgentPage from "./pages/VoiceAgentPage";
 import AutopilotSettingsPage from "./pages/AutopilotSettingsPage";
 import AutopilotSequencesPage from "./pages/AutopilotSequencesPage";
 import AutopilotInboxPage from "./pages/AutopilotInboxPage";
+import AIBrainPage from "./pages/AIBrainPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
