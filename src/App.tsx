@@ -92,6 +92,11 @@ import SecurityPage from "./pages/SecurityPage";
 import CareersPage from "./pages/CareersPage";
 import BlogPage from "./pages/BlogPage";
 import DemoRequestPage from "./pages/DemoRequestPage";
+import WebDevelopmentPage from "./pages/WebDevelopmentPage";
+import MobileTechnologyPage from "./pages/MobileTechnologyPage";
+import ITSolutionsPage from "./pages/ITSolutionsPage";
+import EMarketingPage from "./pages/EMarketingPage";
+import AutomationPage from "./pages/AutomationPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
