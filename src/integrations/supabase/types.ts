@@ -567,6 +567,44 @@ export type Database = {
           },
         ]
       }
+      ai_behavior_patterns: {
+        Row: {
+          business_id: string
+          confidence_score: number
+          created_at: string
+          description: string
+          id: string
+          pattern_type: string
+          recommendation: string | null
+        }
+        Insert: {
+          business_id: string
+          confidence_score?: number
+          created_at?: string
+          description: string
+          id?: string
+          pattern_type: string
+          recommendation?: string | null
+        }
+        Update: {
+          business_id?: string
+          confidence_score?: number
+          created_at?: string
+          description?: string
+          id?: string
+          pattern_type?: string
+          recommendation?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_behavior_patterns_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_business_alerts: {
         Row: {
           alert_type: string
@@ -937,6 +975,38 @@ export type Database = {
           },
         ]
       }
+      ai_learning_events: {
+        Row: {
+          business_id: string
+          created_at: string
+          data_payload: Json | null
+          event_type: string
+          id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          data_payload?: Json | null
+          event_type: string
+          id?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          data_payload?: Json | null
+          event_type?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_learning_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_marketing_insights: {
         Row: {
           business_id: string
@@ -980,6 +1050,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ai_marketing_insights_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_model_training: {
+        Row: {
+          accuracy_score: number | null
+          business_id: string
+          created_at: string
+          id: string
+          model_type: string
+          status: string
+          summary: string | null
+          trained_at: string | null
+          training_data_size: number
+        }
+        Insert: {
+          accuracy_score?: number | null
+          business_id: string
+          created_at?: string
+          id?: string
+          model_type: string
+          status?: string
+          summary?: string | null
+          trained_at?: string | null
+          training_data_size?: number
+        }
+        Update: {
+          accuracy_score?: number | null
+          business_id?: string
+          created_at?: string
+          id?: string
+          model_type?: string
+          status?: string
+          summary?: string | null
+          trained_at?: string | null
+          training_data_size?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_model_training_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -1272,6 +1386,44 @@ export type Database = {
           },
           {
             foreignKeyName: "ai_voice_call_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_workflow_adaptations: {
+        Row: {
+          adaptation_reason: string
+          applied_changes: Json | null
+          business_id: string
+          created_at: string
+          id: string
+          status: string
+          workflow_type: string
+        }
+        Insert: {
+          adaptation_reason: string
+          applied_changes?: Json | null
+          business_id: string
+          created_at?: string
+          id?: string
+          status?: string
+          workflow_type: string
+        }
+        Update: {
+          adaptation_reason?: string
+          applied_changes?: Json | null
+          business_id?: string
+          created_at?: string
+          id?: string
+          status?: string
+          workflow_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workflow_adaptations_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
