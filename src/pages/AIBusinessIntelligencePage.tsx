@@ -19,8 +19,8 @@ import { toast } from "sonner";
 
 const priorityIcon = (p: string) => {
   if (p === "CRITICAL" || p === "HIGH") return <AlertTriangle className="h-4 w-4 text-destructive" />;
-  if (p === "MEDIUM") return <Activity className="h-4 w-4 text-yellow-500" />;
-  return <CheckCircle className="h-4 w-4 text-green-500" />;
+  if (p === "MEDIUM") return <Activity className="h-4 w-4 text-accent-foreground" />;
+  return <CheckCircle className="h-4 w-4 text-primary" />;
 };
 
 const riskColor = (level: string) => {
