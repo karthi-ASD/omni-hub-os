@@ -60,7 +60,7 @@ const menuSections: { title: string; items: MenuItem[]; roles?: string[] }[] = [
       { label: "Growth Engine", icon: Sparkles, to: "/growth-engine" },
       { label: "Analytics", icon: TrendingUp, to: "/analytics" },
       { label: "AI Insights", icon: Sparkles, to: "/ai-insights" },
-      { label: "AI Agents", icon: Bot, to: "/ai-agents" },
+      { label: "AI Agents", icon: Bot, to: "/autonomous-agents" },
       { label: "AI Voice Agents", icon: Phone, to: "/ai-voice-agents" },
       { label: "Agent Factory", icon: Factory, to: "/agent-factory" },
       { label: "Voice Agent", icon: PhoneCall, to: "/voice-agent" },
