@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PremiumFooter } from "@/components/PremiumFooter";
-import { Building2, Briefcase, MapPin, ArrowRight, Sparkles, Heart, Zap, Globe, Users } from "lucide-react";
+import { Briefcase, MapPin, ArrowRight, Sparkles, Heart, Zap, Globe, Users } from "lucide-react";
+import { NWLogo } from "@/components/NWLogo";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const openings = [
   { title: "Senior Full-Stack Engineer", dept: "Engineering", location: "Remote / Gold Coast", type: "Full-Time" },
