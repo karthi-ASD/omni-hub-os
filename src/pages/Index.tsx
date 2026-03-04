@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { PremiumFooter } from "@/components/PremiumFooter";
 import {
-  Building2, ArrowRight, Shield, Zap, BarChart3, Users, Globe, Brain,
+  ArrowRight, Shield, Zap, BarChart3, Users, Globe, Brain,
   FileText, Phone, Calendar, Target, TrendingUp, Lock, Layers, Star,
   CheckCircle2, ChevronRight, Briefcase, Receipt, MapPin, Headphones,
   Smartphone, Monitor, Tablet, Award, Sparkles
 } from "lucide-react";
+import { NWLogo } from "@/components/NWLogo";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import heroBg from "@/assets/hero-bg.jpg";
 import dashboardPreview from "@/assets/dashboard-preview.jpg";
 import teamCollab from "@/assets/team-collab.jpg";
