@@ -532,6 +532,60 @@ export type Database = {
           },
         ]
       }
+      ai_conversation_insights: {
+        Row: {
+          business_id: string
+          conversation_id: string | null
+          created_at: string | null
+          id: string
+          intent: string | null
+          lead_id: string | null
+          suggested_next_action: string | null
+          suggested_reply: string | null
+          summary: string | null
+          urgency_score: number | null
+        }
+        Insert: {
+          business_id: string
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          intent?: string | null
+          lead_id?: string | null
+          suggested_next_action?: string | null
+          suggested_reply?: string | null
+          summary?: string | null
+          urgency_score?: number | null
+        }
+        Update: {
+          business_id?: string
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          intent?: string | null
+          lead_id?: string | null
+          suggested_next_action?: string | null
+          suggested_reply?: string | null
+          summary?: string | null
+          urgency_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_conversation_insights_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_conversation_insights_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "lead_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_expansion_strategies: {
         Row: {
           confidence: number
@@ -1515,6 +1569,259 @@ export type Database = {
             columns: ["rule_id"]
             isOneToOne: false
             referencedRelation: "automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autopilot_rate_limits: {
+        Row: {
+          business_id: string
+          date: string
+          id: string
+          lead_id: string
+          sent_count: number | null
+          updated_at: string | null
+          week_count: number | null
+          week_key: string | null
+        }
+        Insert: {
+          business_id: string
+          date?: string
+          id?: string
+          lead_id: string
+          sent_count?: number | null
+          updated_at?: string | null
+          week_count?: number | null
+          week_key?: string | null
+        }
+        Update: {
+          business_id?: string
+          date?: string
+          id?: string
+          lead_id?: string
+          sent_count?: number | null
+          updated_at?: string | null
+          week_count?: number | null
+          week_key?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopilot_rate_limits_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autopilot_runs: {
+        Row: {
+          business_id: string
+          conversation_id: string | null
+          created_at: string | null
+          current_step_order: number | null
+          ended_at: string | null
+          failure_reason: string | null
+          id: string
+          lead_id: string | null
+          next_step_at: string | null
+          sequence_id: string | null
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          business_id: string
+          conversation_id?: string | null
+          created_at?: string | null
+          current_step_order?: number | null
+          ended_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          lead_id?: string | null
+          next_step_at?: string | null
+          sequence_id?: string | null
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          conversation_id?: string | null
+          created_at?: string | null
+          current_step_order?: number | null
+          ended_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          lead_id?: string | null
+          next_step_at?: string | null
+          sequence_id?: string | null
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopilot_runs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopilot_runs_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "lead_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopilot_runs_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "autopilot_sequences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autopilot_sequences: {
+        Row: {
+          business_id: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          purpose: string
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          purpose?: string
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          purpose?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopilot_sequences_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autopilot_settings: {
+        Row: {
+          allowed_channels: Json | null
+          business_id: string
+          created_at: string | null
+          default_owner_role: string | null
+          escalation_enabled: boolean | null
+          id: string
+          is_enabled: boolean
+          max_messages_per_day: number | null
+          max_messages_per_week: number | null
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          timezone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          allowed_channels?: Json | null
+          business_id: string
+          created_at?: string | null
+          default_owner_role?: string | null
+          escalation_enabled?: boolean | null
+          id?: string
+          is_enabled?: boolean
+          max_messages_per_day?: number | null
+          max_messages_per_week?: number | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          allowed_channels?: Json | null
+          business_id?: string
+          created_at?: string | null
+          default_owner_role?: string | null
+          escalation_enabled?: boolean | null
+          id?: string
+          is_enabled?: boolean
+          max_messages_per_day?: number | null
+          max_messages_per_week?: number | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopilot_settings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autopilot_steps: {
+        Row: {
+          ai_enabled: boolean | null
+          business_id: string | null
+          channel: string
+          delay_minutes: number
+          id: string
+          sequence_id: string
+          step_order: number
+          stop_if_booked: boolean | null
+          stop_if_replied: boolean | null
+          template_id: string | null
+        }
+        Insert: {
+          ai_enabled?: boolean | null
+          business_id?: string | null
+          channel?: string
+          delay_minutes?: number
+          id?: string
+          sequence_id: string
+          step_order?: number
+          stop_if_booked?: boolean | null
+          stop_if_replied?: boolean | null
+          template_id?: string | null
+        }
+        Update: {
+          ai_enabled?: boolean | null
+          business_id?: string | null
+          channel?: string
+          delay_minutes?: number
+          id?: string
+          sequence_id?: string
+          step_order?: number
+          stop_if_booked?: boolean | null
+          stop_if_replied?: boolean | null
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopilot_steps_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autopilot_steps_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "autopilot_sequences"
             referencedColumns: ["id"]
           },
         ]
@@ -3779,6 +4086,47 @@ export type Database = {
           },
         ]
       }
+      escalation_rules: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          escalate_to_role: string
+          id: string
+          is_active: boolean | null
+          notify_channels: Json | null
+          sla_minutes: number
+          trigger_type: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          escalate_to_role?: string
+          id?: string
+          is_active?: boolean | null
+          notify_channels?: Json | null
+          sla_minutes?: number
+          trigger_type?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          escalate_to_role?: string
+          id?: string
+          is_active?: boolean | null
+          notify_channels?: Json | null
+          sla_minutes?: number
+          trigger_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escalation_rules_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       eway_events: {
         Row: {
           business_id: string | null
@@ -5361,6 +5709,50 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_conversations: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          id: string
+          inquiry_id: string | null
+          last_message_at: string | null
+          lead_id: string | null
+          mode: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          id?: string
+          inquiry_id?: string | null
+          last_message_at?: string | null
+          lead_id?: string | null
+          mode?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          inquiry_id?: string | null
+          last_message_at?: string | null
+          lead_id?: string | null
+          mode?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_conversations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
