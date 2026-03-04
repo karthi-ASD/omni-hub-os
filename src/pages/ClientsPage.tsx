@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useClients, Client, OnboardingStatus } from "@/hooks/useClients";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -8,8 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Plus, Mail, Phone, Building2 } from "lucide-react";
-import { format } from "date-fns";
+import { Users, Plus, Mail, Phone, Building2, Search, ChevronRight } from "lucide-react";
 
 const onboardingColors: Record<string, string> = {
   pending: "bg-amber-500/10 text-amber-600",
@@ -20,7 +19,13 @@ const onboardingColors: Record<string, string> = {
 const ClientsPage = () => {
   const { clients, loading, createClient, updateOnboardingStatus } = useClients();
   const [createOpen, setCreateOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const [form, setForm] = useState({ contact_name: "", email: "", phone: "", company_name: "", address: "" });
+
+  const filtered = clients.filter(c =>
+    !search || [c.contact_name, c.email, c.company_name, c.phone]
+      .some(f => f?.toLowerCase().includes(search.toLowerCase()))
+  );
 
   const handleCreate = async () => {
     await createClient({
@@ -34,61 +39,101 @@ const ClientsPage = () => {
     setForm({ contact_name: "", email: "", phone: "", company_name: "", address: "" });
   };
 
+  // Summary stats
+  const statusCounts = {
+    pending: clients.filter(c => c.onboarding_status === "pending").length,
+    in_progress: clients.filter(c => c.onboarding_status === "in_progress").length,
+    completed: clients.filter(c => c.onboarding_status === "completed").length,
+  };
+
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><Users className="h-6 w-6" /> Clients</h1>
-          <p className="text-muted-foreground">Manage your client base</p>
-        </div>
-        <Button onClick={() => setCreateOpen(true)} size="sm"><Plus className="h-4 w-4 mr-1" /> New Client</Button>
+    <div className="space-y-4 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold flex items-center gap-2">
+          <Users className="h-5 w-5 text-primary" /> Clients
+        </h1>
+        <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <Plus className="h-4 w-4 mr-1" /> New
+        </Button>
       </div>
 
+      {/* Summary chips */}
+      <div className="flex gap-2 overflow-x-auto -mx-4 px-4">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/10 shrink-0">
+          <span className="text-lg font-bold text-amber-600">{statusCounts.pending}</span>
+          <span className="text-xs text-amber-600 font-medium">Pending</span>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-500/10 shrink-0">
+          <span className="text-lg font-bold text-blue-600">{statusCounts.in_progress}</span>
+          <span className="text-xs text-blue-600 font-medium">In Progress</span>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-green-500/10 shrink-0">
+          <span className="text-lg font-bold text-green-600">{statusCounts.completed}</span>
+          <span className="text-xs text-green-600 font-medium">Completed</span>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Search clients..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-10 rounded-xl" />
+      </div>
+
+      {/* Client cards */}
       {loading ? (
-        <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}</div>
-      ) : clients.length === 0 ? (
-        <Card><CardContent className="py-12 text-center text-muted-foreground">No clients yet. Clients are created when contracts are signed.</CardContent></Card>
+        <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}</div>
+      ) : filtered.length === 0 ? (
+        <div className="py-16 text-center text-muted-foreground">No clients found</div>
       ) : (
         <div className="space-y-2">
-          {clients.map(c => (
-            <Card key={c.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="flex items-center gap-4 py-3 px-4">
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm">{c.contact_name}</p>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    {c.company_name && <span className="flex items-center gap-1"><Building2 className="h-3 w-3" />{c.company_name}</span>}
-                    <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{c.email}</span>
-                    {c.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{c.phone}</span>}
+          {filtered.map(c => (
+            <Card key={c.id} className="rounded-xl overflow-hidden">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-semibold text-sm truncate">{c.contact_name}</p>
+                      <Badge className={`text-[10px] px-1.5 py-0 ${onboardingColors[c.onboarding_status]}`}>
+                        {c.onboarding_status.replace("_", " ")}
+                      </Badge>
+                    </div>
+                    {c.company_name && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Building2 className="h-3 w-3" /> {c.company_name}
+                      </p>
+                    )}
                   </div>
+                  <Select value={c.onboarding_status} onValueChange={v => updateOnboardingStatus(c.id, v as OnboardingStatus)}>
+                    <SelectTrigger className="w-28 h-7 text-[10px]"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Badge className={onboardingColors[c.onboarding_status]}>{c.onboarding_status.replace("_", " ")}</Badge>
-                <Select value={c.onboarding_status} onValueChange={v => updateOnboardingStatus(c.id, v as OnboardingStatus)}>
-                  <SelectTrigger className="w-36 h-7 text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
+
+                {/* Quick actions */}
+                <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border">
+                  {c.phone && (
+                    <a href={`tel:${c.phone}`} className="flex items-center gap-1 text-xs text-primary font-medium">
+                      <Phone className="h-3.5 w-3.5" /> Call
+                    </a>
+                  )}
+                  <a href={`mailto:${c.email}`} className="flex items-center gap-1 text-xs text-primary font-medium">
+                    <Mail className="h-3.5 w-3.5" /> Email
+                  </a>
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
 
-      {/* Summary */}
-      <div className="grid grid-cols-3 gap-4">
-        {(["pending", "in_progress", "completed"] as const).map(s => (
-          <Card key={s}>
-            <CardHeader className="pb-2"><CardTitle className="text-sm capitalize text-muted-foreground">{s.replace("_", " ")}</CardTitle></CardHeader>
-            <CardContent><p className="text-2xl font-bold">{clients.filter(c => c.onboarding_status === s).length}</p></CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* CREATE */}
+      {/* Create Client */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>New Client</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><Label>Contact Name *</Label><Input value={form.contact_name} onChange={e => setForm(p => ({ ...p, contact_name: e.target.value }))} /></div>
@@ -99,7 +144,7 @@ const ClientsPage = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={!form.contact_name || !form.email}>Create Client</Button>
+            <Button onClick={handleCreate} disabled={!form.contact_name || !form.email}>Create</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
