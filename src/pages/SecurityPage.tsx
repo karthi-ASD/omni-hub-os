@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PremiumFooter } from "@/components/PremiumFooter";
-import { Building2, Shield, Lock, Eye, Database, Server, CheckCircle2, ArrowRight, Sparkles } from "lucide-react";
+import { Shield, Lock, Eye, Database, Server, CheckCircle2, ArrowRight, Sparkles } from "lucide-react";
+import { NWLogo } from "@/components/NWLogo";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const features = [
   { icon: Lock, title: "End-to-End Encryption", desc: "All data is encrypted at rest (AES-256) and in transit (TLS 1.3). Your sensitive business data is protected at every layer." },
@@ -12,14 +14,13 @@ const features = [
   { icon: CheckCircle2, title: "Regular Penetration Testing", desc: "We conduct quarterly penetration tests by independent security firms and remediate all findings within 48 hours." },
 ];
 
-const SecurityPage = () => (
+const SecurityPage = () => {
+  usePageTitle("Security", "Enterprise-grade security at every layer. AES-256 encryption, row-level security, SOC 2 Type II, and GDPR compliance.");
+  return (
   <div className="min-h-screen bg-[#0a0e1a] text-white">
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a0e1a]/90 backdrop-blur-xl border-b border-[#d4a853]/20">
       <div className="container mx-auto flex items-center justify-between h-16 px-4 md:px-8">
-        <Link to="/" className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-[#d4a853] to-[#b8902e] flex items-center justify-center"><Building2 className="h-5 w-5 text-[#0a0e1a]" /></div>
-          <span className="text-xl font-bold bg-gradient-to-r from-[#d4a853] to-[#f0d48a] bg-clip-text text-transparent">NextWeb OS</span>
-        </Link>
+        <Link to="/"><NWLogo /></Link>
         <Link to="/signup"><Button className="bg-gradient-to-r from-[#d4a853] to-[#b8902e] text-[#0a0e1a] font-semibold">Get Started</Button></Link>
       </div>
     </nav>
@@ -58,6 +59,7 @@ const SecurityPage = () => (
     </section>
     <PremiumFooter />
   </div>
-);
+  );
+};
 
 export default SecurityPage;

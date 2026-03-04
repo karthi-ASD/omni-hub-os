@@ -6,11 +6,14 @@ import { Label } from "@/components/ui/label";
 import { PremiumFooter } from "@/components/PremiumFooter";
 import { toast } from "sonner";
 import {
-  Building2, Play, CheckCircle2, ArrowRight, Users, TrendingUp,
+  Play, CheckCircle2, ArrowRight, Users, TrendingUp,
   Sparkles, Monitor, Shield, Zap, Brain, Globe
 } from "lucide-react";
+import { NWLogo } from "@/components/NWLogo";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const DemoPage = () => {
+  usePageTitle("Book a Demo", "Request a free personalized demo of NextWeb OS. See CRM, AI automation, and 100+ modules in action.");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", company: "", size: "", role: "", interest: "" });
@@ -30,8 +33,7 @@ const DemoPage = () => {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a0e1a]/90 backdrop-blur-xl border-b border-[#d4a853]/20">
         <div className="container mx-auto flex items-center justify-between h-16 px-4 md:px-8">
           <Link to="/" className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-[#d4a853] to-[#b8902e] flex items-center justify-center"><Building2 className="h-5 w-5 text-[#0a0e1a]" /></div>
-            <span className="text-xl font-bold bg-gradient-to-r from-[#d4a853] to-[#f0d48a] bg-clip-text text-transparent">NextWeb OS</span>
+            <NWLogo />
           </Link>
           <Link to="/signup"><Button className="bg-gradient-to-r from-[#d4a853] to-[#b8902e] text-[#0a0e1a] font-semibold">Get Started Free</Button></Link>
         </div>

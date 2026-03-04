@@ -5,9 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Building2, Eye, EyeOff, Lock, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Lock, ArrowRight } from "lucide-react";
+import { NWLogo } from "@/components/NWLogo";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const ResetPassword = () => {
+  usePageTitle("Set New Password", "Choose a new secure password for your NextWeb OS account.");
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -16,9 +19,7 @@ const ResetPassword = () => {
 
   useEffect(() => {
     const hash = window.location.hash;
-    if (hash.includes("type=recovery")) {
-      setReady(true);
-    } else {
+    if (hash.includes("type=recovery")) { setReady(true); } else {
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
         if (event === "PASSWORD_RECOVERY") setReady(true);
       });
@@ -35,9 +36,8 @@ const ResetPassword = () => {
       if (error) throw error;
       toast.success("Password updated! You can now sign in.");
       navigate("/login");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update password");
-    } finally { setLoading(false); }
+    } catch (err: any) { toast.error(err.message || "Failed to update password"); }
+    finally { setLoading(false); }
   };
 
   if (!ready) {
@@ -57,14 +57,7 @@ const ResetPassword = () => {
       <div className="absolute bottom-20 left-1/4 h-72 w-72 bg-[#d4a853]/5 rounded-full blur-3xl" />
 
       <div className="w-full max-w-md space-y-8 relative z-10">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#d4a853] to-[#b8902e] flex items-center justify-center shadow-lg shadow-[#d4a853]/20">
-            <Building2 className="h-6 w-6 text-[#0a0e1a]" />
-          </div>
-          <span className="text-2xl font-bold bg-gradient-to-r from-[#d4a853] to-[#f0d48a] bg-clip-text text-transparent">
-            NextWeb OS
-          </span>
-        </div>
+        <NWLogo size="lg" />
 
         <div>
           <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[#d4a853]/20 to-[#d4a853]/5 border border-[#d4a853]/20 flex items-center justify-center mb-6">

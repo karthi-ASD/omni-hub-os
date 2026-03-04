@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { PremiumFooter } from "@/components/PremiumFooter";
 import {
-  Building2, ArrowRight, Shield, Zap, BarChart3, Users, Globe, Brain,
+  ArrowRight, Shield, Zap, BarChart3, Users, Globe, Brain,
   FileText, Phone, Calendar, Target, TrendingUp, Lock, Layers, Star,
   CheckCircle2, ChevronRight, Briefcase, Receipt, MapPin, Headphones,
   Smartphone, Monitor, Tablet, Award, Sparkles
 } from "lucide-react";
+import { NWLogo } from "@/components/NWLogo";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import heroBg from "@/assets/hero-bg.jpg";
 import dashboardPreview from "@/assets/dashboard-preview.jpg";
 import teamCollab from "@/assets/team-collab.jpg";
@@ -15,6 +17,7 @@ import aiAutomation from "@/assets/ai-automation.jpg";
 import multiDevice from "@/assets/multi-device.jpg";
 
 const Index = () => {
+  usePageTitle("", "NextWeb OS — the all-in-one business operating system. CRM, AI, invoicing, SEO, payroll, and 100+ modules for modern enterprises.");
   const { session, loading } = useAuth();
 
   if (loading) {
@@ -34,14 +37,7 @@ const Index = () => {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a0e1a]/90 backdrop-blur-xl border-b border-[#d4a853]/20">
         <div className="container mx-auto flex items-center justify-between h-16 px-4 md:px-8">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-[#d4a853] to-[#b8902e] flex items-center justify-center shadow-lg shadow-[#d4a853]/20">
-              <Building2 className="h-5 w-5 text-[#0a0e1a]" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-[#d4a853] to-[#f0d48a] bg-clip-text text-transparent">
-              NextWeb OS
-            </span>
-          </div>
+          <NWLogo />
           <div className="hidden md:flex items-center gap-8 text-sm">
             <a href="#features" className="text-gray-400 hover:text-[#d4a853] transition-colors">Features</a>
             <a href="#platform" className="text-gray-400 hover:text-[#d4a853] transition-colors">Platform</a>
