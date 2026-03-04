@@ -297,6 +297,9 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AutopilotSequencesPage /></ProtectedRoute>
               } />
               <Route path="/autopilot/inbox" element={<AutopilotInboxPage />} />
+              <Route path="/ai-brain" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AIBrainPage /></ProtectedRoute>
+              } />
               <Route path="/usage-analytics" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><UsageAnalyticsPage /></ProtectedRoute>
               } />
