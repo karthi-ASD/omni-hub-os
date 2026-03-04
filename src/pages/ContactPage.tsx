@@ -6,9 +6,11 @@ import { Label } from "@/components/ui/label";
 import { PremiumFooter } from "@/components/PremiumFooter";
 import { toast } from "sonner";
 import {
-  Building2, MapPin, Phone, Mail, Globe, Clock, Send, MessageSquare,
+  MapPin, Phone, Mail, Globe, Clock, Send, MessageSquare,
   Headphones, ArrowRight, Sparkles, CheckCircle2
 } from "lucide-react";
+import { NWLogo } from "@/components/NWLogo";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const ContactPage = () => {
   const [loading, setLoading] = useState(false);
