@@ -172,6 +172,7 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["super_admin"]}><PartnersPage /></ProtectedRoute>
               } />
               <Route path="/ai-agents" element={<AIAgentsPage />} />
+              <Route path="/ai-voice-agents" element={<AIVoiceAgentsPage />} />
               <Route path="/investor-pitch" element={
                 <ProtectedRoute requiredRoles={["super_admin"]}><InvestorPitchPage /></ProtectedRoute>
               } />
