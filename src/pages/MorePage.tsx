@@ -52,11 +52,12 @@ const menuSections: { title: string; items: MenuItem[]; roles?: string[] }[] = [
     ],
   },
   {
-    title: "Intelligence",
+    title: "Intelligence & AI",
     items: [
       { label: "Analytics", icon: TrendingUp, to: "/analytics" },
       { label: "AI Insights", icon: Brain, to: "/ai-insights" },
       { label: "AI Agents", icon: Bot, to: "/ai-agents" },
+      { label: "AI Voice Agents", icon: Phone, to: "/ai-voice-agents" },
       { label: "Reports", icon: PieChart, to: "/reports" },
     ],
   },
