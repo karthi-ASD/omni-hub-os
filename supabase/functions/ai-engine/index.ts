@@ -57,13 +57,15 @@ serve(async (req) => {
               priority: { type: "string", enum: ["LOW", "MEDIUM", "HIGH"] },
               recommended_action: { type: "string", description: "Next best action for this lead" },
               reasoning: { type: "string", description: "Brief explanation of the score" },
+              conversion_probability: { type: "number", description: "Conversion probability 0-100" },
             },
-            required: ["score", "priority", "recommended_action", "reasoning"],
+            required: ["score", "priority", "recommended_action", "reasoning", "conversion_probability"],
             additionalProperties: false,
           },
         },
       }];
       toolChoice = { type: "function", function: { name: "score_lead" } };
+
     } else if (task_type === "seo_analysis") {
       systemPrompt = `You are an expert SEO analyst for a digital agency. Analyze the provided campaign data and give actionable recommendations.`;
       userPrompt = `Analyze this SEO campaign and provide recommendations:\n${JSON.stringify(payload)}`;
@@ -97,6 +99,7 @@ serve(async (req) => {
         },
       }];
       toolChoice = { type: "function", function: { name: "seo_recommendations" } };
+
     } else if (task_type === "sales_forecast") {
       systemPrompt = `You are a sales analytics AI for a digital agency. Based on the pipeline data, forecast monthly revenue.`;
       userPrompt = `Forecast revenue based on this pipeline data:\n${JSON.stringify(payload)}`;
@@ -110,11 +113,9 @@ serve(async (req) => {
             properties: {
               projected_revenue: { type: "number" },
               confidence: { type: "number", description: "0-100 confidence percentage" },
-              factors: {
-                type: "array",
-                items: { type: "string" },
-              },
+              factors: { type: "array", items: { type: "string" } },
               summary: { type: "string" },
+              projected_annual: { type: "number", description: "Projected annual revenue" },
             },
             required: ["projected_revenue", "confidence", "factors", "summary"],
             additionalProperties: false,
@@ -122,6 +123,139 @@ serve(async (req) => {
         },
       }];
       toolChoice = { type: "function", function: { name: "forecast_revenue" } };
+
+    } else if (task_type === "churn_detection") {
+      systemPrompt = `You are a customer success AI for a digital agency CRM. Analyze customer data and predict churn risk. Consider: payment history, support ticket frequency, communication recency, usage patterns, contract status.`;
+      userPrompt = `Analyze this customer for churn risk:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "detect_churn",
+          description: "Return churn risk assessment for a customer",
+          parameters: {
+            type: "object",
+            properties: {
+              churn_probability: { type: "number", description: "Churn probability 0-100" },
+              health_score: { type: "number", description: "Customer health score 0-100" },
+              risk_level: { type: "string", enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+              risk_factors: { type: "array", items: { type: "string" } },
+              recommended_actions: { type: "array", items: { type: "string" } },
+              summary: { type: "string" },
+            },
+            required: ["churn_probability", "health_score", "risk_level", "risk_factors", "recommended_actions", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "detect_churn" } };
+
+    } else if (task_type === "marketing_analysis") {
+      systemPrompt = `You are a marketing analytics AI for a digital agency. Analyze channel performance data and provide budget optimization recommendations. Consider: leads generated, conversion rates, cost per lead, ROI, and industry benchmarks.`;
+      userPrompt = `Analyze marketing channel performance and recommend budget changes:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "analyze_marketing",
+          description: "Return marketing channel analysis with budget recommendations",
+          parameters: {
+            type: "object",
+            properties: {
+              channel_analysis: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    channel: { type: "string" },
+                    performance_rating: { type: "string", enum: ["POOR", "FAIR", "GOOD", "EXCELLENT"] },
+                    roi_score: { type: "number" },
+                    budget_recommendation: { type: "string", enum: ["INCREASE", "MAINTAIN", "DECREASE", "PAUSE"] },
+                    recommended_change_percent: { type: "number" },
+                  },
+                  required: ["channel", "performance_rating", "roi_score", "budget_recommendation"],
+                  additionalProperties: false,
+                },
+              },
+              top_channel: { type: "string" },
+              summary: { type: "string" },
+            },
+            required: ["channel_analysis", "top_channel", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "analyze_marketing" } };
+
+    } else if (task_type === "business_recommendations") {
+      systemPrompt = `You are a business intelligence AI advisor for a digital agency CRM. Based on the overall business data (leads, deals, customers, revenue, marketing), generate 3-7 high-impact actionable recommendations. Each recommendation should be specific, measurable, and tied to a business outcome.`;
+      userPrompt = `Generate business recommendations based on this data:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "generate_recommendations",
+          description: "Return prioritized business recommendations",
+          parameters: {
+            type: "object",
+            properties: {
+              recommendations: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    recommendation_type: { type: "string", enum: ["lead_followup", "deal_risk", "churn_prevention", "marketing_optimization", "revenue_growth", "operational"] },
+                    priority: { type: "string", enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+                    title: { type: "string" },
+                    description: { type: "string" },
+                    impact_score: { type: "number", description: "Expected impact 0-100" },
+                    entity_type: { type: "string", description: "lead, deal, client, campaign, or general" },
+                  },
+                  required: ["recommendation_type", "priority", "title", "description", "impact_score"],
+                  additionalProperties: false,
+                },
+              },
+            },
+            required: ["recommendations"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "generate_recommendations" } };
+
+    } else if (task_type === "pricing_recommendation") {
+      systemPrompt = `You are a pricing strategy AI for a digital agency. Analyze past deal data, close rates by price range, and industry benchmarks to recommend optimal pricing ranges for services.`;
+      userPrompt = `Recommend pricing based on this deal history:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "recommend_pricing",
+          description: "Return pricing recommendations by service type",
+          parameters: {
+            type: "object",
+            properties: {
+              pricing_recommendations: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    service_type: { type: "string" },
+                    recommended_min: { type: "number" },
+                    recommended_max: { type: "number" },
+                    optimal_price: { type: "number" },
+                    close_rate_at_optimal: { type: "number" },
+                    reasoning: { type: "string" },
+                  },
+                  required: ["service_type", "recommended_min", "recommended_max", "optimal_price", "reasoning"],
+                  additionalProperties: false,
+                },
+              },
+              summary: { type: "string" },
+            },
+            required: ["pricing_recommendations", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "recommend_pricing" } };
+
     } else {
       return new Response(JSON.stringify({ error: "Unknown task_type" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -38,6 +38,7 @@ import CommunicationsPage from "./pages/CommunicationsPage";
 import SystemMonitorPage from "./pages/SystemMonitorPage";
 import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
 import AIInsightsPage from "./pages/AIInsightsPage";
+import AIBusinessIntelligencePage from "./pages/AIBusinessIntelligencePage";
 import WhiteLabelPage from "./pages/WhiteLabelPage";
 import InvestorDashboardPage from "./pages/InvestorDashboardPage";
 import PartnersPage from "./pages/PartnersPage";
@@ -170,6 +171,7 @@ const App = () => (
               <Route path="/communications" element={<CommunicationsPage />} />
               <Route path="/analytics" element={<AnalyticsDashboardPage />} />
               <Route path="/ai-insights" element={<AIInsightsPage />} />
+              <Route path="/ai-intelligence" element={<AIBusinessIntelligencePage />} />
               <Route path="/white-label" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><WhiteLabelPage /></ProtectedRoute>
               } />
