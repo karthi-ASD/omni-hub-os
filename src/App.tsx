@@ -103,6 +103,9 @@ import AgentFactoryPage from "./pages/AgentFactoryPage";
 import ProviderConnectionsPage from "./pages/ProviderConnectionsPage";
 import ConsentCompliancePage from "./pages/ConsentCompliancePage";
 import VoiceAgentPage from "./pages/VoiceAgentPage";
+import AutopilotSettingsPage from "./pages/AutopilotSettingsPage";
+import AutopilotSequencesPage from "./pages/AutopilotSequencesPage";
+import AutopilotInboxPage from "./pages/AutopilotInboxPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
