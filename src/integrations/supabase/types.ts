@@ -9241,6 +9241,330 @@ export type Database = {
           },
         ]
       }
+      voice_agent_events: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          event_source: string
+          event_type: string
+          id: string
+          payload_json: Json | null
+          session_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          event_source?: string
+          event_type: string
+          id?: string
+          payload_json?: Json | null
+          session_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          event_source?: string
+          event_type?: string
+          id?: string
+          payload_json?: Json | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_agent_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_agent_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "voice_agent_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_agent_extractions: {
+        Row: {
+          budget_range: string | null
+          business_id: string
+          business_name: string | null
+          call_outcome: string | null
+          call_summary: string | null
+          confirmed_followup_date: string | null
+          confirmed_followup_time: string | null
+          consent_confirmed: boolean | null
+          created_at: string | null
+          email: string | null
+          id: string
+          lead_name: string | null
+          next_action: string | null
+          phone: string | null
+          requirement_summary: string | null
+          service_interest: string | null
+          session_id: string
+          timeframe_end: string | null
+          timeframe_start: string | null
+          timezone: string | null
+        }
+        Insert: {
+          budget_range?: string | null
+          business_id: string
+          business_name?: string | null
+          call_outcome?: string | null
+          call_summary?: string | null
+          confirmed_followup_date?: string | null
+          confirmed_followup_time?: string | null
+          consent_confirmed?: boolean | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          lead_name?: string | null
+          next_action?: string | null
+          phone?: string | null
+          requirement_summary?: string | null
+          service_interest?: string | null
+          session_id: string
+          timeframe_end?: string | null
+          timeframe_start?: string | null
+          timezone?: string | null
+        }
+        Update: {
+          budget_range?: string | null
+          business_id?: string
+          business_name?: string | null
+          call_outcome?: string | null
+          call_summary?: string | null
+          confirmed_followup_date?: string | null
+          confirmed_followup_time?: string | null
+          consent_confirmed?: boolean | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          lead_name?: string | null
+          next_action?: string | null
+          phone?: string | null
+          requirement_summary?: string | null
+          service_interest?: string | null
+          session_id?: string
+          timeframe_end?: string | null
+          timeframe_start?: string | null
+          timezone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_agent_extractions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_agent_extractions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "voice_agent_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_agent_policies: {
+        Row: {
+          business_id: string
+          call_timezone: string | null
+          call_window_end: string | null
+          call_window_start: string | null
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          max_attempts: number | null
+          require_consent: boolean | null
+          retry_minutes: number | null
+          trigger_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          call_timezone?: string | null
+          call_window_end?: string | null
+          call_window_start?: string | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          max_attempts?: number | null
+          require_consent?: boolean | null
+          retry_minutes?: number | null
+          trigger_type?: string
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          call_timezone?: string | null
+          call_window_end?: string | null
+          call_window_start?: string | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          max_attempts?: number | null
+          require_consent?: boolean | null
+          retry_minutes?: number | null
+          trigger_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_agent_policies_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_agent_scripts: {
+        Row: {
+          business_id: string | null
+          created_at: string | null
+          id: string
+          language: string | null
+          name: string
+          script_json: Json
+          updated_at: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string | null
+          id?: string
+          language?: string | null
+          name: string
+          script_json?: Json
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string | null
+          id?: string
+          language?: string | null
+          name?: string
+          script_json?: Json
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_agent_scripts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_agent_sessions: {
+        Row: {
+          agent_id: string | null
+          agent_version_id: string | null
+          ai_summary: string | null
+          attempt_number: number | null
+          business_id: string
+          call_duration_seconds: number | null
+          created_at: string | null
+          ended_at: string | null
+          error_message: string | null
+          extracted_json: Json | null
+          followup_calendar_event_id: string | null
+          id: string
+          inquiry_id: string | null
+          lead_id: string | null
+          plivo_call_uuid: string | null
+          recording_url: string | null
+          scheduled_call_at: string | null
+          started_at: string | null
+          status: string
+          thread_id: string | null
+          transcript_text: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          agent_version_id?: string | null
+          ai_summary?: string | null
+          attempt_number?: number | null
+          business_id: string
+          call_duration_seconds?: number | null
+          created_at?: string | null
+          ended_at?: string | null
+          error_message?: string | null
+          extracted_json?: Json | null
+          followup_calendar_event_id?: string | null
+          id?: string
+          inquiry_id?: string | null
+          lead_id?: string | null
+          plivo_call_uuid?: string | null
+          recording_url?: string | null
+          scheduled_call_at?: string | null
+          started_at?: string | null
+          status?: string
+          thread_id?: string | null
+          transcript_text?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          agent_version_id?: string | null
+          ai_summary?: string | null
+          attempt_number?: number | null
+          business_id?: string
+          call_duration_seconds?: number | null
+          created_at?: string | null
+          ended_at?: string | null
+          error_message?: string | null
+          extracted_json?: Json | null
+          followup_calendar_event_id?: string | null
+          id?: string
+          inquiry_id?: string | null
+          lead_id?: string | null
+          plivo_call_uuid?: string | null
+          recording_url?: string | null
+          scheduled_call_at?: string | null
+          started_at?: string | null
+          status?: string
+          thread_id?: string | null
+          transcript_text?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_agent_sessions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_agent_sessions_agent_version_id_fkey"
+            columns: ["agent_version_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agent_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_agent_sessions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_agent_sessions_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voice_call_jobs: {
         Row: {
           business_id: string
