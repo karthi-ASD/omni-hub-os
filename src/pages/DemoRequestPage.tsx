@@ -13,6 +13,7 @@ import { NWLogo } from "@/components/NWLogo";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
 const DemoPage = () => {
+  usePageTitle("Book a Demo", "Request a free personalized demo of NextWeb OS. See CRM, AI automation, and 100+ modules in action.");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", company: "", size: "", role: "", interest: "" });
