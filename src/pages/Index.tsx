@@ -41,9 +41,10 @@ const Index = () => {
           <div className="hidden md:flex items-center gap-8 text-sm">
             <a href="#features" className="text-gray-400 hover:text-[#d4a853] transition-colors">Features</a>
             <a href="#platform" className="text-gray-400 hover:text-[#d4a853] transition-colors">Platform</a>
-            <a href="#ai" className="text-gray-400 hover:text-[#d4a853] transition-colors">AI Engine</a>
-            <a href="#modules" className="text-gray-400 hover:text-[#d4a853] transition-colors">Modules</a>
-            <a href="#testimonials" className="text-gray-400 hover:text-[#d4a853] transition-colors">Testimonials</a>
+            <a href="#pricing" className="text-gray-400 hover:text-[#d4a853] transition-colors">Pricing</a>
+            <Link to="/web-development" className="text-gray-400 hover:text-[#d4a853] transition-colors">Services</Link>
+            <Link to="/automation" className="text-gray-400 hover:text-[#d4a853] transition-colors">Automation</Link>
+            <Link to="/about" className="text-gray-400 hover:text-[#d4a853] transition-colors">About</Link>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/login">
@@ -427,54 +428,70 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Pricing Teaser */}
-      <section className="py-20 md:py-32">
+      {/* Pricing */}
+      <section id="pricing" className="py-20 md:py-32">
         <div className="container mx-auto px-4 md:px-8">
           <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 bg-[#d4a853]/10 border border-[#d4a853]/30 rounded-full px-4 py-2 mb-6">
+              <Receipt className="h-4 w-4 text-[#d4a853]" />
+              <span className="text-sm text-[#d4a853] font-medium">Transparent Pricing in AUD</span>
+            </div>
             <h2 className="text-3xl md:text-5xl font-bold mb-4">
-              Simple,{" "}
+              Plans That{" "}
               <span className="bg-gradient-to-r from-[#d4a853] to-[#f0d48a] bg-clip-text text-transparent">
-                Transparent Pricing
+                Scale With You
               </span>
             </h2>
-            <p className="text-gray-400 max-w-xl mx-auto text-lg">
-              Start free, scale as you grow. No hidden fees, no surprises.
+            <p className="text-gray-400 max-w-2xl mx-auto text-lg">
+              All prices in Australian Dollars (AUD). Paid month-on-month — no lock-in contracts. Cancel anytime.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {[
               {
                 plan: "Starter",
-                price: "Free",
-                desc: "Perfect for solo entrepreneurs",
-                features: ["Up to 3 users", "CRM & Lead Management", "Basic Invoicing", "Mobile App Access"],
+                price: "$499",
+                period: "/mo AUD",
+                desc: "For solo operators & small teams getting started",
+                features: ["Up to 5 users", "CRM & Lead Management", "Basic Invoicing", "Mobile App Access", "Email Support", "5 GB Storage"],
                 highlight: false,
               },
               {
                 plan: "Professional",
-                price: "$49/mo",
-                desc: "For growing agencies",
-                features: ["Unlimited users", "All 100+ Modules", "AI Engine & Automation", "Priority Support", "Custom Branding"],
+                price: "$1,500",
+                period: "/mo AUD",
+                desc: "Our flagship plan for growing agencies",
+                features: ["Unlimited users", "All 100+ Modules", "AI Engine & Automation", "WhatsApp & SMS Automation", "Priority Support", "Custom Branding", "API Access", "50 GB Storage", "Dedicated Account Manager"],
                 highlight: true,
+              },
+              {
+                plan: "Business",
+                price: "$3,500",
+                period: "/mo AUD",
+                desc: "Multi-location enterprises with advanced needs",
+                features: ["Everything in Professional", "White-label Solution", "Multi-tenant Management", "Advanced AI Agents", "SLA Guarantee (99.9%)", "SSO & SAML Auth", "Unlimited Storage", "Custom Integrations", "24/7 Phone Support"],
+                highlight: false,
               },
               {
                 plan: "Enterprise",
                 price: "Custom",
-                desc: "For large organizations",
-                features: ["Dedicated Infrastructure", "SLA Guarantee", "White-label Solution", "Onboarding & Training", "24/7 Phone Support"],
+                period: "",
+                desc: "Tailored for large organizations & franchises",
+                features: ["Everything in Business", "Dedicated Infrastructure", "On-premise Option", "Custom Development", "Onboarding & Training", "Compliance & Audit Support", "Executive Dashboard", "Franchise Blueprint", "Strategic Advisory"],
                 highlight: false,
               },
             ].map((tier) => (
               <div
                 key={tier.plan}
-                className={`relative rounded-xl p-6 border transition-all ${
+                className={`relative rounded-xl p-6 border transition-all flex flex-col ${
                   tier.highlight
-                    ? "bg-gradient-to-b from-[#1a2244] to-[#111832] border-[#d4a853]/50 shadow-xl shadow-[#d4a853]/10 scale-105"
+                    ? "bg-gradient-to-b from-[#1a2244] to-[#111832] border-[#d4a853]/50 shadow-xl shadow-[#d4a853]/10 lg:scale-105 z-10"
                     : "bg-[#111832] border-[#1e2a4a] hover:border-[#d4a853]/30"
                 }`}
               >
                 {tier.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#d4a853] to-[#b8902e] text-[#0a0e1a] text-xs font-bold px-4 py-1 rounded-full">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#d4a853] to-[#b8902e] text-[#0a0e1a] text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
                     MOST POPULAR
                   </div>
                 )}
@@ -483,9 +500,10 @@ const Index = () => {
                   <span className="text-3xl font-bold bg-gradient-to-r from-[#d4a853] to-[#f0d48a] bg-clip-text text-transparent">
                     {tier.price}
                   </span>
+                  <span className="text-gray-500 text-sm">{tier.period}</span>
                 </div>
                 <p className="text-gray-500 text-sm mt-2">{tier.desc}</p>
-                <ul className="mt-6 space-y-3">
+                <ul className="mt-6 space-y-2.5 flex-1">
                   {tier.features.map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
                       <CheckCircle2 className="h-4 w-4 text-[#d4a853] flex-shrink-0" />
@@ -493,7 +511,7 @@ const Index = () => {
                     </li>
                   ))}
                 </ul>
-                <Link to="/signup" className="block mt-6">
+                <Link to={tier.plan === "Enterprise" ? "/demo" : "/signup"} className="block mt-6">
                   <Button
                     className={`w-full ${
                       tier.highlight
@@ -501,11 +519,42 @@ const Index = () => {
                         : "bg-[#1e2a4a] text-white hover:bg-[#2a3660]"
                     }`}
                   >
-                    Get Started
+                    {tier.plan === "Enterprise" ? "Contact Sales" : "Start Free Trial"}
                   </Button>
                 </Link>
               </div>
             ))}
+          </div>
+
+          {/* Payment Options */}
+          <div className="mt-16 max-w-4xl mx-auto">
+            <div className="bg-[#111832] border border-[#1e2a4a] rounded-xl p-8">
+              <h3 className="text-xl font-bold text-white text-center mb-6">Flexible Payment Options</h3>
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="text-center p-4 rounded-lg bg-[#0a0e1a] border border-[#1e2a4a]">
+                  <div className="text-2xl mb-2">💳</div>
+                  <h4 className="font-semibold text-white text-sm">Credit / Debit Card</h4>
+                  <p className="text-gray-500 text-xs mt-1">Visa, Mastercard, Amex — auto-charged monthly</p>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-[#0a0e1a] border border-[#1e2a4a]">
+                  <div className="text-2xl mb-2">🏦</div>
+                  <h4 className="font-semibold text-white text-sm">Bank Transfer / Direct Debit</h4>
+                  <p className="text-gray-500 text-xs mt-1">AU direct debit via eWAY or manual bank transfer</p>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-[#0a0e1a] border border-[#1e2a4a]">
+                  <div className="text-2xl mb-2">📄</div>
+                  <h4 className="font-semibold text-white text-sm">Invoice / Purchase Order</h4>
+                  <p className="text-gray-500 text-xs mt-1">Net-30 invoicing for Enterprise & Government clients</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap justify-center gap-6 mt-6 text-xs text-gray-500">
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-[#22c55e]" /> No lock-in contracts</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-[#22c55e]" /> Month-on-month billing</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-[#22c55e]" /> 14-day free trial</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-[#22c55e]" /> Cancel anytime</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-[#22c55e]" /> All prices in AUD</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
