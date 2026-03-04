@@ -103,6 +103,9 @@ import AgentFactoryPage from "./pages/AgentFactoryPage";
 import ProviderConnectionsPage from "./pages/ProviderConnectionsPage";
 import ConsentCompliancePage from "./pages/ConsentCompliancePage";
 import VoiceAgentPage from "./pages/VoiceAgentPage";
+import AutopilotSettingsPage from "./pages/AutopilotSettingsPage";
+import AutopilotSequencesPage from "./pages/AutopilotSequencesPage";
+import AutopilotInboxPage from "./pages/AutopilotInboxPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -280,6 +283,13 @@ const App = () => (
               <Route path="/voice-agent" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><VoiceAgentPage /></ProtectedRoute>
               } />
+              <Route path="/autopilot/settings" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AutopilotSettingsPage /></ProtectedRoute>
+              } />
+              <Route path="/autopilot/sequences" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AutopilotSequencesPage /></ProtectedRoute>
+              } />
+              <Route path="/autopilot/inbox" element={<AutopilotInboxPage />} />
               <Route path="/usage-analytics" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><UsageAnalyticsPage /></ProtectedRoute>
               } />

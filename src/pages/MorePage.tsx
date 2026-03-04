@@ -5,7 +5,7 @@ import {
   PieChart, Globe, Mail, TrendingUp, Brain, Bot, Store, Calendar, Clock,
   Shield, Settings, LogOut, Users, Building2, Activity, Palette, Megaphone,
   UserCog, CalendarDays, Ticket, Phone, DollarSign, Briefcase as BriefcaseIcon,
-  Sparkles, MessageCircle, Plug, ShieldCheck, Factory, PhoneCall,
+  Sparkles, MessageCircle, Plug, ShieldCheck, Factory, PhoneCall, Zap, Workflow, Inbox,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -69,6 +69,14 @@ const menuSections: { title: string; items: MenuItem[]; roles?: string[] }[] = [
       { label: "Conversations", icon: MessageCircle, to: "/conversations" },
       { label: "Providers", icon: Plug, to: "/providers" },
       { label: "Consent", icon: ShieldCheck, to: "/consent-compliance" },
+    ],
+  },
+  {
+    title: "Autopilot",
+    items: [
+      { label: "Inbox", icon: Inbox, to: "/autopilot/inbox" },
+      { label: "Sequences", icon: Workflow, to: "/autopilot/sequences" },
+      { label: "Settings", icon: Zap, to: "/autopilot/settings" },
     ],
   },
   {
