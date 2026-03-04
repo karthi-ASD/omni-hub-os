@@ -277,6 +277,9 @@ const App = () => (
               <Route path="/consent-compliance" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><ConsentCompliancePage /></ProtectedRoute>
               } />
+              <Route path="/voice-agent" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><VoiceAgentPage /></ProtectedRoute>
+              } />
               <Route path="/usage-analytics" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><UsageAnalyticsPage /></ProtectedRoute>
               } />

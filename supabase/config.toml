@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.webhook-router]
 verify_jwt = false
+
+[functions.process-voice-agent-queue]
+verify_jwt = false
+
+[functions.plivo-callback]
+verify_jwt = false
