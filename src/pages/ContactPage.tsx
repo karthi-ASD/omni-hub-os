@@ -31,10 +31,9 @@ const ContactPage = () => {
     <div className="min-h-screen bg-[#0a0e1a] text-white">
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a0e1a]/90 backdrop-blur-xl border-b border-[#d4a853]/20">
         <div className="container mx-auto flex items-center justify-between h-16 px-4 md:px-8">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-[#d4a853] to-[#b8902e] flex items-center justify-center"><Building2 className="h-5 w-5 text-[#0a0e1a]" /></div>
-            <span className="text-xl font-bold bg-gradient-to-r from-[#d4a853] to-[#f0d48a] bg-clip-text text-transparent">NextWeb OS</span>
-          </Link>
+        <Link to="/" className="flex items-center gap-3">
+          <NWLogo />
+        </Link>
           <div className="flex items-center gap-3">
             <Link to="/login"><Button variant="ghost" className="text-gray-300 hover:text-[#d4a853]">Sign In</Button></Link>
             <Link to="/signup"><Button className="bg-gradient-to-r from-[#d4a853] to-[#b8902e] text-[#0a0e1a] font-semibold">Get Started</Button></Link>

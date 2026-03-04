@@ -171,6 +171,7 @@ const AboutPage = () => {
 
     <PremiumFooter />
   </div>
-);
+  );
+};
 
 export default AboutPage;
