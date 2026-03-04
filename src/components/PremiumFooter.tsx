@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
-import { Building2, MapPin, Phone, Mail, Globe, Linkedin, Twitter, Facebook, Instagram, ArrowRight } from "lucide-react";
+import { MapPin, Phone, Mail, Globe, Linkedin, Twitter, Facebook, Instagram, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NWLogo } from "@/components/NWLogo";
 
 const footerSections = [
   {
@@ -63,7 +64,6 @@ const footerSections = [
 export function PremiumFooter() {
   return (
     <footer className="border-t border-[#d4a853]/10 bg-[#060914]">
-      {/* Newsletter / CTA band */}
       <div className="border-b border-[#1e2a4a]">
         <div className="container mx-auto px-4 md:px-8 py-12">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -72,11 +72,7 @@ export function PremiumFooter() {
               <p className="text-gray-500 mt-1">Get product updates, industry insights, and exclusive offers.</p>
             </div>
             <div className="flex gap-2 w-full md:w-auto">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="h-11 px-4 rounded-lg bg-[#111832] border border-[#1e2a4a] text-white placeholder:text-gray-600 focus:border-[#d4a853] focus:outline-none text-sm flex-1 md:w-72"
-              />
+              <input type="email" placeholder="Enter your email" className="h-11 px-4 rounded-lg bg-[#111832] border border-[#1e2a4a] text-white placeholder:text-gray-600 focus:border-[#d4a853] focus:outline-none text-sm flex-1 md:w-72" />
               <Button className="bg-gradient-to-r from-[#d4a853] to-[#b8902e] text-[#0a0e1a] font-semibold hover:from-[#e0b85e] hover:to-[#c99d3a] shrink-0">
                 Subscribe <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
@@ -85,24 +81,16 @@ export function PremiumFooter() {
         </div>
       </div>
 
-      {/* Main footer */}
       <div className="container mx-auto px-4 md:px-8 py-16">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
-          {/* Brand column */}
           <div className="col-span-2 md:col-span-3 lg:col-span-1">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-[#d4a853] to-[#b8902e] flex items-center justify-center">
-                <Building2 className="h-5 w-5 text-[#0a0e1a]" />
-              </div>
-              <span className="text-lg font-bold bg-gradient-to-r from-[#d4a853] to-[#f0d48a] bg-clip-text text-transparent">
-                NextWeb OS
-              </span>
+            <div className="mb-5">
+              <NWLogo />
             </div>
             <p className="text-gray-500 text-sm leading-relaxed mb-6">
               The complete business operating system powering 500+ digital agencies and enterprises worldwide.
             </p>
             
-            {/* Company info */}
             <div className="space-y-3 text-sm text-gray-500">
               <p className="font-semibold text-gray-400">Nextweb Pty Ltd</p>
               <div className="flex items-start gap-2">
@@ -127,38 +115,22 @@ export function PremiumFooter() {
               </div>
             </div>
 
-            {/* Social */}
             <div className="flex gap-3 mt-6">
-              {[
-                { icon: Linkedin, href: "#" },
-                { icon: Twitter, href: "#" },
-                { icon: Facebook, href: "#" },
-                { icon: Instagram, href: "#" },
-              ].map((social, i) => (
-                <a
-                  key={i}
-                  href={social.href}
-                  className="h-9 w-9 rounded-lg bg-[#111832] border border-[#1e2a4a] flex items-center justify-center text-gray-500 hover:text-[#d4a853] hover:border-[#d4a853]/30 transition-all"
-                >
-                  <social.icon className="h-4 w-4" />
+              {[Linkedin, Twitter, Facebook, Instagram].map((Icon, i) => (
+                <a key={i} href="#" className="h-9 w-9 rounded-lg bg-[#111832] border border-[#1e2a4a] flex items-center justify-center text-gray-500 hover:text-[#d4a853] hover:border-[#d4a853]/30 transition-all">
+                  <Icon className="h-4 w-4" />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Link columns */}
           {footerSections.map((section) => (
             <div key={section.title}>
               <h4 className="font-semibold text-white text-sm mb-4">{section.title}</h4>
               <ul className="space-y-2.5">
                 {section.links.map((link) => (
                   <li key={link.label}>
-                    <Link
-                      to={link.to}
-                      className="text-sm text-gray-500 hover:text-[#d4a853] transition-colors"
-                    >
-                      {link.label}
-                    </Link>
+                    <Link to={link.to} className="text-sm text-gray-500 hover:text-[#d4a853] transition-colors">{link.label}</Link>
                   </li>
                 ))}
               </ul>
@@ -167,12 +139,9 @@ export function PremiumFooter() {
         </div>
       </div>
 
-      {/* Government badges */}
       <div className="border-t border-[#1e2a4a]">
         <div className="container mx-auto px-4 md:px-8 py-8 text-center">
-          <p className="text-xs text-gray-600 font-semibold uppercase tracking-wider mb-4">
-            Government Approved IT Supplier
-          </p>
+          <p className="text-xs text-gray-600 font-semibold uppercase tracking-wider mb-4">Government Approved IT Supplier</p>
           <div className="flex flex-wrap justify-center gap-6 text-xs text-gray-600">
             <span className="px-3 py-1.5 bg-[#111832] border border-[#1e2a4a] rounded-full">🏛️ Queensland Government</span>
             <span className="px-3 py-1.5 bg-[#111832] border border-[#1e2a4a] rounded-full">🏛️ NSW Government</span>
@@ -182,7 +151,6 @@ export function PremiumFooter() {
         </div>
       </div>
 
-      {/* Bottom bar */}
       <div className="border-t border-[#1e2a4a]">
         <div className="container mx-auto px-4 md:px-8 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-600">

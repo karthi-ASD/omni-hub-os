@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { UpcomingEvents } from "@/components/dashboard/UpcomingEvents";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import {
   Users, Bell, Calendar, FolderKanban, Phone, Receipt, DollarSign, Building2,
   Target, ClipboardList, MessageSquare, Briefcase, ArrowRight, TrendingUp,
@@ -12,6 +13,7 @@ import {
 import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
+  usePageTitle("Dashboard", "Your NextWeb OS command center — real-time stats, quick actions, and activity feed.");
   const { profile, isSuperAdmin } = useAuth();
   const { stats, loading } = useDashboardStats();
   const navigate = useNavigate();

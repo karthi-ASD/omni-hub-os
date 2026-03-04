@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Eye, EyeOff, Building2, CheckCircle2, ArrowRight, Users, TrendingUp, Sparkles } from "lucide-react";
+import { Eye, EyeOff, CheckCircle2, ArrowRight, Users, TrendingUp, Sparkles } from "lucide-react";
+import { NWLogo } from "@/components/NWLogo";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const getPasswordStrength = (password: string): { score: number; label: string; color: string } => {
   let score = 0;
@@ -21,56 +23,36 @@ const getPasswordStrength = (password: string): { score: number; label: string; 
 };
 
 const Signup = () => {
+  usePageTitle("Create Account", "Sign up for NextWeb OS — the all-in-one business operating system. Free 14-day trial, no credit card required.");
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [form, setForm] = useState({
-    businessName: "",
-    fullName: "",
-    email: "",
-    password: "",
-  });
-
+  const [form, setForm] = useState({ businessName: "", fullName: "", email: "", password: "" });
   const strength = getPasswordStrength(form.password);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (form.password.length < 8) {
-      toast.error("Password must be at least 8 characters");
-      return;
-    }
+    if (form.password.length < 8) { toast.error("Password must be at least 8 characters"); return; }
     setLoading(true);
     try {
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: form.email.trim(),
-        password: form.password,
-        options: {
-          data: { full_name: form.fullName.trim() },
-          emailRedirectTo: window.location.origin,
-        },
+        email: form.email.trim(), password: form.password,
+        options: { data: { full_name: form.fullName.trim() }, emailRedirectTo: window.location.origin },
       });
       if (authError) throw authError;
       if (!authData.user) throw new Error("Signup failed");
-
       const { error: rpcError } = await supabase.rpc("handle_signup", {
-        _user_id: authData.user.id,
-        _business_name: form.businessName.trim(),
-        _email: form.email.trim(),
+        _user_id: authData.user.id, _business_name: form.businessName.trim(), _email: form.email.trim(),
       });
       if (rpcError) throw rpcError;
-
       toast.success("Account created! Please check your email to verify.");
       navigate("/login");
-    } catch (err: any) {
-      toast.error(err.message || "Signup failed");
-    } finally {
-      setLoading(false);
-    }
+    } catch (err: any) { toast.error(err.message || "Signup failed"); }
+    finally { setLoading(false); }
   };
 
   return (
     <div className="flex min-h-screen">
-      {/* Left panel */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0a0e1a] via-[#111832] to-[#0a0e1a]" />
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyMTIsMTY4LDgzLDAuMDUpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-60" />
@@ -78,26 +60,14 @@ const Signup = () => {
         <div className="absolute bottom-20 left-10 h-96 w-96 bg-[#d4a853]/5 rounded-full blur-3xl" />
         
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#d4a853] to-[#b8902e] flex items-center justify-center shadow-lg shadow-[#d4a853]/20">
-              <Building2 className="h-6 w-6 text-[#0a0e1a]" />
-            </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-[#d4a853] to-[#f0d48a] bg-clip-text text-transparent">
-              NextWeb OS
-            </span>
-          </div>
+          <NWLogo size="lg" />
 
           <div className="max-w-md">
             <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
               Launch Your Business{" "}
-              <span className="bg-gradient-to-r from-[#d4a853] to-[#f0d48a] bg-clip-text text-transparent">
-                Operating System
-              </span>
+              <span className="bg-gradient-to-r from-[#d4a853] to-[#f0d48a] bg-clip-text text-transparent">Operating System</span>
             </h2>
-            <p className="text-gray-400 text-lg leading-relaxed mb-10">
-              Join 500+ agencies already running their entire operations on NextWeb OS. Get started in under 2 minutes.
-            </p>
-            
+            <p className="text-gray-400 text-lg leading-relaxed mb-10">Join 500+ agencies already running their entire operations on NextWeb OS. Get started in under 2 minutes.</p>
             <div className="space-y-5">
               {[
                 { icon: Sparkles, value: "14-day", label: "Free trial, no credit card" },
@@ -108,34 +78,23 @@ const Signup = () => {
                   <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#d4a853]/10 to-[#d4a853]/5 border border-[#d4a853]/20 flex items-center justify-center">
                     <stat.icon className="h-5 w-5 text-[#d4a853]" />
                   </div>
-                  <div>
-                    <span className="text-white font-bold text-lg">{stat.value}</span>
-                    <span className="text-gray-400 text-sm ml-2">{stat.label}</span>
-                  </div>
+                  <div><span className="text-white font-bold text-lg">{stat.value}</span><span className="text-gray-400 text-sm ml-2">{stat.label}</span></div>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="flex items-center gap-6 text-xs text-gray-600">
-            <span>© {new Date().getFullYear()} NextWeb OS</span>
-            <a href="#" className="hover:text-[#d4a853] transition-colors">Privacy</a>
-            <a href="#" className="hover:text-[#d4a853] transition-colors">Terms</a>
+            <span>© {new Date().getFullYear()} Nextweb Pty Ltd</span>
+            <Link to="/privacy" className="hover:text-[#d4a853] transition-colors">Privacy</Link>
+            <Link to="/terms" className="hover:text-[#d4a853] transition-colors">Terms</Link>
           </div>
         </div>
       </div>
 
-      {/* Right panel - form */}
       <div className="flex-1 flex items-center justify-center p-6 bg-[#0a0e1a] lg:bg-[#080b16]">
         <div className="w-full max-w-md space-y-6">
-          <div className="lg:hidden flex items-center gap-3 mb-2">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-[#d4a853] to-[#b8902e] flex items-center justify-center">
-              <Building2 className="h-5 w-5 text-[#0a0e1a]" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-[#d4a853] to-[#f0d48a] bg-clip-text text-transparent">
-              NextWeb OS
-            </span>
-          </div>
+          <div className="lg:hidden"><NWLogo /></div>
           <div>
             <h2 className="text-3xl font-bold text-white">Create Your Account</h2>
             <p className="text-gray-500 mt-2">Set up your business and start your free trial</p>
@@ -164,25 +123,14 @@ const Signup = () => {
               </div>
               {form.password.length > 0 && (
                 <div className="space-y-1">
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i <= strength.score ? strength.color : "bg-[#1e2a4a]"}`} />
-                    ))}
-                  </div>
+                  <div className="flex gap-1">{[1,2,3,4,5].map((i) => (<div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i <= strength.score ? strength.color : "bg-[#1e2a4a]"}`} />))}</div>
                   <p className="text-xs text-gray-500">{strength.label}</p>
                 </div>
               )}
             </div>
 
             <Button type="submit" className="w-full h-12 bg-gradient-to-r from-[#d4a853] to-[#b8902e] text-[#0a0e1a] font-semibold text-base hover:from-[#e0b85e] hover:to-[#c99d3a] shadow-lg shadow-[#d4a853]/20" disabled={loading}>
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0a0e1a] border-t-transparent" />
-                  Creating account...
-                </div>
-              ) : (
-                <>Create Account <ArrowRight className="ml-2 h-4 w-4" /></>
-              )}
+              {loading ? (<div className="flex items-center gap-2"><div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0a0e1a] border-t-transparent" />Creating account...</div>) : (<>Create Account <ArrowRight className="ml-2 h-4 w-4" /></>)}
             </Button>
 
             <div className="relative my-2">
