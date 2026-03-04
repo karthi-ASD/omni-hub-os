@@ -5,7 +5,7 @@ import {
   PieChart, Globe, Mail, TrendingUp, Brain, Bot, Store, Calendar, Clock,
   Shield, Settings, LogOut, Users, Building2, Activity, Palette, Megaphone,
   UserCog, CalendarDays, Ticket, Phone, DollarSign, Briefcase as BriefcaseIcon,
-  Sparkles,
+  Sparkles, MessageCircle, Plug, ShieldCheck, Factory,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -58,7 +58,16 @@ const menuSections: { title: string; items: MenuItem[]; roles?: string[] }[] = [
       { label: "AI Insights", icon: Brain, to: "/ai-insights" },
       { label: "AI Agents", icon: Bot, to: "/ai-agents" },
       { label: "AI Voice Agents", icon: Phone, to: "/ai-voice-agents" },
+      { label: "Agent Factory", icon: Factory, to: "/agent-factory" },
       { label: "Reports", icon: PieChart, to: "/reports" },
+    ],
+  },
+  {
+    title: "Messaging & Compliance",
+    items: [
+      { label: "Conversations", icon: MessageCircle, to: "/conversations" },
+      { label: "Providers", icon: Plug, to: "/providers" },
+      { label: "Consent", icon: ShieldCheck, to: "/consent-compliance" },
     ],
   },
   {
