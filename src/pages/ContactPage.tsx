@@ -13,6 +13,7 @@ import { NWLogo } from "@/components/NWLogo";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
 const ContactPage = () => {
+  usePageTitle("Contact Us", "Get in touch with Nextweb — 1800 365 247. Office: Broadbeach, Gold Coast, Australia.");
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", company: "", subject: "", message: "" });
 
