@@ -266,6 +266,63 @@ export type Database = {
           },
         ]
       }
+      ai_agent_scripts: {
+        Row: {
+          agent_id: string | null
+          business_id: string
+          closing_text: string | null
+          created_at: string | null
+          id: string
+          intro_text: string | null
+          is_default: boolean | null
+          qualification_questions_json: Json | null
+          scheduling_text: string | null
+          script_name: string
+          verification_text: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          business_id: string
+          closing_text?: string | null
+          created_at?: string | null
+          id?: string
+          intro_text?: string | null
+          is_default?: boolean | null
+          qualification_questions_json?: Json | null
+          scheduling_text?: string | null
+          script_name: string
+          verification_text?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          business_id?: string
+          closing_text?: string | null
+          created_at?: string | null
+          id?: string
+          intro_text?: string | null
+          is_default?: boolean | null
+          qualification_questions_json?: Json | null
+          scheduling_text?: string | null
+          script_name?: string
+          verification_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_scripts_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_scripts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_agent_tasks: {
         Row: {
           agent_id: string
@@ -313,30 +370,48 @@ export type Database = {
       ai_agents: {
         Row: {
           agent_name: string
+          ai_provider: string | null
           autonomy_level: string
           business_id: string | null
+          call_timeout_seconds: number | null
           created_at: string
           enabled: boolean
           id: string
+          language: string | null
+          retry_attempts: number | null
           scope: string
+          script_id: string | null
+          voice_type: string | null
         }
         Insert: {
           agent_name: string
+          ai_provider?: string | null
           autonomy_level?: string
           business_id?: string | null
+          call_timeout_seconds?: number | null
           created_at?: string
           enabled?: boolean
           id?: string
+          language?: string | null
+          retry_attempts?: number | null
           scope: string
+          script_id?: string | null
+          voice_type?: string | null
         }
         Update: {
           agent_name?: string
+          ai_provider?: string | null
           autonomy_level?: string
           business_id?: string | null
+          call_timeout_seconds?: number | null
           created_at?: string
           enabled?: boolean
           id?: string
+          language?: string | null
+          retry_attempts?: number | null
           scope?: string
+          script_id?: string | null
+          voice_type?: string | null
         }
         Relationships: [
           {
@@ -344,6 +419,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agents_script_id_fkey"
+            columns: ["script_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agent_scripts"
             referencedColumns: ["id"]
           },
         ]
@@ -374,6 +456,81 @@ export type Database = {
           target_region?: string
         }
         Relationships: []
+      }
+      ai_lead_qualifications: {
+        Row: {
+          ai_summary: string | null
+          budget_range: string | null
+          business_id: string
+          call_log_id: string | null
+          created_at: string | null
+          followup_date: string | null
+          followup_time: string | null
+          id: string
+          lead_id: string | null
+          lead_name: string | null
+          lead_score: number | null
+          project_type: string | null
+          requirement_summary: string | null
+          service_interest: string | null
+          status: string | null
+          timeframe: string | null
+          timezone: string | null
+        }
+        Insert: {
+          ai_summary?: string | null
+          budget_range?: string | null
+          business_id: string
+          call_log_id?: string | null
+          created_at?: string | null
+          followup_date?: string | null
+          followup_time?: string | null
+          id?: string
+          lead_id?: string | null
+          lead_name?: string | null
+          lead_score?: number | null
+          project_type?: string | null
+          requirement_summary?: string | null
+          service_interest?: string | null
+          status?: string | null
+          timeframe?: string | null
+          timezone?: string | null
+        }
+        Update: {
+          ai_summary?: string | null
+          budget_range?: string | null
+          business_id?: string
+          call_log_id?: string | null
+          created_at?: string | null
+          followup_date?: string | null
+          followup_time?: string | null
+          id?: string
+          lead_id?: string | null
+          lead_name?: string | null
+          lead_score?: number | null
+          project_type?: string | null
+          requirement_summary?: string | null
+          service_interest?: string | null
+          status?: string | null
+          timeframe?: string | null
+          timezone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_lead_qualifications_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_lead_qualifications_call_log_id_fkey"
+            columns: ["call_log_id"]
+            isOneToOne: false
+            referencedRelation: "ai_voice_call_logs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ai_sales_forecasts: {
         Row: {
@@ -485,6 +642,81 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ai_tasks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_voice_call_logs: {
+        Row: {
+          agent_id: string | null
+          ai_summary: string | null
+          business_id: string
+          call_duration_seconds: number | null
+          call_outcome: string | null
+          call_status: string | null
+          consent_given: boolean | null
+          created_at: string | null
+          id: string
+          lead_email: string | null
+          lead_id: string | null
+          lead_name: string | null
+          lead_phone: string | null
+          provider: string | null
+          recording_url: string | null
+          transcript: string | null
+          website_source: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          ai_summary?: string | null
+          business_id: string
+          call_duration_seconds?: number | null
+          call_outcome?: string | null
+          call_status?: string | null
+          consent_given?: boolean | null
+          created_at?: string | null
+          id?: string
+          lead_email?: string | null
+          lead_id?: string | null
+          lead_name?: string | null
+          lead_phone?: string | null
+          provider?: string | null
+          recording_url?: string | null
+          transcript?: string | null
+          website_source?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          ai_summary?: string | null
+          business_id?: string
+          call_duration_seconds?: number | null
+          call_outcome?: string | null
+          call_status?: string | null
+          consent_given?: boolean | null
+          created_at?: string | null
+          id?: string
+          lead_email?: string | null
+          lead_id?: string | null
+          lead_name?: string | null
+          lead_phone?: string | null
+          provider?: string | null
+          recording_url?: string | null
+          transcript?: string | null
+          website_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_voice_call_logs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_voice_call_logs_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"

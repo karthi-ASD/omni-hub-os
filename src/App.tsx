@@ -42,6 +42,7 @@ import WhiteLabelPage from "./pages/WhiteLabelPage";
 import InvestorDashboardPage from "./pages/InvestorDashboardPage";
 import PartnersPage from "./pages/PartnersPage";
 import AIAgentsPage from "./pages/AIAgentsPage";
+import AIVoiceAgentsPage from "./pages/AIVoiceAgentsPage";
 import InvestorPitchPage from "./pages/InvestorPitchPage";
 import MarketplacePage from "./pages/MarketplacePage";
 import AppFactoryPage from "./pages/AppFactoryPage";
@@ -171,6 +172,7 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["super_admin"]}><PartnersPage /></ProtectedRoute>
               } />
               <Route path="/ai-agents" element={<AIAgentsPage />} />
+              <Route path="/ai-voice-agents" element={<AIVoiceAgentsPage />} />
               <Route path="/investor-pitch" element={
                 <ProtectedRoute requiredRoles={["super_admin"]}><InvestorPitchPage /></ProtectedRoute>
               } />
