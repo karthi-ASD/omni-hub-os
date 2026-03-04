@@ -469,6 +469,96 @@ serve(async (req) => {
       systemPrompt = `You are a senior business advisor AI for a digital agency CRM platform. Answer the user's business question using your knowledge of CRM best practices, sales optimization, marketing strategy, and team management. Be specific, actionable, and data-driven in your response.`;
       userPrompt = `Business question: ${payload?.question || "How can I grow my business?"}\n\nContext: ${JSON.stringify(payload)}`;
 
+    } else if (task_type === "behavior_analysis") {
+      systemPrompt = `You are a behavioral analytics AI for a digital agency CRM. Analyze user behavior, lead interactions, campaign performance, and messaging effectiveness to identify actionable patterns. Return 3-7 patterns with confidence scores and recommendations.`;
+      userPrompt = `Identify behavior patterns from this business data:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "identify_patterns",
+          description: "Return identified behavior patterns",
+          parameters: {
+            type: "object",
+            properties: {
+              patterns: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    pattern_type: { type: "string", enum: ["channel_preference", "timing", "conversion", "engagement", "churn_signal", "growth_signal"] },
+                    description: { type: "string" },
+                    confidence_score: { type: "number", description: "0-100" },
+                    recommendation: { type: "string" },
+                  },
+                  required: ["pattern_type", "description", "confidence_score"],
+                  additionalProperties: false,
+                },
+              },
+              summary: { type: "string" },
+            },
+            required: ["patterns", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "identify_patterns" } };
+
+    } else if (task_type === "workflow_optimization") {
+      systemPrompt = `You are a workflow optimization AI for a digital agency CRM. Analyze existing workflows (lead follow-up, sales pipeline, marketing sequences) and suggest concrete adaptations to improve efficiency, conversion rates, and response times. Return 2-5 actionable adaptations.`;
+      userPrompt = `Optimize workflows for this business:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "suggest_adaptations",
+          description: "Return workflow adaptation suggestions",
+          parameters: {
+            type: "object",
+            properties: {
+              adaptations: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    workflow_type: { type: "string", enum: ["lead_followup", "sales_pipeline", "marketing_sequence", "support_escalation", "onboarding"] },
+                    reason: { type: "string" },
+                    changes: { type: "object", description: "Structured changes to apply" },
+                  },
+                  required: ["workflow_type", "reason"],
+                  additionalProperties: false,
+                },
+              },
+              summary: { type: "string" },
+            },
+            required: ["adaptations", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "suggest_adaptations" } };
+
+    } else if (task_type === "model_training") {
+      systemPrompt = `You are an ML training simulation AI for a digital agency CRM. Simulate training a ${payload?.model_type || "predictive"} model on the provided business data. Return realistic training metrics including data size, accuracy score, and a summary of what the model learned.`;
+      userPrompt = `Simulate training a ${payload?.model_type} model:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "training_result",
+          description: "Return model training results",
+          parameters: {
+            type: "object",
+            properties: {
+              data_size: { type: "number", description: "Number of training samples used" },
+              accuracy: { type: "number", description: "Model accuracy 0-100" },
+              summary: { type: "string" },
+              key_features: { type: "array", items: { type: "string" } },
+            },
+            required: ["data_size", "accuracy", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "training_result" } };
+
     } else {
       return new Response(JSON.stringify({ error: "Unknown task_type" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },

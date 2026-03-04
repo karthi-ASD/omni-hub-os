@@ -109,6 +109,7 @@ import AutopilotSettingsPage from "./pages/AutopilotSettingsPage";
 import AutopilotSequencesPage from "./pages/AutopilotSequencesPage";
 import AutopilotInboxPage from "./pages/AutopilotInboxPage";
 import AIBrainPage from "./pages/AIBrainPage";
+import AILearningPage from "./pages/AILearningPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -299,6 +300,9 @@ const App = () => (
               <Route path="/autopilot/inbox" element={<AutopilotInboxPage />} />
               <Route path="/ai-brain" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AIBrainPage /></ProtectedRoute>
+              } />
+              <Route path="/ai-learning" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AILearningPage /></ProtectedRoute>
               } />
               <Route path="/usage-analytics" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><UsageAnalyticsPage /></ProtectedRoute>
