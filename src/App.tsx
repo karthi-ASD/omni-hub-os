@@ -266,6 +266,16 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><VaultPage /></ProtectedRoute>
               } />
               <Route path="/job-crm" element={<JobCRMPage />} />
+              <Route path="/conversations" element={<ConversationsPage />} />
+              <Route path="/agent-factory" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AgentFactoryPage /></ProtectedRoute>
+              } />
+              <Route path="/providers" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><ProviderConnectionsPage /></ProtectedRoute>
+              } />
+              <Route path="/consent-compliance" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><ConsentCompliancePage /></ProtectedRoute>
+              } />
               <Route path="/usage-analytics" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><UsageAnalyticsPage /></ProtectedRoute>
               } />
