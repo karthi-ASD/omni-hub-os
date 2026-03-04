@@ -72,6 +72,14 @@ const menuSections: { title: string; items: MenuItem[]; roles?: string[] }[] = [
     ],
   },
   {
+    title: "Autopilot",
+    items: [
+      { label: "Inbox", icon: Inbox, to: "/autopilot/inbox" },
+      { label: "Sequences", icon: Workflow, to: "/autopilot/sequences" },
+      { label: "Settings", icon: Zap, to: "/autopilot/settings" },
+    ],
+  },
+  {
     title: "Team",
     items: [
       { label: "Workforce", icon: UserCog, to: "/workforce" },
