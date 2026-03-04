@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PremiumFooter } from "@/components/PremiumFooter";
-import { Building2, Shield, Lock, Eye, Database, Server, CheckCircle2, ArrowRight, Sparkles } from "lucide-react";
+import { Shield, Lock, Eye, Database, Server, CheckCircle2, ArrowRight, Sparkles } from "lucide-react";
+import { NWLogo } from "@/components/NWLogo";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const features = [
   { icon: Lock, title: "End-to-End Encryption", desc: "All data is encrypted at rest (AES-256) and in transit (TLS 1.3). Your sensitive business data is protected at every layer." },
