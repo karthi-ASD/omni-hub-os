@@ -147,7 +147,7 @@ const AIBusinessIntelligencePage = () => {
                       <div className="flex items-center gap-1.5 shrink-0">
                         <Badge variant="outline" className="text-[10px]">{rec.impact_score}</Badge>
                         <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => completeRecommendation(rec.id)}>
-                          <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+                          <CheckCircle className="h-3.5 w-3.5 text-primary" />
                         </Button>
                         <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => dismissRecommendation(rec.id)}>
                           <XCircle className="h-3.5 w-3.5 text-muted-foreground" />
