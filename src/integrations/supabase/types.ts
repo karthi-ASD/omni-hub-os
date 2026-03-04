@@ -260,6 +260,124 @@ export type Database = {
           },
         ]
       }
+      ai_agent_actions_v2: {
+        Row: {
+          action_payload_json: Json | null
+          action_type: string
+          approval_request_id: string | null
+          business_id: string
+          created_at: string
+          execution_status: Database["public"]["Enums"]["agent_action_status"]
+          id: string
+          requires_approval: boolean
+          run_id: string
+          target_id: string | null
+          target_table: string | null
+        }
+        Insert: {
+          action_payload_json?: Json | null
+          action_type: string
+          approval_request_id?: string | null
+          business_id: string
+          created_at?: string
+          execution_status?: Database["public"]["Enums"]["agent_action_status"]
+          id?: string
+          requires_approval?: boolean
+          run_id: string
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Update: {
+          action_payload_json?: Json | null
+          action_type?: string
+          approval_request_id?: string | null
+          business_id?: string
+          created_at?: string
+          execution_status?: Database["public"]["Enums"]["agent_action_status"]
+          id?: string
+          requires_approval?: boolean
+          run_id?: string
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_actions_v2_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_actions_v2_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agent_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agent_approvals: {
+        Row: {
+          action_id: string | null
+          approver_role: string
+          business_id: string
+          created_at: string
+          decided_at: string | null
+          id: string
+          reason: string | null
+          requested_by: string
+          run_id: string
+          status: Database["public"]["Enums"]["agent_approval_status"]
+        }
+        Insert: {
+          action_id?: string | null
+          approver_role?: string
+          business_id: string
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          reason?: string | null
+          requested_by?: string
+          run_id: string
+          status?: Database["public"]["Enums"]["agent_approval_status"]
+        }
+        Update: {
+          action_id?: string | null
+          approver_role?: string
+          business_id?: string
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          reason?: string | null
+          requested_by?: string
+          run_id?: string
+          status?: Database["public"]["Enums"]["agent_approval_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_approvals_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agent_actions_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_approvals_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_approvals_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agent_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_agent_assignments: {
         Row: {
           agent_id: string
@@ -345,6 +463,167 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agent_guardrails: {
+        Row: {
+          agent_type: Database["public"]["Enums"]["agent_type"]
+          business_id: string
+          created_at: string
+          enforcement: Database["public"]["Enums"]["guardrail_enforcement"]
+          id: string
+          is_active: boolean
+          risk_level: Database["public"]["Enums"]["risk_level"]
+          rule_json: Json | null
+          rule_name: string
+        }
+        Insert: {
+          agent_type: Database["public"]["Enums"]["agent_type"]
+          business_id: string
+          created_at?: string
+          enforcement?: Database["public"]["Enums"]["guardrail_enforcement"]
+          id?: string
+          is_active?: boolean
+          risk_level?: Database["public"]["Enums"]["risk_level"]
+          rule_json?: Json | null
+          rule_name: string
+        }
+        Update: {
+          agent_type?: Database["public"]["Enums"]["agent_type"]
+          business_id?: string
+          created_at?: string
+          enforcement?: Database["public"]["Enums"]["guardrail_enforcement"]
+          id?: string
+          is_active?: boolean
+          risk_level?: Database["public"]["Enums"]["risk_level"]
+          rule_json?: Json | null
+          rule_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_guardrails_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agent_knowledge_base: {
+        Row: {
+          business_id: string
+          content: string | null
+          created_at: string
+          id: string
+          source_type: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          source_type?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          source_type?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_knowledge_base_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agent_runs: {
+        Row: {
+          agent_id: string
+          business_id: string
+          confidence_score: number | null
+          created_at: string
+          created_by_user_id: string | null
+          ended_at: string | null
+          error_message: string | null
+          id: string
+          input_json: Json | null
+          output_json: Json | null
+          playbook_id: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["agent_run_status"]
+          trigger_ref: string | null
+          trigger_source: string
+        }
+        Insert: {
+          agent_id: string
+          business_id: string
+          confidence_score?: number | null
+          created_at?: string
+          created_by_user_id?: string | null
+          ended_at?: string | null
+          error_message?: string | null
+          id?: string
+          input_json?: Json | null
+          output_json?: Json | null
+          playbook_id?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["agent_run_status"]
+          trigger_ref?: string | null
+          trigger_source?: string
+        }
+        Update: {
+          agent_id?: string
+          business_id?: string
+          confidence_score?: number | null
+          created_at?: string
+          created_by_user_id?: string | null
+          ended_at?: string | null
+          error_message?: string | null
+          id?: string
+          input_json?: Json | null
+          output_json?: Json | null
+          playbook_id?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["agent_run_status"]
+          trigger_ref?: string | null
+          trigger_source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_runs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_autonomous_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_runs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_runs_playbook_id_fkey"
+            columns: ["playbook_id"]
+            isOneToOne: false
+            referencedRelation: "ai_playbooks"
             referencedColumns: ["id"]
           },
         ]
@@ -446,6 +725,44 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agent_tool_connections: {
+        Row: {
+          business_id: string
+          config_vault_key: string | null
+          created_at: string
+          id: string
+          status: string
+          tool_name: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          config_vault_key?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          tool_name: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          config_vault_key?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          tool_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_tool_connections_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
@@ -563,6 +880,53 @@ export type Database = {
             columns: ["script_id"]
             isOneToOne: false
             referencedRelation: "ai_agent_scripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_autonomous_agents: {
+        Row: {
+          agent_type: Database["public"]["Enums"]["agent_type"]
+          business_id: string
+          config_json: Json | null
+          created_at: string
+          id: string
+          is_enabled: boolean
+          mode: Database["public"]["Enums"]["agent_mode"]
+          name: string
+          owner_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          agent_type: Database["public"]["Enums"]["agent_type"]
+          business_id: string
+          config_json?: Json | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          mode?: Database["public"]["Enums"]["agent_mode"]
+          name: string
+          owner_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agent_type?: Database["public"]["Enums"]["agent_type"]
+          business_id?: string
+          config_json?: Json | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          mode?: Database["public"]["Enums"]["agent_mode"]
+          name?: string
+          owner_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_autonomous_agents_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
@@ -1094,6 +1458,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ai_model_training_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_playbooks: {
+        Row: {
+          agent_type: Database["public"]["Enums"]["agent_type"]
+          business_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          requires_approval_default: boolean
+          steps_json: Json
+          trigger_filter_json: Json | null
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          agent_type: Database["public"]["Enums"]["agent_type"]
+          business_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          requires_approval_default?: boolean
+          steps_json?: Json
+          trigger_filter_json?: Json | null
+          trigger_type?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_type?: Database["public"]["Enums"]["agent_type"]
+          business_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          requires_approval_default?: boolean
+          steps_json?: Json
+          trigger_filter_json?: Json | null
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_playbooks_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -10931,6 +11348,17 @@ export type Database = {
       }
     }
     Enums: {
+      agent_action_status: "PLANNED" | "EXECUTED" | "SKIPPED" | "FAILED"
+      agent_approval_status: "PENDING" | "APPROVED" | "REJECTED"
+      agent_mode: "SUGGEST" | "EXECUTE" | "HYBRID"
+      agent_run_status:
+        | "QUEUED"
+        | "RUNNING"
+        | "NEEDS_APPROVAL"
+        | "COMPLETED"
+        | "FAILED"
+        | "CANCELED"
+      agent_type: "SALES" | "MARKETING" | "SUPPORT" | "FINANCE"
       app_role:
         | "super_admin"
         | "business_admin"
@@ -10962,6 +11390,7 @@ export type Database = {
       deal_status: "open" | "won" | "lost" | "archived"
       dunning_action: "email" | "notification" | "task" | "suspend"
       gateway_environment: "sandbox" | "live"
+      guardrail_enforcement: "BLOCK" | "REQUIRE_APPROVAL" | "WARN"
       inquiry_channel:
         | "organic"
         | "google_ads"
@@ -11029,6 +11458,7 @@ export type Database = {
       reminder_entity_type: "inquiry" | "lead"
       reminder_priority: "low" | "medium" | "high"
       reminder_status: "pending" | "done" | "snoozed" | "cancelled" | "overdue"
+      risk_level: "LOW" | "MEDIUM" | "HIGH"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -11156,6 +11586,18 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      agent_action_status: ["PLANNED", "EXECUTED", "SKIPPED", "FAILED"],
+      agent_approval_status: ["PENDING", "APPROVED", "REJECTED"],
+      agent_mode: ["SUGGEST", "EXECUTE", "HYBRID"],
+      agent_run_status: [
+        "QUEUED",
+        "RUNNING",
+        "NEEDS_APPROVAL",
+        "COMPLETED",
+        "FAILED",
+        "CANCELED",
+      ],
+      agent_type: ["SALES", "MARKETING", "SUPPORT", "FINANCE"],
       app_role: [
         "super_admin",
         "business_admin",
@@ -11190,6 +11632,7 @@ export const Constants = {
       deal_status: ["open", "won", "lost", "archived"],
       dunning_action: ["email", "notification", "task", "suspend"],
       gateway_environment: ["sandbox", "live"],
+      guardrail_enforcement: ["BLOCK", "REQUIRE_APPROVAL", "WARN"],
       inquiry_channel: [
         "organic",
         "google_ads",
@@ -11257,6 +11700,7 @@ export const Constants = {
       reminder_entity_type: ["inquiry", "lead"],
       reminder_priority: ["low", "medium", "high"],
       reminder_status: ["pending", "done", "snoozed", "cancelled", "overdue"],
+      risk_level: ["LOW", "MEDIUM", "HIGH"],
     },
   },
 } as const

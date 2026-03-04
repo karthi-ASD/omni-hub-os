@@ -305,7 +305,9 @@ const App = () => (
               <Route path="/ai-learning" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AILearningPage /></ProtectedRoute>
               } />
-              <Route path="/usage-analytics" element={
+              <Route path="/autonomous-agents" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AutonomousAgentsPage /></ProtectedRoute>
+              } />
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><UsageAnalyticsPage /></ProtectedRoute>
               } />
               <Route path="/demo-mode" element={

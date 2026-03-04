@@ -559,6 +559,42 @@ serve(async (req) => {
       }];
       toolChoice = { type: "function", function: { name: "training_result" } };
 
+    } else if (task_type === "agent_execute_run") {
+      systemPrompt = `You are an autonomous AI agent executor for a digital agency CRM. Given the agent type and input context, plan and produce a list of atomic actions the agent should take. For each action specify: action_type, target_table (if applicable), payload, and whether it requires_approval (true for HIGH risk actions like sending external messages, creating invoices, deleting records; false for LOW risk like creating internal tasks or notes). Return a confidence score for the overall plan.`;
+      userPrompt = `Execute agent run with this context:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "plan_agent_run",
+          description: "Return planned actions for the agent run",
+          parameters: {
+            type: "object",
+            properties: {
+              confidence_score: { type: "number", description: "Overall confidence 0-100" },
+              actions: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    action_type: { type: "string" },
+                    target_table: { type: "string" },
+                    payload: { type: "object" },
+                    requires_approval: { type: "boolean" },
+                    reasoning: { type: "string" },
+                  },
+                  required: ["action_type", "reasoning"],
+                  additionalProperties: false,
+                },
+              },
+              summary: { type: "string" },
+            },
+            required: ["confidence_score", "actions", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "plan_agent_run" } };
+
     } else {
       return new Response(JSON.stringify({ error: "Unknown task_type" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
