@@ -83,6 +83,7 @@ import TasksPage from "./pages/TasksPage";
 import TicketsPage from "./pages/TicketsPage";
 import ReportsPage from "./pages/ReportsPage";
 import MarketingPage from "./pages/MarketingPage";
+import MorePage from "./pages/MorePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
