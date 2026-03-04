@@ -98,6 +98,10 @@ import MobileTechnologyPage from "./pages/MobileTechnologyPage";
 import ITSolutionsPage from "./pages/ITSolutionsPage";
 import EMarketingPage from "./pages/EMarketingPage";
 import AutomationPage from "./pages/AutomationPage";
+import ConversationsPage from "./pages/ConversationsPage";
+import AgentFactoryPage from "./pages/AgentFactoryPage";
+import ProviderConnectionsPage from "./pages/ProviderConnectionsPage";
+import ConsentCompliancePage from "./pages/ConsentCompliancePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
