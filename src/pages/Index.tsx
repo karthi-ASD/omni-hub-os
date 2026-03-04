@@ -41,9 +41,10 @@ const Index = () => {
           <div className="hidden md:flex items-center gap-8 text-sm">
             <a href="#features" className="text-gray-400 hover:text-[#d4a853] transition-colors">Features</a>
             <a href="#platform" className="text-gray-400 hover:text-[#d4a853] transition-colors">Platform</a>
-            <a href="#ai" className="text-gray-400 hover:text-[#d4a853] transition-colors">AI Engine</a>
-            <a href="#modules" className="text-gray-400 hover:text-[#d4a853] transition-colors">Modules</a>
-            <a href="#testimonials" className="text-gray-400 hover:text-[#d4a853] transition-colors">Testimonials</a>
+            <a href="#pricing" className="text-gray-400 hover:text-[#d4a853] transition-colors">Pricing</a>
+            <Link to="/web-development" className="text-gray-400 hover:text-[#d4a853] transition-colors">Services</Link>
+            <Link to="/automation" className="text-gray-400 hover:text-[#d4a853] transition-colors">Automation</Link>
+            <Link to="/about" className="text-gray-400 hover:text-[#d4a853] transition-colors">About</Link>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/login">
