@@ -6,9 +6,11 @@ import { Label } from "@/components/ui/label";
 import { PremiumFooter } from "@/components/PremiumFooter";
 import { toast } from "sonner";
 import {
-  Building2, Play, CheckCircle2, ArrowRight, Users, TrendingUp,
+  Play, CheckCircle2, ArrowRight, Users, TrendingUp,
   Sparkles, Monitor, Shield, Zap, Brain, Globe
 } from "lucide-react";
+import { NWLogo } from "@/components/NWLogo";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const DemoPage = () => {
   const [loading, setLoading] = useState(false);
