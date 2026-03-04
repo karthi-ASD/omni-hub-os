@@ -84,6 +84,14 @@ import TicketsPage from "./pages/TicketsPage";
 import ReportsPage from "./pages/ReportsPage";
 import MarketingPage from "./pages/MarketingPage";
 import MorePage from "./pages/MorePage";
+import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import TermsPage from "./pages/TermsPage";
+import SecurityPage from "./pages/SecurityPage";
+import CareersPage from "./pages/CareersPage";
+import BlogPage from "./pages/BlogPage";
+import DemoRequestPage from "./pages/DemoRequestPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
