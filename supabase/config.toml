@@ -2,3 +2,6 @@ project_id = "equruhaugrbtqjixqgtg"
 
 [functions.ai-engine]
 verify_jwt = false
+
+[functions.webhook-router]
+verify_jwt = false
