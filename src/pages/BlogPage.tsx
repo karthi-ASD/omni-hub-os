@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PremiumFooter } from "@/components/PremiumFooter";
-import { Building2, BookOpen, ArrowRight, Calendar, User, Clock, Tag } from "lucide-react";
+import { BookOpen, ArrowRight, Calendar, User, Clock, Tag } from "lucide-react";
+import { NWLogo } from "@/components/NWLogo";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const posts = [
   { title: "How AI is Transforming Digital Agency Operations in 2026", excerpt: "Explore how autonomous AI agents are automating lead scoring, client management, and sales forecasting for modern agencies.", category: "AI & Automation", author: "Rajeev Kumar", date: "Feb 28, 2026", readTime: "8 min" },
