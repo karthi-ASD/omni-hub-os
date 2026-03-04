@@ -17,6 +17,7 @@ import aiAutomation from "@/assets/ai-automation.jpg";
 import multiDevice from "@/assets/multi-device.jpg";
 
 const Index = () => {
+  usePageTitle("", "NextWeb OS — the all-in-one business operating system. CRM, AI, invoicing, SEO, payroll, and 100+ modules for modern enterprises.");
   const { session, loading } = useAuth();
 
   if (loading) {
