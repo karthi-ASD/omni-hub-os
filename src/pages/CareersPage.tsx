@@ -92,6 +92,7 @@ const CareersPage = () => {
     </section>
     <PremiumFooter />
   </div>
-);
+  );
+};
 
 export default CareersPage;

@@ -57,6 +57,7 @@ const TermsPage = () => {
     </section>
     <PremiumFooter />
   </div>
-);
+  );
+};
 
 export default TermsPage;

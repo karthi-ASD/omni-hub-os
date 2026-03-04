@@ -78,6 +78,7 @@ const BlogPage = () => {
     </section>
     <PremiumFooter />
   </div>
-);
+  );
+};
 
 export default BlogPage;

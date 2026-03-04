@@ -59,6 +59,7 @@ const SecurityPage = () => {
     </section>
     <PremiumFooter />
   </div>
-);
+  );
+};
 
 export default SecurityPage;

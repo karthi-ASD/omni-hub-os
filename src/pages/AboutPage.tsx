@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PremiumFooter } from "@/components/PremiumFooter";
 import {
-  Users, Globe, Award, Sparkles, Target, Heart,
+  Building2, Users, Globe, Award, Sparkles, Target, Heart,
   Lightbulb, Shield, Zap, ArrowRight, MapPin, Phone, Mail
 } from "lucide-react";
 import { NWLogo } from "@/components/NWLogo";

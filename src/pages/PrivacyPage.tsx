@@ -57,6 +57,7 @@ const PrivacyPage = () => {
     </section>
     <PremiumFooter />
   </div>
-);
+  );
+};
 
 export default PrivacyPage;
