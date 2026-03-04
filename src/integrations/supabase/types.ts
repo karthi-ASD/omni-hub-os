@@ -225,6 +225,54 @@ export type Database = {
           },
         ]
       }
+      ai_agent_assignments: {
+        Row: {
+          agent_id: string
+          assigned_team_id: string | null
+          assigned_user_id: string | null
+          business_id: string
+          created_at: string | null
+          id: string
+          scope_type: string
+          triggers_enabled: boolean | null
+        }
+        Insert: {
+          agent_id: string
+          assigned_team_id?: string | null
+          assigned_user_id?: string | null
+          business_id: string
+          created_at?: string | null
+          id?: string
+          scope_type?: string
+          triggers_enabled?: boolean | null
+        }
+        Update: {
+          agent_id?: string
+          assigned_team_id?: string | null
+          assigned_user_id?: string | null
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          scope_type?: string
+          triggers_enabled?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_assignments_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_assignments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_agent_goals: {
         Row: {
           agent_id: string
@@ -363,6 +411,60 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agent_versions: {
+        Row: {
+          agent_id: string
+          business_id: string | null
+          created_at: string | null
+          data_capture_schema: Json | null
+          id: string
+          is_active: boolean | null
+          safety_rules: string | null
+          system_prompt: string | null
+          tools_allowed: Json | null
+          version_number: number
+        }
+        Insert: {
+          agent_id: string
+          business_id?: string | null
+          created_at?: string | null
+          data_capture_schema?: Json | null
+          id?: string
+          is_active?: boolean | null
+          safety_rules?: string | null
+          system_prompt?: string | null
+          tools_allowed?: Json | null
+          version_number?: number
+        }
+        Update: {
+          agent_id?: string
+          business_id?: string | null
+          created_at?: string | null
+          data_capture_schema?: Json | null
+          id?: string
+          is_active?: boolean | null
+          safety_rules?: string | null
+          system_prompt?: string | null
+          tools_allowed?: Json | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_versions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_versions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
@@ -2486,6 +2588,53 @@ export type Database = {
           },
         ]
       }
+      consent_records: {
+        Row: {
+          business_id: string
+          consent_type: string
+          created_at: string | null
+          email: string | null
+          id: string
+          person_id: string | null
+          person_type: string
+          phone: string | null
+          source: string
+          status: string
+        }
+        Insert: {
+          business_id: string
+          consent_type: string
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          person_id?: string | null
+          person_type?: string
+          phone?: string | null
+          source?: string
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          consent_type?: string
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          person_id?: string | null
+          person_type?: string
+          phone?: string | null
+          source?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consent_records_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           business_id: string
@@ -2546,6 +2695,191 @@ export type Database = {
             columns: ["proposal_id"]
             isOneToOne: false
             referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_messages: {
+        Row: {
+          body_html: string | null
+          body_text: string | null
+          business_id: string
+          channel: string
+          created_at: string | null
+          created_by: string | null
+          direction: string
+          error_message: string | null
+          from_address: string | null
+          id: string
+          media_urls: Json | null
+          provider_message_id: string | null
+          received_at: string | null
+          sent_at: string | null
+          status: string
+          thread_id: string
+          to_address: string | null
+        }
+        Insert: {
+          body_html?: string | null
+          body_text?: string | null
+          business_id: string
+          channel?: string
+          created_at?: string | null
+          created_by?: string | null
+          direction?: string
+          error_message?: string | null
+          from_address?: string | null
+          id?: string
+          media_urls?: Json | null
+          provider_message_id?: string | null
+          received_at?: string | null
+          sent_at?: string | null
+          status?: string
+          thread_id: string
+          to_address?: string | null
+        }
+        Update: {
+          body_html?: string | null
+          body_text?: string | null
+          business_id?: string
+          channel?: string
+          created_at?: string | null
+          created_by?: string | null
+          direction?: string
+          error_message?: string | null
+          from_address?: string | null
+          id?: string
+          media_urls?: Json | null
+          provider_message_id?: string | null
+          received_at?: string | null
+          sent_at?: string | null
+          status?: string
+          thread_id?: string
+          to_address?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_messages_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_participants: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          display_name: string | null
+          email: string | null
+          id: string
+          participant_id: string | null
+          participant_type: string
+          phone: string | null
+          thread_id: string
+          whatsapp_number: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          participant_id?: string | null
+          participant_type?: string
+          phone?: string | null
+          thread_id: string
+          whatsapp_number?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          participant_id?: string | null
+          participant_type?: string
+          phone?: string | null
+          thread_id?: string
+          whatsapp_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_participants_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_participants_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_threads: {
+        Row: {
+          assigned_to: string | null
+          business_id: string
+          client_id: string | null
+          created_at: string | null
+          id: string
+          job_id: string | null
+          last_message_at: string | null
+          lead_id: string | null
+          status: string
+          subject: string | null
+          thread_type: string
+          ticket_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          business_id: string
+          client_id?: string | null
+          created_at?: string | null
+          id?: string
+          job_id?: string | null
+          last_message_at?: string | null
+          lead_id?: string | null
+          status?: string
+          subject?: string | null
+          thread_type?: string
+          ticket_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          business_id?: string
+          client_id?: string | null
+          created_at?: string | null
+          id?: string
+          job_id?: string | null
+          last_message_at?: string | null
+          lead_id?: string | null
+          status?: string
+          subject?: string | null
+          thread_type?: string
+          ticket_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_threads_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
@@ -5479,6 +5813,44 @@ export type Database = {
         }
         Relationships: []
       }
+      opt_out_registry: {
+        Row: {
+          business_id: string
+          channel: string
+          created_at: string | null
+          email: string | null
+          id: string
+          phone: string | null
+          reason: string
+        }
+        Insert: {
+          business_id: string
+          channel: string
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          phone?: string | null
+          reason?: string
+        }
+        Update: {
+          business_id?: string
+          channel?: string
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          phone?: string | null
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opt_out_registry_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_structure_nodes: {
         Row: {
           business_id: string
@@ -6303,6 +6675,149 @@ export type Database = {
             columns: ["deal_id"]
             isOneToOne: false
             referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_access_logs: {
+        Row: {
+          action: string
+          business_id: string
+          created_at: string | null
+          id: string
+          ip: string | null
+          performed_by: string
+          provider_connection_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          business_id: string
+          created_at?: string | null
+          id?: string
+          ip?: string | null
+          performed_by: string
+          provider_connection_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          ip?: string | null
+          performed_by?: string
+          provider_connection_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_access_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_access_logs_provider_connection_id_fkey"
+            columns: ["provider_connection_id"]
+            isOneToOne: false
+            referencedRelation: "provider_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_connections: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          display_label: string | null
+          id: string
+          last_tested_at: string | null
+          provider_name: string
+          provider_type: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          display_label?: string | null
+          id?: string
+          last_tested_at?: string | null
+          provider_name: string
+          provider_type: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          display_label?: string | null
+          id?: string
+          last_tested_at?: string | null
+          provider_name?: string
+          provider_type?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_connections_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_credentials_vault: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          encrypted_value: string
+          id: string
+          key_name: string
+          masked_value: string | null
+          provider_connection_id: string
+          rotation_due_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          encrypted_value: string
+          id?: string
+          key_name: string
+          masked_value?: string | null
+          provider_connection_id: string
+          rotation_due_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          encrypted_value?: string
+          id?: string
+          key_name?: string
+          masked_value?: string | null
+          provider_connection_id?: string
+          rotation_due_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_credentials_vault_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_credentials_vault_provider_connection_id_fkey"
+            columns: ["provider_connection_id"]
+            isOneToOne: false
+            referencedRelation: "provider_connections"
             referencedColumns: ["id"]
           },
         ]
@@ -8816,6 +9331,104 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webhook_endpoints: {
+        Row: {
+          api_key_hash: string | null
+          business_id: string
+          created_at: string | null
+          endpoint_type: string
+          id: string
+          is_active: boolean | null
+          name: string
+          rate_limit_per_minute: number | null
+          signature_secret_encrypted: string | null
+        }
+        Insert: {
+          api_key_hash?: string | null
+          business_id: string
+          created_at?: string | null
+          endpoint_type?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          rate_limit_per_minute?: number | null
+          signature_secret_encrypted?: string | null
+        }
+        Update: {
+          api_key_hash?: string | null
+          business_id?: string
+          created_at?: string | null
+          endpoint_type?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          rate_limit_per_minute?: number | null
+          signature_secret_encrypted?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_endpoints_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webhook_events: {
+        Row: {
+          business_id: string
+          endpoint_id: string
+          error_message: string | null
+          event_type: string | null
+          external_event_id: string | null
+          id: string
+          payload_json: Json | null
+          processed_at: string | null
+          received_at: string | null
+          status: string
+        }
+        Insert: {
+          business_id: string
+          endpoint_id: string
+          error_message?: string | null
+          event_type?: string | null
+          external_event_id?: string | null
+          id?: string
+          payload_json?: Json | null
+          processed_at?: string | null
+          received_at?: string | null
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          endpoint_id?: string
+          error_message?: string | null
+          event_type?: string | null
+          external_event_id?: string | null
+          id?: string
+          payload_json?: Json | null
+          processed_at?: string | null
+          received_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "webhook_events_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "webhook_endpoints"
             referencedColumns: ["id"]
           },
         ]
