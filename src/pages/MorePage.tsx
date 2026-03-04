@@ -5,7 +5,7 @@ import {
   PieChart, Globe, Mail, TrendingUp, Brain, Bot, Store, Calendar, Clock,
   Shield, Settings, LogOut, Users, Building2, Activity, Palette, Megaphone,
   UserCog, CalendarDays, Ticket, Phone, DollarSign, Briefcase as BriefcaseIcon,
-  Sparkles,
+  Sparkles, MessageCircle, Plug, ShieldCheck, Factory,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
