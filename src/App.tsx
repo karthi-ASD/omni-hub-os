@@ -39,6 +39,7 @@ import SystemMonitorPage from "./pages/SystemMonitorPage";
 import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
 import AIInsightsPage from "./pages/AIInsightsPage";
 import AIBusinessIntelligencePage from "./pages/AIBusinessIntelligencePage";
+import GrowthEnginePage from "./pages/GrowthEnginePage";
 import WhiteLabelPage from "./pages/WhiteLabelPage";
 import InvestorDashboardPage from "./pages/InvestorDashboardPage";
 import PartnersPage from "./pages/PartnersPage";
