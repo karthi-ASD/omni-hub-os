@@ -2,9 +2,11 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PremiumFooter } from "@/components/PremiumFooter";
 import {
-  Building2, Users, Globe, Award, Sparkles, Target, Heart,
+  Users, Globe, Award, Sparkles, Target, Heart,
   Lightbulb, Shield, Zap, ArrowRight, MapPin, Phone, Mail
 } from "lucide-react";
+import { NWLogo } from "@/components/NWLogo";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 const values = [
   { icon: Lightbulb, title: "Innovation First", desc: "We push boundaries with cutting-edge AI, automation, and multi-tenant architecture to keep our clients ahead." },
