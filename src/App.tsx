@@ -173,6 +173,9 @@ const App = () => (
               <Route path="/analytics" element={<AnalyticsDashboardPage />} />
               <Route path="/ai-insights" element={<AIInsightsPage />} />
               <Route path="/ai-intelligence" element={<AIBusinessIntelligencePage />} />
+              <Route path="/growth-engine" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><GrowthEnginePage /></ProtectedRoute>
+              } />
               <Route path="/white-label" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><WhiteLabelPage /></ProtectedRoute>
               } />
