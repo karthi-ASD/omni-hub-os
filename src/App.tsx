@@ -111,6 +111,8 @@ import AutopilotInboxPage from "./pages/AutopilotInboxPage";
 import AIBrainPage from "./pages/AIBrainPage";
 import AILearningPage from "./pages/AILearningPage";
 import AutonomousAgentsPage from "./pages/AutonomousAgentsPage";
+import WebsitesPage from "./pages/WebsitesPage";
+import LeadRoutingPage from "./pages/LeadRoutingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -307,6 +309,12 @@ const App = () => (
               } />
               <Route path="/autonomous-agents" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AutonomousAgentsPage /></ProtectedRoute>
+              } />
+              <Route path="/websites" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><WebsitesPage /></ProtectedRoute>
+              } />
+              <Route path="/lead-routing" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><LeadRoutingPage /></ProtectedRoute>
               } />
               <Route path="/usage-analytics" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><UsageAnalyticsPage /></ProtectedRoute>

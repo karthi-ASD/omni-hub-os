@@ -6,6 +6,7 @@ import {
   Shield, Settings, LogOut, Users, Building2, Activity, Palette, Megaphone,
   UserCog, CalendarDays, Ticket, Phone, DollarSign, Briefcase as BriefcaseIcon,
   Sparkles, MessageCircle, Plug, ShieldCheck, Factory, PhoneCall, Zap, Workflow, Inbox,
+  Route,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -24,6 +25,8 @@ const menuSections: { title: string; items: MenuItem[]; roles?: string[] }[] = [
       { label: "Proposals", icon: FileText, to: "/proposals" },
       { label: "Contracts", icon: FileText, to: "/contracts" },
       { label: "Job CRM", icon: BriefcaseIcon, to: "/job-crm" },
+      { label: "Websites", icon: Globe, to: "/websites" },
+      { label: "Lead Routing", icon: Route, to: "/lead-routing" },
     ],
   },
   {

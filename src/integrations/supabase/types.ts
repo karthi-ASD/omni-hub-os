@@ -4814,6 +4814,44 @@ export type Database = {
           },
         ]
       }
+      employee_capacity: {
+        Row: {
+          business_id: string
+          current_assigned_today: number
+          daily_lead_limit: number
+          employee_id: string
+          id: string
+          is_active: boolean
+          last_reset_date: string
+        }
+        Insert: {
+          business_id: string
+          current_assigned_today?: number
+          daily_lead_limit?: number
+          employee_id: string
+          id?: string
+          is_active?: boolean
+          last_reset_date?: string
+        }
+        Update: {
+          business_id?: string
+          current_assigned_today?: number
+          daily_lead_limit?: number
+          employee_id?: string
+          id?: string
+          is_active?: boolean
+          last_reset_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_capacity_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_cost_rates: {
         Row: {
           business_id: string
@@ -6799,6 +6837,108 @@ export type Database = {
           },
         ]
       }
+      lead_assignment_logs: {
+        Row: {
+          assigned_by: string
+          business_id: string
+          created_at: string
+          from_employee_id: string | null
+          id: string
+          lead_id: string
+          reason: string | null
+          rule_id: string | null
+          to_employee_id: string
+        }
+        Insert: {
+          assigned_by?: string
+          business_id: string
+          created_at?: string
+          from_employee_id?: string | null
+          id?: string
+          lead_id: string
+          reason?: string | null
+          rule_id?: string | null
+          to_employee_id: string
+        }
+        Update: {
+          assigned_by?: string
+          business_id?: string
+          created_at?: string
+          from_employee_id?: string | null
+          id?: string
+          lead_id?: string
+          reason?: string | null
+          rule_id?: string | null
+          to_employee_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_assignment_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_assignment_logs_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "lead_assignment_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_assignment_rules: {
+        Row: {
+          business_id: string
+          config_json: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          mode: Database["public"]["Enums"]["lead_assignment_mode"]
+          rule_name: string
+          updated_at: string
+          website_id: string | null
+        }
+        Insert: {
+          business_id: string
+          config_json?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          mode?: Database["public"]["Enums"]["lead_assignment_mode"]
+          rule_name: string
+          updated_at?: string
+          website_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          config_json?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          mode?: Database["public"]["Enums"]["lead_assignment_mode"]
+          rule_name?: string
+          updated_at?: string
+          website_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_assignment_rules_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_assignment_rules_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_conversations: {
         Row: {
           business_id: string
@@ -6890,6 +7030,8 @@ export type Database = {
           ai_recommended_action: string | null
           ai_score: number | null
           assigned_to_user_id: string | null
+          assignment_mode: string | null
+          assignment_reason: string | null
           business_id: string
           business_name: string | null
           created_at: string
@@ -6899,13 +7041,16 @@ export type Database = {
           gclid: string | null
           id: string
           inquiry_id: string | null
+          is_deleted: boolean
           landing_page_url: string | null
           last_contacted_at: string | null
+          locked_fields: Json | null
           name: string
           next_follow_up_at: string | null
           notes: string | null
           phone: string | null
           referrer_url: string | null
+          service_detected: string | null
           services_needed: string | null
           source: Database["public"]["Enums"]["lead_source"]
           stage: Database["public"]["Enums"]["lead_stage"]
@@ -6917,12 +7062,15 @@ export type Database = {
           utm_medium: string | null
           utm_source: string | null
           utm_term: string | null
+          website_id: string | null
         }
         Insert: {
           ai_priority?: string | null
           ai_recommended_action?: string | null
           ai_score?: number | null
           assigned_to_user_id?: string | null
+          assignment_mode?: string | null
+          assignment_reason?: string | null
           business_id: string
           business_name?: string | null
           created_at?: string
@@ -6932,13 +7080,16 @@ export type Database = {
           gclid?: string | null
           id?: string
           inquiry_id?: string | null
+          is_deleted?: boolean
           landing_page_url?: string | null
           last_contacted_at?: string | null
+          locked_fields?: Json | null
           name: string
           next_follow_up_at?: string | null
           notes?: string | null
           phone?: string | null
           referrer_url?: string | null
+          service_detected?: string | null
           services_needed?: string | null
           source?: Database["public"]["Enums"]["lead_source"]
           stage?: Database["public"]["Enums"]["lead_stage"]
@@ -6950,12 +7101,15 @@ export type Database = {
           utm_medium?: string | null
           utm_source?: string | null
           utm_term?: string | null
+          website_id?: string | null
         }
         Update: {
           ai_priority?: string | null
           ai_recommended_action?: string | null
           ai_score?: number | null
           assigned_to_user_id?: string | null
+          assignment_mode?: string | null
+          assignment_reason?: string | null
           business_id?: string
           business_name?: string | null
           created_at?: string
@@ -6965,13 +7119,16 @@ export type Database = {
           gclid?: string | null
           id?: string
           inquiry_id?: string | null
+          is_deleted?: boolean
           landing_page_url?: string | null
           last_contacted_at?: string | null
+          locked_fields?: Json | null
           name?: string
           next_follow_up_at?: string | null
           notes?: string | null
           phone?: string | null
           referrer_url?: string | null
+          service_detected?: string | null
           services_needed?: string | null
           source?: Database["public"]["Enums"]["lead_source"]
           stage?: Database["public"]["Enums"]["lead_stage"]
@@ -6983,6 +7140,7 @@ export type Database = {
           utm_medium?: string | null
           utm_source?: string | null
           utm_term?: string | null
+          website_id?: string | null
         }
         Relationships: [
           {
@@ -6997,6 +7155,13 @@ export type Database = {
             columns: ["inquiry_id"]
             isOneToOne: false
             referencedRelation: "inquiries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_websites"
             referencedColumns: ["id"]
           },
         ]
@@ -10454,6 +10619,71 @@ export type Database = {
           },
         ]
       }
+      tenant_websites: {
+        Row: {
+          api_key_hash: string | null
+          api_key_last4: string | null
+          approved_at: string | null
+          approved_by: string | null
+          business_id: string
+          call_allowed_end_time: string | null
+          call_allowed_start_time: string | null
+          created_at: string
+          created_by: string | null
+          default_lead_owner_employee_id: string | null
+          domain: string
+          id: string
+          status: string
+          timezone: string | null
+          updated_at: string
+          website_name: string
+        }
+        Insert: {
+          api_key_hash?: string | null
+          api_key_last4?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          business_id: string
+          call_allowed_end_time?: string | null
+          call_allowed_start_time?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_lead_owner_employee_id?: string | null
+          domain: string
+          id?: string
+          status?: string
+          timezone?: string | null
+          updated_at?: string
+          website_name: string
+        }
+        Update: {
+          api_key_hash?: string | null
+          api_key_last4?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          business_id?: string
+          call_allowed_end_time?: string | null
+          call_allowed_start_time?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_lead_owner_employee_id?: string | null
+          domain?: string
+          id?: string
+          status?: string
+          timezone?: string | null
+          updated_at?: string
+          website_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_websites_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       theme_settings: {
         Row: {
           accent_color: string
@@ -11329,6 +11559,57 @@ export type Database = {
           },
         ]
       }
+      website_services: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          service_category: string | null
+          service_description: string | null
+          service_name: string
+          updated_at: string
+          website_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          service_category?: string | null
+          service_description?: string | null
+          service_name: string
+          updated_at?: string
+          website_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          service_category?: string | null
+          service_description?: string | null
+          service_name?: string
+          updated_at?: string
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_services_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_services_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -11430,6 +11711,12 @@ export type Database = {
         | "note"
         | "meeting"
         | "status_change"
+      lead_assignment_mode:
+        | "round_robin"
+        | "territory"
+        | "priority"
+        | "ai_score"
+        | "manual"
       lead_source: "inquiry" | "cold_call" | "referral" | "manual" | "other"
       lead_stage:
         | "new"
@@ -11669,6 +11956,13 @@ export const Constants = {
         "note",
         "meeting",
         "status_change",
+      ],
+      lead_assignment_mode: [
+        "round_robin",
+        "territory",
+        "priority",
+        "ai_score",
+        "manual",
       ],
       lead_source: ["inquiry", "cold_call", "referral", "manual", "other"],
       lead_stage: [
