@@ -38,9 +38,19 @@ const AIVoiceAgentsPage = () => {
   });
   const [newQuestion, setNewQuestion] = useState("");
 
+  const [creatingAgent, setCreatingAgent] = useState(false);
+
   const handleCreateAgent = async () => {
-    const ok = await createAgent(agentForm as any);
-    if (ok) { setAgentOpen(false); setAgentForm({ agent_name: "", scope: "sales", autonomy_level: "suggest_only", voice_type: "professional", language: "en-AU", ai_provider: "elevenlabs", call_timeout_seconds: 60, retry_attempts: 2 }); }
+    if (!agentForm.agent_name.trim()) {
+      return;
+    }
+    setCreatingAgent(true);
+    try {
+      const ok = await createAgent(agentForm as any);
+      if (ok) { setAgentOpen(false); setAgentForm({ agent_name: "", scope: "sales", autonomy_level: "suggest_only", voice_type: "professional", language: "en-AU", ai_provider: "elevenlabs", call_timeout_seconds: 60, retry_attempts: 2 }); }
+    } finally {
+      setCreatingAgent(false);
+    }
   };
 
   const handleCreateScript = async () => {
@@ -257,7 +267,7 @@ const AIVoiceAgentsPage = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button onClick={handleCreateAgent} className="w-full">Create Agent</Button>
+                  <Button onClick={handleCreateAgent} disabled={creatingAgent || !agentForm.agent_name.trim()} className="w-full">{creatingAgent ? "Creating..." : "Create Agent"}</Button>
                 </div>
               </DialogContent>
             </Dialog>
