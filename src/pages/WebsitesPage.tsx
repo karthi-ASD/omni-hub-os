@@ -89,12 +89,16 @@ const WebsitesPage = () => {
                     <p className="text-xs text-gray-400 truncate">{w.domain}</p>
                     <div className="flex items-center gap-2 mt-1.5">
                       <Badge variant="secondary" className={statusColors[w.status] || ""}>{w.status}</Badge>
-                      {w.api_key_last4 && (
-                        <span className="text-[10px] text-gray-500 flex items-center gap-1">
-                          <Key className="h-3 w-3" /> ****{w.api_key_last4}
-                        </span>
-                      )}
                     </div>
+                    {(w as any).api_key_plain && (
+                      <div className="flex items-center gap-1 mt-2">
+                        <Key className="h-3 w-3 text-[#d4a853] shrink-0" />
+                        <code className="text-[10px] bg-[#0a0e1a] px-2 py-0.5 rounded border border-[#1e2a4a] text-emerald-400 select-all break-all">{(w as any).api_key_plain}</code>
+                        <Button size="icon" variant="ghost" className="h-5 w-5 shrink-0" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText((w as any).api_key_plain); toast.success("API key copied!"); }}>
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-1.5 shrink-0">
                     {isSuperAdmin && w.status === "pending" && (
@@ -163,7 +167,7 @@ const WebsitesPage = () => {
               </TabsContent>
 
               <TabsContent value="embed" className="mt-3">
-                <EmbedCodeBlock domain={selectedW.domain} apiKeyLast4={selectedW.api_key_last4} />
+                <EmbedCodeBlock domain={selectedW.domain} apiKeyPlain={(selectedW as any).api_key_plain || null} apiKeyLast4={selectedW.api_key_last4} />
               </TabsContent>
             </Tabs>
           </CardContent>
@@ -182,11 +186,11 @@ const WebsitesPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* API Key modal - shown ONCE */}
+      {/* API Key modal */}
       <Dialog open={apiKeyModal.open} onOpenChange={(o) => { if (!o) setApiKeyModal({ open: false, key: "" }); }}>
         <DialogContent className="bg-[#111832] border-[#1e2a4a] text-white">
           <DialogHeader><DialogTitle className="flex items-center gap-2"><Key className="h-5 w-5 text-[#d4a853]" /> API Key Generated</DialogTitle></DialogHeader>
-          <p className="text-sm text-yellow-400">⚠️ Copy this key now. It will NOT be shown again.</p>
+          <p className="text-sm text-emerald-400">✅ This key is saved and always visible on each website card.</p>
           <div className="flex items-center gap-2 mt-2">
             <code className="flex-1 p-3 bg-[#0a0e1a] rounded-lg border border-[#1e2a4a] text-xs text-emerald-400 break-all select-all">{apiKeyModal.key}</code>
             <Button size="icon" variant="outline" onClick={handleCopy} className="border-[#1e2a4a] shrink-0">
@@ -199,16 +203,18 @@ const WebsitesPage = () => {
   );
 };
 
-function EmbedCodeBlock({ domain, apiKeyLast4 }: { domain: string; apiKeyLast4: string | null }) {
+function EmbedCodeBlock({ domain, apiKeyPlain, apiKeyLast4 }: { domain: string; apiKeyPlain: string | null; apiKeyLast4: string | null }) {
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const endpoint = `https://${projectId}.supabase.co/functions/v1/website-lead-capture`;
   const [copiedEmbed, setCopiedEmbed] = useState(false);
+  const displayKey = apiKeyPlain || "API_KEY_HERE";
+  const keyNote = apiKeyPlain ? "" : ` // Replace with your API key (last4: ${apiKeyLast4 || "????"})`;
 
   const embedCode = `<!-- NextWeb OS Lead Capture Form -->
 <script>
 const NEXTWEB_CONFIG = {
   endpoint: "${endpoint}",
-  apiKey: "API_KEY_HERE", // Replace with your API key (last4: ${apiKeyLast4 || "????"}),
+  apiKey: "${displayKey}",${keyNote}
   testMode: false
 };
 </script>
@@ -275,7 +281,8 @@ const NEXTWEB_CONFIG = {
       <pre className="p-3 bg-[#0a0e1a] rounded-lg border border-[#1e2a4a] text-xs text-gray-300 overflow-x-auto max-h-64 whitespace-pre-wrap">
         {embedCode}
       </pre>
-      <p className="text-xs text-yellow-400">⚠️ Replace <code>API_KEY_HERE</code> with the actual API key provided by your administrator.</p>
+      {!apiKeyPlain && <p className="text-xs text-yellow-400">⚠️ Replace <code>API_KEY_HERE</code> with the actual API key provided by your administrator.</p>}
+      {apiKeyPlain && <p className="text-xs text-emerald-400">✅ API key is pre-filled. You can copy and paste this directly.</p>}
     </div>
   );
 };

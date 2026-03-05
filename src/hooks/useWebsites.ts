@@ -98,9 +98,10 @@ export function useWebsites() {
         status: "approved",
         api_key_hash: keyHash,
         api_key_last4: last4,
+        api_key_plain: rawKey,
         approved_by: profile.user_id,
         approved_at: new Date().toISOString(),
-      })
+      } as any)
       .eq("id", websiteId);
 
     if (error) { toast.error("Failed to approve"); return null; }
@@ -111,7 +112,7 @@ export function useWebsites() {
       payload_json: { entity_type: "tenant_website", entity_id: websiteId, short_message: "Website domain approved" },
     });
 
-    toast.success("Website approved! Copy the API key now — it won't be shown again.");
+    toast.success("Website approved! API key is now visible on the website card.");
     fetchWebsites(isSuperAdmin ? undefined : profile.business_id);
     return rawKey; // Return once for display
   };
