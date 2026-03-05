@@ -110,6 +110,7 @@ import AutopilotSequencesPage from "./pages/AutopilotSequencesPage";
 import AutopilotInboxPage from "./pages/AutopilotInboxPage";
 import AIBrainPage from "./pages/AIBrainPage";
 import AILearningPage from "./pages/AILearningPage";
+import AISalesBrainPage from "./pages/AISalesBrainPage";
 import AutonomousAgentsPage from "./pages/AutonomousAgentsPage";
 import WebsitesPage from "./pages/WebsitesPage";
 import LeadRoutingPage from "./pages/LeadRoutingPage";
@@ -309,6 +310,9 @@ const App = () => (
               } />
               <Route path="/autonomous-agents" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AutonomousAgentsPage /></ProtectedRoute>
+              } />
+              <Route path="/ai-sales-brain" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AISalesBrainPage /></ProtectedRoute>
               } />
               <Route path="/websites" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><WebsitesPage /></ProtectedRoute>

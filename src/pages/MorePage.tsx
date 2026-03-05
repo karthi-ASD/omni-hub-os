@@ -4,11 +4,11 @@ import {
   MessageSquare, FolderKanban, FileText, Briefcase, Receipt, BarChart3,
   PieChart, Globe, Mail, TrendingUp, Brain, Bot, Store, Calendar, Clock,
   Shield, Settings, LogOut, Users, Building2, Activity, Palette, Megaphone,
-  UserCog, CalendarDays, Ticket, Phone, DollarSign, Briefcase as BriefcaseIcon,
+  UserCog, CalendarDays, Ticket, Phone, DollarSign,
   Sparkles, MessageCircle, Plug, ShieldCheck, Factory, PhoneCall, Zap, Workflow, Inbox,
   Route, CreditCard, Gauge, Eye, Server, Landmark, Scale, Map, Target as TargetIcon,
   Rocket, GitBranch, Trophy, Layers, Umbrella, BarChart2, BookOpen, Lock, Cpu,
-  Flag, ListChecks, CheckCircle, FileBarChart, Network, Heart,
+  Flag, ListChecks, CheckCircle, FileBarChart, Network, Heart, Bell, Wrench,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -18,9 +18,39 @@ interface MenuItem {
   to: string;
 }
 
-const menuSections: { title: string; items: MenuItem[]; roles?: string[] }[] = [
+interface MenuSection {
+  title: string;
+  description: string;
+  items: MenuItem[];
+  roles?: string[];
+}
+
+const superAdminSections: MenuSection[] = [
   {
-    title: "Sales & CRM",
+    title: "1 · Platform Overview",
+    description: "Overall platform health and activity",
+    items: [
+      { label: "Dashboard", icon: BarChart3, to: "/dashboard" },
+      { label: "Activity Timeline", icon: Activity, to: "/activity-timeline" },
+      { label: "Notifications", icon: Bell, to: "/notifications" },
+      { label: "Calendar", icon: Calendar, to: "/calendar" },
+      { label: "Analytics", icon: BarChart2, to: "/analytics" },
+    ],
+  },
+  {
+    title: "2 · Tenant Management",
+    description: "Business accounts, domains, and usage",
+    items: [
+      { label: "Businesses", icon: Building2, to: "/businesses" },
+      { label: "Websites", icon: Globe, to: "/websites" },
+      { label: "Usage Analytics", icon: BarChart2, to: "/usage-analytics" },
+      { label: "White Label", icon: Palette, to: "/white-label" },
+      { label: "Demo Mode", icon: Eye, to: "/demo-mode" },
+    ],
+  },
+  {
+    title: "3 · Sales Management",
+    description: "Full sales pipeline from inquiry to contract",
     items: [
       { label: "Inquiries", icon: MessageSquare, to: "/inquiries" },
       { label: "Leads", icon: TargetIcon, to: "/leads" },
@@ -29,113 +59,105 @@ const menuSections: { title: string; items: MenuItem[]; roles?: string[] }[] = [
       { label: "Contracts", icon: FileText, to: "/contracts" },
       { label: "Clients", icon: Users, to: "/clients" },
       { label: "Client 360", icon: Heart, to: "/client-360" },
-      { label: "Job CRM", icon: BriefcaseIcon, to: "/job-crm" },
-      { label: "Websites", icon: Globe, to: "/websites" },
       { label: "Lead Routing", icon: Route, to: "/lead-routing" },
+      { label: "AI Sales Brain", icon: Brain, to: "/ai-sales-brain" },
     ],
   },
   {
-    title: "Projects & Work",
+    title: "4 · Delivery Operations",
+    description: "Projects, tasks, SLA, and service tracking",
     items: [
       { label: "Projects", icon: Briefcase, to: "/projects" },
       { label: "Tasks", icon: ListChecks, to: "/tasks" },
-      { label: "Calendar", icon: Calendar, to: "/calendar" },
-      { label: "Reminders", icon: Clock, to: "/reminders" },
+      { label: "Job CRM", icon: Wrench, to: "/job-crm" },
+      { label: "SLA Monitor", icon: Gauge, to: "/sla" },
       { label: "Tickets", icon: Ticket, to: "/tickets" },
+      { label: "Reminders", icon: Clock, to: "/reminders" },
     ],
   },
   {
-    title: "Finance",
+    title: "5 · Marketing Operations",
+    description: "SEO, campaigns, competitor analysis, and reports",
     items: [
-      { label: "Invoices", icon: Receipt, to: "/invoices" },
-      { label: "Payments", icon: BarChart3, to: "/payments" },
-      { label: "Billing", icon: PieChart, to: "/billing" },
-      { label: "Tenant Billing", icon: CreditCard, to: "/tenant-billing" },
-      { label: "Gateways", icon: CreditCard, to: "/gateways" },
-      { label: "Payroll", icon: DollarSign, to: "/payroll" },
-    ],
-  },
-  {
-    title: "Marketing & SEO",
-    items: [
-      { label: "SEO", icon: Globe, to: "/seo" },
-      { label: "Communications", icon: Mail, to: "/communications" },
+      { label: "SEO Engine", icon: Globe, to: "/seo" },
       { label: "Marketing", icon: Megaphone, to: "/marketing" },
       { label: "Geo Engine", icon: Map, to: "/geo-engine" },
+      { label: "Competitive Intel", icon: TargetIcon, to: "/competitive-intel" },
+      { label: "Communications", icon: Mail, to: "/communications" },
       { label: "Analytics Intg.", icon: Plug, to: "/analytics-integrations" },
-    ],
-  },
-  {
-    title: "Intelligence & AI",
-    items: [
-      { label: "AI Brain", icon: Brain, to: "/ai-brain" },
-      { label: "AI Learning", icon: Sparkles, to: "/ai-learning" },
-      { label: "AI Intelligence", icon: Brain, to: "/ai-intelligence" },
-      { label: "AI Insights", icon: Sparkles, to: "/ai-insights" },
-      { label: "AI Agents", icon: Bot, to: "/autonomous-agents" },
-      { label: "AI Voice Agents", icon: Phone, to: "/ai-voice-agents" },
-      { label: "Agent Factory", icon: Factory, to: "/agent-factory" },
-      { label: "Voice Agent", icon: PhoneCall, to: "/voice-agent" },
-      { label: "Growth Engine", icon: Sparkles, to: "/growth-engine" },
-      { label: "Revenue Intel", icon: TrendingUp, to: "/revenue-intelligence" },
-      { label: "Analytics", icon: BarChart2, to: "/analytics" },
       { label: "Reports", icon: FileBarChart, to: "/reports" },
     ],
   },
   {
-    title: "Messaging & Compliance",
+    title: "6 · Finance",
+    description: "Billing, invoices, payments, and forecasting",
     items: [
-      { label: "Conversations", icon: MessageCircle, to: "/conversations" },
-      { label: "Providers", icon: Plug, to: "/providers" },
+      { label: "Billing", icon: PieChart, to: "/billing" },
+      { label: "Invoices", icon: Receipt, to: "/invoices" },
+      { label: "Payments", icon: BarChart3, to: "/payments" },
+      { label: "Tenant Billing", icon: CreditCard, to: "/tenant-billing" },
+      { label: "Platform Billing", icon: CreditCard, to: "/platform-billing" },
+      { label: "Gateways", icon: CreditCard, to: "/gateways" },
+      { label: "Revenue Intel", icon: TrendingUp, to: "/revenue-intelligence" },
+    ],
+  },
+  {
+    title: "7 · Workforce Management",
+    description: "Employees, attendance, leave, payroll, and org chart",
+    items: [
+      { label: "Employees", icon: UserCog, to: "/workforce" },
+      { label: "Leave", icon: CalendarDays, to: "/leave" },
+      { label: "Payroll", icon: DollarSign, to: "/payroll" },
+      { label: "Org Chart", icon: Network, to: "/org-chart" },
+    ],
+  },
+  {
+    title: "8 · Intelligence & AI",
+    description: "AI Brain, agents, learning, and growth engine",
+    items: [
+      { label: "AI Brain", icon: Brain, to: "/ai-brain" },
+      { label: "AI Sales Brain", icon: Sparkles, to: "/ai-sales-brain" },
+      { label: "AI Learning", icon: BookOpen, to: "/ai-learning" },
+      { label: "AI Intelligence", icon: Brain, to: "/ai-intelligence" },
+      { label: "AI Insights", icon: Sparkles, to: "/ai-insights" },
+      { label: "AI Agents", icon: Bot, to: "/autonomous-agents" },
+      { label: "AI Voice", icon: Phone, to: "/ai-voice-agents" },
+      { label: "Agent Factory", icon: Factory, to: "/agent-factory" },
+      { label: "Voice Agent", icon: PhoneCall, to: "/voice-agent" },
+      { label: "Growth Engine", icon: Rocket, to: "/growth-engine" },
+    ],
+  },
+  {
+    title: "9 · Security & Compliance",
+    description: "Vault, audits, backups, approvals, and compliance",
+    items: [
+      { label: "Vault", icon: Lock, to: "/vault" },
+      { label: "Audit Logs", icon: Shield, to: "/audit-logs" },
+      { label: "Backups", icon: Server, to: "/backups" },
+      { label: "Compliance", icon: ShieldCheck, to: "/compliance" },
+      { label: "Governance", icon: Scale, to: "/governance-controls" },
       { label: "Consent", icon: ShieldCheck, to: "/consent-compliance" },
     ],
   },
   {
-    title: "Autopilot",
+    title: "🔧 System Settings",
+    description: "Users, roles, integrations, and system config",
     items: [
-      { label: "Inbox", icon: Inbox, to: "/autopilot/inbox" },
-      { label: "Sequences", icon: Workflow, to: "/autopilot/sequences" },
-      { label: "Settings", icon: Zap, to: "/autopilot/settings" },
-    ],
-  },
-  {
-    title: "Team & HR",
-    items: [
-      { label: "Workforce", icon: UserCog, to: "/workforce" },
-      { label: "Leave", icon: CalendarDays, to: "/leave" },
-      { label: "Payroll", icon: DollarSign, to: "/payroll" },
-      { label: "SLA", icon: Gauge, to: "/sla" },
-      { label: "Org Chart", icon: Network, to: "/org-chart" },
-    ],
-    roles: ["super_admin", "business_admin"],
-  },
-  {
-    title: "Admin",
-    items: [
-      { label: "Businesses", icon: Building2, to: "/businesses" },
       { label: "Users", icon: Users, to: "/users" },
-      { label: "Audit Logs", icon: Shield, to: "/audit-logs" },
       { label: "Settings", icon: Settings, to: "/settings" },
       { label: "System Monitor", icon: Server, to: "/system-monitor" },
-      { label: "Usage Analytics", icon: BarChart2, to: "/usage-analytics" },
-      { label: "Activity", icon: Activity, to: "/activity-timeline" },
-      { label: "Governance", icon: Scale, to: "/governance-controls" },
-      { label: "White Label", icon: Palette, to: "/white-label" },
-      { label: "Vault", icon: Lock, to: "/vault" },
+      { label: "Providers", icon: Plug, to: "/providers" },
       { label: "Marketplace", icon: Store, to: "/marketplace" },
       { label: "App Factory", icon: Cpu, to: "/app-factory" },
-      { label: "Demo Mode", icon: Eye, to: "/demo-mode" },
     ],
-    roles: ["super_admin", "business_admin"],
   },
   {
-    title: "Platform (SuperAdmin)",
+    title: "🏢 Corporate & Expansion",
+    description: "Investor relations, fundraising, IPO, and franchise",
     items: [
-      { label: "Platform Billing", icon: CreditCard, to: "/platform-billing" },
       { label: "Investor Dash", icon: Landmark, to: "/investor-dashboard" },
       { label: "Investor Pitch", icon: Trophy, to: "/investor-pitch" },
       { label: "Partners", icon: Briefcase, to: "/partners" },
-      { label: "Infrastructure", icon: Server, to: "/infrastructure" },
       { label: "Corporate", icon: Building2, to: "/corporate-structure" },
       { label: "Fundraising", icon: Rocket, to: "/fundraising" },
       { label: "Governance", icon: Scale, to: "/governance" },
@@ -144,23 +166,150 @@ const menuSections: { title: string; items: MenuItem[]; roles?: string[] }[] = [
       { label: "Acquisitions", icon: Layers, to: "/acquisitions" },
       { label: "IPO Readiness", icon: Flag, to: "/ipo-readiness" },
       { label: "Franchise", icon: GitBranch, to: "/franchise-blueprint" },
-      { label: "Competitive", icon: TargetIcon, to: "/competitive-intel" },
       { label: "Capital", icon: DollarSign, to: "/capital-allocation" },
+      { label: "Infrastructure", icon: Server, to: "/infrastructure" },
       { label: "Observability", icon: Eye, to: "/observability" },
       { label: "Incidents", icon: Umbrella, to: "/incidents" },
-      { label: "Backups", icon: Server, to: "/backups" },
-      { label: "Compliance", icon: ShieldCheck, to: "/compliance" },
       { label: "Releases", icon: Rocket, to: "/releases" },
       { label: "Go Live", icon: CheckCircle, to: "/go-live" },
       { label: "Dependencies", icon: GitBranch, to: "/dependencies" },
       { label: "QA Checklist", icon: ListChecks, to: "/qa-checklist" },
     ],
-    roles: ["super_admin"],
+  },
+];
+
+const tenantAdminSections: MenuSection[] = [
+  {
+    title: "Dashboard",
+    description: "Your business overview and key metrics",
+    items: [
+      { label: "Dashboard", icon: BarChart3, to: "/dashboard" },
+      { label: "Notifications", icon: Bell, to: "/notifications" },
+      { label: "Calendar", icon: Calendar, to: "/calendar" },
+    ],
+  },
+  {
+    title: "Leads & Sales",
+    description: "All potential customers captured from forms, ads, and campaigns",
+    items: [
+      { label: "Inquiries", icon: MessageSquare, to: "/inquiries" },
+      { label: "Leads", icon: TargetIcon, to: "/leads" },
+      { label: "Deals", icon: FolderKanban, to: "/deals" },
+      { label: "Proposals", icon: FileText, to: "/proposals" },
+      { label: "Contracts", icon: FileText, to: "/contracts" },
+      { label: "Clients", icon: Users, to: "/clients" },
+      { label: "AI Sales Brain", icon: Brain, to: "/ai-sales-brain" },
+    ],
+  },
+  {
+    title: "Jobs / Projects",
+    description: "Track projects, assign tasks, and monitor delivery",
+    items: [
+      { label: "Projects", icon: Briefcase, to: "/projects" },
+      { label: "Tasks", icon: ListChecks, to: "/tasks" },
+      { label: "Job CRM", icon: Wrench, to: "/job-crm" },
+      { label: "Reminders", icon: Clock, to: "/reminders" },
+    ],
+  },
+  {
+    title: "Marketing / SEO",
+    description: "SEO campaigns, keyword tracking, and reports",
+    items: [
+      { label: "SEO Engine", icon: Globe, to: "/seo" },
+      { label: "Marketing", icon: Megaphone, to: "/marketing" },
+      { label: "Communications", icon: Mail, to: "/communications" },
+      { label: "Reports", icon: FileBarChart, to: "/reports" },
+    ],
+  },
+  {
+    title: "Billing",
+    description: "Invoices, payments, and financial overview",
+    items: [
+      { label: "Billing", icon: PieChart, to: "/billing" },
+      { label: "Invoices", icon: Receipt, to: "/invoices" },
+      { label: "Payments", icon: BarChart3, to: "/payments" },
+    ],
+  },
+  {
+    title: "Employees",
+    description: "Manage your team, attendance, and payroll",
+    items: [
+      { label: "Workforce", icon: UserCog, to: "/workforce" },
+      { label: "Leave", icon: CalendarDays, to: "/leave" },
+      { label: "Payroll", icon: DollarSign, to: "/payroll" },
+      { label: "Org Chart", icon: Network, to: "/org-chart" },
+    ],
+  },
+  {
+    title: "Communications",
+    description: "Conversations, autopilot inbox, and messaging",
+    items: [
+      { label: "Inbox", icon: Inbox, to: "/autopilot/inbox" },
+      { label: "Conversations", icon: MessageCircle, to: "/conversations" },
+      { label: "Sequences", icon: Workflow, to: "/autopilot/sequences" },
+    ],
+  },
+  {
+    title: "Support Tickets",
+    description: "Submit issues and track resolutions",
+    items: [
+      { label: "Tickets", icon: Ticket, to: "/tickets" },
+    ],
+  },
+  {
+    title: "Company Settings",
+    description: "Users, settings, audit logs, and integrations",
+    items: [
+      { label: "Users", icon: Users, to: "/users" },
+      { label: "Settings", icon: Settings, to: "/settings" },
+      { label: "Websites", icon: Globe, to: "/websites" },
+      { label: "Audit Logs", icon: Shield, to: "/audit-logs" },
+      { label: "Vault", icon: Lock, to: "/vault" },
+    ],
+  },
+];
+
+const employeeSections: MenuSection[] = [
+  {
+    title: "My Work",
+    description: "Your tasks, calendar, and reminders",
+    items: [
+      { label: "Dashboard", icon: BarChart3, to: "/dashboard" },
+      { label: "Tasks", icon: ListChecks, to: "/tasks" },
+      { label: "Calendar", icon: Calendar, to: "/calendar" },
+      { label: "Reminders", icon: Clock, to: "/reminders" },
+      { label: "Notifications", icon: Bell, to: "/notifications" },
+    ],
+  },
+  {
+    title: "CRM",
+    description: "Leads, deals, and client management",
+    items: [
+      { label: "Leads", icon: TargetIcon, to: "/leads" },
+      { label: "Deals", icon: FolderKanban, to: "/deals" },
+      { label: "Clients", icon: Users, to: "/clients" },
+      { label: "Projects", icon: Briefcase, to: "/projects" },
+    ],
+  },
+  {
+    title: "Communication",
+    description: "Inbox and conversations",
+    items: [
+      { label: "Inbox", icon: Inbox, to: "/autopilot/inbox" },
+      { label: "Conversations", icon: MessageCircle, to: "/conversations" },
+    ],
+  },
+  {
+    title: "Support",
+    description: "Submit and track support tickets",
+    items: [
+      { label: "Tickets", icon: Ticket, to: "/tickets" },
+    ],
   },
 ];
 
 const MorePage = () => {
-  const { profile, roles, signOut } = useAuth();
+  const { profile, roles, signOut, isSuperAdmin, isBusinessAdmin } = useAuth();
   const navigate = useNavigate();
 
   const initials = profile?.full_name
@@ -170,9 +319,11 @@ const MorePage = () => {
     .toUpperCase()
     .slice(0, 2) || "?";
 
-  const visibleSections = menuSections.filter(
-    (s) => !s.roles || s.roles.some((r) => roles.includes(r as any))
-  );
+  const sections = isSuperAdmin
+    ? superAdminSections
+    : isBusinessAdmin
+    ? tenantAdminSections
+    : employeeSections;
 
   return (
     <div className="pb-4 animate-fade-in">
@@ -198,12 +349,15 @@ const MorePage = () => {
         </div>
       </div>
 
-      {/* Menu sections */}
-      {visibleSections.map((section) => (
-        <div key={section.title} className="mb-4">
-          <p className="text-[10px] font-bold text-[#d4a853] uppercase tracking-[0.15em] px-1 pb-2">
-            {section.title}
-          </p>
+      {/* Department sections */}
+      {sections.map((section) => (
+        <div key={section.title} className="mb-5">
+          <div className="px-1 pb-2">
+            <p className="text-[10px] font-bold text-[#d4a853] uppercase tracking-[0.15em]">
+              {section.title}
+            </p>
+            <p className="text-[10px] text-gray-500 mt-0.5">{section.description}</p>
+          </div>
           <div className="grid grid-cols-4 gap-1.5">
             {section.items.map((item) => (
               <button
@@ -211,7 +365,7 @@ const MorePage = () => {
                 onClick={() => navigate(item.to)}
                 className="flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl hover:bg-[#111832] active:bg-[#1e2a4a] transition-colors border border-transparent hover:border-[#1e2a4a]"
               >
-                <div className="h-10 w-10 rounded-xl bg-[#111832] border border-[#1e2a4a] flex items-center justify-center group-hover:border-[#d4a853]/30">
+                <div className="h-10 w-10 rounded-xl bg-[#111832] border border-[#1e2a4a] flex items-center justify-center">
                   <item.icon className="h-5 w-5 text-gray-400" />
                 </div>
                 <span className="text-[11px] font-medium text-gray-400 text-center leading-tight line-clamp-2">

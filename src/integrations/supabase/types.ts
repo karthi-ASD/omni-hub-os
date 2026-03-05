@@ -1571,6 +1571,50 @@ export type Database = {
           },
         ]
       }
+      ai_sales_brain_scores: {
+        Row: {
+          business_id: string
+          conversion_probability: number | null
+          created_at: string
+          id: string
+          lead_id: string | null
+          lead_name: string | null
+          reasoning: string | null
+          recommended_action: string | null
+          score_factors_json: Json | null
+        }
+        Insert: {
+          business_id: string
+          conversion_probability?: number | null
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          lead_name?: string | null
+          reasoning?: string | null
+          recommended_action?: string | null
+          score_factors_json?: Json | null
+        }
+        Update: {
+          business_id?: string
+          conversion_probability?: number | null
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          lead_name?: string | null
+          reasoning?: string | null
+          recommended_action?: string | null
+          score_factors_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_sales_brain_scores_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_sales_forecasts: {
         Row: {
           business_id: string
@@ -1602,6 +1646,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ai_sales_forecasts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_sales_recommendations: {
+        Row: {
+          business_id: string
+          created_at: string
+          description: string | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          is_applied: boolean | null
+          priority: string | null
+          recommendation_type: string
+          title: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          description?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          is_applied?: boolean | null
+          priority?: string | null
+          recommendation_type?: string
+          title: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          description?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          is_applied?: boolean | null
+          priority?: string | null
+          recommendation_type?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_sales_recommendations_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -10286,6 +10377,68 @@ export type Database = {
         }
         Relationships: []
       }
+      support_tickets: {
+        Row: {
+          assigned_to_user_id: string | null
+          business_id: string
+          category: string
+          closed_at: string | null
+          created_at: string
+          created_by_user_id: string
+          description: string | null
+          id: string
+          priority: string
+          resolved_at: string | null
+          sla_due_at: string | null
+          status: string
+          subject: string
+          ticket_number: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to_user_id?: string | null
+          business_id: string
+          category?: string
+          closed_at?: string | null
+          created_at?: string
+          created_by_user_id: string
+          description?: string | null
+          id?: string
+          priority?: string
+          resolved_at?: string | null
+          sla_due_at?: string | null
+          status?: string
+          subject: string
+          ticket_number?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to_user_id?: string | null
+          business_id?: string
+          category?: string
+          closed_at?: string | null
+          created_at?: string
+          created_by_user_id?: string
+          description?: string | null
+          id?: string
+          priority?: string
+          resolved_at?: string | null
+          sla_due_at?: string | null
+          status?: string
+          subject?: string
+          ticket_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_events: {
         Row: {
           business_id: string | null
@@ -10721,6 +10874,41 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: true
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          is_internal: boolean
+          ticket_id: string
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          ticket_id: string
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          ticket_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_comments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
             referencedColumns: ["id"]
           },
         ]
