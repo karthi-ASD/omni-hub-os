@@ -107,23 +107,38 @@ export function useAIVoiceAgents() {
   }, [fetchAgents, fetchScripts, fetchCallLogs, fetchQualifications]);
 
   const createAgent = async (agent: Partial<AIVoiceAgent>) => {
-    if (!profile?.business_id) return false;
-    const { error } = await supabase.from("ai_agents").insert({
-      agent_name: agent.agent_name,
-      scope: agent.scope || "sales",
-      autonomy_level: agent.autonomy_level || "suggest_only",
-      business_id: profile.business_id,
-      enabled: false,
-      voice_type: agent.voice_type || "professional",
-      language: agent.language || "en-AU",
-      ai_provider: agent.ai_provider || "elevenlabs",
-      call_timeout_seconds: agent.call_timeout_seconds || 60,
-      retry_attempts: agent.retry_attempts || 2,
-    } as any);
-    if (error) { toast.error(error.message); return false; }
-    toast.success("AI Voice Agent created");
-    fetchAgents();
-    return true;
+    if (!profile?.business_id) {
+      toast.error("Please complete your business setup before creating an agent");
+      return false;
+    }
+    if (!agent.agent_name?.trim()) {
+      toast.error("Agent name is required");
+      return false;
+    }
+    try {
+      const { error } = await supabase.from("ai_agents").insert({
+        agent_name: agent.agent_name.trim(),
+        scope: agent.scope || "sales",
+        autonomy_level: agent.autonomy_level || "suggest_only",
+        business_id: profile.business_id,
+        enabled: false,
+        voice_type: agent.voice_type || "professional",
+        language: agent.language || "en-AU",
+        ai_provider: agent.ai_provider || "elevenlabs",
+        call_timeout_seconds: agent.call_timeout_seconds || 60,
+        retry_attempts: agent.retry_attempts || 2,
+      } as any);
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+      toast.success("AI Voice Agent created");
+      fetchAgents();
+      return true;
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to create agent");
+      return false;
+    }
   };
 
   const toggleAgent = async (id: string, enabled: boolean) => {
