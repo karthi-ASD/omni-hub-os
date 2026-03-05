@@ -121,8 +121,9 @@ const Businesses = () => {
 
     const { error } = await supabase.from("tenant_websites").update({
       status: "approved", api_key_hash: keyHash, api_key_last4: last4,
+      api_key_plain: rawKey,
       approved_by: profile.user_id, approved_at: new Date().toISOString(),
-    }).eq("id", websiteId);
+    } as any).eq("id", websiteId);
 
     if (error) { toast.error("Failed to approve"); return; }
 
@@ -250,11 +251,19 @@ const Businesses = () => {
                               w.status === "disabled" ? "bg-gray-500/10 text-gray-400" :
                               "bg-destructive/10 text-destructive"
                             }>{w.status}</Badge>
-                            {w.api_key_last4 && (
+                            {(w as any).api_key_plain ? (
+                              <div className="flex items-center gap-1 mt-1">
+                                <Key className="h-3 w-3 text-[hsl(var(--accent))]" />
+                                <code className="text-[10px] bg-[#0a0e1a] px-2 py-0.5 rounded border border-[#1e2a4a] text-emerald-400 select-all break-all">{(w as any).api_key_plain}</code>
+                                <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => { navigator.clipboard.writeText((w as any).api_key_plain); toast.success("API key copied!"); }}>
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ) : w.api_key_last4 ? (
                               <span className="text-[10px] text-gray-500 flex items-center gap-1">
                                 <Key className="h-3 w-3" /> ****{w.api_key_last4}
                               </span>
-                            )}
+                            ) : null}
                             {w.call_allowed_start_time && (
                               <span className="text-[10px] text-gray-500 flex items-center gap-1">
                                 <Clock className="h-3 w-3" /> {w.call_allowed_start_time}–{w.call_allowed_end_time}
@@ -310,7 +319,7 @@ const Businesses = () => {
         <Dialog open={apiKeyModal.open} onOpenChange={(o) => { if (!o) setApiKeyModal({ open: false, key: "" }); }}>
           <DialogContent className="bg-[#111832] border-[#1e2a4a] text-white">
             <DialogHeader><DialogTitle className="flex items-center gap-2"><Key className="h-5 w-5 text-[#d4a853]" /> API Key Generated</DialogTitle></DialogHeader>
-            <p className="text-sm text-yellow-400">⚠️ Copy this key now. It will NOT be shown again.</p>
+            <p className="text-sm text-emerald-400">✅ This key is saved and always visible in the Websites tab.</p>
             <div className="flex items-center gap-2 mt-2">
               <code className="flex-1 p-3 bg-[#0a0e1a] rounded-lg border border-[#1e2a4a] text-xs text-emerald-400 break-all select-all">{apiKeyModal.key}</code>
               <Button size="icon" variant="outline" onClick={handleCopyKey} className="border-[#1e2a4a] shrink-0">

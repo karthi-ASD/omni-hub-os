@@ -1,0 +1,1 @@
+ALTER TABLE public.tenant_websites ADD COLUMN IF NOT EXISTS api_key_plain text;

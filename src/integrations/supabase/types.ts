@@ -10776,6 +10776,7 @@ export type Database = {
         Row: {
           api_key_hash: string | null
           api_key_last4: string | null
+          api_key_plain: string | null
           approved_at: string | null
           approved_by: string | null
           business_id: string
@@ -10794,6 +10795,7 @@ export type Database = {
         Insert: {
           api_key_hash?: string | null
           api_key_last4?: string | null
+          api_key_plain?: string | null
           approved_at?: string | null
           approved_by?: string | null
           business_id: string
@@ -10812,6 +10814,7 @@ export type Database = {
         Update: {
           api_key_hash?: string | null
           api_key_last4?: string | null
+          api_key_plain?: string | null
           approved_at?: string | null
           approved_by?: string | null
           business_id?: string
