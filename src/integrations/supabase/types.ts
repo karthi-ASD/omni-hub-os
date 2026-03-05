@@ -11905,7 +11905,13 @@ export type Database = {
         | "priority"
         | "ai_score"
         | "manual"
-      lead_source: "inquiry" | "cold_call" | "referral" | "manual" | "other"
+      lead_source:
+        | "inquiry"
+        | "cold_call"
+        | "referral"
+        | "manual"
+        | "other"
+        | "website_form"
       lead_stage:
         | "new"
         | "contacted"
@@ -12152,7 +12158,14 @@ export const Constants = {
         "ai_score",
         "manual",
       ],
-      lead_source: ["inquiry", "cold_call", "referral", "manual", "other"],
+      lead_source: [
+        "inquiry",
+        "cold_call",
+        "referral",
+        "manual",
+        "other",
+        "website_form",
+      ],
       lead_stage: [
         "new",
         "contacted",
