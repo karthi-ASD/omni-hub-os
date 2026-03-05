@@ -75,65 +75,46 @@ Deno.serve(async (req) => {
       }
 
       // --- PLIVO CALL INITIATION ---
-      // Check for Plivo credentials in provider vault
-      const { data: plivoConn } = await supabase
-        .from("provider_connections")
-        .select("id, status")
-        .eq("business_id", session.business_id)
-        .eq("provider_name", "Plivo")
-        .eq("status", "CONNECTED")
-        .limit(1);
+      const authId = Deno.env.get("PLIVO_AUTH_ID");
+      const authToken = Deno.env.get("PLIVO_AUTH_TOKEN");
+      const callerId = Deno.env.get("PLIVO_CALLER_ID");
 
       let callUuid = `mvp-stub-${crypto.randomUUID().slice(0, 8)}`;
       let callInitiated = false;
 
-      if (plivoConn?.[0]) {
-        // Fetch Plivo credentials
-        const { data: creds } = await supabase
-          .from("provider_credentials_vault")
-          .select("key_name, encrypted_value")
-          .eq("provider_connection_id", plivoConn[0].id);
+      if (authId && authToken && callerId) {
+        try {
+          const plivoUrl = `https://api.plivo.com/v1/Account/${authId}/Call/`;
+          const callbackUrl = `${supabaseUrl}/functions/v1/plivo-callback`;
 
-        const credMap: Record<string, string> = {};
-        creds?.forEach(c => { credMap[c.key_name] = c.encrypted_value; });
+          const plivoRes = await fetch(plivoUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Basic " + btoa(`${authId}:${authToken}`),
+            },
+            body: JSON.stringify({
+              from: callerId.replace(/\s/g, ""),
+              to: "placeholder-number", // In production: lead's phone from lead record
+              answer_url: callbackUrl,
+              hangup_url: callbackUrl,
+              ring_timeout: 30,
+              machine_detection: true,
+            }),
+          });
 
-        const authId = credMap["PLIVO_AUTH_ID"];
-        const authToken = credMap["PLIVO_AUTH_TOKEN"];
-        const callerId = credMap["PLIVO_CALLER_ID"];
-
-        if (authId && authToken && callerId) {
-          // Real Plivo call
-          try {
-            const plivoUrl = `https://api.plivo.com/v1/Account/${authId}/Call/`;
-            const callbackUrl = `${supabaseUrl}/functions/v1/plivo-callback`;
-
-            const plivoRes = await fetch(plivoUrl, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Basic " + btoa(`${authId}:${authToken}`),
-              },
-              body: JSON.stringify({
-                from: callerId,
-                to: "placeholder-number", // In production: lead's phone from lead record
-                answer_url: callbackUrl,
-                hangup_url: callbackUrl,
-                ring_timeout: 30,
-                machine_detection: true,
-              }),
-            });
-
-            const plivoData = await plivoRes.json();
-            if (plivoRes.ok && plivoData.request_uuid) {
-              callUuid = plivoData.request_uuid;
-              callInitiated = true;
-            } else {
-              console.error("Plivo call failed:", plivoData);
-            }
-          } catch (plivoErr) {
-            console.error("Plivo API error:", plivoErr);
+          const plivoData = await plivoRes.json();
+          if (plivoRes.ok && plivoData.request_uuid) {
+            callUuid = plivoData.request_uuid;
+            callInitiated = true;
+          } else {
+            console.error("Plivo call failed:", plivoData);
           }
+        } catch (plivoErr) {
+          console.error("Plivo API error:", plivoErr);
         }
+      } else {
+        console.log("Plivo credentials not configured, using stub mode");
       }
 
       // Update session status
