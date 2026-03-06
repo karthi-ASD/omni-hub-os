@@ -292,9 +292,9 @@ Important rules:
       responseXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <GetInput action="${selfUrl}" method="POST" inputType="speech" speechEndTimeout="2500" speechModel="enhanced" profanityFilter="false" log="true">
-    <Speak voice="Polly.Joanna" language="en-US">${escapeXml(aiText)}</Speak>
+    <Speak voice="Polly.Olivia" language="en-AU">${escapeXml(aiText)}</Speak>
   </GetInput>
-  <Speak voice="Polly.Joanna" language="en-US">It seems like we got disconnected. Thank you for your time, and we'll follow up with you soon. Goodbye!</Speak>
+  <Speak voice="Polly.Olivia" language="en-AU">It seems like we got disconnected. Thank you for your time, and we'll follow up with you soon. Goodbye!</Speak>
 </Response>`;
     }
 
