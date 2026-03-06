@@ -37,6 +37,8 @@ const InquiriesPage = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", suburb: "", message: "", service_interest: "" });
+  const [selectedInquiry, setSelectedInquiry] = useState<(typeof inquiries)[0] | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const filtered = inquiries.filter((i) => {
     const matchesSearch = !search || [i.name, i.email, i.phone, i.suburb, i.message].some(f => f?.toLowerCase().includes(search.toLowerCase()));
