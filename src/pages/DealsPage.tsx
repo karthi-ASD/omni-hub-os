@@ -330,6 +330,9 @@ const DealsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Deal Detail Sheet */}
+      <DealDetailSheet deal={selectedDeal} open={detailOpen} onOpenChange={setDetailOpen} />
     </div>
   );
 };
