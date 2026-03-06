@@ -114,6 +114,14 @@ import AISalesBrainPage from "./pages/AISalesBrainPage";
 import AutonomousAgentsPage from "./pages/AutonomousAgentsPage";
 import WebsitesPage from "./pages/WebsitesPage";
 import LeadRoutingPage from "./pages/LeadRoutingPage";
+import CustomerServiceDashboard from "./pages/CustomerServiceDashboard";
+import CompanyAccountsPage from "./pages/CompanyAccountsPage";
+import KnowledgeBasePage from "./pages/KnowledgeBasePage";
+import CSAutomationPage from "./pages/CSAutomationPage";
+import CSReportsPage from "./pages/CSReportsPage";
+import AIAssistantSettingsPage from "./pages/AIAssistantSettingsPage";
+import CustomerPortalPage from "./pages/CustomerPortalPage";
+import SatisfactionSurveysPage from "./pages/SatisfactionSurveysPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
