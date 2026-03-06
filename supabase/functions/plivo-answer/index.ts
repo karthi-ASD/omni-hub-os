@@ -44,7 +44,6 @@ Deno.serve(async (req) => {
     let scriptIntro = "";
 
     if (callUuid) {
-      // Find session by UUID or most recent CALLING
       const { data: sess } = await supabase
         .from("voice_agent_sessions")
         .select("*")
@@ -68,10 +67,8 @@ Deno.serve(async (req) => {
       }
 
       if (session) {
-        // Parallel fetch: lead name, business name, script — all at once
         const promises: Promise<any>[] = [];
 
-        // Lead name
         if (session.lead_id) {
           promises.push(
             supabase.from("leads").select("name").eq("id", session.lead_id).single()
@@ -84,34 +81,29 @@ Deno.serve(async (req) => {
           );
         }
 
-        // Business name
         promises.push(
           supabase.from("businesses").select("name").eq("id", session.business_id).single()
             .then(r => { if (r.data?.name) businessName = r.data.name; })
         );
 
-        // Script
         promises.push(
           supabase.from("ai_agent_scripts").select("intro_text")
             .eq("business_id", session.business_id).eq("is_default", true).limit(1)
             .then(r => {
-              if (r.data?.[0]?.intro_text) {
-                scriptIntro = r.data[0].intro_text;
-              }
+              if (r.data?.[0]?.intro_text) scriptIntro = r.data[0].intro_text;
             })
         );
 
         await Promise.all(promises);
 
-        // Replace placeholders in script
         if (scriptIntro) {
           scriptIntro = scriptIntro
             .replace("{lead_name}", leadName)
             .replace("{business_name}", businessName);
         }
 
-        // Update status + log event in parallel
-        await Promise.all([
+        // Fire-and-forget: status update + event log
+        Promise.all([
           supabase.from("voice_agent_sessions").update({ status: "IN_PROGRESS" }).eq("id", session.id),
           supabase.from("voice_agent_events").insert({
             business_id: session.business_id,
@@ -120,22 +112,25 @@ Deno.serve(async (req) => {
             event_type: "CALL_ANSWERED",
             payload_json: { from, to, call_uuid: callUuid },
           }),
-        ]);
+        ]).catch(e => console.error("DB error:", e));
       }
     }
 
-    // Short, punchy greeting — reduces time before the caller can speak
-    const greeting = scriptIntro ||
-      `Hi ${leadName}, this is Sarah from ${businessName}. Thanks for your interest! How can I help you today?`;
+    // Short, warm, human greeting with SSML for natural prosody
+    const greetingText = scriptIntro ||
+      `Hi ${leadName}, this is Sarah from ${businessName}. How can I help you today?`;
 
     const aiResponseUrl = `${supabaseUrl}/functions/v1/plivo-ai-response`;
 
+    // SSML-enhanced speech for natural, warm, human-like delivery
+    const ssmlGreeting = `<prosody rate="95%" volume="loud">${escapeXml(greetingText)}</prosody>`;
+
     const plivoXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <GetInput action="${aiResponseUrl}" method="POST" inputType="speech" speechEndTimeout="2" speechModel="default" profanityFilter="false" log="true" language="${LANG}">
-    <Speak voice="${VOICE}" language="${LANG}">${escapeXml(greeting)}</Speak>
+  <GetInput action="${aiResponseUrl}" method="POST" inputType="speech" speechEndTimeout="auto" speechModel="command_and_search" executionTimeout="30" profanityFilter="false" log="true" language="${LANG}">
+    <Speak voice="${VOICE}" language="${LANG}">${ssmlGreeting}</Speak>
   </GetInput>
-  <Speak voice="${VOICE}" language="${LANG}">Sorry I missed that. We will follow up with you shortly. Goodbye!</Speak>
+  <Speak voice="${VOICE}" language="${LANG}"><prosody rate="95%">Sorry I missed that. We&#39;ll follow up shortly. Cheers!</prosody></Speak>
 </Response>`;
 
     return new Response(plivoXml, {
@@ -144,11 +139,10 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("plivo-answer error:", err);
-    const fallbackXml = `<?xml version="1.0" encoding="UTF-8"?>
+    return new Response(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Speak voice="${VOICE}" language="${LANG}">Thanks for your interest. We will follow up shortly. Goodbye!</Speak>
-</Response>`;
-    return new Response(fallbackXml, {
+  <Speak voice="${VOICE}" language="${LANG}">Thanks for your interest. We&#39;ll be in touch shortly. Cheers!</Speak>
+</Response>`, {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/xml" },
     });
