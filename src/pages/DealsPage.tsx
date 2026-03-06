@@ -186,8 +186,9 @@ const DealsPage = () => {
           ) : (
             <div className="space-y-2">
               {filteredDeals.map(deal => (
-                <Card key={deal.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="flex items-center gap-4 py-3 px-4">
+                <Card key={deal.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => { setSelectedDeal(deal); setDetailOpen(true); }}>
+                  <CardContent className="flex items-center gap-4 py-3 px-4" onClick={e => e.stopPropagation()}>
+                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => { setSelectedDeal(deal); setDetailOpen(true); }}>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">{deal.deal_name}</p>
                       <p className="text-xs text-muted-foreground">
