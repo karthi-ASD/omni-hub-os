@@ -595,6 +595,86 @@ serve(async (req) => {
       }];
       toolChoice = { type: "function", function: { name: "plan_agent_run" } };
 
+    } else if (task_type === "ticket_analysis") {
+      systemPrompt = `You are an AI customer service analyst. Analyze the support ticket and provide: sentiment, priority recommendation, category, suggested tags, a brief summary, and a suggested reply. Be concise and actionable.`;
+      userPrompt = `Analyze this support ticket:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "analyze_ticket",
+          description: "Return ticket analysis with AI recommendations",
+          parameters: {
+            type: "object",
+            properties: {
+              sentiment: { type: "string", enum: ["positive", "neutral", "negative", "frustrated", "urgent"] },
+              recommended_priority: { type: "string", enum: ["low", "medium", "high", "critical"] },
+              category: { type: "string" },
+              tags: { type: "array", items: { type: "string" } },
+              summary: { type: "string", description: "2-3 sentence summary" },
+              suggested_reply: { type: "string", description: "Professional reply suggestion" },
+              escalation_risk: { type: "number", description: "0-100 risk of escalation" },
+              suggested_department: { type: "string" },
+            },
+            required: ["sentiment", "recommended_priority", "category", "tags", "summary", "suggested_reply", "escalation_risk"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "analyze_ticket" } };
+
+    } else if (task_type === "kb_search") {
+      systemPrompt = `You are a knowledge base AI assistant. Given a customer query and a list of available KB articles, recommend the most relevant articles and generate a helpful answer. If no articles match well, generate a helpful response from your knowledge.`;
+      userPrompt = `Customer query: "${payload?.query}"\n\nAvailable KB articles:\n${JSON.stringify(payload?.articles || [])}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "kb_answer",
+          description: "Return KB search results and AI-generated answer",
+          parameters: {
+            type: "object",
+            properties: {
+              answer: { type: "string", description: "Helpful answer to the customer query" },
+              relevant_article_ids: { type: "array", items: { type: "string" }, description: "IDs of relevant articles" },
+              confidence: { type: "number", description: "0-100 confidence in the answer" },
+            },
+            required: ["answer", "confidence"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "kb_answer" } };
+
+    } else if (task_type === "ticket_reply_suggest") {
+      systemPrompt = `You are a professional customer service AI. Based on the ticket context and conversation history, generate 3 reply options: a concise reply, a detailed reply, and an empathetic reply. Each should be professional, helpful, and resolve the customer's issue.`;
+      userPrompt = `Generate reply suggestions for this ticket:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "suggest_replies",
+          description: "Return 3 reply suggestions",
+          parameters: {
+            type: "object",
+            properties: {
+              replies: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    style: { type: "string", enum: ["concise", "detailed", "empathetic"] },
+                    text: { type: "string" },
+                  },
+                  required: ["style", "text"],
+                  additionalProperties: false,
+                },
+              },
+            },
+            required: ["replies"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "suggest_replies" } };
+
     } else {
       return new Response(JSON.stringify({ error: "Unknown task_type" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
