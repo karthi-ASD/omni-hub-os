@@ -126,10 +126,9 @@ const DealsPage = () => {
                 </div>
                 <div className="space-y-2">
                   {stageDeals.map(deal => (
-                    <Card key={deal.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => { setSelectedDeal(deal); setDetailOpen(true); }}>
-                      <CardContent className="p-3 space-y-2" onClick={e => e.stopPropagation()}>
+                    <Card key={deal.id} className="hover:shadow-md transition-shadow cursor-pointer">
+                      <CardContent className="p-3 space-y-2">
                         <p className="font-medium text-sm truncate cursor-pointer" onClick={() => { setSelectedDeal(deal); setDetailOpen(true); }}>{deal.deal_name}</p>
-                        <p className="font-medium text-sm truncate">{deal.deal_name}</p>
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <User className="h-3 w-3" /> {deal.contact_name}
                         </div>
