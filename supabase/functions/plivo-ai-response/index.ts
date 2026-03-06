@@ -347,7 +347,7 @@ Important rules:
       // Continue the conversation — speak AI response then listen again
       responseXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <GetInput action="${selfUrl}" method="POST" inputType="speech" speechEndTimeout="3000" speechModel="enhanced" profanityFilter="false" log="true" language="${LANG}">
+  <GetInput action="${selfUrl}" method="POST" inputType="speech" speechEndTimeout="3" speechModel="default" profanityFilter="false" log="true" language="${LANG}">
     <Speak voice="${VOICE}" language="${LANG}">${escapeXml(aiText)}</Speak>
   </GetInput>
   <Speak voice="${VOICE}" language="${LANG}">It seems like we got disconnected. Thank you for your time, and we'll follow up with you soon. Goodbye!</Speak>
@@ -377,5 +377,5 @@ function escapeXml(str: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
+    .replace(/'/g, "&#39;");
 }
