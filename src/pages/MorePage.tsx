@@ -117,7 +117,7 @@ const superAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "7 · Workforce Management",
+    title: "8 · Workforce Management",
     description: "Employees, attendance, leave, payroll, and org chart",
     items: [
       { label: "Employees", icon: UserCog, to: "/workforce" },
