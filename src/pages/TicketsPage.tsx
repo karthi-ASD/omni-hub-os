@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -45,6 +46,7 @@ const priorityColors: Record<string, string> = {
 
 const TicketsPage = () => {
   usePageTitle("Support Tickets");
+  const navigate = useNavigate();
   const { profile, isSuperAdmin, isBusinessAdmin } = useAuth();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(true);
@@ -209,7 +211,8 @@ const TicketsPage = () => {
       ) : (
         <div className="space-y-3">
           {filtered.map((ticket) => (
-            <Card key={ticket.id} className="border-border hover:border-primary/30 transition-colors">
+            <Card key={ticket.id} className="border-border hover:border-primary/30 transition-colors cursor-pointer"
+              onClick={() => navigate(`/ticket/${ticket.id}`)}>
               <CardContent className="py-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
