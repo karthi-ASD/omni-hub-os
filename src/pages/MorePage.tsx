@@ -77,6 +77,8 @@ const superAdminSections: MenuSection[] = [
       { label: "AI Assistant", icon: Bot, to: "/ai-assistant-settings" },
       { label: "CS Automation", icon: Zap, to: "/cs-automation" },
       { label: "Customer Portal", icon: Globe, to: "/customer-portal" },
+      { label: "Customer App", icon: Globe, to: "/customer-app" },
+      { label: "Staff App", icon: Headphones, to: "/staff-app" },
       { label: "SLA Monitor", icon: Gauge, to: "/sla" },
     ],
   },
