@@ -122,6 +122,9 @@ import CSReportsPage from "./pages/CSReportsPage";
 import AIAssistantSettingsPage from "./pages/AIAssistantSettingsPage";
 import CustomerPortalPage from "./pages/CustomerPortalPage";
 import SatisfactionSurveysPage from "./pages/SatisfactionSurveysPage";
+import TicketDetailPage from "./pages/TicketDetailPage";
+import CustomerMobileAppPage from "./pages/CustomerMobileAppPage";
+import StaffMobileAppPage from "./pages/StaffMobileAppPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
