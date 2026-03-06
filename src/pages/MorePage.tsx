@@ -143,7 +143,7 @@ const superAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "9 · Security & Compliance",
+    title: "10 · Security & Compliance",
     description: "Vault, audits, backups, approvals, and compliance",
     items: [
       { label: "Vault", icon: Lock, to: "/vault" },
