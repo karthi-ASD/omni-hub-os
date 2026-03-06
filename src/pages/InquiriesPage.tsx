@@ -127,7 +127,7 @@ const InquiriesPage = () => {
               </TableHeader>
               <TableBody>
                 {filtered.map((inq) => (
-                  <TableRow key={inq.id}>
+                  <TableRow key={inq.id} className="cursor-pointer hover:bg-muted/50" onClick={() => { setSelectedInquiry(inq); setDetailOpen(true); }}>
                     <TableCell className="font-medium">{inq.name}</TableCell>
                     <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{inq.email}</TableCell>
                     <TableCell className="hidden lg:table-cell text-sm">{inq.phone || "—"}</TableCell>
