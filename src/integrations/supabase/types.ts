@@ -1102,6 +1102,65 @@ export type Database = {
           },
         ]
       }
+      ai_cs_feature_settings: {
+        Row: {
+          ai_chatbot: boolean
+          auto_categorization: boolean
+          business_id: string
+          created_at: string
+          escalation_prediction: boolean
+          id: string
+          intent_detection: boolean
+          kb_recommendations: boolean
+          priority_detection: boolean
+          reply_suggestions: boolean
+          sentiment_analysis: boolean
+          smart_routing: boolean
+          ticket_summary: boolean
+          updated_at: string
+        }
+        Insert: {
+          ai_chatbot?: boolean
+          auto_categorization?: boolean
+          business_id: string
+          created_at?: string
+          escalation_prediction?: boolean
+          id?: string
+          intent_detection?: boolean
+          kb_recommendations?: boolean
+          priority_detection?: boolean
+          reply_suggestions?: boolean
+          sentiment_analysis?: boolean
+          smart_routing?: boolean
+          ticket_summary?: boolean
+          updated_at?: string
+        }
+        Update: {
+          ai_chatbot?: boolean
+          auto_categorization?: boolean
+          business_id?: string
+          created_at?: string
+          escalation_prediction?: boolean
+          id?: string
+          intent_detection?: boolean
+          kb_recommendations?: boolean
+          priority_detection?: boolean
+          reply_suggestions?: boolean
+          sentiment_analysis?: boolean
+          smart_routing?: boolean
+          ticket_summary?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_cs_feature_settings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_expansion_strategies: {
         Row: {
           confidence: number
@@ -3766,6 +3825,74 @@ export type Database = {
           },
         ]
       }
+      company_accounts: {
+        Row: {
+          account_manager_user_id: string | null
+          address: string | null
+          business_id: string
+          company_name: string
+          created_at: string
+          email: string | null
+          health_status: string
+          id: string
+          industry: string | null
+          notes: string | null
+          phone: string | null
+          plan: string | null
+          renewal_date: string | null
+          status: string
+          tags: string[] | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          account_manager_user_id?: string | null
+          address?: string | null
+          business_id: string
+          company_name: string
+          created_at?: string
+          email?: string | null
+          health_status?: string
+          id?: string
+          industry?: string | null
+          notes?: string | null
+          phone?: string | null
+          plan?: string | null
+          renewal_date?: string | null
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          account_manager_user_id?: string | null
+          address?: string | null
+          business_id?: string
+          company_name?: string
+          created_at?: string
+          email?: string | null
+          health_status?: string
+          id?: string
+          industry?: string | null
+          notes?: string | null
+          phone?: string | null
+          plan?: string | null
+          renewal_date?: string | null
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_accounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       competitive_benchmarks: {
         Row: {
           competitor_id: string | null
@@ -4330,6 +4457,97 @@ export type Database = {
             foreignKeyName: "cost_entries_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cs_automation_rules: {
+        Row: {
+          action_type: string
+          business_id: string
+          config_json: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          is_enabled: boolean
+          last_run_at: string | null
+          name: string
+          runs_count: number
+          trigger_event: string
+          updated_at: string
+        }
+        Insert: {
+          action_type: string
+          business_id: string
+          config_json?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean
+          last_run_at?: string | null
+          name: string
+          runs_count?: number
+          trigger_event: string
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          business_id?: string
+          config_json?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean
+          last_run_at?: string | null
+          name?: string
+          runs_count?: number
+          trigger_event?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cs_automation_rules_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_portal_settings: {
+        Row: {
+          branding_json: Json | null
+          business_id: string
+          created_at: string
+          features_json: Json | null
+          id: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          branding_json?: Json | null
+          business_id: string
+          created_at?: string
+          features_json?: Json | null
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          branding_json?: Json | null
+          business_id?: string
+          created_at?: string
+          features_json?: Json | null
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_settings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -6870,6 +7088,62 @@ export type Database = {
           },
         ]
       }
+      kb_articles: {
+        Row: {
+          author_user_id: string | null
+          business_id: string
+          category: string
+          content: string | null
+          created_at: string
+          helpful_count: number
+          id: string
+          not_helpful_count: number
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          views_count: number
+        }
+        Insert: {
+          author_user_id?: string | null
+          business_id: string
+          category?: string
+          content?: string | null
+          created_at?: string
+          helpful_count?: number
+          id?: string
+          not_helpful_count?: number
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          views_count?: number
+        }
+        Update: {
+          author_user_id?: string | null
+          business_id?: string
+          category?: string
+          content?: string | null
+          created_at?: string
+          helpful_count?: number
+          id?: string
+          not_helpful_count?: number
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          views_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kb_articles_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_activities: {
         Row: {
           actor_user_id: string
@@ -9114,6 +9388,50 @@ export type Database = {
           },
         ]
       }
+      satisfaction_surveys: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          name: string
+          questions_json: Json | null
+          status: string
+          survey_type: string
+          trigger_event: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          name: string
+          questions_json?: Json | null
+          status?: string
+          survey_type?: string
+          trigger_event?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          questions_json?: Json | null
+          status?: string
+          survey_type?: string
+          trigger_event?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "satisfaction_surveys_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schema_items: {
         Row: {
           business_id: string
@@ -10379,16 +10697,25 @@ export type Database = {
       }
       support_tickets: {
         Row: {
+          ai_summary: string | null
+          ai_tags: string[] | null
           assigned_to_user_id: string | null
           business_id: string
           category: string
+          channel: string | null
           closed_at: string | null
+          company_account_id: string | null
           created_at: string
           created_by_user_id: string
+          csat_score: number | null
+          department: string | null
           description: string | null
+          escalated_at: string | null
+          first_response_at: string | null
           id: string
           priority: string
           resolved_at: string | null
+          sentiment: string | null
           sla_due_at: string | null
           status: string
           subject: string
@@ -10396,16 +10723,25 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ai_summary?: string | null
+          ai_tags?: string[] | null
           assigned_to_user_id?: string | null
           business_id: string
           category?: string
+          channel?: string | null
           closed_at?: string | null
+          company_account_id?: string | null
           created_at?: string
           created_by_user_id: string
+          csat_score?: number | null
+          department?: string | null
           description?: string | null
+          escalated_at?: string | null
+          first_response_at?: string | null
           id?: string
           priority?: string
           resolved_at?: string | null
+          sentiment?: string | null
           sla_due_at?: string | null
           status?: string
           subject: string
@@ -10413,16 +10749,25 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ai_summary?: string | null
+          ai_tags?: string[] | null
           assigned_to_user_id?: string | null
           business_id?: string
           category?: string
+          channel?: string | null
           closed_at?: string | null
+          company_account_id?: string | null
           created_at?: string
           created_by_user_id?: string
+          csat_score?: number | null
+          department?: string | null
           description?: string | null
+          escalated_at?: string | null
+          first_response_at?: string | null
           id?: string
           priority?: string
           resolved_at?: string | null
+          sentiment?: string | null
           sla_due_at?: string | null
           status?: string
           subject?: string
@@ -10435,6 +10780,71 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_company_account_id_fkey"
+            columns: ["company_account_id"]
+            isOneToOne: false
+            referencedRelation: "company_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      survey_responses: {
+        Row: {
+          business_id: string
+          comment: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          id: string
+          score: number | null
+          survey_id: string | null
+          ticket_id: string | null
+        }
+        Insert: {
+          business_id: string
+          comment?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          id?: string
+          score?: number | null
+          survey_id?: string | null
+          ticket_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          comment?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          id?: string
+          score?: number | null
+          survey_id?: string | null
+          ticket_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_responses_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "survey_responses_survey_id_fkey"
+            columns: ["survey_id"]
+            isOneToOne: false
+            referencedRelation: "satisfaction_surveys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "survey_responses_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
             referencedColumns: ["id"]
           },
         ]

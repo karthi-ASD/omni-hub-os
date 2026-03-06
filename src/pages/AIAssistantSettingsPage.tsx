@@ -1,24 +1,38 @@
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Bot, Zap, MessageSquare, Brain, ShieldCheck, Settings, Sparkles } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Bot, MessageSquare, Brain, Zap, ShieldCheck, Sparkles } from "lucide-react";
+import { useAICSFeatureSettings } from "@/hooks/useAICSFeatureSettings";
 
-const aiFeatures = [
-  { name: "AI Reply Suggestions", description: "Generate contextual reply suggestions for agents", icon: MessageSquare, enabled: true, category: "Agent Assist" },
-  { name: "Ticket Auto-Categorization", description: "Automatically categorize and tag incoming tickets", icon: Zap, enabled: true, category: "Automation" },
-  { name: "Sentiment Analysis", description: "Detect customer sentiment in real-time", icon: Brain, enabled: true, category: "Intelligence" },
-  { name: "Priority Detection", description: "AI-powered priority assignment based on content analysis", icon: Sparkles, enabled: true, category: "Automation" },
-  { name: "Smart Routing", description: "Route tickets to the best available agent or department", icon: Zap, enabled: true, category: "Automation" },
-  { name: "Ticket Summary Generation", description: "Auto-generate summaries for long ticket threads", icon: MessageSquare, enabled: false, category: "Agent Assist" },
-  { name: "Customer Intent Detection", description: "Detect customer intent and suggest next best action", icon: Brain, enabled: true, category: "Intelligence" },
-  { name: "Escalation Prediction", description: "Predict which tickets are likely to escalate", icon: ShieldCheck, enabled: false, category: "Intelligence" },
-  { name: "AI Chatbot (First Level)", description: "AI-powered first response chatbot for common queries", icon: Bot, enabled: true, category: "Self-Service" },
-  { name: "Knowledge Base Recommendations", description: "Suggest relevant KB articles to agents and customers", icon: Sparkles, enabled: true, category: "Self-Service" },
+const featureConfig = [
+  { key: "reply_suggestions", name: "AI Reply Suggestions", description: "Generate contextual reply suggestions for agents", icon: MessageSquare, category: "Agent Assist" },
+  { key: "auto_categorization", name: "Ticket Auto-Categorization", description: "Automatically categorize and tag incoming tickets", icon: Zap, category: "Automation" },
+  { key: "sentiment_analysis", name: "Sentiment Analysis", description: "Detect customer sentiment in real-time", icon: Brain, category: "Intelligence" },
+  { key: "priority_detection", name: "Priority Detection", description: "AI-powered priority assignment based on content analysis", icon: Sparkles, category: "Automation" },
+  { key: "smart_routing", name: "Smart Routing", description: "Route tickets to the best available agent or department", icon: Zap, category: "Automation" },
+  { key: "ticket_summary", name: "Ticket Summary Generation", description: "Auto-generate summaries for long ticket threads", icon: MessageSquare, category: "Agent Assist" },
+  { key: "intent_detection", name: "Customer Intent Detection", description: "Detect customer intent and suggest next best action", icon: Brain, category: "Intelligence" },
+  { key: "escalation_prediction", name: "Escalation Prediction", description: "Predict which tickets are likely to escalate", icon: ShieldCheck, category: "Intelligence" },
+  { key: "ai_chatbot", name: "AI Chatbot (First Level)", description: "AI-powered first response chatbot for common queries", icon: Bot, category: "Self-Service" },
+  { key: "kb_recommendations", name: "Knowledge Base Recommendations", description: "Suggest relevant KB articles to agents and customers", icon: Sparkles, category: "Self-Service" },
 ];
 
 const AIAssistantSettingsPage = () => {
   usePageTitle("AI Assistant Settings");
+  const { settings, loading, upsert } = useAICSFeatureSettings();
+
+  const handleToggle = (key: string, value: boolean) => {
+    upsert({ ...settings, [key]: value });
+  };
+
+  const getVal = (key: string) => {
+    if (!settings) return true; // default on
+    return settings[key] ?? true;
+  };
+
+  const activeCount = featureConfig.filter(f => getVal(f.key)).length;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -33,39 +47,33 @@ const AIAssistantSettingsPage = () => {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <Card className="border-border/50">
-          <CardContent className="p-3 text-center">
-            <p className="text-lg font-bold text-emerald-600">{aiFeatures.filter(f => f.enabled).length}</p>
-            <p className="text-[10px] text-muted-foreground">Active Features</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50">
-          <CardContent className="p-3 text-center">
-            <p className="text-lg font-bold text-muted-foreground">{aiFeatures.filter(f => !f.enabled).length}</p>
-            <p className="text-[10px] text-muted-foreground">Disabled</p>
-          </CardContent>
-        </Card>
+        <Card className="border-border/50"><CardContent className="p-3 text-center"><p className="text-lg font-bold text-emerald-600">{activeCount}</p><p className="text-[10px] text-muted-foreground">Active Features</p></CardContent></Card>
+        <Card className="border-border/50"><CardContent className="p-3 text-center"><p className="text-lg font-bold text-muted-foreground">{featureConfig.length - activeCount}</p><p className="text-[10px] text-muted-foreground">Disabled</p></CardContent></Card>
       </div>
 
-      <div className="space-y-3">
-        {aiFeatures.map((f) => (
-          <Card key={f.name} className="border-border/50">
-            <CardContent className="p-4 flex items-start gap-3">
-              <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <f.icon className="h-4 w-4 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className="text-sm font-medium text-foreground">{f.name}</p>
-                  <Badge variant="outline" className="text-[9px] px-1.5 py-0">{f.category}</Badge>
+      {loading ? (
+        <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-20 w-full" />)}</div>
+      ) : (
+        <div className="space-y-3">
+          {featureConfig.map((f) => (
+            <Card key={f.key} className="border-border/50">
+              <CardContent className="p-4 flex items-start gap-3">
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <f.icon className="h-4 w-4 text-primary" />
                 </div>
-                <p className="text-[11px] text-muted-foreground">{f.description}</p>
-              </div>
-              <Switch checked={f.enabled} />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <p className="text-sm font-medium text-foreground">{f.name}</p>
+                    <Badge variant="outline" className="text-[9px] px-1.5 py-0">{f.category}</Badge>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">{f.description}</p>
+                </div>
+                <Switch checked={getVal(f.key)} onCheckedChange={(v) => handleToggle(f.key, v)} />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
