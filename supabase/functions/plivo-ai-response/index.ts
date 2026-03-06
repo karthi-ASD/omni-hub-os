@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     if (!speechResult || speechResult.trim() === "") {
       const goodbyeXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Speak voice="Polly.Joanna" language="en-US">I didn't hear anything. Thank you for your time. One of our team members will follow up with you shortly. Have a great day!</Speak>
+  <Speak voice="Polly.Olivia" language="en-AU">I didn't hear anything. Thank you for your time. One of our team members will follow up with you shortly. Have a great day!</Speak>
 </Response>`;
       return new Response(goodbyeXml, {
         status: 200,
