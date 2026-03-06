@@ -26,7 +26,7 @@ export function NWLogo({ size = "md", showText = true }: NWLogoProps) {
         className={`${sizeClasses[size]} rounded-lg object-contain`}
       />
       {showText && (
-        <span className={`${textClasses[size]} font-bold bg-gradient-to-r from-[#d4a853] to-[#f0d48a] bg-clip-text text-transparent`}>
+        <span className={`${textClasses[size]} font-bold text-primary-foreground`}>
           NextWeb OS
         </span>
       )}
