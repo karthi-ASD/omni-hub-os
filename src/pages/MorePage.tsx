@@ -265,10 +265,18 @@ const tenantAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "Support Tickets",
-    description: "Submit issues and track resolutions",
+    title: "Customer Service",
+    description: "AI-powered support, ticketing, and customer success",
     items: [
+      { label: "CS Dashboard", icon: Headphones, to: "/cs-dashboard" },
       { label: "Tickets", icon: Ticket, to: "/tickets" },
+      { label: "Company Accounts", icon: Building2, to: "/company-accounts" },
+      { label: "Knowledge Base", icon: BookOpen, to: "/knowledge-base" },
+      { label: "CSAT Surveys", icon: ThumbsUp, to: "/satisfaction-surveys" },
+      { label: "CS Reports", icon: BarChart3, to: "/cs-reports" },
+      { label: "AI Assistant", icon: Bot, to: "/ai-assistant-settings" },
+      { label: "CS Automation", icon: Zap, to: "/cs-automation" },
+      { label: "Customer Portal", icon: Globe, to: "/customer-portal" },
     ],
   },
   {
