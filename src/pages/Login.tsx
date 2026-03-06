@@ -21,20 +21,12 @@ const Login: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: form.email.trim(),
-        password: form.password,
-      });
+      const { error } = await supabase.auth.signInWithPassword({ email: form.email.trim(), password: form.password });
       if (error) throw error;
-
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from("system_events").insert({
-          event_type: "LOGIN",
-          payload_json: { email: form.email.trim() },
-        });
+        await supabase.from("system_events").insert({ event_type: "LOGIN", payload_json: { email: form.email.trim() } });
       }
-
       toast.success("Welcome back!");
       navigate("/dashboard");
     } catch (err: any) {
@@ -46,27 +38,20 @@ const Login: React.FC = () => {
 
   return (
     <div className="flex min-h-screen">
-      {/* Left panel - Premium branding */}
+      {/* Left panel */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0a0e1a] via-[#111832] to-[#0a0e1a]" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyMTIsMTY4LDgzLDAuMDUpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-60" />
-        <div className="absolute top-20 left-10 h-72 w-72 bg-[#d4a853]/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 h-96 w-96 bg-[#2563eb]/5 rounded-full blur-3xl" />
-        
+        <div className="absolute inset-0 gradient-primary" />
+        <div className="absolute top-20 left-10 h-72 w-72 bg-primary-foreground/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 h-96 w-96 bg-primary-foreground/5 rounded-full blur-3xl" />
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <NWLogo size="lg" />
-
           <div className="max-w-md">
-            <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
-              Welcome Back to Your{" "}
-              <span className="bg-gradient-to-r from-[#d4a853] to-[#f0d48a] bg-clip-text text-transparent">
-                Command Center
-              </span>
+            <h2 className="text-4xl font-bold text-primary-foreground mb-4 leading-tight">
+              Welcome Back to Your <span className="text-primary-foreground/90">Command Center</span>
             </h2>
-            <p className="text-gray-400 text-lg leading-relaxed mb-10">
-              Access your complete business operating system. Manage clients, close deals, and scale your operations — all from one powerful dashboard.
+            <p className="text-primary-foreground/70 text-lg leading-relaxed mb-10">
+              Access your complete business operating system. Manage clients, close deals, and scale your operations.
             </p>
-            
             <div className="space-y-4">
               {[
                 { icon: Shield, label: "Enterprise-grade security & encryption" },
@@ -74,57 +59,53 @@ const Login: React.FC = () => {
                 { icon: Globe, label: "100+ integrated business modules" },
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-[#d4a853]/10 border border-[#d4a853]/20 flex items-center justify-center">
-                    <item.icon className="h-4 w-4 text-[#d4a853]" />
+                  <div className="h-8 w-8 rounded-lg bg-primary-foreground/10 border border-primary-foreground/20 flex items-center justify-center">
+                    <item.icon className="h-4 w-4 text-primary-foreground" />
                   </div>
-                  <span className="text-gray-300 text-sm">{item.label}</span>
+                  <span className="text-primary-foreground/80 text-sm">{item.label}</span>
                 </div>
               ))}
             </div>
           </div>
-
-          <div className="flex items-center gap-6 text-xs text-gray-600">
+          <div className="flex items-center gap-6 text-xs text-primary-foreground/40">
             <span>© {new Date().getFullYear()} Nextweb Pty Ltd</span>
-            <Link to="/privacy" className="hover:text-[#d4a853] transition-colors">Privacy</Link>
-            <Link to="/terms" className="hover:text-[#d4a853] transition-colors">Terms</Link>
+            <Link to="/privacy" className="hover:text-primary-foreground/70 transition-colors">Privacy</Link>
+            <Link to="/terms" className="hover:text-primary-foreground/70 transition-colors">Terms</Link>
           </div>
         </div>
       </div>
 
-      {/* Right panel - Login form */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-[#0a0e1a] lg:bg-[#080b16]">
+      {/* Right panel */}
+      <div className="flex-1 flex items-center justify-center p-6 bg-background">
         <div className="w-full max-w-md space-y-8">
-          <div className="lg:hidden">
-            <NWLogo />
-          </div>
-
+          <div className="lg:hidden"><NWLogo /></div>
           <div>
-            <h2 className="text-3xl font-bold text-white">Sign In</h2>
-            <p className="text-gray-500 mt-2">Enter your credentials to access your dashboard</p>
+            <h2 className="text-3xl font-bold">Sign In</h2>
+            <p className="text-muted-foreground mt-2">Enter your credentials to access your dashboard</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-300 text-sm font-medium">Email Address</Label>
-              <Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="john@acmecorp.com" required maxLength={255} className="h-12 bg-[#111832] border-[#1e2a4a] text-white placeholder:text-gray-600 focus:border-[#d4a853] focus:ring-[#d4a853]/20" />
+              <Label htmlFor="email" className="text-sm font-medium">Email Address</Label>
+              <Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="john@acmecorp.com" required maxLength={255} className="h-12" />
             </div>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <Label htmlFor="password" className="text-gray-300 text-sm font-medium">Password</Label>
-                <Link to="/forgot-password" className="text-xs text-[#d4a853] hover:text-[#f0d48a] transition-colors">Forgot password?</Link>
+                <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                <Link to="/forgot-password" className="text-xs text-primary hover:underline transition-colors">Forgot password?</Link>
               </div>
               <div className="relative">
-                <Input id="password" type={showPassword ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Enter your password" required className="h-12 bg-[#111832] border-[#1e2a4a] text-white placeholder:text-gray-600 focus:border-[#d4a853] focus:ring-[#d4a853]/20 pr-12" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#d4a853] transition-colors">
+                <Input id="password" type={showPassword ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Enter your password" required className="h-12 pr-12" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors">
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
 
-            <Button type="submit" className="w-full h-12 bg-gradient-to-r from-[#d4a853] to-[#b8902e] text-[#0a0e1a] font-semibold text-base hover:from-[#e0b85e] hover:to-[#c99d3a] shadow-lg shadow-[#d4a853]/20 transition-all" disabled={loading}>
+            <Button type="submit" className="w-full h-12 font-semibold text-base shadow-lg" disabled={loading}>
               {loading ? (
                 <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0a0e1a] border-t-transparent" />
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
                   Signing in...
                 </div>
               ) : (
@@ -133,11 +114,11 @@ const Login: React.FC = () => {
             </Button>
 
             <div className="relative my-3">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#1e2a4a]" /></div>
-              <div className="relative flex justify-center"><span className="bg-[#0a0e1a] lg:bg-[#080b16] px-3 text-xs text-gray-600">or continue with</span></div>
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
+              <div className="relative flex justify-center"><span className="bg-background px-3 text-xs text-muted-foreground">or continue with</span></div>
             </div>
 
-            <Button type="button" variant="outline" className="w-full h-12 bg-[#111832] border-[#1e2a4a] text-gray-300 hover:bg-[#1e2a4a] hover:text-white hover:border-[#d4a853]/30 transition-all" disabled={loading} onClick={async () => {
+            <Button type="button" variant="outline" className="w-full h-12" disabled={loading} onClick={async () => {
               setLoading(true);
               try {
                 const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
@@ -151,9 +132,9 @@ const Login: React.FC = () => {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-gray-500">
+          <p className="text-center text-sm text-muted-foreground">
             Don't have an account?{" "}
-            <Link to="/signup" className="text-[#d4a853] hover:text-[#f0d48a] font-medium transition-colors">Create one free</Link>
+            <Link to="/signup" className="text-primary hover:underline font-medium transition-colors">Create one free</Link>
           </p>
         </div>
       </div>
