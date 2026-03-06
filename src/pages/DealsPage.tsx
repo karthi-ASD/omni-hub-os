@@ -41,6 +41,8 @@ const DealsPage = () => {
   const [stageChangeOpen, setStageChangeOpen] = useState<{ deal: Deal; toStage: DealStage } | null>(null);
   const [wonLostOpen, setWonLostOpen] = useState<{ dealId: string; type: "won" | "lost" } | null>(null);
   const [filter, setFilter] = useState<DealStage | "all">("all");
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   // Form states
   const [form, setForm] = useState({ deal_name: "", contact_name: "", email: "", phone: "", business_name: "", service_interest: "", estimated_value: "" });
