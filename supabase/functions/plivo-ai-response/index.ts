@@ -239,7 +239,7 @@ Important rules:
       // End the conversation
       responseXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Speak voice="Polly.Joanna" language="en-US">${escapeXml(aiText)}</Speak>
+  <Speak voice="Polly.Olivia" language="en-AU">${escapeXml(aiText)}</Speak>
 </Response>`;
 
       // Update session as completed
