@@ -46,6 +46,7 @@ const priorityColors: Record<string, string> = {
 
 const TicketsPage = () => {
   usePageTitle("Support Tickets");
+  const navigate = useNavigate();
   const { profile, isSuperAdmin, isBusinessAdmin } = useAuth();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(true);
