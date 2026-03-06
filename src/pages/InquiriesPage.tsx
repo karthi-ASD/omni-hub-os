@@ -15,6 +15,7 @@ import { Plus, Search, ArrowRight, MessageSquare, Filter } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import type { Database } from "@/integrations/supabase/types";
+import { InquiryDetailSheet } from "@/components/inquiries/InquiryDetailSheet";
 
 type InquiryStatus = Database["public"]["Enums"]["inquiry_status"];
 
