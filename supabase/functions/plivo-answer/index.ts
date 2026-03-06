@@ -5,6 +5,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Plivo-supported Australian English female voice
+const VOICE = "Polly.Nicole";
+const LANG = "en-AU";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -15,7 +19,7 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, serviceKey);
 
   try {
-    // Plivo sends form-encoded or JSON data
+    // Parse Plivo webhook (form-encoded or JSON)
     let callUuid = "";
     let from = "";
     let to = "";
@@ -26,27 +30,51 @@ Deno.serve(async (req) => {
       callUuid = body.CallUUID || body.RequestUUID || "";
       from = body.From || "";
       to = body.To || "";
+      console.log("plivo-answer JSON body:", JSON.stringify(body));
     } else {
       const body = await req.text();
       const params = new URLSearchParams(body);
       callUuid = params.get("CallUUID") || params.get("RequestUUID") || "";
       from = params.get("From") || "";
       to = params.get("To") || "";
+      console.log("plivo-answer form body:", body);
     }
 
-    // Find the session for this call
+    console.log("plivo-answer called - CallUUID:", callUuid, "From:", from, "To:", to);
+
+    // Find the session for this call — try by plivo_call_uuid first, then by phone number
     let session: any = null;
     let leadName = "there";
-    let businessName = "our team";
+    let businessName = "Nextweb";
     let scriptIntro = "";
 
     if (callUuid) {
+      // Try exact UUID match
       const { data: sess } = await supabase
         .from("voice_agent_sessions")
         .select("*")
         .eq("plivo_call_uuid", callUuid)
         .single();
       session = sess;
+
+      // If no match, try finding by status IN_PROGRESS or CALLING (most recent)
+      if (!session) {
+        console.log("No session found by UUID, trying recent CALLING session");
+        const { data: recentSess } = await supabase
+          .from("voice_agent_sessions")
+          .select("*")
+          .in("status", ["CALLING", "IN_PROGRESS"])
+          .order("started_at", { ascending: false })
+          .limit(1);
+        if (recentSess?.[0]) {
+          session = recentSess[0];
+          // Update the session with the actual call UUID from Plivo
+          await supabase.from("voice_agent_sessions").update({
+            plivo_call_uuid: callUuid,
+          }).eq("id", session.id);
+          console.log("Matched to recent session:", session.id);
+        }
+      }
 
       if (session) {
         // Get lead name
@@ -100,21 +128,26 @@ Deno.serve(async (req) => {
           event_type: "CALL_ANSWERED",
           payload_json: { from, to, call_uuid: callUuid },
         });
+      } else {
+        console.log("WARNING: No session found for call UUID:", callUuid);
       }
     }
 
     const greeting = scriptIntro ||
-      `Hello ${leadName}! This is an AI assistant calling from ${businessName}. Thank you for your interest in our services. I'd love to help you with any questions you might have. How can I assist you today?`;
+      `Hello ${leadName}! This is an AI assistant calling from ${businessName}. Thank you for your interest in our services. How can I assist you today?`;
 
     const aiResponseUrl = `${supabaseUrl}/functions/v1/plivo-ai-response`;
 
-    // Return Plivo XML that speaks a greeting then listens for speech
+    console.log("Returning greeting XML, aiResponseUrl:", aiResponseUrl);
+    console.log("Greeting text:", greeting);
+
+    // Return Plivo XML — speak greeting then listen for speech input
     const plivoXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <GetInput action="${aiResponseUrl}" method="POST" inputType="speech" speechEndTimeout="2500" speechModel="enhanced" profanityFilter="false" log="true">
-    <Speak voice="Polly.Olivia" language="en-AU">${escapeXml(greeting)}</Speak>
+  <GetInput action="${aiResponseUrl}" method="POST" inputType="speech" speechEndTimeout="3000" speechModel="enhanced" profanityFilter="false" log="true" language="${LANG}">
+    <Speak voice="${VOICE}" language="${LANG}">${escapeXml(greeting)}</Speak>
   </GetInput>
-  <Speak voice="Polly.Olivia" language="en-AU">I didn't catch that. Thank you for your time, and we'll follow up with you shortly. Goodbye!</Speak>
+  <Speak voice="${VOICE}" language="${LANG}">I didn't catch that. Thank you for your time, and we'll follow up with you shortly. Goodbye!</Speak>
 </Response>`;
 
     return new Response(plivoXml, {
@@ -125,7 +158,7 @@ Deno.serve(async (req) => {
     console.error("Plivo answer error:", err);
     const fallbackXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Speak voice="Polly.Olivia" language="en-AU">Thank you for your interest. One of our team members will follow up with you shortly. Goodbye!</Speak>
+  <Speak voice="${VOICE}" language="${LANG}">Thank you for your interest. One of our team members will follow up with you shortly. Goodbye!</Speak>
 </Response>`;
     return new Response(fallbackXml, {
       status: 200,

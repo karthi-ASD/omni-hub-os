@@ -5,6 +5,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Plivo-supported Australian English female voice
+const VOICE = "Polly.Nicole";
+const LANG = "en-AU";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -24,20 +28,23 @@ Deno.serve(async (req) => {
       const body = await req.json();
       callUuid = body.CallUUID || "";
       speechResult = body.Speech || "";
+      console.log("ai-response JSON body:", JSON.stringify(body));
     } else {
       const body = await req.text();
       const params = new URLSearchParams(body);
       callUuid = params.get("CallUUID") || "";
       speechResult = params.get("Speech") || "";
+      console.log("ai-response form body:", body);
     }
 
     console.log("AI Response - CallUUID:", callUuid, "Speech:", speechResult);
 
-    // If no speech detected, say goodbye
+    // If no speech detected, prompt again or say goodbye
     if (!speechResult || speechResult.trim() === "") {
+      console.log("No speech detected, saying goodbye");
       const goodbyeXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Speak voice="Polly.Olivia" language="en-AU">I didn't hear anything. Thank you for your time. One of our team members will follow up with you shortly. Have a great day!</Speak>
+  <Speak voice="${VOICE}" language="${LANG}">I didn't hear anything. Thank you for your time. One of our team members will follow up with you shortly. Have a great day!</Speak>
 </Response>`;
       return new Response(goodbyeXml, {
         status: 200,
@@ -48,7 +55,7 @@ Deno.serve(async (req) => {
     // Find session and conversation history
     let session: any = null;
     let leadName = "the caller";
-    let businessName = "our company";
+    let businessName = "Nextweb";
     let serviceInterest = "";
     let conversationHistory: Array<{ role: string; content: string }> = [];
 
@@ -60,7 +67,26 @@ Deno.serve(async (req) => {
         .single();
       session = sess;
 
+      if (!session) {
+        // Fallback: find most recent IN_PROGRESS session
+        console.log("No session by UUID, trying recent IN_PROGRESS");
+        const { data: recentSess } = await supabase
+          .from("voice_agent_sessions")
+          .select("*")
+          .eq("status", "IN_PROGRESS")
+          .order("started_at", { ascending: false })
+          .limit(1);
+        if (recentSess?.[0]) {
+          session = recentSess[0];
+          await supabase.from("voice_agent_sessions").update({
+            plivo_call_uuid: callUuid,
+          }).eq("id", session.id);
+        }
+      }
+
       if (session) {
+        console.log("Found session:", session.id);
+
         // Get lead info
         if (session.lead_id) {
           const { data: lead } = await supabase
@@ -120,6 +146,17 @@ Deno.serve(async (req) => {
           event_type: "USER_SPEECH",
           payload_json: { text: speechResult },
         });
+
+        // Update transcript immediately
+        const currentTranscript = session.transcript_text || "";
+        const updatedTranscript = currentTranscript
+          ? `${currentTranscript}\nCaller: ${speechResult}`
+          : `Caller: ${speechResult}`;
+        await supabase.from("voice_agent_sessions").update({
+          transcript_text: updatedTranscript,
+        }).eq("id", session.id);
+      } else {
+        console.log("WARNING: No session found for call UUID:", callUuid);
       }
     }
 
@@ -132,7 +169,7 @@ Deno.serve(async (req) => {
         .eq("business_id", session.business_id)
         .limit(10);
       if (knowledge && knowledge.length > 0) {
-        knowledgeContext = "\n\nCOMPANY KNOWLEDGE BASE:\n" + 
+        knowledgeContext = "\n\nCOMPANY KNOWLEDGE BASE:\n" +
           knowledge.map(k => `### ${k.title}\n${k.content}`).join("\n\n");
       }
 
@@ -157,7 +194,7 @@ Deno.serve(async (req) => {
     }
 
     // Build AI prompt
-    const systemPrompt = `You are a professional, friendly AI sales assistant for ${businessName}. You are on a live phone call with ${leadName}.
+    const systemPrompt = `You are a professional, friendly Australian female AI sales assistant for ${businessName}. You are on a live phone call with ${leadName}. Speak with a warm Australian tone.
 
 Your goals:
 1. Qualify the lead by understanding their needs, budget, and timeline
@@ -170,18 +207,21 @@ ${serviceInterest ? `The caller initially expressed interest in: ${serviceIntere
 ${knowledgeContext}
 
 Important rules:
-- Keep each response under 50 words - this is spoken aloud
+- Keep each response under 50 words - this is spoken aloud on a phone call
 - Sound natural and conversational, not robotic
 - If the caller wants to end the call, say goodbye politely
 - If asked something you don't know, offer to have a team member follow up
 - Never mention you are an AI unless directly asked
-- Use facts from the knowledge base when answering about company services, experience, or capabilities`;
+- Use facts from the knowledge base when answering about company services, experience, or capabilities
+- Speak as an Australian would — use Australian English expressions naturally`;
 
     const messages = [
       { role: "system", content: systemPrompt },
       ...conversationHistory,
       { role: "user", content: speechResult },
     ];
+
+    console.log("Calling AI Gateway with", messages.length, "messages");
 
     // Call Lovable AI Gateway
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -200,16 +240,16 @@ Important rules:
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();
       console.error("AI Gateway error:", aiResponse.status, errText);
-      throw new Error("AI Gateway error");
+      throw new Error("AI Gateway error: " + aiResponse.status);
     }
 
     const aiData = await aiResponse.json();
-    const aiText = aiData.choices?.[0]?.message?.content || 
+    const aiText = aiData.choices?.[0]?.message?.content ||
       "Thank you for that. Let me have a team member follow up with more details.";
 
     console.log("AI response text:", aiText);
 
-    // Log AI response
+    // Log AI response and update transcript
     if (session) {
       await supabase.from("voice_agent_events").insert({
         business_id: session.business_id,
@@ -219,17 +259,22 @@ Important rules:
         payload_json: { text: aiText, user_said: speechResult },
       });
 
-      // Append to transcript
-      const currentTranscript = session.transcript_text || "";
-      const newTranscript = currentTranscript +
-        `\nCaller: ${speechResult}\nAgent: ${aiText}`;
+      // Get latest transcript and append agent response
+      const { data: latestSession } = await supabase
+        .from("voice_agent_sessions")
+        .select("transcript_text")
+        .eq("id", session.id)
+        .single();
+      
+      const currentTranscript = latestSession?.transcript_text || "";
+      const newTranscript = `${currentTranscript}\nAgent: ${aiText}`;
       await supabase.from("voice_agent_sessions").update({
         transcript_text: newTranscript.trim(),
       }).eq("id", session.id);
     }
 
-    // Check if the AI is saying goodbye (simple heuristic)
-    const isGoodbye = /\b(goodbye|good bye|bye|take care|have a great day|have a good day|farewell)\b/i.test(aiText) &&
+    // Check if the AI is saying goodbye
+    const isGoodbye = /\b(goodbye|good bye|bye|take care|have a great day|have a good day|farewell|cheers)\b/i.test(aiText) &&
       aiText.length < 200;
 
     const selfUrl = `${supabaseUrl}/functions/v1/plivo-ai-response`;
@@ -239,17 +284,20 @@ Important rules:
       // End the conversation
       responseXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Speak voice="Polly.Olivia" language="en-AU">${escapeXml(aiText)}</Speak>
+  <Speak voice="${VOICE}" language="${LANG}">${escapeXml(aiText)}</Speak>
 </Response>`;
 
-      // Update session as completed
+      // Update session as completed with AI summary
       if (session) {
-        // Generate AI summary
-        const summaryMessages = [
-          { role: "system", content: "Summarize this call transcript in 2-3 sentences. Include: caller's needs, qualification level (hot/warm/cold), and any follow-up actions needed." },
-          { role: "user", content: session.transcript_text + `\nCaller: ${speechResult}\nAgent: ${aiText}` },
-        ];
+        const { data: finalSession } = await supabase
+          .from("voice_agent_sessions")
+          .select("transcript_text")
+          .eq("id", session.id)
+          .single();
 
+        const fullTranscript = finalSession?.transcript_text || "";
+
+        // Generate AI summary
         try {
           const summaryResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
@@ -259,7 +307,10 @@ Important rules:
             },
             body: JSON.stringify({
               model: "google/gemini-2.5-flash-lite",
-              messages: summaryMessages,
+              messages: [
+                { role: "system", content: "Summarize this call transcript in 2-3 sentences. Include: caller's needs, qualification level (hot/warm/cold), and any follow-up actions needed." },
+                { role: "user", content: fullTranscript },
+              ],
               max_tokens: 200,
             }),
           });
@@ -278,6 +329,11 @@ Important rules:
               event_type: "VOICE_CALL_SUMMARY_READY",
               payload_json: { session_id: session.id, summary },
             });
+          } else {
+            await supabase.from("voice_agent_sessions").update({
+              status: "COMPLETED",
+              ended_at: new Date().toISOString(),
+            }).eq("id", session.id);
           }
         } catch (sumErr) {
           console.error("Summary generation error:", sumErr);
@@ -288,13 +344,13 @@ Important rules:
         }
       }
     } else {
-      // Continue the conversation - speak AI response then listen again
+      // Continue the conversation — speak AI response then listen again
       responseXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <GetInput action="${selfUrl}" method="POST" inputType="speech" speechEndTimeout="2500" speechModel="enhanced" profanityFilter="false" log="true">
-    <Speak voice="Polly.Olivia" language="en-AU">${escapeXml(aiText)}</Speak>
+  <GetInput action="${selfUrl}" method="POST" inputType="speech" speechEndTimeout="3000" speechModel="enhanced" profanityFilter="false" log="true" language="${LANG}">
+    <Speak voice="${VOICE}" language="${LANG}">${escapeXml(aiText)}</Speak>
   </GetInput>
-  <Speak voice="Polly.Olivia" language="en-AU">It seems like we got disconnected. Thank you for your time, and we'll follow up with you soon. Goodbye!</Speak>
+  <Speak voice="${VOICE}" language="${LANG}">It seems like we got disconnected. Thank you for your time, and we'll follow up with you soon. Goodbye!</Speak>
 </Response>`;
     }
 
@@ -306,7 +362,7 @@ Important rules:
     console.error("Plivo AI response error:", err);
     const errorXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Speak voice="Polly.Olivia" language="en-AU">I apologize, but I'm having a technical difficulty. One of our team members will follow up with you shortly. Thank you for your patience. Goodbye!</Speak>
+  <Speak voice="${VOICE}" language="${LANG}">I apologize, but I'm having a technical difficulty. One of our team members will follow up with you shortly. Thank you for your patience. Goodbye!</Speak>
 </Response>`;
     return new Response(errorXml, {
       status: 200,
