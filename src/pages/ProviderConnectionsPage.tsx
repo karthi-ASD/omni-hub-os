@@ -27,9 +27,10 @@ const providerTypes = [
 
 const providerNames: Record<string, string[]> = {
   WHATSAPP: ["WhatsAppCloud", "Twilio"],
-  SMS: ["Twilio", "MessageBird", "Vonage"],
+  SMS: ["Twilio", "MessageBird", "Vonage", "Plivo"],
   EMAIL: ["SendGrid", "Mailgun", "SMTP", "SES"],
-  VOICE: ["Twilio", "Vapi", "Retell", "ElevenLabs"],
+  VOICE: ["Twilio", "Vapi", "Retell", "ElevenLabs", "Plivo"],
+  PLIVO: ["Plivo"],
   GOOGLE_CALENDAR: ["Google"],
   WEBHOOK: ["Custom"],
 };
