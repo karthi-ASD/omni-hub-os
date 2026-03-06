@@ -114,6 +114,14 @@ import AISalesBrainPage from "./pages/AISalesBrainPage";
 import AutonomousAgentsPage from "./pages/AutonomousAgentsPage";
 import WebsitesPage from "./pages/WebsitesPage";
 import LeadRoutingPage from "./pages/LeadRoutingPage";
+import CustomerServiceDashboard from "./pages/CustomerServiceDashboard";
+import CompanyAccountsPage from "./pages/CompanyAccountsPage";
+import KnowledgeBasePage from "./pages/KnowledgeBasePage";
+import CSAutomationPage from "./pages/CSAutomationPage";
+import CSReportsPage from "./pages/CSReportsPage";
+import AIAssistantSettingsPage from "./pages/AIAssistantSettingsPage";
+import CustomerPortalPage from "./pages/CustomerPortalPage";
+import SatisfactionSurveysPage from "./pages/SatisfactionSurveysPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -320,6 +328,20 @@ const App = () => (
               <Route path="/lead-routing" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><LeadRoutingPage /></ProtectedRoute>
               } />
+              <Route path="/cs-dashboard" element={<CustomerServiceDashboard />} />
+              <Route path="/company-accounts" element={<CompanyAccountsPage />} />
+              <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
+              <Route path="/cs-automation" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><CSAutomationPage /></ProtectedRoute>
+              } />
+              <Route path="/cs-reports" element={<CSReportsPage />} />
+              <Route path="/ai-assistant-settings" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AIAssistantSettingsPage /></ProtectedRoute>
+              } />
+              <Route path="/customer-portal" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><CustomerPortalPage /></ProtectedRoute>
+              } />
+              <Route path="/satisfaction-surveys" element={<SatisfactionSurveysPage />} />
               <Route path="/usage-analytics" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><UsageAnalyticsPage /></ProtectedRoute>
               } />

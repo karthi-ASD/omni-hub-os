@@ -9,6 +9,7 @@ import {
   Route, CreditCard, Gauge, Eye, Server, Landmark, Scale, Map, Target as TargetIcon,
   Rocket, GitBranch, Trophy, Layers, Umbrella, BarChart2, BookOpen, Lock, Cpu,
   Flag, ListChecks, CheckCircle, FileBarChart, Network, Heart, Bell, Wrench,
+  Headphones, ThumbsUp,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -64,19 +65,33 @@ const superAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "4 · Delivery Operations",
-    description: "Projects, tasks, SLA, and service tracking",
+    title: "4 · Customer Service",
+    description: "AI-powered support, ticketing, and customer success",
+    items: [
+      { label: "CS Dashboard", icon: Headphones, to: "/cs-dashboard" },
+      { label: "Tickets", icon: Ticket, to: "/tickets" },
+      { label: "Company Accounts", icon: Building2, to: "/company-accounts" },
+      { label: "Knowledge Base", icon: BookOpen, to: "/knowledge-base" },
+      { label: "CSAT Surveys", icon: ThumbsUp, to: "/satisfaction-surveys" },
+      { label: "CS Reports", icon: BarChart3, to: "/cs-reports" },
+      { label: "AI Assistant", icon: Bot, to: "/ai-assistant-settings" },
+      { label: "CS Automation", icon: Zap, to: "/cs-automation" },
+      { label: "Customer Portal", icon: Globe, to: "/customer-portal" },
+      { label: "SLA Monitor", icon: Gauge, to: "/sla" },
+    ],
+  },
+  {
+    title: "5 · Delivery Operations",
+    description: "Projects, tasks, and service tracking",
     items: [
       { label: "Projects", icon: Briefcase, to: "/projects" },
       { label: "Tasks", icon: ListChecks, to: "/tasks" },
       { label: "Job CRM", icon: Wrench, to: "/job-crm" },
-      { label: "SLA Monitor", icon: Gauge, to: "/sla" },
-      { label: "Tickets", icon: Ticket, to: "/tickets" },
       { label: "Reminders", icon: Clock, to: "/reminders" },
     ],
   },
   {
-    title: "5 · Marketing Operations",
+    title: "6 · Marketing Operations",
     description: "SEO, campaigns, competitor analysis, and reports",
     items: [
       { label: "SEO Engine", icon: Globe, to: "/seo" },
@@ -89,7 +104,7 @@ const superAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "6 · Finance",
+    title: "7 · Finance",
     description: "Billing, invoices, payments, and forecasting",
     items: [
       { label: "Billing", icon: PieChart, to: "/billing" },
@@ -102,7 +117,7 @@ const superAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "7 · Workforce Management",
+    title: "8 · Workforce Management",
     description: "Employees, attendance, leave, payroll, and org chart",
     items: [
       { label: "Employees", icon: UserCog, to: "/workforce" },
@@ -112,7 +127,7 @@ const superAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "8 · Intelligence & AI",
+    title: "9 · Intelligence & AI",
     description: "AI Brain, agents, learning, and growth engine",
     items: [
       { label: "AI Brain", icon: Brain, to: "/ai-brain" },
@@ -128,7 +143,7 @@ const superAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "9 · Security & Compliance",
+    title: "10 · Security & Compliance",
     description: "Vault, audits, backups, approvals, and compliance",
     items: [
       { label: "Vault", icon: Lock, to: "/vault" },
@@ -250,10 +265,18 @@ const tenantAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "Support Tickets",
-    description: "Submit issues and track resolutions",
+    title: "Customer Service",
+    description: "AI-powered support, ticketing, and customer success",
     items: [
+      { label: "CS Dashboard", icon: Headphones, to: "/cs-dashboard" },
       { label: "Tickets", icon: Ticket, to: "/tickets" },
+      { label: "Company Accounts", icon: Building2, to: "/company-accounts" },
+      { label: "Knowledge Base", icon: BookOpen, to: "/knowledge-base" },
+      { label: "CSAT Surveys", icon: ThumbsUp, to: "/satisfaction-surveys" },
+      { label: "CS Reports", icon: BarChart3, to: "/cs-reports" },
+      { label: "AI Assistant", icon: Bot, to: "/ai-assistant-settings" },
+      { label: "CS Automation", icon: Zap, to: "/cs-automation" },
+      { label: "Customer Portal", icon: Globe, to: "/customer-portal" },
     ],
   },
   {
@@ -300,10 +323,14 @@ const employeeSections: MenuSection[] = [
     ],
   },
   {
-    title: "Support",
-    description: "Submit and track support tickets",
+    title: "Customer Service",
+    description: "Support dashboard, tickets, and knowledge base",
     items: [
+      { label: "CS Dashboard", icon: Headphones, to: "/cs-dashboard" },
       { label: "Tickets", icon: Ticket, to: "/tickets" },
+      { label: "Knowledge Base", icon: BookOpen, to: "/knowledge-base" },
+      { label: "CSAT Surveys", icon: ThumbsUp, to: "/satisfaction-surveys" },
+      { label: "CS Reports", icon: BarChart3, to: "/cs-reports" },
     ],
   },
 ];
