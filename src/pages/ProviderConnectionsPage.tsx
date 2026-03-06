@@ -20,6 +20,7 @@ const providerTypes = [
   { value: "SMS", label: "SMS", icon: Phone },
   { value: "EMAIL", label: "Email", icon: Mail },
   { value: "VOICE", label: "Voice", icon: Phone },
+  { value: "PLIVO", label: "Plivo (Voice & SMS)", icon: Phone },
   { value: "GOOGLE_CALENDAR", label: "Google Calendar", icon: Calendar },
   { value: "WEBHOOK", label: "Webhook", icon: Webhook },
 ];
