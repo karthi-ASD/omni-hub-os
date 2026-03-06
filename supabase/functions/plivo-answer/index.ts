@@ -5,7 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Plivo-supported Australian English female voice
 const VOICE = "Polly.Nicole";
 const LANG = "en-AU";
 
@@ -19,7 +18,6 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, serviceKey);
 
   try {
-    // Parse Plivo webhook (form-encoded or JSON)
     let callUuid = "";
     let from = "";
     let to = "";
@@ -30,26 +28,23 @@ Deno.serve(async (req) => {
       callUuid = body.CallUUID || body.RequestUUID || "";
       from = body.From || "";
       to = body.To || "";
-      console.log("plivo-answer JSON body:", JSON.stringify(body));
     } else {
       const body = await req.text();
       const params = new URLSearchParams(body);
       callUuid = params.get("CallUUID") || params.get("RequestUUID") || "";
       from = params.get("From") || "";
       to = params.get("To") || "";
-      console.log("plivo-answer form body:", body);
     }
 
-    console.log("plivo-answer called - CallUUID:", callUuid, "From:", from, "To:", to);
+    console.log("plivo-answer - UUID:", callUuid);
 
-    // Find the session for this call — try by plivo_call_uuid first, then by phone number
     let session: any = null;
     let leadName = "there";
     let businessName = "Nextweb";
     let scriptIntro = "";
 
     if (callUuid) {
-      // Try exact UUID match
+      // Find session by UUID or most recent CALLING
       const { data: sess } = await supabase
         .from("voice_agent_sessions")
         .select("*")
@@ -57,9 +52,7 @@ Deno.serve(async (req) => {
         .single();
       session = sess;
 
-      // If no match, try finding by status IN_PROGRESS or CALLING (most recent)
       if (!session) {
-        console.log("No session found by UUID, trying recent CALLING session");
         const { data: recentSess } = await supabase
           .from("voice_agent_sessions")
           .select("*")
@@ -68,86 +61,81 @@ Deno.serve(async (req) => {
           .limit(1);
         if (recentSess?.[0]) {
           session = recentSess[0];
-          // Update the session with the actual call UUID from Plivo
           await supabase.from("voice_agent_sessions").update({
             plivo_call_uuid: callUuid,
           }).eq("id", session.id);
-          console.log("Matched to recent session:", session.id);
         }
       }
 
       if (session) {
-        // Get lead name
+        // Parallel fetch: lead name, business name, script — all at once
+        const promises: Promise<any>[] = [];
+
+        // Lead name
         if (session.lead_id) {
-          const { data: lead } = await supabase
-            .from("leads")
-            .select("name, service_interest")
-            .eq("id", session.lead_id)
-            .single();
-          if (lead?.name) leadName = lead.name;
+          promises.push(
+            supabase.from("leads").select("name").eq("id", session.lead_id).single()
+              .then(r => { if (r.data?.name) leadName = r.data.name; })
+          );
         } else if (session.inquiry_id) {
-          const { data: inq } = await supabase
-            .from("inquiries")
-            .select("name, service")
-            .eq("id", session.inquiry_id)
-            .single();
-          if (inq?.name) leadName = inq.name;
+          promises.push(
+            supabase.from("inquiries").select("name").eq("id", session.inquiry_id).single()
+              .then(r => { if (r.data?.name) leadName = r.data.name; })
+          );
         }
 
-        // Get business name
-        const { data: biz } = await supabase
-          .from("businesses")
-          .select("name")
-          .eq("id", session.business_id)
-          .single();
-        if (biz?.name) businessName = biz.name;
+        // Business name
+        promises.push(
+          supabase.from("businesses").select("name").eq("id", session.business_id).single()
+            .then(r => { if (r.data?.name) businessName = r.data.name; })
+        );
 
-        // Check for a custom script
-        const { data: scripts } = await supabase
-          .from("ai_agent_scripts")
-          .select("intro_text")
-          .eq("business_id", session.business_id)
-          .eq("is_default", true)
-          .limit(1);
-        if (scripts?.[0]?.intro_text) {
-          scriptIntro = scripts[0].intro_text
+        // Script
+        promises.push(
+          supabase.from("ai_agent_scripts").select("intro_text")
+            .eq("business_id", session.business_id).eq("is_default", true).limit(1)
+            .then(r => {
+              if (r.data?.[0]?.intro_text) {
+                scriptIntro = r.data[0].intro_text;
+              }
+            })
+        );
+
+        await Promise.all(promises);
+
+        // Replace placeholders in script
+        if (scriptIntro) {
+          scriptIntro = scriptIntro
             .replace("{lead_name}", leadName)
             .replace("{business_name}", businessName);
         }
 
-        // Update session status
-        await supabase.from("voice_agent_sessions").update({
-          status: "IN_PROGRESS",
-        }).eq("id", session.id);
-
-        // Log event
-        await supabase.from("voice_agent_events").insert({
-          business_id: session.business_id,
-          session_id: session.id,
-          event_source: "PLIVO",
-          event_type: "CALL_ANSWERED",
-          payload_json: { from, to, call_uuid: callUuid },
-        });
-      } else {
-        console.log("WARNING: No session found for call UUID:", callUuid);
+        // Update status + log event in parallel
+        await Promise.all([
+          supabase.from("voice_agent_sessions").update({ status: "IN_PROGRESS" }).eq("id", session.id),
+          supabase.from("voice_agent_events").insert({
+            business_id: session.business_id,
+            session_id: session.id,
+            event_source: "PLIVO",
+            event_type: "CALL_ANSWERED",
+            payload_json: { from, to, call_uuid: callUuid },
+          }),
+        ]);
       }
     }
 
+    // Short, punchy greeting — reduces time before the caller can speak
     const greeting = scriptIntro ||
-      `Hello ${leadName}! This is an AI assistant calling from ${businessName}. Thank you for your interest in our services. How can I assist you today?`;
+      `Hi ${leadName}, this is Sarah from ${businessName}. Thanks for your interest! How can I help you today?`;
 
     const aiResponseUrl = `${supabaseUrl}/functions/v1/plivo-ai-response`;
 
-    console.log("Returning greeting XML, aiResponseUrl:", aiResponseUrl);
-    console.log("Greeting text:", greeting);
-
-    // Return Plivo XML — speak greeting then listen for speech input
     const plivoXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <GetInput action="${aiResponseUrl}" method="POST" inputType="speech" speechEndTimeout="3" speechModel="default" profanityFilter="false" log="true" language="${LANG}">
+  <GetInput action="${aiResponseUrl}" method="POST" inputType="speech" speechEndTimeout="2" speechModel="default" profanityFilter="false" log="true" language="${LANG}">
     <Speak voice="${VOICE}" language="${LANG}">${escapeXml(greeting)}</Speak>
   </GetInput>
-  <Speak voice="${VOICE}" language="${LANG}">I didn't catch that. Thank you for your time, and we'll follow up with you shortly. Goodbye!</Speak>
+  <Speak voice="${VOICE}" language="${LANG}">Sorry I missed that. We will follow up with you shortly. Goodbye!</Speak>
 </Response>`;
 
     return new Response(plivoXml, {
@@ -155,10 +143,10 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/xml" },
     });
   } catch (err) {
-    console.error("Plivo answer error:", err);
+    console.error("plivo-answer error:", err);
     const fallbackXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Speak voice="${VOICE}" language="${LANG}">Thank you for your interest. One of our team members will follow up with you shortly. Goodbye!</Speak>
+  <Speak voice="${VOICE}" language="${LANG}">Thanks for your interest. We will follow up shortly. Goodbye!</Speak>
 </Response>`;
     return new Response(fallbackXml, {
       status: 200,
