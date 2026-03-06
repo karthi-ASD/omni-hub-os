@@ -113,7 +113,7 @@ export function DealDetailSheet({ deal, open, onOpenChange }: DealDetailSheetPro
             <InfoRow icon={DollarSign} label="Estimated Value" value={deal.estimated_value ? `$${Number(deal.estimated_value).toLocaleString()} ${deal.currency}` : null} />
             <InfoRow icon={Briefcase} label="Service Interest" value={deal.service_interest} />
             <InfoRow icon={Calendar} label="Created" value={format(new Date(deal.created_at), "PPpp")} />
-            {deal.closed_at && <InfoRow icon={Calendar} label="Closed" value={format(new Date(deal.closed_at), "PPpp")} />}
+            {(deal as any).closed_at && <InfoRow icon={Calendar} label="Closed" value={format(new Date((deal as any).closed_at), "PPpp")} />}
             {deal.lost_reason && (
               <div className="pt-3">
                 <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">Lost Reason</p>
