@@ -112,9 +112,9 @@ Deno.serve(async (req) => {
     const plivoXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <GetInput action="${aiResponseUrl}" method="POST" inputType="speech" speechEndTimeout="2500" speechModel="enhanced" profanityFilter="false" log="true">
-    <Speak voice="Polly.Joanna" language="en-US">${escapeXml(greeting)}</Speak>
+    <Speak voice="Polly.Olivia" language="en-AU">${escapeXml(greeting)}</Speak>
   </GetInput>
-  <Speak voice="Polly.Joanna" language="en-US">I didn't catch that. Thank you for your time, and we'll follow up with you shortly. Goodbye!</Speak>
+  <Speak voice="Polly.Olivia" language="en-AU">I didn't catch that. Thank you for your time, and we'll follow up with you shortly. Goodbye!</Speak>
 </Response>`;
 
     return new Response(plivoXml, {
