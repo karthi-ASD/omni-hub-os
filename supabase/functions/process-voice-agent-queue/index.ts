@@ -106,6 +106,7 @@ Deno.serve(async (req) => {
       if (authId && authToken && callerId) {
         try {
           const plivoUrl = `https://api.plivo.com/v1/Account/${authId}/Call/`;
+          const answerUrl = `${supabaseUrl}/functions/v1/plivo-answer`;
           const callbackUrl = `${supabaseUrl}/functions/v1/plivo-callback`;
 
           const plivoRes = await fetch(plivoUrl, {

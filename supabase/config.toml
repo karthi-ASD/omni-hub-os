@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.plivo-callback]
 verify_jwt = false
+
+[functions.plivo-answer]
+verify_jwt = false
+
+[functions.plivo-ai-response]
+verify_jwt = false
