@@ -17,6 +17,7 @@ import {
   Trophy, XCircle, DollarSign, User, Mail,
 } from "lucide-react";
 import { format } from "date-fns";
+import { DealDetailSheet } from "@/components/deals/DealDetailSheet";
 
 const stageColors: Record<DealStage, string> = {
   new: "bg-blue-500/10 text-blue-600",
@@ -40,6 +41,8 @@ const DealsPage = () => {
   const [stageChangeOpen, setStageChangeOpen] = useState<{ deal: Deal; toStage: DealStage } | null>(null);
   const [wonLostOpen, setWonLostOpen] = useState<{ dealId: string; type: "won" | "lost" } | null>(null);
   const [filter, setFilter] = useState<DealStage | "all">("all");
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   // Form states
   const [form, setForm] = useState({ deal_name: "", contact_name: "", email: "", phone: "", business_name: "", service_interest: "", estimated_value: "" });
@@ -125,7 +128,7 @@ const DealsPage = () => {
                   {stageDeals.map(deal => (
                     <Card key={deal.id} className="hover:shadow-md transition-shadow cursor-pointer">
                       <CardContent className="p-3 space-y-2">
-                        <p className="font-medium text-sm truncate">{deal.deal_name}</p>
+                        <p className="font-medium text-sm truncate cursor-pointer" onClick={() => { setSelectedDeal(deal); setDetailOpen(true); }}>{deal.deal_name}</p>
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <User className="h-3 w-3" /> {deal.contact_name}
                         </div>
@@ -182,9 +185,9 @@ const DealsPage = () => {
           ) : (
             <div className="space-y-2">
               {filteredDeals.map(deal => (
-                <Card key={deal.id} className="hover:shadow-md transition-shadow">
+                <Card key={deal.id} className="hover:shadow-md transition-shadow cursor-pointer">
                   <CardContent className="flex items-center gap-4 py-3 px-4">
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => { setSelectedDeal(deal); setDetailOpen(true); }}>
                       <p className="font-medium text-sm truncate">{deal.deal_name}</p>
                       <p className="text-xs text-muted-foreground">
                         {deal.contact_name} · {deal.email}
@@ -325,6 +328,9 @@ const DealsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Deal Detail Sheet */}
+      <DealDetailSheet deal={selectedDeal} open={detailOpen} onOpenChange={setDetailOpen} />
     </div>
   );
 };

@@ -15,6 +15,7 @@ import { Plus, Search, ArrowRight, MessageSquare, Filter } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import type { Database } from "@/integrations/supabase/types";
+import { InquiryDetailSheet } from "@/components/inquiries/InquiryDetailSheet";
 
 type InquiryStatus = Database["public"]["Enums"]["inquiry_status"];
 
@@ -36,6 +37,8 @@ const InquiriesPage = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", suburb: "", message: "", service_interest: "" });
+  const [selectedInquiry, setSelectedInquiry] = useState<(typeof inquiries)[0] | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const filtered = inquiries.filter((i) => {
     const matchesSearch = !search || [i.name, i.email, i.phone, i.suburb, i.message].some(f => f?.toLowerCase().includes(search.toLowerCase()));
@@ -124,7 +127,7 @@ const InquiriesPage = () => {
               </TableHeader>
               <TableBody>
                 {filtered.map((inq) => (
-                  <TableRow key={inq.id}>
+                  <TableRow key={inq.id} className="cursor-pointer hover:bg-muted/50" onClick={() => { setSelectedInquiry(inq); setDetailOpen(true); }}>
                     <TableCell className="font-medium">{inq.name}</TableCell>
                     <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{inq.email}</TableCell>
                     <TableCell className="hidden lg:table-cell text-sm">{inq.phone || "—"}</TableCell>
@@ -162,6 +165,9 @@ const InquiriesPage = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Inquiry Detail Sheet */}
+      <InquiryDetailSheet inquiry={selectedInquiry} open={detailOpen} onOpenChange={setDetailOpen} />
     </div>
   );
 };
