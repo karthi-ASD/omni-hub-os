@@ -9,6 +9,7 @@ import {
   Route, CreditCard, Gauge, Eye, Server, Landmark, Scale, Map, Target as TargetIcon,
   Rocket, GitBranch, Trophy, Layers, Umbrella, BarChart2, BookOpen, Lock, Cpu,
   Flag, ListChecks, CheckCircle, FileBarChart, Network, Heart, Bell, Wrench,
+  Headphones, ThumbsUp,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
