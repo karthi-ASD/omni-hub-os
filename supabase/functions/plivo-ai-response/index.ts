@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     if (!speechResult || speechResult.trim() === "") {
       const goodbyeXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Speak voice="Polly.Joanna" language="en-US">I didn't hear anything. Thank you for your time. One of our team members will follow up with you shortly. Have a great day!</Speak>
+  <Speak voice="Polly.Olivia" language="en-AU">I didn't hear anything. Thank you for your time. One of our team members will follow up with you shortly. Have a great day!</Speak>
 </Response>`;
       return new Response(goodbyeXml, {
         status: 200,
@@ -239,7 +239,7 @@ Important rules:
       // End the conversation
       responseXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Speak voice="Polly.Joanna" language="en-US">${escapeXml(aiText)}</Speak>
+  <Speak voice="Polly.Olivia" language="en-AU">${escapeXml(aiText)}</Speak>
 </Response>`;
 
       // Update session as completed
@@ -292,9 +292,9 @@ Important rules:
       responseXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <GetInput action="${selfUrl}" method="POST" inputType="speech" speechEndTimeout="2500" speechModel="enhanced" profanityFilter="false" log="true">
-    <Speak voice="Polly.Joanna" language="en-US">${escapeXml(aiText)}</Speak>
+    <Speak voice="Polly.Olivia" language="en-AU">${escapeXml(aiText)}</Speak>
   </GetInput>
-  <Speak voice="Polly.Joanna" language="en-US">It seems like we got disconnected. Thank you for your time, and we'll follow up with you soon. Goodbye!</Speak>
+  <Speak voice="Polly.Olivia" language="en-AU">It seems like we got disconnected. Thank you for your time, and we'll follow up with you soon. Goodbye!</Speak>
 </Response>`;
     }
 
@@ -306,7 +306,7 @@ Important rules:
     console.error("Plivo AI response error:", err);
     const errorXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Speak voice="Polly.Joanna" language="en-US">I apologize, but I'm having a technical difficulty. One of our team members will follow up with you shortly. Thank you for your patience. Goodbye!</Speak>
+  <Speak voice="Polly.Olivia" language="en-AU">I apologize, but I'm having a technical difficulty. One of our team members will follow up with you shortly. Thank you for your patience. Goodbye!</Speak>
 </Response>`;
     return new Response(errorXml, {
       status: 200,
