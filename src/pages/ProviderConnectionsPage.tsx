@@ -20,15 +20,17 @@ const providerTypes = [
   { value: "SMS", label: "SMS", icon: Phone },
   { value: "EMAIL", label: "Email", icon: Mail },
   { value: "VOICE", label: "Voice", icon: Phone },
+  { value: "PLIVO", label: "Plivo (Voice & SMS)", icon: Phone },
   { value: "GOOGLE_CALENDAR", label: "Google Calendar", icon: Calendar },
   { value: "WEBHOOK", label: "Webhook", icon: Webhook },
 ];
 
 const providerNames: Record<string, string[]> = {
   WHATSAPP: ["WhatsAppCloud", "Twilio"],
-  SMS: ["Twilio", "MessageBird", "Vonage"],
+  SMS: ["Twilio", "MessageBird", "Vonage", "Plivo"],
   EMAIL: ["SendGrid", "Mailgun", "SMTP", "SES"],
-  VOICE: ["Twilio", "Vapi", "Retell", "ElevenLabs"],
+  VOICE: ["Twilio", "Vapi", "Retell", "ElevenLabs", "Plivo"],
+  PLIVO: ["Plivo"],
   GOOGLE_CALENDAR: ["Google"],
   WEBHOOK: ["Custom"],
 };
