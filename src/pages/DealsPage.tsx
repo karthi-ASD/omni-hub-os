@@ -17,6 +17,7 @@ import {
   Trophy, XCircle, DollarSign, User, Mail,
 } from "lucide-react";
 import { format } from "date-fns";
+import { DealDetailSheet } from "@/components/deals/DealDetailSheet";
 
 const stageColors: Record<DealStage, string> = {
   new: "bg-blue-500/10 text-blue-600",
