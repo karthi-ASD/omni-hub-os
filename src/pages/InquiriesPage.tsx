@@ -165,6 +165,9 @@ const InquiriesPage = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Inquiry Detail Sheet */}
+      <InquiryDetailSheet inquiry={selectedInquiry} open={detailOpen} onOpenChange={setDetailOpen} />
     </div>
   );
 };
