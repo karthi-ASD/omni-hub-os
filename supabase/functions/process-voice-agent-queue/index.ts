@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
             body: JSON.stringify({
               from: callerId.replace(/\s/g, ""),
               to: normalizedPhone,
-              answer_url: callbackUrl,
+              answer_url: answerUrl,
               hangup_url: callbackUrl,
               ring_timeout: 30,
               machine_detection: true,
