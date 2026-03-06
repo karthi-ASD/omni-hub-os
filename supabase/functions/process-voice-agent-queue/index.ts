@@ -82,6 +82,27 @@ Deno.serve(async (req) => {
       let callUuid = `mvp-stub-${crypto.randomUUID().slice(0, 8)}`;
       let callInitiated = false;
 
+      // Resolve the destination phone number from lead or inquiry
+      let toPhone: string | null = null;
+      if (session.lead_id) {
+        const { data: lead } = await supabase.from("leads").select("phone").eq("id", session.lead_id).single();
+        toPhone = lead?.phone || null;
+      } else if (session.inquiry_id) {
+        const { data: inquiry } = await supabase.from("inquiries").select("phone").eq("id", session.inquiry_id).single();
+        toPhone = inquiry?.phone || null;
+      }
+
+      if (!toPhone) {
+        await supabase.from("voice_agent_sessions").update({
+          status: "FAILED",
+          error_message: "No phone number found for lead/inquiry",
+        }).eq("id", session.id);
+        continue;
+      }
+
+      // Normalize phone: ensure it starts with country code
+      const normalizedPhone = toPhone.replace(/[\s\-\(\)]/g, "").replace(/^0/, "+61");
+
       if (authId && authToken && callerId) {
         try {
           const plivoUrl = `https://api.plivo.com/v1/Account/${authId}/Call/`;
@@ -95,7 +116,7 @@ Deno.serve(async (req) => {
             },
             body: JSON.stringify({
               from: callerId.replace(/\s/g, ""),
-              to: "placeholder-number", // In production: lead's phone from lead record
+              to: normalizedPhone,
               answer_url: callbackUrl,
               hangup_url: callbackUrl,
               ring_timeout: 30,
