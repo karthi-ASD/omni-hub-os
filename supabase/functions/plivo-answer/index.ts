@@ -125,7 +125,7 @@ Deno.serve(async (req) => {
     console.error("Plivo answer error:", err);
     const fallbackXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Speak voice="Polly.Joanna">Thank you for your interest. One of our team members will follow up with you shortly. Goodbye!</Speak>
+  <Speak voice="Polly.Olivia" language="en-AU">Thank you for your interest. One of our team members will follow up with you shortly. Goodbye!</Speak>
 </Response>`;
     return new Response(fallbackXml, {
       status: 200,

@@ -306,7 +306,7 @@ Important rules:
     console.error("Plivo AI response error:", err);
     const errorXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Speak voice="Polly.Joanna" language="en-US">I apologize, but I'm having a technical difficulty. One of our team members will follow up with you shortly. Thank you for your patience. Goodbye!</Speak>
+  <Speak voice="Polly.Olivia" language="en-AU">I apologize, but I'm having a technical difficulty. One of our team members will follow up with you shortly. Thank you for your patience. Goodbye!</Speak>
 </Response>`;
     return new Response(errorXml, {
       status: 200,
