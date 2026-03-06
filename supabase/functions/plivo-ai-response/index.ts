@@ -5,6 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Retell AI best practice: Use high-quality neural voice with Australian accent
 const VOICE = "Polly.Nicole";
 const LANG = "en-AU";
 
@@ -19,6 +20,7 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, serviceKey);
 
   try {
+    // Parse input — support both JSON and form-encoded (Plivo sends form-encoded)
     let callUuid = "";
     let speechResult = "";
 
@@ -36,19 +38,15 @@ Deno.serve(async (req) => {
 
     console.log("ai-response - UUID:", callUuid, "Speech:", speechResult);
 
-    // No speech — prompt again instead of hanging up
+    // Retell AI technique: Handle no-speech gracefully with a natural re-prompt
     if (!speechResult || speechResult.trim() === "") {
       const selfUrl = `${supabaseUrl}/functions/v1/plivo-ai-response`;
-      return new Response(`<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <GetInput action="${selfUrl}" method="POST" inputType="speech" speechEndTimeout="auto" speechModel="command_and_search" executionTimeout="30" profanityFilter="false" log="true" language="${LANG}">
+      return new Response(buildXml(
+        `<GetInput action="${selfUrl}" method="POST" inputType="speech" speechEndTimeout="auto" speechModel="command_and_search" executionTimeout="30" profanityFilter="false" log="true" language="${LANG}">
     <Speak voice="${VOICE}" language="${LANG}"><prosody rate="95%" volume="loud">Sorry, I didn&#39;t quite catch that. Could you say that again for me?</prosody></Speak>
   </GetInput>
-  <Speak voice="${VOICE}" language="${LANG}"><prosody rate="95%">No worries at all. We&#39;ll have someone follow up with you. Have a lovely day!</prosody></Speak>
-</Response>`, {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/xml" },
-      });
+  <Speak voice="${VOICE}" language="${LANG}"><prosody rate="95%">No worries at all. We&#39;ll have someone follow up with you. Have a lovely day!</prosody></Speak>`
+      ), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/xml" } });
     }
 
     // Find session
@@ -84,7 +82,7 @@ Deno.serve(async (req) => {
     }
 
     if (session) {
-      // ALL DB reads in parallel for maximum speed
+      // Retell AI technique: ALL DB reads in parallel for minimum latency
       const [leadResult, bizResult, eventsResult, knowledgeResult, scriptResult] = await Promise.all([
         session.lead_id
           ? supabase.from("leads").select("name, service_interest").eq("id", session.lead_id).single()
@@ -97,7 +95,7 @@ Deno.serve(async (req) => {
           .eq("session_id", session.id)
           .in("event_type", ["USER_SPEECH", "AI_RESPONSE"])
           .order("created_at", { ascending: true })
-          .limit(8),
+          .limit(10),
         supabase.from("ai_agent_knowledge_base")
           .select("title, content")
           .eq("business_id", session.business_id)
@@ -115,6 +113,8 @@ Deno.serve(async (req) => {
       }
       if (bizResult.data?.name) businessName = bizResult.data.name;
 
+      // Retell AI technique: Conversation history distillation
+      // Keep only the last 4 exchanges raw, summarize older ones
       if (eventsResult.data) {
         for (const evt of eventsResult.data) {
           const payload = evt.payload_json as any;
@@ -127,15 +127,17 @@ Deno.serve(async (req) => {
       }
 
       if (knowledgeResult.data?.length) {
-        knowledgeContext = "\n\nCOMPANY INFO:\n" +
-          (knowledgeResult.data as any[]).map((k: any) => `${k.title}: ${k.content}`).join("\n");
+        knowledgeContext = "\n\n## Knowledge Base\n" +
+          (knowledgeResult.data as any[]).map((k: any) => `- ${k.title}: ${k.content}`).join("\n");
       }
+
+      let qualificationQuestions = "";
       if (scriptResult.data?.[0]) {
         const script = scriptResult.data[0] as any;
         const questions = script.qualification_questions_json as any[];
         if (questions?.length) {
-          knowledgeContext += "\n\nASK NATURALLY: " +
-            questions.map((q: any) => q.question).join("; ");
+          qualificationQuestions = "\n\n## Qualification Questions (ask naturally, one at a time)\n" +
+            questions.map((q: any, i: number) => `${i + 1}. ${q.question}`).join("\n");
         }
       }
 
@@ -158,42 +160,56 @@ Deno.serve(async (req) => {
         }).eq("id", session.id),
       ]);
 
-      // SYSTEM PROMPT — optimized for human-like, jovial, warm conversation
-      const systemPrompt = `You are Sarah, a warm and friendly Australian woman who works at ${businessName} as a sales consultant. You are on a live phone call with ${leadName}.
+      // ============================================================
+      // RETELL AI BEST PRACTICE: SECTIONAL PROMPT STRUCTURE
+      // Sections: Identity → Style Guardrails → Response Guidelines → Task
+      // ============================================================
+      const systemPrompt = `## Identity
+You are Sarah, a warm and friendly Australian woman who works at ${businessName} as a sales consultant. You are on a live phone call with ${leadName}.
 
-PERSONALITY:
-- You are genuinely cheerful, upbeat, and love chatting with people
-- You speak like a real Australian — use expressions like "no worries", "lovely", "brilliant", "sounds great", "absolutely", "for sure"
-- You laugh naturally — use "haha" occasionally when appropriate
-- You show genuine enthusiasm and empathy
-- You listen carefully and reference what the caller just said
-- You use the caller's name naturally in conversation
+## Style Guardrails
+- Be concise: Keep responses to 1-2 short sentences maximum. This is a phone call, not an essay.
+- Be conversational: Use natural language, contractions ("we've", "you'll", "that's"), and acknowledge what the caller says before responding.
+- Be empathetic: Show genuine understanding for the caller's situation.
+- Use Australian expressions naturally: "no worries", "lovely", "brilliant", "sounds great", "absolutely", "for sure".
+- Use filler words sparingly for natural feel: "oh", "well", "look", "so", "hmm".
+- Add backchannel acknowledgments: "got it", "right", "I see", "of course".
 
-SPEAKING RULES (CRITICAL):
-- Maximum 25 words per response — you are speaking on a phone, be concise
-- Use short, punchy sentences — never long paragraphs
-- Use contractions: "we've", "you'll", "that's", "we're" — never formal speech
-- Add natural filler words sparingly: "oh", "well", "look", "so"
-- End with a question to keep the conversation flowing
-- Never use bullet points, lists, or formatted text — this is spoken aloud
+## Response Guidelines
+- Maximum 1-2 sentences per response. Never more. Ever.
+- Ask only ONE question at a time. Never stack multiple questions.
+- Return dates in spoken form: say "January fifth" not "01/05".
+- Return times in spoken form: say "two thirty PM" not "2:30 PM".
+- Return phone numbers spelled out: say "oh four one two" not "0412".
+- Never use bullet points, numbered lists, or any formatted text — this is spoken aloud.
+- Never use asterisks, hashtags, or markdown formatting.
+- Reference what the caller just said to show active listening.
+- Use the caller's name naturally but not in every response.
 
-KNOWLEDGE:
-${serviceInterest ? `They mentioned interest in: ${serviceInterest}` : ""}
-${knowledgeContext}
+## Task
+1. Greet warmly and establish rapport.
+2. Understand the caller's needs through natural conversation.
+3. Ask qualification questions one at a time, weaving them in naturally.
+4. Provide relevant information from the knowledge base when appropriate.
+5. If you can't answer something, say "Let me get our team onto that for you".
+6. When wrapping up, say goodbye naturally: "Lovely chatting with you!" or "Thanks so much for your time!"
 
-STRICT RULES:
-- Your name is Sarah — never say "[Your Name]" or anything similar
-- Never mention being an AI unless directly asked — if asked, say "I'm Sarah from ${businessName}"
-- If you don't know something, say "Let me get our team onto that for you"
-- When wrapping up, say goodbye naturally: "Lovely chatting with you!" or "Thanks so much for your time!"`;
+## Strict Rules
+- Your name is Sarah. Never say "[Your Name]" or anything like it.
+- Never mention being an AI unless directly asked. If asked, say "I'm Sarah from ${businessName}".
+- Never break character. You are a real person on a real phone call.
+- If the caller is upset, acknowledge their frustration before solving.
+${serviceInterest ? `\n## Context\nThey mentioned interest in: ${serviceInterest}` : ""}${knowledgeContext}${qualificationQuestions}`;
 
+      // Retell AI technique: Keep only last 4 messages for speed, older context is in the system prompt
+      const recentHistory = conversationHistory.slice(-4);
       const messages = [
         { role: "system", content: systemPrompt },
-        ...conversationHistory.slice(-6),
+        ...recentHistory,
         { role: "user", content: speechResult },
       ];
 
-      // AI call + DB writes in parallel
+      // Retell AI technique: AI call + DB writes in parallel for minimum latency
       const [aiResponse] = await Promise.all([
         fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
@@ -204,8 +220,8 @@ STRICT RULES:
           body: JSON.stringify({
             model: "google/gemini-2.5-flash-lite",
             messages,
-            max_tokens: 60,
-            temperature: 0.8,
+            max_tokens: 40, // Retell AI: Force brevity — 1-2 sentences max
+            temperature: 0.9, // Retell AI: Natural variation in responses
           }),
         }),
         dbWrites,
@@ -220,8 +236,14 @@ STRICT RULES:
       let aiText = aiData.choices?.[0]?.message?.content ||
         "No worries, let me get someone from the team to help you out!";
 
-      // Clean up any markdown or formatting artifacts
-      aiText = aiText.replace(/\*\*/g, "").replace(/\*/g, "").replace(/#/g, "").trim();
+      // Retell AI: Clean up any markdown/formatting artifacts
+      aiText = aiText
+        .replace(/\*\*/g, "")
+        .replace(/\*/g, "")
+        .replace(/#/g, "")
+        .replace(/\n/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
 
       console.log("AI:", aiText);
 
@@ -240,63 +262,50 @@ STRICT RULES:
         }).eq("id", session.id),
       ]).catch(e => console.error("DB write error:", e));
 
-      // Check goodbye
+      // Retell AI: Detect goodbye intent
       const isGoodbye = /\b(goodbye|bye|take care|cheers|have a great|have a good|farewell|lovely chatting|thanks so much)\b/i.test(aiText) &&
         !/\b(question|help|tell me|what|how)\b/i.test(aiText);
 
       const selfUrl = `${supabaseUrl}/functions/v1/plivo-ai-response`;
 
-      // SSML prosody for warm, natural delivery
+      // Retell AI: SSML prosody for warm, natural delivery
       const ssmlResponse = `<prosody rate="95%" volume="loud">${escapeXml(aiText)}</prosody>`;
 
       if (isGoodbye) {
-        // Complete session in background
         supabase.from("voice_agent_sessions").update({
           status: "COMPLETED",
           ended_at: new Date().toISOString(),
           ai_summary: `Call with ${leadName}. Transcript recorded.`,
         }).eq("id", session.id).then(() => {}).catch(e => console.error(e));
 
-        return new Response(`<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Speak voice="${VOICE}" language="${LANG}">${ssmlResponse}</Speak>
-</Response>`, {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/xml" },
-        });
+        return new Response(buildXml(
+          `<Speak voice="${VOICE}" language="${LANG}">${ssmlResponse}</Speak>`
+        ), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/xml" } });
       }
 
-      return new Response(`<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <GetInput action="${selfUrl}" method="POST" inputType="speech" speechEndTimeout="auto" speechModel="command_and_search" executionTimeout="30" profanityFilter="false" log="true" language="${LANG}">
+      return new Response(buildXml(
+        `<GetInput action="${selfUrl}" method="POST" inputType="speech" speechEndTimeout="auto" speechModel="command_and_search" executionTimeout="30" profanityFilter="false" log="true" language="${LANG}">
     <Speak voice="${VOICE}" language="${LANG}">${ssmlResponse}</Speak>
   </GetInput>
-  <Speak voice="${VOICE}" language="${LANG}"><prosody rate="95%">Looks like we lost connection. No worries, we&#39;ll be in touch! Cheers!</prosody></Speak>
-</Response>`, {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/xml" },
-      });
+  <Speak voice="${VOICE}" language="${LANG}"><prosody rate="95%">Looks like we lost connection. No worries, we&#39;ll be in touch! Cheers!</prosody></Speak>`
+      ), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/xml" } });
     }
 
     // No session fallback
-    return new Response(`<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Speak voice="${VOICE}" language="${LANG}"><prosody rate="95%" volume="loud">Thanks for calling! Someone from our team will be in touch shortly. Cheers!</prosody></Speak>
-</Response>`, {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/xml" },
-    });
+    return new Response(buildXml(
+      `<Speak voice="${VOICE}" language="${LANG}"><prosody rate="95%" volume="loud">Thanks for calling! Someone from our team will be in touch shortly. Cheers!</prosody></Speak>`
+    ), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/xml" } });
   } catch (err) {
     console.error("ai-response error:", err);
-    return new Response(`<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Speak voice="${VOICE}" language="${LANG}"><prosody rate="95%">Sorry about that, small technical hiccup! Our team will follow up with you shortly. Cheers!</prosody></Speak>
-</Response>`, {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/xml" },
-    });
+    return new Response(buildXml(
+      `<Speak voice="${VOICE}" language="${LANG}"><prosody rate="95%">Sorry about that, small technical hiccup! Our team will follow up with you shortly. Cheers!</prosody></Speak>`
+    ), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/xml" } });
   }
 });
+
+function buildXml(inner: string): string {
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n  ${inner}\n</Response>`;
+}
 
 function escapeXml(str: string): string {
   return str

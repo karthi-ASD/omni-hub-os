@@ -67,6 +67,7 @@ Deno.serve(async (req) => {
       }
 
       if (session) {
+        // Retell AI technique: All DB reads in parallel
         const promises: Promise<any>[] = [];
 
         if (session.lead_id) {
@@ -116,38 +117,32 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Short, warm, human greeting with SSML for natural prosody
+    // Retell AI: Short, warm, human greeting — 1 sentence only
     const greetingText = scriptIntro ||
       `Hi ${leadName}, this is Sarah from ${businessName}. How can I help you today?`;
 
     const aiResponseUrl = `${supabaseUrl}/functions/v1/plivo-ai-response`;
 
-    // SSML-enhanced speech for natural, warm, human-like delivery
+    // Retell AI: SSML prosody for warm, natural delivery
     const ssmlGreeting = `<prosody rate="95%" volume="loud">${escapeXml(greetingText)}</prosody>`;
 
-    const plivoXml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <GetInput action="${aiResponseUrl}" method="POST" inputType="speech" speechEndTimeout="auto" speechModel="command_and_search" executionTimeout="30" profanityFilter="false" log="true" language="${LANG}">
+    return new Response(buildXml(
+      `<GetInput action="${aiResponseUrl}" method="POST" inputType="speech" speechEndTimeout="auto" speechModel="command_and_search" executionTimeout="30" profanityFilter="false" log="true" language="${LANG}">
     <Speak voice="${VOICE}" language="${LANG}">${ssmlGreeting}</Speak>
   </GetInput>
-  <Speak voice="${VOICE}" language="${LANG}"><prosody rate="95%">Sorry I missed that. We&#39;ll follow up shortly. Cheers!</prosody></Speak>
-</Response>`;
-
-    return new Response(plivoXml, {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/xml" },
-    });
+  <Speak voice="${VOICE}" language="${LANG}"><prosody rate="95%">Sorry I missed that. We&#39;ll follow up shortly. Cheers!</prosody></Speak>`
+    ), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/xml" } });
   } catch (err) {
     console.error("plivo-answer error:", err);
-    return new Response(`<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Speak voice="${VOICE}" language="${LANG}">Thanks for your interest. We&#39;ll be in touch shortly. Cheers!</Speak>
-</Response>`, {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/xml" },
-    });
+    return new Response(buildXml(
+      `<Speak voice="${VOICE}" language="${LANG}">Thanks for your interest. We&#39;ll be in touch shortly. Cheers!</Speak>`
+    ), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/xml" } });
   }
 });
+
+function buildXml(inner: string): string {
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n  ${inner}\n</Response>`;
+}
 
 function escapeXml(str: string): string {
   return str
