@@ -323,10 +323,14 @@ const employeeSections: MenuSection[] = [
     ],
   },
   {
-    title: "Support",
-    description: "Submit and track support tickets",
+    title: "Customer Service",
+    description: "Support dashboard, tickets, and knowledge base",
     items: [
+      { label: "CS Dashboard", icon: Headphones, to: "/cs-dashboard" },
       { label: "Tickets", icon: Ticket, to: "/tickets" },
+      { label: "Knowledge Base", icon: BookOpen, to: "/knowledge-base" },
+      { label: "CSAT Surveys", icon: ThumbsUp, to: "/satisfaction-surveys" },
+      { label: "CS Reports", icon: BarChart3, to: "/cs-reports" },
     ],
   },
 ];
