@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
     // Return Plivo XML — speak greeting then listen for speech input
     const plivoXml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <GetInput action="${aiResponseUrl}" method="POST" inputType="speech" speechEndTimeout="3000" speechModel="enhanced" profanityFilter="false" log="true" language="${LANG}">
+  <GetInput action="${aiResponseUrl}" method="POST" inputType="speech" speechEndTimeout="3" speechModel="default" profanityFilter="false" log="true" language="${LANG}">
     <Speak voice="${VOICE}" language="${LANG}">${escapeXml(greeting)}</Speak>
   </GetInput>
   <Speak voice="${VOICE}" language="${LANG}">I didn't catch that. Thank you for your time, and we'll follow up with you shortly. Goodbye!</Speak>
