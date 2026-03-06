@@ -123,24 +123,59 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Fetch knowledge base for context
+    let knowledgeContext = "";
+    if (session) {
+      const { data: knowledge } = await supabase
+        .from("ai_agent_knowledge_base")
+        .select("title, content")
+        .eq("business_id", session.business_id)
+        .limit(10);
+      if (knowledge && knowledge.length > 0) {
+        knowledgeContext = "\n\nCOMPANY KNOWLEDGE BASE:\n" + 
+          knowledge.map(k => `### ${k.title}\n${k.content}`).join("\n\n");
+      }
+
+      // Fetch script for qualification flow
+      const { data: scripts } = await supabase
+        .from("ai_agent_scripts")
+        .select("qualification_questions_json, scheduling_text, closing_text")
+        .eq("business_id", session.business_id)
+        .eq("is_default", true)
+        .limit(1);
+      if (scripts?.[0]) {
+        const script = scripts[0];
+        const questions = script.qualification_questions_json as any[];
+        if (questions?.length) {
+          knowledgeContext += "\n\nQUALIFICATION QUESTIONS TO ASK (weave naturally into conversation):\n" +
+            questions.map((q: any, i: number) => `${i + 1}. ${q.question}`).join("\n");
+        }
+        if (script.scheduling_text) {
+          knowledgeContext += "\n\nWhen ready to schedule: " + script.scheduling_text;
+        }
+      }
+    }
+
     // Build AI prompt
     const systemPrompt = `You are a professional, friendly AI sales assistant for ${businessName}. You are on a live phone call with ${leadName}.
 
 Your goals:
 1. Qualify the lead by understanding their needs, budget, and timeline
-2. Answer questions about the company's services professionally
+2. Answer questions about the company's services using the knowledge base below
 3. If the caller wants to schedule a meeting or callback, collect their preferred date/time
 4. Keep responses concise and conversational (2-3 sentences max) since this is a phone call
 5. Be warm, professional, and helpful - never pushy
 
 ${serviceInterest ? `The caller initially expressed interest in: ${serviceInterest}` : ""}
+${knowledgeContext}
 
 Important rules:
 - Keep each response under 50 words - this is spoken aloud
 - Sound natural and conversational, not robotic
 - If the caller wants to end the call, say goodbye politely
 - If asked something you don't know, offer to have a team member follow up
-- Never mention you are an AI unless directly asked`;
+- Never mention you are an AI unless directly asked
+- Use facts from the knowledge base when answering about company services, experience, or capabilities`;
 
     const messages = [
       { role: "system", content: systemPrompt },
