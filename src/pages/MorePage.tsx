@@ -328,20 +328,19 @@ const MorePage = () => {
   return (
     <div className="pb-4 animate-fade-in">
       {/* Profile card */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0a0e1a] via-[#111832] to-[#0a0e1a] border border-[#1e2a4a] p-5 mb-6">
-        <div className="absolute top-0 right-0 h-24 w-24 bg-[#d4a853]/10 rounded-full blur-2xl" />
+      <div className="relative overflow-hidden rounded-lg gradient-primary p-5 mb-6">
         <div className="relative z-10 flex items-center gap-4">
-          <Avatar className="h-14 w-14 border-2 border-[#d4a853]/30">
-            <AvatarFallback className="text-lg bg-gradient-to-br from-[#d4a853] to-[#b8902e] text-[#0a0e1a] font-bold">
+          <Avatar className="h-14 w-14 border-2 border-primary-foreground/30">
+            <AvatarFallback className="text-lg bg-primary-foreground text-primary font-bold">
               {initials}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-base text-white truncate">{profile?.full_name}</p>
-            <p className="text-xs text-gray-500 truncate">{profile?.email}</p>
+            <p className="font-semibold text-base text-primary-foreground truncate">{profile?.full_name}</p>
+            <p className="text-xs text-primary-foreground/60 truncate">{profile?.email}</p>
             <div className="flex items-center gap-1.5 mt-1">
-              <Sparkles className="h-3 w-3 text-[#d4a853]" />
-              <p className="text-xs text-[#d4a853] capitalize font-medium">
+              <Sparkles className="h-3 w-3 text-primary-foreground/80" />
+              <p className="text-xs text-primary-foreground/80 capitalize font-medium">
                 {roles.join(", ").replace(/_/g, " ")}
               </p>
             </div>
@@ -353,22 +352,22 @@ const MorePage = () => {
       {sections.map((section) => (
         <div key={section.title} className="mb-5">
           <div className="px-1 pb-2">
-            <p className="text-[10px] font-bold text-[#d4a853] uppercase tracking-[0.15em]">
+            <p className="text-[10px] font-bold text-primary uppercase tracking-[0.15em]">
               {section.title}
             </p>
-            <p className="text-[10px] text-gray-500 mt-0.5">{section.description}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{section.description}</p>
           </div>
           <div className="grid grid-cols-4 gap-1.5">
             {section.items.map((item) => (
               <button
                 key={item.to}
                 onClick={() => navigate(item.to)}
-                className="flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl hover:bg-[#111832] active:bg-[#1e2a4a] transition-colors border border-transparent hover:border-[#1e2a4a]"
+                className="flex flex-col items-center gap-1.5 py-3 px-1 rounded-lg hover:bg-secondary active:bg-secondary/80 transition-colors border border-transparent hover:border-border"
               >
-                <div className="h-10 w-10 rounded-xl bg-[#111832] border border-[#1e2a4a] flex items-center justify-center">
-                  <item.icon className="h-5 w-5 text-gray-400" />
+                <div className="h-10 w-10 rounded-lg bg-primary/10 border border-primary/15 flex items-center justify-center">
+                  <item.icon className="h-5 w-5 text-primary" />
                 </div>
-                <span className="text-[11px] font-medium text-gray-400 text-center leading-tight line-clamp-2">
+                <span className="text-[11px] font-medium text-muted-foreground text-center leading-tight line-clamp-2">
                   {item.label}
                 </span>
               </button>
@@ -381,7 +380,7 @@ const MorePage = () => {
       <div className="pt-4">
         <button
           onClick={signOut}
-          className="flex items-center gap-3 w-full px-4 py-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 font-medium text-sm hover:bg-red-500/20 transition-colors"
+          className="flex items-center gap-3 w-full px-4 py-3.5 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive font-medium text-sm hover:bg-destructive/20 transition-colors"
         >
           <LogOut className="h-5 w-5" />
           Sign Out

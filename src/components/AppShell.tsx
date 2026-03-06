@@ -5,7 +5,7 @@ import { MobileHeader } from "@/components/mobile/MobileHeader";
 
 const AppShell = () => {
   return (
-    <div className="flex flex-col min-h-screen w-full bg-[#0a0e1a]">
+    <div className="flex flex-col min-h-screen w-full bg-background">
       <MobileHeader />
       <main className="flex-1 px-4 py-4 pb-24 overflow-y-auto">
         <Outlet />
