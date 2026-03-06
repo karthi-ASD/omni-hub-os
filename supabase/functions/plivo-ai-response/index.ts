@@ -36,10 +36,15 @@ Deno.serve(async (req) => {
 
     console.log("ai-response - UUID:", callUuid, "Speech:", speechResult);
 
+    // No speech — prompt again instead of hanging up
     if (!speechResult || speechResult.trim() === "") {
+      const selfUrl = `${supabaseUrl}/functions/v1/plivo-ai-response`;
       return new Response(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Speak voice="${VOICE}" language="${LANG}">Sorry, I didn&#39;t catch that. Could you say that again?</Speak>
+  <GetInput action="${selfUrl}" method="POST" inputType="speech" speechEndTimeout="auto" speechModel="command_and_search" executionTimeout="30" profanityFilter="false" log="true" language="${LANG}">
+    <Speak voice="${VOICE}" language="${LANG}"><prosody rate="95%" volume="loud">Sorry, I didn&#39;t quite catch that. Could you say that again for me?</prosody></Speak>
+  </GetInput>
+  <Speak voice="${VOICE}" language="${LANG}"><prosody rate="95%">No worries at all. We&#39;ll have someone follow up with you. Have a lovely day!</prosody></Speak>
 </Response>`, {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/xml" },
@@ -52,6 +57,7 @@ Deno.serve(async (req) => {
     let businessName = "Nextweb";
     let serviceInterest = "";
     let conversationHistory: Array<{ role: string; content: string }> = [];
+    let knowledgeContext = "";
 
     if (callUuid) {
       const { data: sess } = await supabase
@@ -70,198 +76,212 @@ Deno.serve(async (req) => {
           .limit(1);
         if (recentSess?.[0]) {
           session = recentSess[0];
-          await supabase.from("voice_agent_sessions").update({
+          supabase.from("voice_agent_sessions").update({
             plivo_call_uuid: callUuid,
-          }).eq("id", session.id);
+          }).eq("id", session.id).then(() => {}).catch(() => {});
+        }
+      }
+    }
+
+    if (session) {
+      // ALL DB reads in parallel for maximum speed
+      const [leadResult, bizResult, eventsResult, knowledgeResult, scriptResult] = await Promise.all([
+        session.lead_id
+          ? supabase.from("leads").select("name, service_interest").eq("id", session.lead_id).single()
+          : session.inquiry_id
+            ? supabase.from("inquiries").select("name, service").eq("id", session.inquiry_id).single()
+            : Promise.resolve({ data: null }),
+        supabase.from("businesses").select("name").eq("id", session.business_id).single(),
+        supabase.from("voice_agent_events")
+          .select("event_type, payload_json")
+          .eq("session_id", session.id)
+          .in("event_type", ["USER_SPEECH", "AI_RESPONSE"])
+          .order("created_at", { ascending: true })
+          .limit(8),
+        supabase.from("ai_agent_knowledge_base")
+          .select("title, content")
+          .eq("business_id", session.business_id)
+          .limit(5),
+        supabase.from("ai_agent_scripts")
+          .select("qualification_questions_json, scheduling_text")
+          .eq("business_id", session.business_id)
+          .eq("is_default", true)
+          .limit(1),
+      ]);
+
+      if (leadResult.data) {
+        leadName = (leadResult.data as any).name || leadName;
+        serviceInterest = (leadResult.data as any).service_interest || (leadResult.data as any).service || "";
+      }
+      if (bizResult.data?.name) businessName = bizResult.data.name;
+
+      if (eventsResult.data) {
+        for (const evt of eventsResult.data) {
+          const payload = evt.payload_json as any;
+          if (evt.event_type === "USER_SPEECH" && payload?.text) {
+            conversationHistory.push({ role: "user", content: payload.text });
+          } else if (evt.event_type === "AI_RESPONSE" && payload?.text) {
+            conversationHistory.push({ role: "assistant", content: payload.text });
+          }
         }
       }
 
-      if (session) {
-        // Parallel: lead info, business name, conversation history, knowledge — ALL at once
-        const [leadResult, bizResult, eventsResult, knowledgeResult, scriptResult] = await Promise.all([
-          // Lead info
-          session.lead_id
-            ? supabase.from("leads").select("name, service_interest").eq("id", session.lead_id).single()
-            : session.inquiry_id
-              ? supabase.from("inquiries").select("name, service").eq("id", session.inquiry_id).single()
-              : Promise.resolve({ data: null }),
-          // Business
-          supabase.from("businesses").select("name").eq("id", session.business_id).single(),
-          // Conversation history
-          supabase.from("voice_agent_events")
-            .select("event_type, payload_json")
-            .eq("session_id", session.id)
-            .in("event_type", ["USER_SPEECH", "AI_RESPONSE"])
-            .order("created_at", { ascending: true })
-            .limit(10),
-          // Knowledge base (limit to 5 most relevant)
-          supabase.from("ai_agent_knowledge_base")
-            .select("title, content")
-            .eq("business_id", session.business_id)
-            .limit(5),
-          // Script
-          supabase.from("ai_agent_scripts")
-            .select("qualification_questions_json, scheduling_text")
-            .eq("business_id", session.business_id)
-            .eq("is_default", true)
-            .limit(1),
-        ]);
-
-        if (leadResult.data) {
-          leadName = (leadResult.data as any).name || leadName;
-          serviceInterest = (leadResult.data as any).service_interest || (leadResult.data as any).service || "";
+      if (knowledgeResult.data?.length) {
+        knowledgeContext = "\n\nCOMPANY INFO:\n" +
+          (knowledgeResult.data as any[]).map((k: any) => `${k.title}: ${k.content}`).join("\n");
+      }
+      if (scriptResult.data?.[0]) {
+        const script = scriptResult.data[0] as any;
+        const questions = script.qualification_questions_json as any[];
+        if (questions?.length) {
+          knowledgeContext += "\n\nASK NATURALLY: " +
+            questions.map((q: any) => q.question).join("; ");
         }
-        if (bizResult.data?.name) businessName = bizResult.data.name;
+      }
 
-        // Build conversation history
-        if (eventsResult.data) {
-          for (const evt of eventsResult.data) {
-            const payload = evt.payload_json as any;
-            if (evt.event_type === "USER_SPEECH" && payload?.text) {
-              conversationHistory.push({ role: "user", content: payload.text });
-            } else if (evt.event_type === "AI_RESPONSE" && payload?.text) {
-              conversationHistory.push({ role: "assistant", content: payload.text });
-            }
-          }
-        }
+      // Fire-and-forget: log speech + update transcript
+      const currentTranscript = session.transcript_text || "";
+      const updatedTranscript = currentTranscript
+        ? `${currentTranscript}\nCaller: ${speechResult}`
+        : `Caller: ${speechResult}`;
 
-        // Log user speech + update transcript in parallel (non-blocking for AI call)
-        const currentTranscript = session.transcript_text || "";
-        const updatedTranscript = currentTranscript
-          ? `${currentTranscript}\nCaller: ${speechResult}`
-          : `Caller: ${speechResult}`;
+      const dbWrites = Promise.all([
+        supabase.from("voice_agent_events").insert({
+          business_id: session.business_id,
+          session_id: session.id,
+          event_source: "PLIVO",
+          event_type: "USER_SPEECH",
+          payload_json: { text: speechResult },
+        }),
+        supabase.from("voice_agent_sessions").update({
+          transcript_text: updatedTranscript,
+        }).eq("id", session.id),
+      ]);
 
-        // Fire-and-forget DB writes — don't await before AI call
-        const dbWrites = Promise.all([
-          supabase.from("voice_agent_events").insert({
-            business_id: session.business_id,
-            session_id: session.id,
-            event_source: "PLIVO",
-            event_type: "USER_SPEECH",
-            payload_json: { text: speechResult },
+      // SYSTEM PROMPT — optimized for human-like, jovial, warm conversation
+      const systemPrompt = `You are Sarah, a warm and friendly Australian woman who works at ${businessName} as a sales consultant. You are on a live phone call with ${leadName}.
+
+PERSONALITY:
+- You are genuinely cheerful, upbeat, and love chatting with people
+- You speak like a real Australian — use expressions like "no worries", "lovely", "brilliant", "sounds great", "absolutely", "for sure"
+- You laugh naturally — use "haha" occasionally when appropriate
+- You show genuine enthusiasm and empathy
+- You listen carefully and reference what the caller just said
+- You use the caller's name naturally in conversation
+
+SPEAKING RULES (CRITICAL):
+- Maximum 25 words per response — you are speaking on a phone, be concise
+- Use short, punchy sentences — never long paragraphs
+- Use contractions: "we've", "you'll", "that's", "we're" — never formal speech
+- Add natural filler words sparingly: "oh", "well", "look", "so"
+- End with a question to keep the conversation flowing
+- Never use bullet points, lists, or formatted text — this is spoken aloud
+
+KNOWLEDGE:
+${serviceInterest ? `They mentioned interest in: ${serviceInterest}` : ""}
+${knowledgeContext}
+
+STRICT RULES:
+- Your name is Sarah — never say "[Your Name]" or anything similar
+- Never mention being an AI unless directly asked — if asked, say "I'm Sarah from ${businessName}"
+- If you don't know something, say "Let me get our team onto that for you"
+- When wrapping up, say goodbye naturally: "Lovely chatting with you!" or "Thanks so much for your time!"`;
+
+      const messages = [
+        { role: "system", content: systemPrompt },
+        ...conversationHistory.slice(-6),
+        { role: "user", content: speechResult },
+      ];
+
+      // AI call + DB writes in parallel
+      const [aiResponse] = await Promise.all([
+        fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${lovableApiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash-lite",
+            messages,
+            max_tokens: 60,
+            temperature: 0.8,
           }),
-          supabase.from("voice_agent_sessions").update({
-            transcript_text: updatedTranscript,
-          }).eq("id", session.id),
-        ]);
+        }),
+        dbWrites,
+      ]);
 
-        // Build knowledge context
-        let knowledgeContext = "";
-        if (knowledgeResult.data?.length) {
-          knowledgeContext = "\n\nCOMPANY INFO:\n" +
-            knowledgeResult.data.map((k: any) => `${k.title}: ${k.content}`).join("\n");
-        }
-        if (scriptResult.data?.[0]) {
-          const script = scriptResult.data[0] as any;
-          const questions = script.qualification_questions_json as any[];
-          if (questions?.length) {
-            knowledgeContext += "\n\nASK THESE (naturally): " +
-              questions.map((q: any) => q.question).join("; ");
-          }
-        }
+      if (!aiResponse.ok) {
+        console.error("AI error:", aiResponse.status);
+        throw new Error("AI error");
+      }
 
-        // Call AI immediately — don't wait for DB writes
-        const systemPrompt = `You are Sarah, a friendly Australian sales assistant at ${businessName}, on a live phone call with ${leadName}. You have an Australian accent and speak naturally.
+      const aiData = await aiResponse.json();
+      let aiText = aiData.choices?.[0]?.message?.content ||
+        "No worries, let me get someone from the team to help you out!";
 
-RULES (CRITICAL):
-- Max 30 words per response — this is spoken on a phone, be brief
-- Sound human and warm, use Australian expressions like "no worries", "lovely", "brilliant"
-- Never say "[Your Name]" — your name is Sarah
-- Answer using company info below
-- If unsure, say "let me get our team to follow up on that"
-- Never mention being an AI unless directly asked
-${serviceInterest ? `\nThey are interested in: ${serviceInterest}` : ""}
-${knowledgeContext}`;
+      // Clean up any markdown or formatting artifacts
+      aiText = aiText.replace(/\*\*/g, "").replace(/\*/g, "").replace(/#/g, "").trim();
 
-        const messages = [
-          { role: "system", content: systemPrompt },
-          ...conversationHistory.slice(-6), // Only last 6 turns for speed
-          { role: "user", content: speechResult },
-        ];
+      console.log("AI:", aiText);
 
-        // AI call + DB writes in parallel
-        const [aiResponse] = await Promise.all([
-          fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${lovableApiKey}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "google/gemini-2.5-flash-lite",
-              messages,
-              max_tokens: 80,
-            }),
-          }),
-          dbWrites,
-        ]);
+      // Fire-and-forget: log AI response + update transcript
+      const aiTranscript = `${updatedTranscript}\nAgent: ${aiText}`;
+      Promise.all([
+        supabase.from("voice_agent_events").insert({
+          business_id: session.business_id,
+          session_id: session.id,
+          event_source: "INTERNAL",
+          event_type: "AI_RESPONSE",
+          payload_json: { text: aiText, user_said: speechResult },
+        }),
+        supabase.from("voice_agent_sessions").update({
+          transcript_text: aiTranscript.trim(),
+        }).eq("id", session.id),
+      ]).catch(e => console.error("DB write error:", e));
 
-        if (!aiResponse.ok) {
-          console.error("AI error:", aiResponse.status);
-          throw new Error("AI error");
-        }
+      // Check goodbye
+      const isGoodbye = /\b(goodbye|bye|take care|cheers|have a great|have a good|farewell|lovely chatting|thanks so much)\b/i.test(aiText) &&
+        !/\b(question|help|tell me|what|how)\b/i.test(aiText);
 
-        const aiData = await aiResponse.json();
-        const aiText = aiData.choices?.[0]?.message?.content ||
-          "No worries, let me get someone from the team to help you out.";
+      const selfUrl = `${supabaseUrl}/functions/v1/plivo-ai-response`;
 
-        console.log("AI:", aiText);
+      // SSML prosody for warm, natural delivery
+      const ssmlResponse = `<prosody rate="95%" volume="loud">${escapeXml(aiText)}</prosody>`;
 
-        // Log AI response + update transcript (fire-and-forget)
-        const aiTranscript = `${updatedTranscript}\nAgent: ${aiText}`;
-        Promise.all([
-          supabase.from("voice_agent_events").insert({
-            business_id: session.business_id,
-            session_id: session.id,
-            event_source: "INTERNAL",
-            event_type: "AI_RESPONSE",
-            payload_json: { text: aiText, user_said: speechResult },
-          }),
-          supabase.from("voice_agent_sessions").update({
-            transcript_text: aiTranscript.trim(),
-          }).eq("id", session.id),
-        ]).catch(e => console.error("DB write error:", e));
-
-        // Check if goodbye
-        const isGoodbye = /\b(goodbye|bye|take care|cheers|have a great|have a good|farewell)\b/i.test(aiText) &&
-          aiText.length < 150;
-
-        const selfUrl = `${supabaseUrl}/functions/v1/plivo-ai-response`;
-
-        if (isGoodbye) {
-          // Complete session in background
-          supabase.from("voice_agent_sessions").update({
-            status: "COMPLETED",
-            ended_at: new Date().toISOString(),
-            ai_summary: `Call with ${leadName}. Transcript recorded.`,
-          }).eq("id", session.id).then(() => {}).catch(e => console.error(e));
-
-          return new Response(`<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Speak voice="${VOICE}" language="${LANG}">${escapeXml(aiText)}</Speak>
-</Response>`, {
-            status: 200,
-            headers: { ...corsHeaders, "Content-Type": "application/xml" },
-          });
-        }
+      if (isGoodbye) {
+        // Complete session in background
+        supabase.from("voice_agent_sessions").update({
+          status: "COMPLETED",
+          ended_at: new Date().toISOString(),
+          ai_summary: `Call with ${leadName}. Transcript recorded.`,
+        }).eq("id", session.id).then(() => {}).catch(e => console.error(e));
 
         return new Response(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <GetInput action="${selfUrl}" method="POST" inputType="speech" speechEndTimeout="2" speechModel="default" profanityFilter="false" log="true" language="${LANG}">
-    <Speak voice="${VOICE}" language="${LANG}">${escapeXml(aiText)}</Speak>
-  </GetInput>
-  <Speak voice="${VOICE}" language="${LANG}">Looks like we lost connection. We&#39;ll follow up soon. Cheers!</Speak>
+  <Speak voice="${VOICE}" language="${LANG}">${ssmlResponse}</Speak>
 </Response>`, {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/xml" },
         });
       }
+
+      return new Response(`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <GetInput action="${selfUrl}" method="POST" inputType="speech" speechEndTimeout="auto" speechModel="command_and_search" executionTimeout="30" profanityFilter="false" log="true" language="${LANG}">
+    <Speak voice="${VOICE}" language="${LANG}">${ssmlResponse}</Speak>
+  </GetInput>
+  <Speak voice="${VOICE}" language="${LANG}"><prosody rate="95%">Looks like we lost connection. No worries, we&#39;ll be in touch! Cheers!</prosody></Speak>
+</Response>`, {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/xml" },
+      });
     }
 
-    // Fallback — no session found
+    // No session fallback
     return new Response(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Speak voice="${VOICE}" language="${LANG}">Thanks for calling! Someone from our team will be in touch shortly. Cheers!</Speak>
+  <Speak voice="${VOICE}" language="${LANG}"><prosody rate="95%" volume="loud">Thanks for calling! Someone from our team will be in touch shortly. Cheers!</prosody></Speak>
 </Response>`, {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/xml" },
@@ -270,7 +290,7 @@ ${knowledgeContext}`;
     console.error("ai-response error:", err);
     return new Response(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Speak voice="${VOICE}" language="${LANG}">Sorry about that, having a small technical hiccup. Our team will follow up with you shortly. Cheers!</Speak>
+  <Speak voice="${VOICE}" language="${LANG}"><prosody rate="95%">Sorry about that, small technical hiccup! Our team will follow up with you shortly. Cheers!</prosody></Speak>
 </Response>`, {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/xml" },
