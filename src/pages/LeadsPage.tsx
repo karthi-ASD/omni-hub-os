@@ -6,17 +6,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Search, Target, Filter, Archive, Phone, Mail, FolderKanban, ChevronRight, MessageSquare } from "lucide-react";
+import { Plus, Search, Target, Phone, Mail, FolderKanban, MessageSquare, ChevronRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 import { useNavigate } from "react-router-dom";
+import { LeadDetailSheet } from "@/components/leads/LeadDetailSheet";
 
 type LeadStage = Database["public"]["Enums"]["lead_stage"];
+type Lead = Database["public"]["Tables"]["leads"]["Row"];
 
 const stageColors: Record<string, string> = {
   new: "bg-blue-500/10 text-blue-500",
@@ -29,7 +31,7 @@ const stageColors: Record<string, string> = {
 };
 
 const LeadsPage = () => {
-  const { leads, loading, createLead, updateStage, logActivity, archiveLead } = useLeads();
+  const { leads, loading, createLead, updateStage, logActivity, archiveLead, getActivities, updateLead } = useLeads();
   const { createDeal } = useDeals();
   const { profile } = useAuth();
   const navigate = useNavigate();
@@ -40,6 +42,8 @@ const LeadsPage = () => {
   const [activitySummary, setActivitySummary] = useState("");
   const [activityType, setActivityType] = useState<string>("call");
   const [form, setForm] = useState({ name: "", email: "", phone: "", business_name: "", services_needed: "", notes: "" });
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const filtered = leads
     .filter(l => l.status === "active")
@@ -67,7 +71,11 @@ const LeadsPage = () => {
     setActivitySummary("");
   };
 
-  // Stage summary counts
+  const openLeadDetail = (lead: Lead) => {
+    setSelectedLead(lead);
+    setDetailOpen(true);
+  };
+
   const stageCounts = ["new", "contacted", "negotiation", "won"].map(s => ({
     stage: s,
     count: leads.filter(l => l.status === "active" && l.stage === s).length,
@@ -88,22 +96,11 @@ const LeadsPage = () => {
       {/* Stage pills */}
       <div className="overflow-x-auto -mx-4 px-4">
         <div className="flex gap-2" style={{ minWidth: "max-content" }}>
-          <button
-            onClick={() => setStageFilter("all")}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              stageFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-            }`}
-          >
+          <button onClick={() => setStageFilter("all")} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${stageFilter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
             All ({leads.filter(l => l.status === "active").length})
           </button>
           {stageCounts.map(s => (
-            <button
-              key={s.stage}
-              onClick={() => setStageFilter(s.stage)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors capitalize ${
-                stageFilter === s.stage ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-              }`}
-            >
+            <button key={s.stage} onClick={() => setStageFilter(s.stage)} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors capitalize ${stageFilter === s.stage ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
               {s.stage.replace(/_/g, " ")} ({s.count})
             </button>
           ))}
@@ -124,7 +121,7 @@ const LeadsPage = () => {
       ) : (
         <div className="space-y-2">
           {filtered.map((lead) => (
-            <Card key={lead.id} className="rounded-xl overflow-hidden active:bg-muted/30 transition-colors">
+            <Card key={lead.id} className="rounded-xl overflow-hidden hover:shadow-md transition-all cursor-pointer active:bg-muted/30" onClick={() => openLeadDetail(lead)}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
@@ -134,17 +131,20 @@ const LeadsPage = () => {
                         {lead.stage.replace(/_/g, " ")}
                       </Badge>
                     </div>
-                    {lead.business_name && (
-                      <p className="text-xs text-muted-foreground truncate">{lead.business_name}</p>
-                    )}
+                    {lead.business_name && <p className="text-xs text-muted-foreground truncate">{lead.business_name}</p>}
+                    <div className="flex items-center gap-3 mt-1">
+                      {lead.email && <span className="text-xs text-muted-foreground truncate">{lead.email}</span>}
+                      {lead.phone && <span className="text-xs text-muted-foreground">{lead.phone}</span>}
+                    </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
                     </p>
                   </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground mt-1 shrink-0" />
                 </div>
 
                 {/* Quick action buttons */}
-                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border" onClick={e => e.stopPropagation()}>
                   {lead.phone && (
                     <a href={`tel:${lead.phone}`} className="flex items-center gap-1 text-xs text-primary font-medium">
                       <Phone className="h-3.5 w-3.5" /> Call
@@ -153,28 +153,18 @@ const LeadsPage = () => {
                   <a href={`mailto:${lead.email}`} className="flex items-center gap-1 text-xs text-primary font-medium">
                     <Mail className="h-3.5 w-3.5" /> Email
                   </a>
-                  <button
-                    onClick={() => { setActivityDialog(lead.id); setActivityType("call"); }}
-                    className="flex items-center gap-1 text-xs text-primary font-medium"
-                  >
+                  <button onClick={() => { setActivityDialog(lead.id); setActivityType("call"); }} className="flex items-center gap-1 text-xs text-primary font-medium">
                     <MessageSquare className="h-3.5 w-3.5" /> Log
                   </button>
-                  <button
-                    onClick={async () => {
-                      await createDeal({
-                        deal_name: `${lead.name} – ${lead.services_needed || "New Deal"}`,
-                        contact_name: lead.name,
-                        email: lead.email,
-                        phone: lead.phone,
-                        business_name: lead.business_name,
-                        service_interest: lead.services_needed,
-                        estimated_budget: lead.estimated_budget,
-                        lead_id: lead.id,
-                      } as any);
-                      navigate("/deals");
-                    }}
-                    className="flex items-center gap-1 text-xs text-accent font-medium ml-auto"
-                  >
+                  <button onClick={async () => {
+                    await createDeal({
+                      deal_name: `${lead.name} – ${lead.services_needed || "New Deal"}`,
+                      contact_name: lead.name, email: lead.email, phone: lead.phone,
+                      business_name: lead.business_name, service_interest: lead.services_needed,
+                      estimated_budget: lead.estimated_budget, lead_id: lead.id,
+                    } as any);
+                    navigate("/deals");
+                  }} className="flex items-center gap-1 text-xs text-accent font-medium ml-auto">
                     <FolderKanban className="h-3.5 w-3.5" /> Convert
                   </button>
                 </div>
@@ -183,6 +173,17 @@ const LeadsPage = () => {
           ))}
         </div>
       )}
+
+      {/* Lead Detail Sheet */}
+      <LeadDetailSheet
+        lead={selectedLead}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        onUpdateStage={updateStage}
+        onArchive={archiveLead}
+        onSaveEdit={async (id, updates) => { await updateLead(id, updates); }}
+        getActivities={getActivities}
+      />
 
       {/* Create Lead Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

@@ -142,5 +142,12 @@ export function useLeads() {
     fetchLeads();
   };
 
-  return { leads, loading, createLead, updateStage, assignLead, logActivity, getActivities, archiveLead, refetch: fetchLeads };
+  const updateLead = async (id: string, updates: Record<string, unknown>) => {
+    const { error } = await supabase.from("leads").update(updates).eq("id", id);
+    if (error) { toast.error("Failed to update lead"); return; }
+    toast.success("Lead updated");
+    fetchLeads();
+  };
+
+  return { leads, loading, createLead, updateStage, assignLead, logActivity, getActivities, archiveLead, updateLead, refetch: fetchLeads };
 }
