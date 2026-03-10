@@ -144,6 +144,8 @@ import ClientProjectsPage from "./pages/ClientProjectsPage";
 import TaskPipelinePage from "./pages/TaskPipelinePage";
 import WorkloadMonitorPage from "./pages/WorkloadMonitorPage";
 import SLAMonitorPage from "./pages/SLAMonitorPage";
+import CompanyLoginPage from "./pages/CompanyLoginPage";
+import CompanySignupPage from "./pages/CompanySignupPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -175,6 +177,8 @@ const App = () => (
             <Route path="/it-solutions" element={<ITSolutionsPage />} />
             <Route path="/e-marketing" element={<EMarketingPage />} />
             <Route path="/automation" element={<AutomationPage />} />
+            <Route path="/company/:slug/login" element={<CompanyLoginPage />} />
+            <Route path="/company/:slug/signup" element={<CompanySignupPage />} />
 
             {/* Protected app shell */}
             <Route

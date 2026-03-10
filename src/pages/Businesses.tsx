@@ -197,7 +197,33 @@ const Businesses = () => {
                   <div><p className="text-gray-500 text-xs">Business ID</p><p className="text-white font-mono text-xs">{selectedBiz.id}</p></div>
                   <div><p className="text-gray-500 text-xs">Created</p><p className="text-white">{new Date(selectedBiz.created_at).toLocaleDateString()}</p></div>
                   <div><p className="text-gray-500 text-xs">Status</p><Badge variant={selectedBiz.status === "active" ? "default" : "destructive"}>{selectedBiz.status}</Badge></div>
+                  <div><p className="text-gray-500 text-xs">Slug</p><p className="text-white font-mono text-xs">{(selectedBiz as any).slug || "—"}</p></div>
                 </div>
+
+                {/* Company Portal URLs */}
+                {(selectedBiz as any).slug && (
+                  <div className="mt-4 p-3 rounded-lg bg-[#0a0e1a] border border-[#1e2a4a] space-y-2">
+                    <p className="text-xs font-semibold text-[#d4a853] flex items-center gap-1"><Globe className="h-3 w-3" /> Company Portal URLs</p>
+                    {[
+                      { label: "Login URL", path: `/company/${(selectedBiz as any).slug}/login` },
+                      { label: "Signup URL", path: `/company/${(selectedBiz as any).slug}/signup` },
+                    ].map(({ label, path }) => {
+                      const fullUrl = `${window.location.origin}${path}`;
+                      return (
+                        <div key={label} className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-[10px] text-gray-500">{label}</p>
+                            <p className="text-xs text-emerald-400 font-mono truncate">{fullUrl}</p>
+                          </div>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => { navigator.clipboard.writeText(fullUrl); toast.success(`${label} copied!`); }}>
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
                 <div className="flex gap-2 pt-2">
                   <Button size="sm" variant="outline" onClick={() => openEdit(selectedBiz)}>
                     <Pencil className="h-3 w-3 mr-1" /> Edit Name
@@ -380,7 +406,7 @@ const Businesses = () => {
                   </div>
                   <div>
                     <p className="font-medium text-white text-sm">{biz.name}</p>
-                    <p className="text-xs text-gray-500">Created {new Date(biz.created_at).toLocaleDateString()}</p>
+                    <p className="text-xs text-gray-500">/{(biz as any).slug} · Created {new Date(biz.created_at).toLocaleDateString()}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
