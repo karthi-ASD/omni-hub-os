@@ -10694,6 +10694,59 @@ export type Database = {
         }
         Relationships: []
       }
+      role_module_permissions: {
+        Row: {
+          business_id: string
+          can_approve: boolean
+          can_create: boolean
+          can_delete: boolean
+          can_edit: boolean
+          can_export: boolean
+          can_view: boolean
+          created_at: string
+          id: string
+          module_key: string
+          role_name: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          can_approve?: boolean
+          can_create?: boolean
+          can_delete?: boolean
+          can_edit?: boolean
+          can_export?: boolean
+          can_view?: boolean
+          created_at?: string
+          id?: string
+          module_key: string
+          role_name: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          can_approve?: boolean
+          can_create?: boolean
+          can_delete?: boolean
+          can_edit?: boolean
+          can_export?: boolean
+          can_view?: boolean
+          created_at?: string
+          id?: string
+          module_key?: string
+          role_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_module_permissions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saas_plans: {
         Row: {
           created_at: string
