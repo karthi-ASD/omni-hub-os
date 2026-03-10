@@ -3556,6 +3556,79 @@ export type Database = {
           },
         ]
       }
+      client_projects: {
+        Row: {
+          assigned_department_id: string | null
+          business_id: string
+          client_id: string | null
+          client_name: string
+          company_name: string | null
+          contract_duration_months: number | null
+          created_at: string
+          description: string | null
+          id: string
+          project_manager_user_id: string | null
+          service_type: string
+          start_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_department_id?: string | null
+          business_id: string
+          client_id?: string | null
+          client_name: string
+          company_name?: string | null
+          contract_duration_months?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          project_manager_user_id?: string | null
+          service_type?: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_department_id?: string | null
+          business_id?: string
+          client_id?: string | null
+          client_name?: string
+          company_name?: string | null
+          contract_duration_months?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          project_manager_user_id?: string | null
+          service_type?: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_projects_assigned_department_id_fkey"
+            columns: ["assigned_department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_projects_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_projects_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
@@ -5432,6 +5505,60 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_workloads: {
+        Row: {
+          business_id: string
+          completed_tasks: number
+          created_at: string
+          current_tasks: number
+          employee_id: string
+          id: string
+          last_calculated_at: string
+          overdue_tasks: number
+          productivity_score: number | null
+          task_capacity: number
+        }
+        Insert: {
+          business_id: string
+          completed_tasks?: number
+          created_at?: string
+          current_tasks?: number
+          employee_id: string
+          id?: string
+          last_calculated_at?: string
+          overdue_tasks?: number
+          productivity_score?: number | null
+          task_capacity?: number
+        }
+        Update: {
+          business_id?: string
+          completed_tasks?: number
+          created_at?: string
+          current_tasks?: number
+          employee_id?: string
+          id?: string
+          last_calculated_at?: string
+          overdue_tasks?: number
+          productivity_score?: number | null
+          task_capacity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_workloads_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_workloads_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "hr_employees"
             referencedColumns: ["id"]
           },
         ]
@@ -9568,6 +9695,92 @@ export type Database = {
           },
         ]
       }
+      project_tasks: {
+        Row: {
+          assigned_employee_id: string | null
+          assigned_manager_user_id: string | null
+          business_id: string
+          client_name: string | null
+          created_at: string
+          deadline: string | null
+          department_id: string | null
+          description: string | null
+          id: string
+          priority: string
+          project_id: string | null
+          source: string | null
+          start_date: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_employee_id?: string | null
+          assigned_manager_user_id?: string | null
+          business_id: string
+          client_name?: string | null
+          created_at?: string
+          deadline?: string | null
+          department_id?: string | null
+          description?: string | null
+          id?: string
+          priority?: string
+          project_id?: string | null
+          source?: string | null
+          start_date?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_employee_id?: string | null
+          assigned_manager_user_id?: string | null
+          business_id?: string
+          client_name?: string | null
+          created_at?: string
+          deadline?: string | null
+          department_id?: string | null
+          description?: string | null
+          id?: string
+          priority?: string
+          project_id?: string | null
+          source?: string | null
+          start_date?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_tasks_assigned_employee_id_fkey"
+            columns: ["assigned_employee_id"]
+            isOneToOne: false
+            referencedRelation: "hr_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_tasks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_tasks_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "client_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           assigned_manager_user_id: string | null
@@ -12900,6 +13113,77 @@ export type Database = {
           },
         ]
       }
+      sla_tracking: {
+        Row: {
+          breached_at: string | null
+          business_id: string
+          created_at: string
+          deadline_at: string
+          department_id: string | null
+          id: string
+          project_id: string | null
+          sla_hours: number
+          started_at: string
+          status: string
+          task_id: string | null
+        }
+        Insert: {
+          breached_at?: string | null
+          business_id: string
+          created_at?: string
+          deadline_at: string
+          department_id?: string | null
+          id?: string
+          project_id?: string | null
+          sla_hours?: number
+          started_at?: string
+          status?: string
+          task_id?: string | null
+        }
+        Update: {
+          breached_at?: string | null
+          business_id?: string
+          created_at?: string
+          deadline_at?: string
+          department_id?: string | null
+          id?: string
+          project_id?: string | null
+          sla_hours?: number
+          started_at?: string
+          status?: string
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sla_tracking_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sla_tracking_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sla_tracking_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "client_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sla_tracking_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_media_tasks: {
         Row: {
           assigned_employee_id: string | null
@@ -13301,6 +13585,48 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      task_comments: {
+        Row: {
+          business_id: string
+          content: string
+          created_at: string
+          id: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          content: string
+          created_at?: string
+          id?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tenant_customers: {
         Row: {

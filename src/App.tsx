@@ -139,6 +139,11 @@ import HRTaskTrackingPage from "./pages/HRTaskTrackingPage";
 import HRAnalyticsDashboardPage from "./pages/HRAnalyticsDashboardPage";
 import EmployeeSelfServicePage from "./pages/EmployeeSelfServicePage";
 import ManagerDashboardPage from "./pages/ManagerDashboardPage";
+import AgencyCommandCenterPage from "./pages/AgencyCommandCenterPage";
+import ClientProjectsPage from "./pages/ClientProjectsPage";
+import TaskPipelinePage from "./pages/TaskPipelinePage";
+import WorkloadMonitorPage from "./pages/WorkloadMonitorPage";
+import SLAMonitorPage from "./pages/SLAMonitorPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -395,6 +400,21 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager"]}><ManagerDashboardPage /></ProtectedRoute>
               } />
               <Route path="/my-dashboard" element={<EmployeeSelfServicePage />} />
+              <Route path="/agency-command" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AgencyCommandCenterPage /></ProtectedRoute>
+              } />
+              <Route path="/client-projects" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager"]}><ClientProjectsPage /></ProtectedRoute>
+              } />
+              <Route path="/task-pipeline" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager"]}><TaskPipelinePage /></ProtectedRoute>
+              } />
+              <Route path="/workload-monitor" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><WorkloadMonitorPage /></ProtectedRoute>
+              } />
+              <Route path="/sla-monitor" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><SLAMonitorPage /></ProtectedRoute>
+              } />
               <Route path="/usage-analytics" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><UsageAnalyticsPage /></ProtectedRoute>
               } />

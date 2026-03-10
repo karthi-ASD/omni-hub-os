@@ -83,7 +83,18 @@ const superAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "5 · Delivery Operations",
+    title: "5 · Agency Operations",
+    description: "Command center, client projects, task pipeline, workload, and SLA",
+    items: [
+      { label: "Command Center", icon: Gauge, to: "/agency-command" },
+      { label: "Client Projects", icon: Briefcase, to: "/client-projects" },
+      { label: "Task Pipeline", icon: FolderKanban, to: "/task-pipeline" },
+      { label: "Workload Monitor", icon: BarChart2, to: "/workload-monitor" },
+      { label: "SLA Monitor", icon: Gauge, to: "/sla-monitor" },
+    ],
+  },
+  {
+    title: "6 · Delivery Operations",
     description: "Projects, tasks, and service tracking",
     items: [
       { label: "Projects", icon: Briefcase, to: "/projects" },
@@ -93,7 +104,7 @@ const superAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "6 · Marketing & SEO Operations",
+    title: "7 · Marketing & SEO Operations",
     description: "SEO projects, tasks, blogs, GMB, social media, rankings, AI & execution",
     items: [
       { label: "SEO Engine", icon: Globe, to: "/seo" },
@@ -109,7 +120,7 @@ const superAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "7 · Finance",
+    title: "8 · Finance",
     description: "Billing, invoices, payments, and forecasting",
     items: [
       { label: "Billing", icon: PieChart, to: "/billing" },
@@ -122,7 +133,7 @@ const superAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "8 · HR & Workforce",
+    title: "9 · HR & Workforce",
     description: "HR management, departments, employees, leave, payroll, performance, tasks, analytics",
     items: [
       { label: "Departments", icon: Building2, to: "/hr/departments" },
@@ -138,7 +149,7 @@ const superAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "9 · Intelligence & AI",
+    title: "10 · Intelligence & AI",
     description: "AI Brain, agents, learning, and growth engine",
     items: [
       { label: "AI Brain", icon: Brain, to: "/ai-brain" },
@@ -154,7 +165,7 @@ const superAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "10 · Security & Compliance",
+    title: "11 · Security & Compliance",
     description: "Vault, audits, backups, approvals, and compliance",
     items: [
       { label: "Vault", icon: Lock, to: "/vault" },
@@ -225,6 +236,17 @@ const tenantAdminSections: MenuSection[] = [
       { label: "Contracts", icon: FileText, to: "/contracts" },
       { label: "Clients", icon: Users, to: "/clients" },
       { label: "AI Sales Brain", icon: Brain, to: "/ai-sales-brain" },
+    ],
+  },
+  {
+    title: "Agency Operations",
+    description: "Command center, client projects, task pipeline, workload, and SLA",
+    items: [
+      { label: "Command Center", icon: Gauge, to: "/agency-command" },
+      { label: "Client Projects", icon: Briefcase, to: "/client-projects" },
+      { label: "Task Pipeline", icon: FolderKanban, to: "/task-pipeline" },
+      { label: "Workload Monitor", icon: BarChart2, to: "/workload-monitor" },
+      { label: "SLA Monitor", icon: Gauge, to: "/sla-monitor" },
     ],
   },
   {
@@ -320,6 +342,14 @@ const managerSections: MenuSection[] = [
       { label: "Leave Requests", icon: CalendarDays, to: "/hr/leave" },
       { label: "Performance", icon: Trophy, to: "/hr/performance" },
       { label: "HR Tasks", icon: ListChecks, to: "/hr/tasks" },
+    ],
+  },
+  {
+    title: "Operations",
+    description: "Client projects, task pipeline, and SLA",
+    items: [
+      { label: "Client Projects", icon: Briefcase, to: "/client-projects" },
+      { label: "Task Pipeline", icon: FolderKanban, to: "/task-pipeline" },
     ],
   },
   {
