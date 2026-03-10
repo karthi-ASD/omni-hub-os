@@ -193,6 +193,7 @@ const App = () => (
               <Route path="/seo-ops" element={<SeoOperationsPage />} />
               <Route path="/seo-ops/:projectId" element={<SeoProjectDetailPage />} />
               <Route path="/seo-team" element={<SeoTeamDashboardPage />} />
+              <Route path="/seo-intel/:projectId" element={<SeoIntelligencePage />} />
               <Route path="/communications" element={<CommunicationsPage />} />
               <Route path="/analytics" element={<AnalyticsDashboardPage />} />
               <Route path="/ai-insights" element={<AIInsightsPage />} />
