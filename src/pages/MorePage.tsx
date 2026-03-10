@@ -4,7 +4,7 @@ import {
   MessageSquare, FolderKanban, FileText, Briefcase, Receipt, BarChart3,
   PieChart, Globe, Mail, TrendingUp, Brain, Bot, Store, Calendar, Clock,
   Shield, Settings, LogOut, Users, Building2, Activity, Palette, Megaphone,
-  UserCog, CalendarDays, Ticket, Phone, DollarSign,
+  UserCog, CalendarDays, Ticket, Phone, DollarSign, UserPlus,
   Sparkles, MessageCircle, Plug, ShieldCheck, Factory, PhoneCall, Zap, Workflow, Inbox,
   Route, CreditCard, Gauge, Eye, Server, Landmark, Scale, Map, Target as TargetIcon,
   Rocket, GitBranch, Trophy, Layers, Umbrella, BarChart2, BookOpen, Lock, Cpu,
