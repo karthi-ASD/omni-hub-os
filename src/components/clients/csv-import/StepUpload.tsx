@@ -22,9 +22,9 @@ const StepUpload: React.FC<Props> = ({ onFileSelected }) => {
         onClick={() => fileRef.current?.click()}
       >
         <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-        <p className="text-sm font-medium">Click to upload CSV file</p>
-        <p className="text-xs text-muted-foreground mt-1">Supports Xero-format contact exports and standard CSV</p>
-        <input ref={fileRef} type="file" accept=".csv,.txt" className="hidden" onChange={handleFile} />
+        <p className="text-sm font-medium">Click to upload CSV or Excel file</p>
+        <p className="text-xs text-muted-foreground mt-1">Supports Xero Contacts exports (.xlsx/.csv)</p>
+        <input ref={fileRef} type="file" accept=".csv,.txt,.xlsx,.xls" className="hidden" onChange={handleFile} />
       </div>
     </div>
   );
