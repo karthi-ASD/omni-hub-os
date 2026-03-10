@@ -310,6 +310,49 @@ const tenantAdminSections: MenuSection[] = [
   },
 ];
 
+const managerSections: MenuSection[] = [
+  {
+    title: "Department Management",
+    description: "Your team, tasks, and department operations",
+    items: [
+      { label: "Team Dashboard", icon: BarChart3, to: "/manager-dashboard" },
+      { label: "My HR Portal", icon: UserCog, to: "/my-dashboard" },
+      { label: "Leave Requests", icon: CalendarDays, to: "/hr/leave" },
+      { label: "Performance", icon: Trophy, to: "/hr/performance" },
+      { label: "HR Tasks", icon: ListChecks, to: "/hr/tasks" },
+    ],
+  },
+  {
+    title: "My Work",
+    description: "Your tasks, calendar, and reminders",
+    items: [
+      { label: "Dashboard", icon: BarChart3, to: "/dashboard" },
+      { label: "Tasks", icon: ListChecks, to: "/tasks" },
+      { label: "Calendar", icon: Calendar, to: "/calendar" },
+      { label: "Reminders", icon: Clock, to: "/reminders" },
+      { label: "Notifications", icon: Bell, to: "/notifications" },
+    ],
+  },
+  {
+    title: "CRM",
+    description: "Leads, deals, and client management",
+    items: [
+      { label: "Leads", icon: TargetIcon, to: "/leads" },
+      { label: "Deals", icon: FolderKanban, to: "/deals" },
+      { label: "Clients", icon: Users, to: "/clients" },
+      { label: "Projects", icon: Briefcase, to: "/projects" },
+    ],
+  },
+  {
+    title: "Communication",
+    description: "Inbox and conversations",
+    items: [
+      { label: "Inbox", icon: Inbox, to: "/autopilot/inbox" },
+      { label: "Conversations", icon: MessageCircle, to: "/conversations" },
+    ],
+  },
+];
+
 const employeeSections: MenuSection[] = [
   {
     title: "My Work",
