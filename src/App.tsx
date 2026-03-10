@@ -132,6 +132,12 @@ import StaffMobileAppPage from "./pages/StaffMobileAppPage";
 import HRDepartmentsPage from "./pages/HRDepartmentsPage";
 import HREmployeeListPage from "./pages/HREmployeeListPage";
 import HREmployeeProfilePage from "./pages/HREmployeeProfilePage";
+import HRLeaveManagementPage from "./pages/HRLeaveManagementPage";
+import HRPayrollPage from "./pages/HRPayrollPage";
+import HRPerformancePage from "./pages/HRPerformancePage";
+import HRTaskTrackingPage from "./pages/HRTaskTrackingPage";
+import HRAnalyticsDashboardPage from "./pages/HRAnalyticsDashboardPage";
+import EmployeeSelfServicePage from "./pages/EmployeeSelfServicePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -369,6 +375,22 @@ const App = () => (
               <Route path="/hr/employee/:employeeId" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HREmployeeProfilePage /></ProtectedRoute>
               } />
+              <Route path="/hr/leave" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HRLeaveManagementPage /></ProtectedRoute>
+              } />
+              <Route path="/hr/payroll" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HRPayrollPage /></ProtectedRoute>
+              } />
+              <Route path="/hr/performance" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HRPerformancePage /></ProtectedRoute>
+              } />
+              <Route path="/hr/tasks" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HRTaskTrackingPage /></ProtectedRoute>
+              } />
+              <Route path="/hr/analytics" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HRAnalyticsDashboardPage /></ProtectedRoute>
+              } />
+              <Route path="/my-dashboard" element={<EmployeeSelfServicePage />} />
               <Route path="/usage-analytics" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><UsageAnalyticsPage /></ProtectedRoute>
               } />
