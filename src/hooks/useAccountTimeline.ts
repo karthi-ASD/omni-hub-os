@@ -24,25 +24,32 @@ export function useAccountTimeline(clientId?: string) {
     const timeline: TimelineEvent[] = [];
 
     // Batch 1
+    const q = (table: string, cols: string, extraFilter?: { col: string; val: string }) => {
+      let query = (supabase.from(table as any) as any).select(cols).eq("business_id", bizId);
+      if (extraFilter) query = query.eq(extraFilter.col, extraFilter.val);
+      return query;
+    };
+
+    const cf = { col: "client_id", val: clientId };
+    const ef = { col: "entity_id", val: clientId };
+
     const [dealsR, proposalsR, contractsR, invoicesR] = await Promise.all([
-      supabase.from("deals").select("id, title, status, created_at").eq("business_id", bizId).eq("client_id", clientId) as any,
-      supabase.from("proposals").select("id, title, status, created_at").eq("business_id", bizId).eq("client_id", clientId) as any,
-      supabase.from("contracts").select("id, title, status, created_at").eq("business_id", bizId).eq("client_id", clientId) as any,
-      supabase.from("invoices").select("id, invoice_number, status, total_amount, created_at").eq("business_id", bizId).eq("client_id", clientId) as any,
+      q("deals", "id, title, status, created_at", cf),
+      q("proposals", "id, title, status, created_at", cf),
+      q("contracts", "id, title, status, created_at", cf),
+      q("invoices", "id, invoice_number, status, total_amount, created_at", cf),
     ]);
 
-    // Batch 2
     const [paymentsR, ticketsR, projectsR, remindersR] = await Promise.all([
-      supabase.from("payments").select("id, amount, status, created_at").eq("business_id", bizId).eq("client_id", clientId),
-      supabase.from("support_tickets").select("id, subject, status, priority, created_at").eq("business_id", bizId),
-      supabase.from("projects").select("id, project_name, status, created_at").eq("business_id", bizId).eq("client_id", clientId),
-      supabase.from("reminders").select("id, title, status, created_at").eq("business_id", bizId).eq("entity_id", clientId),
+      q("payments", "id, amount, status, created_at", cf),
+      q("support_tickets", "id, subject, status, priority, created_at"),
+      q("projects", "id, project_name, status, created_at", cf),
+      q("reminders", "id, title, status, created_at", ef),
     ]);
 
-    // Batch 3
     const [seoTasksR, sysR] = await Promise.all([
-      supabase.from("seo_tasks").select("id, task_title, status, created_at").eq("business_id", bizId).eq("client_id", clientId),
-      supabase.from("system_events").select("id, event_type, payload_json, created_at").eq("business_id", bizId).order("created_at", { ascending: false }).limit(200),
+      q("seo_tasks", "id, task_title, status, created_at", cf),
+      (supabase.from("system_events") as any).select("id, event_type, payload_json, created_at").eq("business_id", bizId).order("created_at", { ascending: false }).limit(200),
     ]);
 
     (dealsR.data ?? []).forEach((d: any) => timeline.push({
