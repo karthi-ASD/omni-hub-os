@@ -516,6 +516,7 @@ const managerSections: MenuSection[] = [
     items: [
       { label: "Team Dashboard", icon: BarChart3, to: "/manager-dashboard" },
       { label: "My HR Portal", icon: UserCog, to: "/my-dashboard" },
+      { label: "Daily Reports", icon: FileBarChart, to: "/daily-work-reports" },
       { label: "Leave Requests", icon: CalendarDays, to: "/hr/leave" },
       { label: "Performance", icon: Trophy, to: "/hr/performance" },
       { label: "HR Tasks", icon: ListChecks, to: "/hr/tasks" },
