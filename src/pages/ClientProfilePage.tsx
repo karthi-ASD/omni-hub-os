@@ -13,8 +13,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
   ArrowLeft, Globe, Smartphone, Search, FileText, Ticket, Clock,
-  Mail, Phone, Building2, MapPin, Plus, ExternalLink
+  Mail, Phone, Building2, MapPin, Plus, ExternalLink, DollarSign, CreditCard, TrendingUp, AlertTriangle
 } from "lucide-react";
+import { useClientFinancials } from "@/hooks/useClientFinancials";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 
 const statusColor = (s: string) => {
@@ -44,6 +46,7 @@ const ClientProfilePage = () => {
     services, websites, apps, seoProjects, invoices, contracts, tickets, timeline,
     loading, addWebsite, addApp,
   } = useClientProfile(id);
+  const financials = useClientFinancials(id);
 
   const [websiteDialog, setWebsiteDialog] = useState(false);
   const [appDialog, setAppDialog] = useState(false);
@@ -141,11 +144,12 @@ const ClientProfilePage = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="details" className="space-y-4">
-        <TabsList className="grid grid-cols-4 lg:grid-cols-8">
+        <TabsList className="grid grid-cols-4 lg:grid-cols-9">
           <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsTrigger value="finance"><DollarSign className="h-3.5 w-3.5 mr-1" />Finance</TabsTrigger>
           <TabsTrigger value="services">Services</TabsTrigger>
           <TabsTrigger value="websites">Websites</TabsTrigger>
-          <TabsTrigger value="seo">SEO</TabsTrigger>
+          <TabsTrigger value="seo" className="hidden lg:inline-flex">SEO</TabsTrigger>
           <TabsTrigger value="apps" className="hidden lg:inline-flex">Apps</TabsTrigger>
           <TabsTrigger value="billing" className="hidden lg:inline-flex">Billing</TabsTrigger>
           <TabsTrigger value="tickets" className="hidden lg:inline-flex">Tickets</TabsTrigger>
@@ -178,6 +182,93 @@ const ClientProfilePage = () => {
                 ))}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ── Financial Portfolio ── */}
+        <TabsContent value="finance">
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { label: "Lifetime Revenue", value: `$${financials.totalRevenue.toLocaleString("en-AU", { minimumFractionDigits: 2 })}`, icon: DollarSign, color: "text-[hsl(152,60%,42%)]" },
+                { label: "Outstanding", value: `$${financials.totalOutstanding.toLocaleString("en-AU", { minimumFractionDigits: 2 })}`, icon: Clock, color: "text-[hsl(var(--primary))]" },
+                { label: "Overdue", value: String(financials.overdueInvoices), icon: AlertTriangle, color: financials.overdueInvoices > 0 ? "text-[hsl(var(--destructive))]" : "text-muted-foreground" },
+                { label: "Avg Invoice", value: `$${financials.avgInvoiceValue.toLocaleString("en-AU", { minimumFractionDigits: 2 })}`, icon: FileText, color: "text-muted-foreground" },
+              ].map(s => (
+                <Card key={s.label} className="rounded-xl">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <s.icon className={`h-4 w-4 ${s.color}`} />
+                      <span className="text-xs text-muted-foreground">{s.label}</span>
+                    </div>
+                    <p className="text-lg font-bold">{s.value}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <Card className="rounded-xl">
+              <CardHeader className="pb-2"><CardTitle className="text-sm">Client Lifetime Value</CardTitle></CardHeader>
+              <CardContent className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                <div><span className="text-muted-foreground">Total Invoices</span><p className="font-semibold text-lg">{financials.totalInvoices}</p></div>
+                <div><span className="text-muted-foreground">Paid Invoices</span><p className="font-semibold text-lg">{financials.paidInvoices}</p></div>
+                <div><span className="text-muted-foreground">Months Active</span><p className="font-semibold text-lg">{financials.monthsActive}</p></div>
+                <div><span className="text-muted-foreground">Last Payment</span><p className="font-semibold text-lg">{financials.lastPaymentDate ? format(new Date(financials.lastPaymentDate), "dd MMM yyyy") : "—"}</p></div>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-xl">
+              <CardHeader><CardTitle className="text-sm">Invoice History ({financials.invoices.length})</CardTitle></CardHeader>
+              <CardContent>
+                {financials.invoices.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader><TableRow>
+                        <TableHead>Invoice #</TableHead><TableHead>Date</TableHead><TableHead>Due</TableHead>
+                        <TableHead className="text-right">Total</TableHead><TableHead className="text-right">Due</TableHead><TableHead>Status</TableHead>
+                      </TableRow></TableHeader>
+                      <TableBody>
+                        {financials.invoices.map((inv: any) => (
+                          <TableRow key={inv.id}>
+                            <TableCell className="font-mono text-sm">{inv.invoice_number || "—"}</TableCell>
+                            <TableCell className="text-sm">{inv.invoice_date ? format(new Date(inv.invoice_date), "dd MMM yyyy") : "—"}</TableCell>
+                            <TableCell className="text-sm">{inv.due_date ? format(new Date(inv.due_date), "dd MMM yyyy") : "—"}</TableCell>
+                            <TableCell className="text-right font-medium">${Number(inv.total_amount || 0).toLocaleString("en-AU", { minimumFractionDigits: 2 })}</TableCell>
+                            <TableCell className="text-right">${Number(inv.amount_due || 0).toLocaleString("en-AU", { minimumFractionDigits: 2 })}</TableCell>
+                            <TableCell><Badge variant={inv.status === "PAID" ? "default" : inv.status === "OVERDUE" ? "destructive" : "secondary"} className="text-xs">{inv.status}</Badge></TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : <p className="text-center text-sm text-muted-foreground py-6">No invoices from Xero for this client</p>}
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-xl">
+              <CardHeader><CardTitle className="text-sm flex items-center gap-2"><CreditCard className="h-4 w-4" /> Payment History ({financials.payments.length})</CardTitle></CardHeader>
+              <CardContent>
+                {financials.payments.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader><TableRow>
+                        <TableHead>Date</TableHead><TableHead className="text-right">Amount</TableHead><TableHead>Method</TableHead><TableHead>Reference</TableHead>
+                      </TableRow></TableHeader>
+                      <TableBody>
+                        {financials.payments.map((p: any) => (
+                          <TableRow key={p.id}>
+                            <TableCell className="text-sm">{p.payment_date ? format(new Date(p.payment_date), "dd MMM yyyy") : "—"}</TableCell>
+                            <TableCell className="text-right font-medium">${Number(p.payment_amount || 0).toLocaleString("en-AU", { minimumFractionDigits: 2 })}</TableCell>
+                            <TableCell className="text-sm">{p.payment_method || "—"}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">{p.transaction_reference || "—"}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : <p className="text-center text-sm text-muted-foreground py-6">No payment records for this client</p>}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* ── Services ── */}

@@ -15,7 +15,8 @@ import {
   Building2, Users, ArrowUpRight, ArrowDownRight, Calendar, Brain, Link, Unlink, Zap
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend } from "recharts";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -45,6 +46,31 @@ const FinanceDashboardPage = () => {
   const [syncing, setSyncing] = useState(false);
   const [forecasting, setForecasting] = useState(false);
   const [forecast, setForecast] = useState<any>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle OAuth callback code
+  useEffect(() => {
+    const code = searchParams.get("code");
+    if (code && profile?.business_id) {
+      const redirectUri = `${window.location.origin}/finance`;
+      (async () => {
+        setSyncing(true);
+        try {
+          const { data, error } = await supabase.functions.invoke("xero-sync", {
+            body: { action: "oauth_callback", business_id: profile.business_id, code, redirect_uri: redirectUri },
+          });
+          if (error) throw error;
+          toast.success("Xero connected successfully!");
+          setSearchParams({});
+          refresh();
+        } catch (e: any) {
+          toast.error(e.message || "OAuth connection failed");
+        } finally {
+          setSyncing(false);
+        }
+      })();
+    }
+  }, [searchParams, profile?.business_id]);
 
   const handleAddExpense = async () => {
     if (!expenseForm.category || !expenseForm.amount) return;
@@ -77,9 +103,8 @@ const FinanceDashboardPage = () => {
   }, [profile?.business_id, refresh]);
 
   const handleConnectXero = useCallback(() => {
-    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
     const redirectUri = `${window.location.origin}/finance`;
-    const clientId = "YOUR_XERO_CLIENT_ID"; // Will be replaced after secrets are configured
+    const clientId = "1A76351349884DE19A30ED4EB47D8556";
     const scopes = "openid profile email accounting.transactions accounting.contacts offline_access";
     const authUrl = `https://login.xero.com/identity/connect/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
     window.open(authUrl, "_blank", "width=600,height=700");
