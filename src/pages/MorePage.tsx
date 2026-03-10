@@ -120,7 +120,7 @@ const superAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "7 · Finance",
+    title: "8 · Finance",
     description: "Billing, invoices, payments, and forecasting",
     items: [
       { label: "Billing", icon: PieChart, to: "/billing" },
