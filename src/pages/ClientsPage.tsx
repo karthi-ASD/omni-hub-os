@@ -18,6 +18,7 @@ const onboardingColors: Record<string, string> = {
 };
 
 const ClientsPage = () => {
+  const navigate = useNavigate();
   const { clients, loading, createClient, updateOnboardingStatus, refetch } = useClients();
   const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
