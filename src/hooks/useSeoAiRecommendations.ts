@@ -68,7 +68,7 @@ export function useSeoAiRecommendations(projectId?: string) {
   };
 
   const updateStatus = async (id: string, status: string) => {
-    await supabase.from("seo_ai_recommendations").update({ status } as any).eq("id", id);
+    await (supabase.from("seo_ai_recommendations") as any).update({ status }).eq("id", id);
     fetch();
   };
 
