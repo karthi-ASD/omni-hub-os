@@ -486,6 +486,7 @@ const App = () => (
               <Route path="/finance" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><FinanceDashboardPage /></ProtectedRoute>
               } />
+              <Route path="/my-billing" element={<ClientBillingPortalPage />} />
               <Route path="/activity-timeline" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><ActivityTimelinePage /></ProtectedRoute>
               } />
