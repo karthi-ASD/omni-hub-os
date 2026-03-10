@@ -177,6 +177,8 @@ const App = () => (
             <Route path="/it-solutions" element={<ITSolutionsPage />} />
             <Route path="/e-marketing" element={<EMarketingPage />} />
             <Route path="/automation" element={<AutomationPage />} />
+            <Route path="/company/:slug/login" element={<CompanyLoginPage />} />
+            <Route path="/company/:slug/signup" element={<CompanySignupPage />} />
 
             {/* Protected app shell */}
             <Route
