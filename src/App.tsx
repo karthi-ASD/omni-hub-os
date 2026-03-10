@@ -163,6 +163,7 @@ import AdminOperationsDashboardPage from "./pages/AdminOperationsDashboardPage";
 import DailyWorkReportsPage from "./pages/DailyWorkReportsPage";
 import EmployeeActivityMonitorPage from "./pages/EmployeeActivityMonitorPage";
 import DepartmentPerformancePage from "./pages/DepartmentPerformancePage";
+import CEODashboardPage from "./pages/CEODashboardPage";
 import CompanyLoginPage from "./pages/CompanyLoginPage";
 import CompanySignupPage from "./pages/CompanySignupPage";
 import DepartmentSignupPage from "./pages/DepartmentSignupPage";
