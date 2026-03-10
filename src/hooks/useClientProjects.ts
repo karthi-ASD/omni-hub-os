@@ -61,7 +61,7 @@ export function useClientProjects() {
   };
 
   const update = async (id: string, values: Record<string, any>) => {
-    await supabase.from("client_projects").update(values as any).eq("id", id);
+    await supabase.from("client_projects" as any).update(values as any).eq("id", id);
     fetch();
   };
 
