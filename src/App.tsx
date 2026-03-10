@@ -367,7 +367,7 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AILearningPage /></ProtectedRoute>
               } />
               <Route path="/autonomous-agents" element={
-                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AutonomousAgentsPage /></ProtectedRoute>
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager"]}><AutonomousAgentsPage /></ProtectedRoute>
               } />
               <Route path="/ai-sales-brain" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AISalesBrainPage /></ProtectedRoute>

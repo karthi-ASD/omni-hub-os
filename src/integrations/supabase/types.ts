@@ -1031,6 +1031,75 @@ export type Database = {
           },
         ]
       }
+      ai_blog_drafts: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          brief_id: string | null
+          business_id: string
+          client_id: string | null
+          content: string | null
+          created_at: string
+          id: string
+          meta_description: string | null
+          meta_title: string | null
+          status: string
+          target_keyword: string | null
+          title: string
+          tone: string | null
+          word_count: number | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          brief_id?: string | null
+          business_id: string
+          client_id?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          status?: string
+          target_keyword?: string | null
+          title: string
+          tone?: string | null
+          word_count?: number | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          brief_id?: string | null
+          business_id?: string
+          client_id?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          status?: string
+          target_keyword?: string | null
+          title?: string
+          tone?: string | null
+          word_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_blog_drafts_brief_id_fkey"
+            columns: ["brief_id"]
+            isOneToOne: false
+            referencedRelation: "ai_content_briefs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_blog_drafts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_business_alerts: {
         Row: {
           alert_type: string
@@ -1103,6 +1172,109 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ai_business_health_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_competitor_analysis: {
+        Row: {
+          analysis_json: Json | null
+          business_id: string
+          client_id: string | null
+          competitor_domain: string
+          content_gaps_json: Json | null
+          created_at: string
+          id: string
+          keyword_gaps_json: Json | null
+          opportunities_json: Json | null
+        }
+        Insert: {
+          analysis_json?: Json | null
+          business_id: string
+          client_id?: string | null
+          competitor_domain: string
+          content_gaps_json?: Json | null
+          created_at?: string
+          id?: string
+          keyword_gaps_json?: Json | null
+          opportunities_json?: Json | null
+        }
+        Update: {
+          analysis_json?: Json | null
+          business_id?: string
+          client_id?: string | null
+          competitor_domain?: string
+          content_gaps_json?: Json | null
+          created_at?: string
+          id?: string
+          keyword_gaps_json?: Json | null
+          opportunities_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_competitor_analysis_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_content_briefs: {
+        Row: {
+          brief_type: string
+          business_id: string
+          client_id: string | null
+          created_at: string
+          headings_json: Json | null
+          id: string
+          recommended_title: string | null
+          schema_recommendation: string | null
+          search_intent: string | null
+          secondary_keywords: string[] | null
+          status: string
+          structure_json: Json | null
+          target_keyword: string
+          word_count_recommendation: number | null
+        }
+        Insert: {
+          brief_type?: string
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          headings_json?: Json | null
+          id?: string
+          recommended_title?: string | null
+          schema_recommendation?: string | null
+          search_intent?: string | null
+          secondary_keywords?: string[] | null
+          status?: string
+          structure_json?: Json | null
+          target_keyword: string
+          word_count_recommendation?: number | null
+        }
+        Update: {
+          brief_type?: string
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          headings_json?: Json | null
+          id?: string
+          recommended_title?: string | null
+          schema_recommendation?: string | null
+          search_intent?: string | null
+          secondary_keywords?: string[] | null
+          status?: string
+          structure_json?: Json | null
+          target_keyword?: string
+          word_count_recommendation?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_content_briefs_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -1314,6 +1486,53 @@ export type Database = {
           },
         ]
       }
+      ai_execution_logs: {
+        Row: {
+          action: string
+          approved_by: string | null
+          business_id: string
+          client_id: string | null
+          created_at: string
+          id: string
+          module: string
+          output_summary: string | null
+          project_id: string | null
+          status: string
+        }
+        Insert: {
+          action: string
+          approved_by?: string | null
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          module: string
+          output_summary?: string | null
+          project_id?: string | null
+          status?: string
+        }
+        Update: {
+          action?: string
+          approved_by?: string | null
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          module?: string
+          output_summary?: string | null
+          project_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_execution_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_expansion_strategies: {
         Row: {
           confidence: number
@@ -1375,6 +1594,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ai_forecasts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_keyword_clusters: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          cluster_name: string
+          cluster_type: string
+          created_at: string
+          id: string
+          keywords_json: Json | null
+          primary_keyword: string | null
+          priority: string | null
+          search_intent: string | null
+          status: string
+          suggested_page_type: string | null
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          cluster_name: string
+          cluster_type?: string
+          created_at?: string
+          id?: string
+          keywords_json?: Json | null
+          primary_keyword?: string | null
+          priority?: string | null
+          search_intent?: string | null
+          status?: string
+          suggested_page_type?: string | null
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          cluster_name?: string
+          cluster_type?: string
+          created_at?: string
+          id?: string
+          keywords_json?: Json | null
+          primary_keyword?: string | null
+          priority?: string | null
+          search_intent?: string | null
+          status?: string
+          suggested_page_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_keyword_clusters_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -1677,6 +1949,59 @@ export type Database = {
           },
         ]
       }
+      ai_outreach_prospects: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          contact_email: string | null
+          created_at: string
+          domain_quality_score: number | null
+          id: string
+          outreach_category: string | null
+          outreach_status: string
+          prospect_domain: string
+          relevance_score: number | null
+          suggested_anchor: string | null
+          suggested_target_url: string | null
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          contact_email?: string | null
+          created_at?: string
+          domain_quality_score?: number | null
+          id?: string
+          outreach_category?: string | null
+          outreach_status?: string
+          prospect_domain: string
+          relevance_score?: number | null
+          suggested_anchor?: string | null
+          suggested_target_url?: string | null
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          contact_email?: string | null
+          created_at?: string
+          domain_quality_score?: number | null
+          id?: string
+          outreach_category?: string | null
+          outreach_status?: string
+          prospect_domain?: string
+          relevance_score?: number | null
+          suggested_anchor?: string | null
+          suggested_target_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_outreach_prospects_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_playbooks: {
         Row: {
           agent_type: Database["public"]["Enums"]["agent_type"]
@@ -1905,6 +2230,112 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ai_sales_recommendations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_seo_audits: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          created_at: string
+          critical_issues: number | null
+          health_score: number | null
+          id: string
+          issues_json: Json | null
+          project_id: string | null
+          status: string
+          total_issues: number | null
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          critical_issues?: number | null
+          health_score?: number | null
+          id?: string
+          issues_json?: Json | null
+          project_id?: string | null
+          status?: string
+          total_issues?: number | null
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          critical_issues?: number | null
+          health_score?: number | null
+          id?: string
+          issues_json?: Json | null
+          project_id?: string | null
+          status?: string
+          total_issues?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_seo_audits_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_social_posts: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          business_id: string
+          caption: string
+          client_id: string | null
+          content_type: string | null
+          created_at: string
+          cta: string | null
+          hashtags: string[] | null
+          id: string
+          image_brief: string | null
+          platform: string
+          scheduled_at: string | null
+          status: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          business_id: string
+          caption: string
+          client_id?: string | null
+          content_type?: string | null
+          created_at?: string
+          cta?: string | null
+          hashtags?: string[] | null
+          id?: string
+          image_brief?: string | null
+          platform?: string
+          scheduled_at?: string | null
+          status?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          business_id?: string
+          caption?: string
+          client_id?: string | null
+          content_type?: string | null
+          created_at?: string
+          cta?: string | null
+          hashtags?: string[] | null
+          id?: string
+          image_brief?: string | null
+          platform?: string
+          scheduled_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_social_posts_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
