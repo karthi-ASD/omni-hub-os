@@ -143,7 +143,11 @@ const TaskPipelinePage = () => {
                         <Badge variant={priorityColor(task.priority)} className="text-[10px]">{task.priority}</Badge>
                         {task.hr_employees?.full_name && <Badge variant="outline" className="text-[10px]">{task.hr_employees.full_name}</Badge>}
                       </div>
-                      {task.deadline && <p className="text-[10px] text-muted-foreground">Due: {task.deadline}</p>}
+                      {task.deadline && (
+                        <p className={`text-[10px] ${new Date(task.deadline) < new Date() && task.status !== "completed" ? "text-destructive font-semibold" : "text-muted-foreground"}`}>
+                          {new Date(task.deadline) < new Date() && task.status !== "completed" ? "⚠ Overdue: " : "Due: "}{task.deadline}
+                        </p>
+                      )}
                       <div className="flex gap-1 flex-wrap">
                         {STAGES.filter(s => s.key !== stage.key).map(s => (
                           <Button key={s.key} size="sm" variant="ghost" className="h-6 text-[10px] px-1.5" onClick={() => moveTask(task.id, s.key)}>
