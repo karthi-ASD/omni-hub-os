@@ -41,21 +41,25 @@ const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ open, onOpenChange, o
   };
 
   const handleFileSelected = async (file: File) => {
-    const { headers, rows } = await parseImportFile(file);
-    if (headers.length === 0) {
-      toast.error("Could not parse file headers");
-      return;
-    }
-    setCsvHeaders(headers);
-    setCsvRows(rows);
+    try {
+      const { headers, rows } = await parseImportFile(file);
+      if (headers.length === 0) {
+        toast.error("Could not parse file headers");
+        return;
+      }
+      setCsvHeaders(headers);
+      setCsvRows(rows);
 
-    // Auto-map fields based on known mappings
-    const autoMappings: FieldMapping[] = headers.map(h => ({
-      csvField: h,
-      crmField: DEFAULT_FIELD_MAP[h] || "__skip__",
-    }));
-    setMappings(autoMappings);
-    setStep("mapping");
+      // Auto-map fields based on known mappings
+      const autoMappings: FieldMapping[] = headers.map(h => ({
+        csvField: h,
+        crmField: DEFAULT_FIELD_MAP[h] || "__skip__",
+      }));
+      setMappings(autoMappings);
+      setStep("mapping");
+    } catch {
+      toast.error("File import failed. Please use a valid CSV or Excel export.");
+    }
   };
 
   const handleUpdateMapping = (index: number, crmField: string) => {
