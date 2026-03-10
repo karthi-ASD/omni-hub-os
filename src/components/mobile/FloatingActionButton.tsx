@@ -35,43 +35,40 @@ export function FloatingActionButton({ onAction }: FABProps) {
 
   return (
     <>
-      {/* Backdrop */}
       {open && (
         <div
-          className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm"
+          className="fixed inset-0 z-50 bg-background/40 backdrop-blur-sm"
           onClick={() => setOpen(false)}
         />
       )}
 
-      {/* Action items */}
-      <div className="fixed bottom-20 right-4 z-50 flex flex-col-reverse items-end gap-3">
+      <div className="fixed bottom-20 right-4 z-50 flex flex-col-reverse items-end gap-2.5">
         {open &&
           actions.map((item, i) => (
             <button
               key={item.action}
               onClick={() => handleAction(item.action)}
               className={cn(
-                "flex items-center gap-3 rounded-full bg-card shadow-lg border border-border px-4 py-2.5 transition-all",
+                "flex items-center gap-3 rounded-xl glass-strong px-4 py-2.5 transition-all hover-lift",
                 "animate-in slide-in-from-bottom-2 fade-in duration-200"
               )}
               style={{ animationDelay: `${i * 50}ms` }}
             >
               <span className="text-sm font-medium">{item.label}</span>
-              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <item.icon className="h-4 w-4 text-primary" />
               </div>
             </button>
           ))}
       </div>
 
-      {/* FAB button */}
       <button
         onClick={() => setOpen(!open)}
         className={cn(
-          "fixed bottom-20 right-4 z-50 h-14 w-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-200",
+          "fixed bottom-20 right-4 z-50 h-14 w-14 rounded-2xl flex items-center justify-center transition-all duration-300",
           open
-            ? "bg-muted rotate-45"
-            : "bg-primary shadow-glow"
+            ? "bg-muted rotate-45 shadow-elevated"
+            : "gradient-primary shadow-glow animate-glow"
         )}
       >
         {open ? (
