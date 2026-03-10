@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useClients, Client, OnboardingStatus } from "@/hooks/useClients";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
