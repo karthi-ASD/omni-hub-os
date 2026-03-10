@@ -18519,6 +18519,7 @@ export type Database = {
       xero_connections: {
         Row: {
           access_token: string | null
+          access_token_encrypted: string | null
           business_id: string
           created_at: string | null
           id: string
@@ -18526,12 +18527,14 @@ export type Database = {
           last_sync_at: string | null
           redirect_url: string | null
           refresh_token: string | null
+          refresh_token_encrypted: string | null
           token_expires_at: string | null
           updated_at: string | null
           xero_tenant_id: string | null
         }
         Insert: {
           access_token?: string | null
+          access_token_encrypted?: string | null
           business_id: string
           created_at?: string | null
           id?: string
@@ -18539,12 +18542,14 @@ export type Database = {
           last_sync_at?: string | null
           redirect_url?: string | null
           refresh_token?: string | null
+          refresh_token_encrypted?: string | null
           token_expires_at?: string | null
           updated_at?: string | null
           xero_tenant_id?: string | null
         }
         Update: {
           access_token?: string | null
+          access_token_encrypted?: string | null
           business_id?: string
           created_at?: string | null
           id?: string
@@ -18552,6 +18557,7 @@ export type Database = {
           last_sync_at?: string | null
           redirect_url?: string | null
           refresh_token?: string | null
+          refresh_token_encrypted?: string | null
           token_expires_at?: string | null
           updated_at?: string | null
           xero_tenant_id?: string | null
