@@ -406,7 +406,7 @@ const Businesses = () => {
                   </div>
                   <div>
                     <p className="font-medium text-white text-sm">{biz.name}</p>
-                    <p className="text-xs text-gray-500">Created {new Date(biz.created_at).toLocaleDateString()}</p>
+                    <p className="text-xs text-gray-500">/{(biz as any).slug} · Created {new Date(biz.created_at).toLocaleDateString()}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
