@@ -1364,6 +1364,42 @@ serve(async (req) => {
       }];
       toolChoice = { type: "function", function: { name: "competitor_analysis" } };
 
+    } else if (task_type === "ceo_insights") {
+      systemPrompt = `You are a Chief Business Intelligence Officer AI for a digital agency. Analyze the company-wide operational data and produce executive-level insights. Focus on: revenue risks, growth opportunities, operational bottlenecks, employee productivity trends, client health, and strategic recommendations. Be specific with numbers and actionable advice.`;
+      userPrompt = `Analyze this company data and produce CEO-level insights:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "ceo_insights",
+          description: "Return executive-level business insights and alerts",
+          parameters: {
+            type: "object",
+            properties: {
+              insights: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    category: { type: "string", enum: ["risk", "growth", "performance", "operations", "revenue", "client_health"] },
+                    severity: { type: "string", enum: ["info", "warning", "critical"] },
+                    title: { type: "string" },
+                    description: { type: "string" },
+                    recommended_action: { type: "string" },
+                  },
+                  required: ["category", "severity", "title", "description", "recommended_action"],
+                  additionalProperties: false,
+                },
+              },
+              executive_summary: { type: "string", description: "2-3 sentence overall business health summary" },
+              health_score: { type: "number", description: "Overall business health score 0-100" },
+            },
+            required: ["insights", "executive_summary", "health_score"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "ceo_insights" } };
+
     } else {
       return new Response(JSON.stringify({ error: "Unknown task_type" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
