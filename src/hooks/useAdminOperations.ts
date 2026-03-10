@@ -67,13 +67,13 @@ export function useAdminOperations() {
       { data: depts },
       { data: tasks },
     ] = await Promise.all([
-      supabase.from("hr_departments").select("*", { count: "exact", head: true }).eq("business_id", bid),
-      (supabase.from("hr_employees") as any).select("id, full_name, employee_code, department_id, designation, employment_status, departments:hr_departments(name)").eq("business_id", bid),
+      (supabase.from("hr_departments" as any) as any).select("*", { count: "exact", head: true }).eq("business_id", bid),
+      (supabase.from("hr_employees" as any) as any).select("id, full_name, employee_code, department_id, designation, employment_status, departments:hr_departments(name)").eq("business_id", bid),
       supabase.from("clients").select("*", { count: "exact", head: true }).eq("business_id", bid),
       supabase.from("leads").select("*", { count: "exact", head: true }).eq("business_id", bid),
-      supabase.from("deals").select("*", { count: "exact", head: true }).eq("business_id", bid).in("status", ["new", "discovery", "proposal", "negotiation"]),
+      supabase.from("deals").select("*", { count: "exact", head: true }).eq("business_id", bid).in("status", ["open", "won"] as any),
       supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("business_id", bid).in("status", ["open", "in_progress"]),
-      supabase.from("hr_departments").select("id, name, head_employee_id").eq("business_id", bid),
+      (supabase.from("hr_departments" as any) as any).select("id, name, head_employee_id").eq("business_id", bid),
       (supabase.from("project_tasks" as any) as any).select("id, status, assigned_employee_id, created_at").eq("business_id", bid),
     ]);
 
