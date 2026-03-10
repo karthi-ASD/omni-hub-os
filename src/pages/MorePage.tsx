@@ -568,6 +568,7 @@ const employeeSections: MenuSection[] = [
     items: [
       { label: "Dashboard", icon: BarChart3, to: "/dashboard" },
       { label: "My HR Portal", icon: UserCog, to: "/my-dashboard" },
+      { label: "Daily Reports", icon: FileBarChart, to: "/daily-work-reports" },
       { label: "Tasks", icon: ListChecks, to: "/tasks" },
       { label: "Calendar", icon: Calendar, to: "/calendar" },
       { label: "Reminders", icon: Clock, to: "/reminders" },
