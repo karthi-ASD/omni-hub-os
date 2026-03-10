@@ -132,8 +132,9 @@ const TaskPipelinePage = () => {
               </div>
               <div className="space-y-2 min-h-[200px] bg-muted/30 rounded-lg p-2">
                 {stageTasks.map(task => (
-                  <Card key={task.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                  <Card key={task.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/task/${task.id}`)}>
                     <CardContent className="p-3 space-y-2">
+                      {task.task_number && <span className="text-[10px] font-mono text-muted-foreground">{task.task_number}</span>}
                       <p className="font-medium text-sm leading-tight">{task.title}</p>
                       {task.client_projects?.client_name && (
                         <p className="text-xs text-muted-foreground">{task.client_projects.client_name}</p>
