@@ -6755,6 +6755,76 @@ export type Database = {
           },
         ]
       }
+      hr_employee_tasks: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string | null
+          deadline: string | null
+          department_id: string | null
+          description: string | null
+          employee_id: string
+          id: string
+          priority: string
+          start_date: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          department_id?: string | null
+          description?: string | null
+          employee_id: string
+          id?: string
+          priority?: string
+          start_date?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          department_id?: string | null
+          description?: string | null
+          employee_id?: string
+          id?: string
+          priority?: string
+          start_date?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_employee_tasks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_employee_tasks_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_employee_tasks_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "hr_employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hr_employees: {
         Row: {
           business_id: string
@@ -6846,6 +6916,258 @@ export type Database = {
           {
             foreignKeyName: "hr_employees_reporting_manager_id_fkey"
             columns: ["reporting_manager_id"]
+            isOneToOne: false
+            referencedRelation: "hr_employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_leave_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          attachment_url: string | null
+          business_id: string
+          created_at: string
+          employee_id: string
+          end_date: string
+          id: string
+          leave_type_id: string
+          num_days: number
+          reason: string | null
+          start_date: string
+          status: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          attachment_url?: string | null
+          business_id: string
+          created_at?: string
+          employee_id: string
+          end_date: string
+          id?: string
+          leave_type_id: string
+          num_days?: number
+          reason?: string | null
+          start_date: string
+          status?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          attachment_url?: string | null
+          business_id?: string
+          created_at?: string
+          employee_id?: string
+          end_date?: string
+          id?: string
+          leave_type_id?: string
+          num_days?: number
+          reason?: string | null
+          start_date?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_leave_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_leave_requests_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "hr_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_leave_requests_leave_type_id_fkey"
+            columns: ["leave_type_id"]
+            isOneToOne: false
+            referencedRelation: "hr_leave_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_leave_types: {
+        Row: {
+          approval_required: boolean
+          business_id: string
+          carry_forward: boolean
+          created_at: string
+          id: string
+          max_days_per_year: number
+          name: string
+          status: string
+        }
+        Insert: {
+          approval_required?: boolean
+          business_id: string
+          carry_forward?: boolean
+          created_at?: string
+          id?: string
+          max_days_per_year?: number
+          name: string
+          status?: string
+        }
+        Update: {
+          approval_required?: boolean
+          business_id?: string
+          carry_forward?: boolean
+          created_at?: string
+          id?: string
+          max_days_per_year?: number
+          name?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_leave_types_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_payroll_records: {
+        Row: {
+          allowances: number
+          approved_by: string | null
+          basic_salary: number
+          bonus: number
+          business_id: string
+          created_at: string
+          deductions: number
+          employee_id: string
+          generated_at: string
+          hra: number
+          id: string
+          month: string
+          net_salary: number
+          overtime: number
+          pf_tax: number
+          status: string
+        }
+        Insert: {
+          allowances?: number
+          approved_by?: string | null
+          basic_salary?: number
+          bonus?: number
+          business_id: string
+          created_at?: string
+          deductions?: number
+          employee_id: string
+          generated_at?: string
+          hra?: number
+          id?: string
+          month: string
+          net_salary?: number
+          overtime?: number
+          pf_tax?: number
+          status?: string
+        }
+        Update: {
+          allowances?: number
+          approved_by?: string | null
+          basic_salary?: number
+          bonus?: number
+          business_id?: string
+          created_at?: string
+          deductions?: number
+          employee_id?: string
+          generated_at?: string
+          hra?: number
+          id?: string
+          month?: string
+          net_salary?: number
+          overtime?: number
+          pf_tax?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_payroll_records_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_payroll_records_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "hr_employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_performance_reviews: {
+        Row: {
+          business_id: string
+          communication: number | null
+          created_at: string
+          employee_id: string
+          hr_feedback: string | null
+          id: string
+          leadership: number | null
+          manager_feedback: string | null
+          overall_rating: number | null
+          productivity: number | null
+          result: string | null
+          review_period: string
+          reviewed_by: string | null
+          team_collaboration: number | null
+          work_quality: number | null
+        }
+        Insert: {
+          business_id: string
+          communication?: number | null
+          created_at?: string
+          employee_id: string
+          hr_feedback?: string | null
+          id?: string
+          leadership?: number | null
+          manager_feedback?: string | null
+          overall_rating?: number | null
+          productivity?: number | null
+          result?: string | null
+          review_period: string
+          reviewed_by?: string | null
+          team_collaboration?: number | null
+          work_quality?: number | null
+        }
+        Update: {
+          business_id?: string
+          communication?: number | null
+          created_at?: string
+          employee_id?: string
+          hr_feedback?: string | null
+          id?: string
+          leadership?: number | null
+          manager_feedback?: string | null
+          overall_rating?: number | null
+          productivity?: number | null
+          result?: string | null
+          review_period?: string
+          reviewed_by?: string | null
+          team_collaboration?: number | null
+          work_quality?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_performance_reviews_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_performance_reviews_employee_id_fkey"
+            columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "hr_employees"
             referencedColumns: ["id"]
