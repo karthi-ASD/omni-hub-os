@@ -71,6 +71,7 @@ const superAdminSections: MenuSection[] = [
     items: [
       { label: "CS Dashboard", icon: Headphones, to: "/cs-dashboard" },
       { label: "Tickets", icon: Ticket, to: "/tickets" },
+      { label: "Internal Tickets", icon: Ticket, to: "/internal-tickets" },
       { label: "Company Accounts", icon: Building2, to: "/company-accounts" },
       { label: "Knowledge Base", icon: BookOpen, to: "/knowledge-base" },
       { label: "CSAT Surveys", icon: ThumbsUp, to: "/satisfaction-surveys" },
