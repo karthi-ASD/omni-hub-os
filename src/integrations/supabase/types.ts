@@ -62,6 +62,209 @@ export type Database = {
           },
         ]
       }
+      account_timeline: {
+        Row: {
+          account_id: string | null
+          business_id: string
+          client_id: string | null
+          contact_id: string | null
+          contract_id: string | null
+          created_at: string
+          event_description: string | null
+          event_title: string
+          event_type: string
+          id: string
+          lead_id: string | null
+          module_name: string | null
+          module_record_id: string | null
+          opportunity_id: string | null
+          ticket_id: string | null
+          user_id: string | null
+          visibility: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          business_id: string
+          client_id?: string | null
+          contact_id?: string | null
+          contract_id?: string | null
+          created_at?: string
+          event_description?: string | null
+          event_title: string
+          event_type: string
+          id?: string
+          lead_id?: string | null
+          module_name?: string | null
+          module_record_id?: string | null
+          opportunity_id?: string | null
+          ticket_id?: string | null
+          user_id?: string | null
+          visibility?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          business_id?: string
+          client_id?: string | null
+          contact_id?: string | null
+          contract_id?: string | null
+          created_at?: string
+          event_description?: string | null
+          event_title?: string
+          event_type?: string
+          id?: string
+          lead_id?: string | null
+          module_name?: string | null
+          module_record_id?: string | null
+          opportunity_id?: string | null
+          ticket_id?: string | null
+          user_id?: string | null
+          visibility?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_timeline_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_timeline_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_timeline_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_timeline_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_timeline_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_timeline_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_timeline_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_timeline_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      accounts: {
+        Row: {
+          account_code: string | null
+          account_status: string
+          address: string | null
+          assigned_account_manager_id: string | null
+          business_id: string
+          city: string | null
+          company_name: string
+          company_size: string | null
+          country: string | null
+          created_at: string
+          created_from_client_id: string | null
+          created_from_lead_id: string | null
+          email: string | null
+          id: string
+          industry: string | null
+          lead_source: string | null
+          phone: string | null
+          primary_contact_id: string | null
+          renewal_date: string | null
+          state: string | null
+          total_revenue: number | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          account_code?: string | null
+          account_status?: string
+          address?: string | null
+          assigned_account_manager_id?: string | null
+          business_id: string
+          city?: string | null
+          company_name: string
+          company_size?: string | null
+          country?: string | null
+          created_at?: string
+          created_from_client_id?: string | null
+          created_from_lead_id?: string | null
+          email?: string | null
+          id?: string
+          industry?: string | null
+          lead_source?: string | null
+          phone?: string | null
+          primary_contact_id?: string | null
+          renewal_date?: string | null
+          state?: string | null
+          total_revenue?: number | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          account_code?: string | null
+          account_status?: string
+          address?: string | null
+          assigned_account_manager_id?: string | null
+          business_id?: string
+          city?: string | null
+          company_name?: string
+          company_size?: string | null
+          country?: string | null
+          created_at?: string
+          created_from_client_id?: string | null
+          created_from_lead_id?: string | null
+          email?: string | null
+          id?: string
+          industry?: string | null
+          lead_source?: string | null
+          phone?: string | null
+          primary_contact_id?: string | null
+          renewal_date?: string | null
+          state?: string | null
+          total_revenue?: number | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       acquisition_scenarios: {
         Row: {
           cost_savings: number
@@ -2953,6 +3156,65 @@ export type Database = {
           },
         ]
       }
+      approvals: {
+        Row: {
+          approval_type: string
+          approved_at: string | null
+          assigned_to: string | null
+          business_id: string
+          created_at: string
+          decision_notes: string | null
+          id: string
+          module_name: string
+          record_id: string
+          rejected_at: string | null
+          request_notes: string | null
+          requested_by: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          approval_type: string
+          approved_at?: string | null
+          assigned_to?: string | null
+          business_id: string
+          created_at?: string
+          decision_notes?: string | null
+          id?: string
+          module_name: string
+          record_id: string
+          rejected_at?: string | null
+          request_notes?: string | null
+          requested_by?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approval_type?: string
+          approved_at?: string | null
+          assigned_to?: string | null
+          business_id?: string
+          created_at?: string
+          decision_notes?: string | null
+          id?: string
+          module_name?: string
+          record_id?: string
+          rejected_at?: string | null
+          request_notes?: string | null
+          requested_by?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approvals_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance_checkins: {
         Row: {
           business_id: string
@@ -3962,6 +4224,102 @@ export type Database = {
           },
         ]
       }
+      callbacks: {
+        Row: {
+          account_id: string | null
+          assigned_agent_id: string | null
+          business_id: string
+          callback_date: string
+          callback_reason: string | null
+          callback_time: string | null
+          completed_at: string | null
+          contact_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          lead_id: string | null
+          notes: string | null
+          opportunity_id: string | null
+          priority: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          assigned_agent_id?: string | null
+          business_id: string
+          callback_date: string
+          callback_reason?: string | null
+          callback_time?: string | null
+          completed_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          opportunity_id?: string | null
+          priority?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          assigned_agent_id?: string | null
+          business_id?: string
+          callback_date?: string
+          callback_reason?: string | null
+          callback_time?: string | null
+          completed_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          opportunity_id?: string | null
+          priority?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "callbacks_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "callbacks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "callbacks_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "callbacks_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "callbacks_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       capital_allocation_models: {
         Row: {
           created_at: string
@@ -4899,6 +5257,149 @@ export type Database = {
           },
         ]
       }
+      contact_relationships: {
+        Row: {
+          account_id: string | null
+          business_id: string
+          child_contact_id: string | null
+          created_at: string
+          id: string
+          parent_contact_id: string | null
+          relationship_label: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          business_id: string
+          child_contact_id?: string | null
+          created_at?: string
+          id?: string
+          parent_contact_id?: string | null
+          relationship_label?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          business_id?: string
+          child_contact_id?: string | null
+          created_at?: string
+          id?: string
+          parent_contact_id?: string | null
+          relationship_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_relationships_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_relationships_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_relationships_child_contact_id_fkey"
+            columns: ["child_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_relationships_parent_contact_id_fkey"
+            columns: ["parent_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          account_id: string | null
+          alternate_phone: string | null
+          business_id: string
+          contact_code: string | null
+          created_at: string
+          decision_maker_flag: boolean | null
+          department_name: string | null
+          designation: string | null
+          email: string | null
+          first_name: string | null
+          full_name: string
+          id: string
+          influence_level: string | null
+          last_name: string | null
+          linkedin_url: string | null
+          notes: string | null
+          phone: string | null
+          relationship_type: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          alternate_phone?: string | null
+          business_id: string
+          contact_code?: string | null
+          created_at?: string
+          decision_maker_flag?: boolean | null
+          department_name?: string | null
+          designation?: string | null
+          email?: string | null
+          first_name?: string | null
+          full_name: string
+          id?: string
+          influence_level?: string | null
+          last_name?: string | null
+          linkedin_url?: string | null
+          notes?: string | null
+          phone?: string | null
+          relationship_type?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          alternate_phone?: string | null
+          business_id?: string
+          contact_code?: string | null
+          created_at?: string
+          decision_maker_flag?: boolean | null
+          department_name?: string | null
+          designation?: string | null
+          email?: string | null
+          first_name?: string | null
+          full_name?: string
+          id?: string
+          influence_level?: string | null
+          last_name?: string | null
+          linkedin_url?: string | null
+          notes?: string | null
+          phone?: string | null
+          relationship_type?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           business_id: string
@@ -5335,6 +5836,81 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_feedback: {
+        Row: {
+          account_id: string | null
+          business_id: string
+          client_id: string | null
+          comments: string | null
+          contact_id: string | null
+          feedback_type: string | null
+          id: string
+          score: number | null
+          submitted_at: string | null
+          ticket_id: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          business_id: string
+          client_id?: string | null
+          comments?: string | null
+          contact_id?: string | null
+          feedback_type?: string | null
+          id?: string
+          score?: number | null
+          submitted_at?: string | null
+          ticket_id?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          business_id?: string
+          client_id?: string | null
+          comments?: string | null
+          contact_id?: string | null
+          feedback_type?: string | null
+          id?: string
+          score?: number | null
+          submitted_at?: string | null
+          ticket_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_feedback_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_feedback_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_feedback_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_feedback_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_feedback_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
             referencedColumns: ["id"]
           },
         ]
@@ -5796,6 +6372,163 @@ export type Database = {
           },
         ]
       }
+      demos: {
+        Row: {
+          account_id: string | null
+          assigned_agent_id: string | null
+          business_id: string
+          contact_id: string | null
+          created_at: string
+          demo_date: string
+          demo_time: string | null
+          demo_type: string | null
+          followup_required: boolean | null
+          id: string
+          notes: string | null
+          opportunity_id: string | null
+          outcome: string | null
+          platform: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          assigned_agent_id?: string | null
+          business_id: string
+          contact_id?: string | null
+          created_at?: string
+          demo_date: string
+          demo_time?: string | null
+          demo_type?: string | null
+          followup_required?: boolean | null
+          id?: string
+          notes?: string | null
+          opportunity_id?: string | null
+          outcome?: string | null
+          platform?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          assigned_agent_id?: string | null
+          business_id?: string
+          contact_id?: string | null
+          created_at?: string
+          demo_date?: string
+          demo_time?: string | null
+          demo_type?: string | null
+          followup_required?: boolean | null
+          id?: string
+          notes?: string | null
+          opportunity_id?: string | null
+          outcome?: string | null
+          platform?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demos_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demos_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demos_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demos_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      department_handoffs: {
+        Row: {
+          account_id: string | null
+          business_id: string
+          created_at: string
+          handoff_notes: string | null
+          handoff_type: string | null
+          id: string
+          source_department_id: string | null
+          source_user_id: string | null
+          status: string | null
+          target_department_id: string | null
+          target_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          business_id: string
+          created_at?: string
+          handoff_notes?: string | null
+          handoff_type?: string | null
+          id?: string
+          source_department_id?: string | null
+          source_user_id?: string | null
+          status?: string | null
+          target_department_id?: string | null
+          target_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          business_id?: string
+          created_at?: string
+          handoff_notes?: string | null
+          handoff_type?: string | null
+          id?: string
+          source_department_id?: string | null
+          source_user_id?: string | null
+          status?: string | null
+          target_department_id?: string | null
+          target_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_handoffs_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_handoffs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_handoffs_source_department_id_fkey"
+            columns: ["source_department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_handoffs_target_department_id_fkey"
+            columns: ["target_department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       departments: {
         Row: {
           business_id: string
@@ -5988,6 +6721,162 @@ export type Database = {
           },
         ]
       }
+      email_messages: {
+        Row: {
+          body_html: string | null
+          body_text: string | null
+          business_id: string
+          cc_email: string | null
+          created_at: string
+          external_message_id: string | null
+          id: string
+          linked_account_id: string | null
+          linked_contact_id: string | null
+          linked_lead_id: string | null
+          linked_opportunity_id: string | null
+          linked_ticket_id: string | null
+          mailbox: string | null
+          message_type: string | null
+          processed_status: string | null
+          received_at: string | null
+          recipient_email: string | null
+          sender_email: string | null
+          sender_name: string | null
+          subject: string | null
+          thread_id: string | null
+        }
+        Insert: {
+          body_html?: string | null
+          body_text?: string | null
+          business_id: string
+          cc_email?: string | null
+          created_at?: string
+          external_message_id?: string | null
+          id?: string
+          linked_account_id?: string | null
+          linked_contact_id?: string | null
+          linked_lead_id?: string | null
+          linked_opportunity_id?: string | null
+          linked_ticket_id?: string | null
+          mailbox?: string | null
+          message_type?: string | null
+          processed_status?: string | null
+          received_at?: string | null
+          recipient_email?: string | null
+          sender_email?: string | null
+          sender_name?: string | null
+          subject?: string | null
+          thread_id?: string | null
+        }
+        Update: {
+          body_html?: string | null
+          body_text?: string | null
+          business_id?: string
+          cc_email?: string | null
+          created_at?: string
+          external_message_id?: string | null
+          id?: string
+          linked_account_id?: string | null
+          linked_contact_id?: string | null
+          linked_lead_id?: string | null
+          linked_opportunity_id?: string | null
+          linked_ticket_id?: string | null
+          mailbox?: string | null
+          message_type?: string | null
+          processed_status?: string | null
+          received_at?: string | null
+          recipient_email?: string | null
+          sender_email?: string | null
+          sender_name?: string | null
+          subject?: string | null
+          thread_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_messages_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_messages_linked_account_id_fkey"
+            columns: ["linked_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_messages_linked_contact_id_fkey"
+            columns: ["linked_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_messages_linked_lead_id_fkey"
+            columns: ["linked_lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_messages_linked_opportunity_id_fkey"
+            columns: ["linked_opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_messages_linked_ticket_id_fkey"
+            columns: ["linked_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_activity_logs: {
+        Row: {
+          activity_description: string | null
+          activity_type: string
+          business_id: string
+          created_at: string
+          id: string
+          module_name: string | null
+          record_id: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_description?: string | null
+          activity_type: string
+          business_id: string
+          created_at?: string
+          id?: string
+          module_name?: string | null
+          record_id?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_description?: string | null
+          activity_type?: string
+          business_id?: string
+          created_at?: string
+          id?: string
+          module_name?: string | null
+          record_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_activity_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_capacity: {
         Row: {
           business_id: string
@@ -6098,6 +6987,148 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "employee_documents_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_performance_daily: {
+        Row: {
+          business_id: string
+          callbacks_completed: number | null
+          callbacks_due: number | null
+          callbacks_missed: number | null
+          calls_logged: number | null
+          created_at: string
+          deals_closed: number | null
+          demos_done: number | null
+          followups_completed: number | null
+          id: string
+          leads_handled: number | null
+          meetings_done: number | null
+          proposals_sent: number | null
+          revenue_closed: number | null
+          stat_date: string
+          tickets_followed_up: number | null
+          tickets_opened: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          callbacks_completed?: number | null
+          callbacks_due?: number | null
+          callbacks_missed?: number | null
+          calls_logged?: number | null
+          created_at?: string
+          deals_closed?: number | null
+          demos_done?: number | null
+          followups_completed?: number | null
+          id?: string
+          leads_handled?: number | null
+          meetings_done?: number | null
+          proposals_sent?: number | null
+          revenue_closed?: number | null
+          stat_date: string
+          tickets_followed_up?: number | null
+          tickets_opened?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          callbacks_completed?: number | null
+          callbacks_due?: number | null
+          callbacks_missed?: number | null
+          calls_logged?: number | null
+          created_at?: string
+          deals_closed?: number | null
+          demos_done?: number | null
+          followups_completed?: number | null
+          id?: string
+          leads_handled?: number | null
+          meetings_done?: number | null
+          proposals_sent?: number | null
+          revenue_closed?: number | null
+          stat_date?: string
+          tickets_followed_up?: number | null
+          tickets_opened?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_performance_daily_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_performance_monthly: {
+        Row: {
+          business_id: string
+          callback_compliance_rate: number | null
+          calls_logged: number | null
+          conversion_rate: number | null
+          created_at: string
+          deals_closed: number | null
+          demos_done: number | null
+          id: string
+          leads_handled: number | null
+          meetings_done: number | null
+          proposals_sent: number | null
+          revenue_closed: number | null
+          stat_month: number
+          stat_year: number
+          ticket_handling_score: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          callback_compliance_rate?: number | null
+          calls_logged?: number | null
+          conversion_rate?: number | null
+          created_at?: string
+          deals_closed?: number | null
+          demos_done?: number | null
+          id?: string
+          leads_handled?: number | null
+          meetings_done?: number | null
+          proposals_sent?: number | null
+          revenue_closed?: number | null
+          stat_month: number
+          stat_year: number
+          ticket_handling_score?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          callback_compliance_rate?: number | null
+          calls_logged?: number | null
+          conversion_rate?: number | null
+          created_at?: string
+          deals_closed?: number | null
+          demos_done?: number | null
+          id?: string
+          leads_handled?: number | null
+          meetings_done?: number | null
+          proposals_sent?: number | null
+          revenue_closed?: number | null
+          stat_month?: number
+          stat_year?: number
+          ticket_handling_score?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_performance_monthly_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -6613,6 +7644,185 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      field_visits: {
+        Row: {
+          account_id: string | null
+          agenda: string | null
+          assigned_agent_id: string | null
+          business_id: string
+          contact_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          opportunity_id: string | null
+          updated_at: string
+          visit_address: string | null
+          visit_date: string
+          visit_outcome: string | null
+          visit_time: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          agenda?: string | null
+          assigned_agent_id?: string | null
+          business_id: string
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          opportunity_id?: string | null
+          updated_at?: string
+          visit_address?: string | null
+          visit_date: string
+          visit_outcome?: string | null
+          visit_time?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          agenda?: string | null
+          assigned_agent_id?: string | null
+          business_id?: string
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          opportunity_id?: string | null
+          updated_at?: string
+          visit_address?: string | null
+          visit_date?: string
+          visit_outcome?: string | null
+          visit_time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_visits_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_visits_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_visits_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_visits_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      followups: {
+        Row: {
+          account_id: string | null
+          assigned_agent_id: string | null
+          business_id: string
+          completed_at: string | null
+          contact_id: string | null
+          created_at: string
+          created_by: string | null
+          followup_date: string
+          followup_time: string | null
+          followup_type: string | null
+          id: string
+          lead_id: string | null
+          notes: string | null
+          opportunity_id: string | null
+          priority: string | null
+          status: string | null
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          assigned_agent_id?: string | null
+          business_id: string
+          completed_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          followup_date: string
+          followup_time?: string | null
+          followup_type?: string | null
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          opportunity_id?: string | null
+          priority?: string | null
+          status?: string | null
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          assigned_agent_id?: string | null
+          business_id?: string
+          completed_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          followup_date?: string
+          followup_time?: string | null
+          followup_type?: string | null
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          opportunity_id?: string | null
+          priority?: string | null
+          status?: string | null
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "followups_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "followups_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "followups_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "followups_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "followups_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
             referencedColumns: ["id"]
           },
         ]
@@ -9309,6 +10519,101 @@ export type Database = {
           },
         ]
       }
+      lead_calls: {
+        Row: {
+          account_id: string | null
+          agent_id: string | null
+          business_id: string
+          call_datetime: string | null
+          call_summary: string | null
+          call_type: string | null
+          contact_id: string | null
+          created_at: string
+          direction: string | null
+          duration_seconds: number | null
+          id: string
+          lead_id: string | null
+          next_action: string | null
+          outcome: string | null
+          recording_file: string | null
+          recording_reference: string | null
+          recording_url: string | null
+          transcript_text: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          agent_id?: string | null
+          business_id: string
+          call_datetime?: string | null
+          call_summary?: string | null
+          call_type?: string | null
+          contact_id?: string | null
+          created_at?: string
+          direction?: string | null
+          duration_seconds?: number | null
+          id?: string
+          lead_id?: string | null
+          next_action?: string | null
+          outcome?: string | null
+          recording_file?: string | null
+          recording_reference?: string | null
+          recording_url?: string | null
+          transcript_text?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          agent_id?: string | null
+          business_id?: string
+          call_datetime?: string | null
+          call_summary?: string | null
+          call_type?: string | null
+          contact_id?: string | null
+          created_at?: string
+          direction?: string | null
+          duration_seconds?: number | null
+          id?: string
+          lead_id?: string | null
+          next_action?: string | null
+          outcome?: string | null
+          recording_file?: string | null
+          recording_reference?: string | null
+          recording_url?: string | null
+          transcript_text?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_calls_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_calls_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_calls_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_calls_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_conversations: {
         Row: {
           business_id: string
@@ -9349,6 +10654,54 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_notes: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          internal_only: boolean | null
+          lead_id: string
+          note_content: string
+          note_type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          internal_only?: boolean | null
+          lead_id: string
+          note_content: string
+          note_type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          internal_only?: boolean | null
+          lead_id?: string
+          note_content?: string
+          note_type?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_notes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_notes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
         ]
@@ -9634,6 +10987,98 @@ export type Database = {
           },
         ]
       }
+      meetings: {
+        Row: {
+          account_id: string | null
+          assigned_agent_id: string | null
+          business_id: string
+          contact_id: string | null
+          created_at: string
+          id: string
+          invite_sent: boolean | null
+          meeting_date: string
+          meeting_link: string | null
+          meeting_location: string | null
+          meeting_platform: string | null
+          meeting_time: string | null
+          meeting_type: string | null
+          notes: string | null
+          objective: string | null
+          opportunity_id: string | null
+          outcome: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          assigned_agent_id?: string | null
+          business_id: string
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          invite_sent?: boolean | null
+          meeting_date: string
+          meeting_link?: string | null
+          meeting_location?: string | null
+          meeting_platform?: string | null
+          meeting_time?: string | null
+          meeting_type?: string | null
+          notes?: string | null
+          objective?: string | null
+          opportunity_id?: string | null
+          outcome?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          assigned_agent_id?: string | null
+          business_id?: string
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          invite_sent?: boolean | null
+          meeting_date?: string
+          meeting_link?: string | null
+          meeting_location?: string | null
+          meeting_platform?: string | null
+          meeting_time?: string | null
+          meeting_type?: string | null
+          notes?: string | null
+          objective?: string | null
+          opportunity_id?: string | null
+          outcome?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meetings_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       migration_runs: {
         Row: {
           error_message: string | null
@@ -9802,6 +11247,86 @@ export type Database = {
           },
         ]
       }
+      onboarding_tasks: {
+        Row: {
+          account_id: string | null
+          assigned_to: string | null
+          business_id: string
+          completed_at: string | null
+          created_at: string
+          department_id: string | null
+          due_date: string | null
+          id: string
+          priority: string | null
+          status: string | null
+          task_description: string | null
+          task_title: string
+          updated_at: string
+          workflow_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          assigned_to?: string | null
+          business_id: string
+          completed_at?: string | null
+          created_at?: string
+          department_id?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          status?: string | null
+          task_description?: string | null
+          task_title: string
+          updated_at?: string
+          workflow_id: string
+        }
+        Update: {
+          account_id?: string | null
+          assigned_to?: string | null
+          business_id?: string
+          completed_at?: string | null
+          created_at?: string
+          department_id?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          status?: string | null
+          task_description?: string | null
+          task_title?: string
+          updated_at?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_tasks_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_tasks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_tasks_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_tasks_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "onboarding_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onboarding_templates: {
         Row: {
           created_at: string
@@ -9825,6 +11350,173 @@ export type Database = {
           template_name?: string
         }
         Relationships: []
+      }
+      onboarding_workflows: {
+        Row: {
+          account_id: string | null
+          assigned_account_manager_id: string | null
+          business_id: string
+          client_id: string | null
+          completed_date: string | null
+          contract_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          onboarding_status: string | null
+          start_date: string | null
+          target_completion_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          assigned_account_manager_id?: string | null
+          business_id: string
+          client_id?: string | null
+          completed_date?: string | null
+          contract_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          onboarding_status?: string | null
+          start_date?: string | null
+          target_completion_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          assigned_account_manager_id?: string | null
+          business_id?: string
+          client_id?: string | null
+          completed_date?: string | null
+          contract_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          onboarding_status?: string | null
+          start_date?: string | null
+          target_completion_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_workflows_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_workflows_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_workflows_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_workflows_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_competitor_tracking: {
+        Row: {
+          business_id: string
+          competitor_name: string
+          competitor_notes: string | null
+          created_at: string
+          id: string
+          opportunity_id: string
+        }
+        Insert: {
+          business_id: string
+          competitor_name: string
+          competitor_notes?: string | null
+          created_at?: string
+          id?: string
+          opportunity_id: string
+        }
+        Update: {
+          business_id?: string
+          competitor_name?: string
+          competitor_notes?: string | null
+          created_at?: string
+          id?: string
+          opportunity_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_competitor_tracking_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_competitor_tracking_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_stage_history: {
+        Row: {
+          business_id: string
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_stage: string
+          notes: string | null
+          old_stage: string | null
+          opportunity_id: string
+        }
+        Insert: {
+          business_id: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_stage: string
+          notes?: string | null
+          old_stage?: string | null
+          opportunity_id: string
+        }
+        Update: {
+          business_id?: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_stage?: string
+          notes?: string | null
+          old_stage?: string | null
+          opportunity_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_stage_history_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_stage_history_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       opt_out_registry: {
         Row: {
@@ -10295,6 +11987,62 @@ export type Database = {
           },
         ]
       }
+      permission_requests: {
+        Row: {
+          business_id: string
+          created_at: string
+          final_status: string | null
+          from_time: string | null
+          hr_approval_status: string | null
+          id: string
+          manager_approval_status: string | null
+          permission_type: string
+          reason: string | null
+          request_date: string
+          to_time: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          final_status?: string | null
+          from_time?: string | null
+          hr_approval_status?: string | null
+          id?: string
+          manager_approval_status?: string | null
+          permission_type?: string
+          reason?: string | null
+          request_date: string
+          to_time?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          final_status?: string | null
+          from_time?: string | null
+          hr_approval_status?: string | null
+          id?: string
+          manager_approval_status?: string | null
+          permission_type?: string
+          reason?: string | null
+          request_date?: string
+          to_time?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permission_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_invoices: {
         Row: {
           amount: number
@@ -10711,6 +12459,57 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposal_line_items: {
+        Row: {
+          business_id: string
+          created_at: string
+          description: string | null
+          id: string
+          item_name: string
+          proposal_id: string
+          quantity: number | null
+          total_price: number | null
+          unit_price: number | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_name: string
+          proposal_id: string
+          quantity?: number | null
+          total_price?: number | null
+          unit_price?: number | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_name?: string
+          proposal_id?: string
+          quantity?: number | null
+          total_price?: number | null
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_line_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposal_line_items_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
             referencedColumns: ["id"]
           },
         ]
@@ -11196,6 +12995,80 @@ export type Database = {
             columns: ["calendar_event_id"]
             isOneToOne: false
             referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      renewals: {
+        Row: {
+          account_id: string | null
+          assigned_to: string | null
+          business_id: string
+          client_id: string | null
+          contract_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          renewal_due_date: string | null
+          renewal_status: string | null
+          renewal_value: number | null
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          assigned_to?: string | null
+          business_id: string
+          client_id?: string | null
+          contract_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          renewal_due_date?: string | null
+          renewal_status?: string | null
+          renewal_value?: number | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          assigned_to?: string | null
+          business_id?: string
+          client_id?: string | null
+          contract_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          renewal_due_date?: string | null
+          renewal_status?: string | null
+          renewal_value?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "renewals_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "renewals_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "renewals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "renewals_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
         ]
@@ -15072,6 +16945,236 @@ export type Database = {
             columns: ["ticket_id"]
             isOneToOne: false
             referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_email_logs: {
+        Row: {
+          body_snapshot: string | null
+          business_id: string
+          email_type: string
+          id: string
+          recipient_email: string | null
+          sent_at: string | null
+          status: string | null
+          subject: string | null
+          ticket_id: string
+        }
+        Insert: {
+          body_snapshot?: string | null
+          business_id: string
+          email_type: string
+          id?: string
+          recipient_email?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject?: string | null
+          ticket_id: string
+        }
+        Update: {
+          body_snapshot?: string | null
+          business_id?: string
+          email_type?: string
+          id?: string
+          recipient_email?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject?: string | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_email_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_email_logs_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_status_history: {
+        Row: {
+          business_id: string
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_status: string
+          notes: string | null
+          old_status: string | null
+          ticket_id: string
+        }
+        Insert: {
+          business_id: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_status: string
+          notes?: string | null
+          old_status?: string | null
+          ticket_id: string
+        }
+        Update: {
+          business_id?: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_status?: string
+          notes?: string | null
+          old_status?: string | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_status_history_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_status_history_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trainer_feedback: {
+        Row: {
+          business_id: string
+          created_at: string
+          employee_user_id: string
+          feedback_text: string | null
+          feedback_type: string | null
+          id: string
+          related_call_id: string | null
+          related_ticket_id: string | null
+          score: number | null
+          trainer_user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          employee_user_id: string
+          feedback_text?: string | null
+          feedback_type?: string | null
+          id?: string
+          related_call_id?: string | null
+          related_ticket_id?: string | null
+          score?: number | null
+          trainer_user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          employee_user_id?: string
+          feedback_text?: string | null
+          feedback_type?: string | null
+          id?: string
+          related_call_id?: string | null
+          related_ticket_id?: string | null
+          score?: number | null
+          trainer_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_feedback_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      upsell_opportunities: {
+        Row: {
+          account_id: string | null
+          assigned_to: string | null
+          business_id: string
+          client_id: string | null
+          contact_id: string | null
+          created_at: string
+          created_from_contract_id: string | null
+          id: string
+          notes: string | null
+          opportunity_value: number | null
+          service_suggested: string | null
+          stage: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          assigned_to?: string | null
+          business_id: string
+          client_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_from_contract_id?: string | null
+          id?: string
+          notes?: string | null
+          opportunity_value?: number | null
+          service_suggested?: string | null
+          stage?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          assigned_to?: string | null
+          business_id?: string
+          client_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_from_contract_id?: string | null
+          id?: string
+          notes?: string | null
+          opportunity_value?: number | null
+          service_suggested?: string | null
+          stage?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upsell_opportunities_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upsell_opportunities_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upsell_opportunities_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upsell_opportunities_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upsell_opportunities_created_from_contract_id_fkey"
+            columns: ["created_from_contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
         ]
