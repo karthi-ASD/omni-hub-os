@@ -37,6 +37,7 @@ import SeoCampaignDetailPage from "./pages/SeoCampaignDetailPage";
 import SeoOperationsPage from "./pages/SeoOperationsPage";
 import SeoProjectDetailPage from "./pages/SeoProjectDetailPage";
 import SeoTeamDashboardPage from "./pages/SeoTeamDashboardPage";
+import SeoIntelligencePage from "./pages/SeoIntelligencePage";
 import CommunicationsPage from "./pages/CommunicationsPage";
 import SystemMonitorPage from "./pages/SystemMonitorPage";
 import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
