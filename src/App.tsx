@@ -93,6 +93,7 @@ import UsageAnalyticsPage from "./pages/UsageAnalyticsPage";
 import DemoModePage from "./pages/DemoModePage";
 import RevenueIntelligencePage from "./pages/RevenueIntelligencePage";
 import FinanceDashboardPage from "./pages/FinanceDashboardPage";
+import ClientBillingPortalPage from "./pages/ClientBillingPortalPage";
 import ActivityTimelinePage from "./pages/ActivityTimelinePage";
 import GovernanceDashboardPage from "./pages/GovernanceDashboardPage";
 import TasksPage from "./pages/TasksPage";
@@ -485,6 +486,7 @@ const App = () => (
               <Route path="/finance" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><FinanceDashboardPage /></ProtectedRoute>
               } />
+              <Route path="/my-billing" element={<ClientBillingPortalPage />} />
               <Route path="/activity-timeline" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><ActivityTimelinePage /></ProtectedRoute>
               } />
