@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ListChecks, AlertTriangle, FileText, MapPin, TrendingUp, BarChart3 } from "lucide-react";
+import { ListChecks, AlertTriangle, FileText, MapPin, TrendingUp, TrendingDown, Link2, BarChart3, Target } from "lucide-react";
 
 interface DashboardStats {
   tasksDueToday: number;
@@ -13,11 +13,18 @@ interface DashboardStats {
   blogsScheduled: number;
   gmbScheduled: number;
   totalActive: number;
+  newBacklinks: number;
+  lostBacklinks: number;
+  lowScorePages: number;
+  gapOpportunities: number;
 }
 
 const SeoTeamDashboardPage = () => {
   const { projects, loading: projLoading } = useSeoProjects();
-  const [stats, setStats] = useState<DashboardStats>({ tasksDueToday: 0, tasksOverdue: 0, blogsScheduled: 0, gmbScheduled: 0, totalActive: 0 });
+  const [stats, setStats] = useState<DashboardStats>({
+    tasksDueToday: 0, tasksOverdue: 0, blogsScheduled: 0, gmbScheduled: 0,
+    totalActive: 0, newBacklinks: 0, lostBacklinks: 0, lowScorePages: 0, gapOpportunities: 0,
+  });
   const [recentTasks, setRecentTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,12 +33,19 @@ const SeoTeamDashboardPage = () => {
       setLoading(true);
       const today = new Date().toISOString().slice(0, 10);
 
-      const [{ data: dueToday }, { data: overdue }, { data: blogs }, { data: gmb }, { data: recent }] = await Promise.all([
+      const [
+        { data: dueToday }, { data: overdue }, { data: blogs }, { data: gmb }, { data: recent },
+        { data: newBl }, { data: lostBl }, { data: lowPages }, { data: highGaps },
+      ] = await Promise.all([
         supabase.from("seo_tasks").select("id").eq("deadline", today).neq("status", "COMPLETED") as any,
         supabase.from("seo_tasks").select("id").lt("deadline", today).neq("status", "COMPLETED") as any,
         supabase.from("seo_blogs").select("id").eq("status", "DRAFT") as any,
         supabase.from("gmb_tasks").select("id").in("status", ["DRAFT", "SCHEDULED"]) as any,
         supabase.from("seo_tasks").select("*").order("updated_at", { ascending: false }).limit(10) as any,
+        (supabase.from("seo_backlinks") as any).select("id").eq("status", "NEW"),
+        (supabase.from("seo_backlinks") as any).select("id").eq("status", "LOST"),
+        (supabase.from("seo_page_scores") as any).select("id").lt("seo_score", 60),
+        (supabase.from("seo_competitor_gap") as any).select("id").gte("opportunity_score", 70),
       ]);
 
       setStats({
@@ -40,6 +54,10 @@ const SeoTeamDashboardPage = () => {
         blogsScheduled: blogs?.length || 0,
         gmbScheduled: gmb?.length || 0,
         totalActive: projects.filter(p => p.project_status === "ACTIVE").length,
+        newBacklinks: newBl?.length || 0,
+        lostBacklinks: lostBl?.length || 0,
+        lowScorePages: lowPages?.length || 0,
+        gapOpportunities: highGaps?.length || 0,
       });
       setRecentTasks(recent || []);
       setLoading(false);
@@ -53,16 +71,23 @@ const SeoTeamDashboardPage = () => {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold">SEO Team Dashboard</h1>
-        <p className="text-muted-foreground">Today's overview and pending work</p>
+        <p className="text-muted-foreground">Today's overview, rankings, backlinks & intelligence</p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Active Projects</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{stats.totalActive}</p></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-1"><ListChecks className="h-3 w-3" />Due Today</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-primary">{stats.tasksDueToday}</p></CardContent></Card>
         <Card className={stats.tasksOverdue > 0 ? "border-destructive" : ""}><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-1"><AlertTriangle className="h-3 w-3" />Overdue</CardTitle></CardHeader><CardContent><p className={`text-2xl font-bold ${stats.tasksOverdue > 0 ? "text-destructive" : ""}`}>{stats.tasksOverdue}</p></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-1"><FileText className="h-3 w-3" />Blogs Pending</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{stats.blogsScheduled}</p></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />GMB Scheduled</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{stats.gmbScheduled}</p></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-1"><TrendingUp className="h-3 w-3" />SEO Score</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">—</p></CardContent></Card>
+      </div>
+
+      {/* Intelligence Row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-1"><TrendingUp className="h-3 w-3" />New Backlinks</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-green-600">{stats.newBacklinks}</p></CardContent></Card>
+        <Card className={stats.lostBacklinks > 0 ? "border-destructive/50" : ""}><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-1"><TrendingDown className="h-3 w-3" />Lost Backlinks</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-destructive">{stats.lostBacklinks}</p></CardContent></Card>
+        <Card className={stats.lowScorePages > 0 ? "border-yellow-500/50" : ""}><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-1"><BarChart3 className="h-3 w-3" />Low SEO Score</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{stats.lowScorePages}</p></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-1"><Target className="h-3 w-3" />Gap Opportunities</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-primary">{stats.gapOpportunities}</p></CardContent></Card>
       </div>
 
       {/* Recent Tasks */}

@@ -88,6 +88,9 @@ const SeoProjectDetailPage = () => {
             {project?.target_location && <><MapPin className="h-3 w-3 ml-2" />{project.target_location}</>}
           </div>
         </div>
+        <Button variant="outline" size="sm" onClick={() => navigate(`/seo-intel/${projectId}`)}>
+          <Sparkles className="h-3 w-3 mr-1" /> SEO Intelligence
+        </Button>
         <div className="text-right">
           <p className="text-sm text-muted-foreground">Progress</p>
           <p className="text-lg font-bold">{progressPct}%</p>

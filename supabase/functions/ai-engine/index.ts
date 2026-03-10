@@ -675,6 +675,101 @@ serve(async (req) => {
       }];
       toolChoice = { type: "function", function: { name: "suggest_replies" } };
 
+    } else if (task_type === "seo_content_generate") {
+      systemPrompt = `You are an expert SEO content writer for a digital agency. Generate high-quality, SEO-optimized content based on the given parameters. The content must be original, engaging, and optimized for the target keyword. Include natural keyword placement, proper heading structure, and internal linking suggestions.`;
+      userPrompt = `Generate SEO content:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "generate_seo_content",
+          description: "Return generated SEO content with score",
+          parameters: {
+            type: "object",
+            properties: {
+              content: { type: "string", description: "The generated content in markdown format" },
+              seo_score: { type: "number", description: "SEO optimization score 0-100" },
+              meta_title: { type: "string" },
+              meta_description: { type: "string" },
+              suggested_headings: { type: "array", items: { type: "string" } },
+            },
+            required: ["content", "seo_score"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "generate_seo_content" } };
+
+    } else if (task_type === "seo_page_score") {
+      systemPrompt = `You are an SEO audit AI. Analyze a webpage and return detailed SEO scores across multiple dimensions. Score each area out of 100. Provide specific, actionable recommendations.`;
+      userPrompt = `Score this page for SEO:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "score_page",
+          description: "Return detailed SEO page scores",
+          parameters: {
+            type: "object",
+            properties: {
+              seo_score: { type: "number", description: "Overall SEO score 0-100" },
+              technical_score: { type: "number" },
+              meta_score: { type: "number" },
+              content_score: { type: "number" },
+              local_seo_score: { type: "number" },
+              readability_score: { type: "number" },
+              keyword_density: { type: "number" },
+              content_length: { type: "number" },
+              internal_links_count: { type: "number" },
+              images_count: { type: "number" },
+              alt_tags_count: { type: "number" },
+              page_title: { type: "string" },
+              recommendations: {
+                type: "array",
+                items: { type: "object", properties: { area: { type: "string" }, suggestion: { type: "string" }, priority: { type: "string", enum: ["LOW", "MEDIUM", "HIGH"] } }, required: ["area", "suggestion", "priority"], additionalProperties: false },
+              },
+            },
+            required: ["seo_score", "technical_score", "meta_score", "content_score", "recommendations"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "score_page" } };
+
+    } else if (task_type === "seo_competitor_gap") {
+      systemPrompt = `You are a competitive SEO analysis AI. Compare the client's SEO positioning against a competitor and identify gaps in keywords, content, backlinks, technical SEO, and local SEO. Return actionable gap opportunities with scores.`;
+      userPrompt = `Analyze competitor gaps:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "analyze_gaps",
+          description: "Return competitor gap analysis",
+          parameters: {
+            type: "object",
+            properties: {
+              gaps: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    keyword: { type: "string" },
+                    client_rank: { type: "number" },
+                    competitor_rank: { type: "number" },
+                    gap_type: { type: "string", enum: ["KEYWORD_GAP", "CONTENT_GAP", "BACKLINK_GAP", "TECHNICAL_GAP", "LOCAL_SEO_GAP"] },
+                    opportunity_score: { type: "number", description: "0-100" },
+                    recommendation: { type: "string" },
+                  },
+                  required: ["keyword", "gap_type", "opportunity_score", "recommendation"],
+                  additionalProperties: false,
+                },
+              },
+              summary: { type: "string" },
+            },
+            required: ["gaps", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "analyze_gaps" } };
+
     } else if (task_type === "seo_advisor") {
       const pd = payload?.project_data || payload;
       systemPrompt = `You are an expert SEO consultant for a digital agency. Analyze the SEO project data and provide 3-5 actionable recommendations. Consider: keyword strategy, content gaps, technical issues, local SEO opportunities, competitor positioning, and link building.`;
