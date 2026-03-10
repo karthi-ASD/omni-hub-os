@@ -5233,6 +5233,59 @@ export type Database = {
           },
         ]
       }
+      cross_department_requests: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          from_department_id: string | null
+          id: string
+          request_message: string | null
+          request_title: string
+          requested_by_name: string | null
+          requested_by_user_id: string | null
+          resolved_at: string | null
+          source_task_id: string | null
+          status: string
+          to_department_id: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          from_department_id?: string | null
+          id?: string
+          request_message?: string | null
+          request_title: string
+          requested_by_name?: string | null
+          requested_by_user_id?: string | null
+          resolved_at?: string | null
+          source_task_id?: string | null
+          status?: string
+          to_department_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          from_department_id?: string | null
+          id?: string
+          request_message?: string | null
+          request_title?: string
+          requested_by_name?: string | null
+          requested_by_user_id?: string | null
+          resolved_at?: string | null
+          source_task_id?: string | null
+          status?: string
+          to_department_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cross_department_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cs_automation_rules: {
         Row: {
           action_type: string
@@ -10475,6 +10528,7 @@ export type Database = {
           source: string | null
           start_date: string | null
           status: string
+          task_number: string | null
           title: string
           updated_at: string
         }
@@ -10493,6 +10547,7 @@ export type Database = {
           source?: string | null
           start_date?: string | null
           status?: string
+          task_number?: string | null
           title: string
           updated_at?: string
         }
@@ -10511,6 +10566,7 @@ export type Database = {
           source?: string | null
           start_date?: string | null
           status?: string
+          task_number?: string | null
           title?: string
           updated_at?: string
         }
@@ -14555,6 +14611,79 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_conversations: {
+        Row: {
+          business_id: string
+          conversation_type: string
+          created_at: string | null
+          id: string
+          message: string
+          sender_name: string | null
+          sender_user_id: string
+          task_id: string
+        }
+        Insert: {
+          business_id: string
+          conversation_type?: string
+          created_at?: string | null
+          id?: string
+          message: string
+          sender_name?: string | null
+          sender_user_id: string
+          task_id: string
+        }
+        Update: {
+          business_id?: string
+          conversation_type?: string
+          created_at?: string | null
+          id?: string
+          message?: string
+          sender_name?: string | null
+          sender_user_id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_conversations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_dependencies: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          depends_on_task_id: string
+          id: string
+          task_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          depends_on_task_id: string
+          id?: string
+          task_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          depends_on_task_id?: string
+          id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_dependencies_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]

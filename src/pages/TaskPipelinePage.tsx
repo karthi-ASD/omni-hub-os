@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, GripVertical } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -25,6 +25,7 @@ const STAGES = [
 
 const TaskPipelinePage = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const projectId = searchParams.get("project") || undefined;
   const { tasksByStatus, loading, create, update } = useProjectTasks(projectId);
   const { projects, departments } = useClientProjects();
@@ -131,8 +132,9 @@ const TaskPipelinePage = () => {
               </div>
               <div className="space-y-2 min-h-[200px] bg-muted/30 rounded-lg p-2">
                 {stageTasks.map(task => (
-                  <Card key={task.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                  <Card key={task.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/task/${task.id}`)}>
                     <CardContent className="p-3 space-y-2">
+                      {task.task_number && <span className="text-[10px] font-mono text-muted-foreground">{task.task_number}</span>}
                       <p className="font-medium text-sm leading-tight">{task.title}</p>
                       {task.client_projects?.client_name && (
                         <p className="text-xs text-muted-foreground">{task.client_projects.client_name}</p>

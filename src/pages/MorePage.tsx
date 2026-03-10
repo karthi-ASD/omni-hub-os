@@ -91,6 +91,8 @@ const superAdminSections: MenuSection[] = [
       { label: "Command Center", icon: Gauge, to: "/agency-command" },
       { label: "Client Projects", icon: Briefcase, to: "/client-projects" },
       { label: "Task Pipeline", icon: FolderKanban, to: "/task-pipeline" },
+      { label: "Team Hierarchy", icon: Network, to: "/team-hierarchy" },
+      { label: "Cross-Dept Requests", icon: GitBranch, to: "/cross-dept-requests" },
       { label: "Workload Monitor", icon: BarChart2, to: "/workload-monitor" },
       { label: "SLA Monitor", icon: Gauge, to: "/sla-monitor" },
     ],

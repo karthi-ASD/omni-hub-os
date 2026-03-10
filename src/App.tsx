@@ -151,6 +151,9 @@ import ManagerDashboardPage from "./pages/ManagerDashboardPage";
 import AgencyCommandCenterPage from "./pages/AgencyCommandCenterPage";
 import ClientProjectsPage from "./pages/ClientProjectsPage";
 import TaskPipelinePage from "./pages/TaskPipelinePage";
+import TaskDetailPage from "./pages/TaskDetailPage";
+import TeamHierarchyPage from "./pages/TeamHierarchyPage";
+import CrossDeptRequestsPage from "./pages/CrossDeptRequestsPage";
 import WorkloadMonitorPage from "./pages/WorkloadMonitorPage";
 import SLAMonitorPage from "./pages/SLAMonitorPage";
 import CompanyLoginPage from "./pages/CompanyLoginPage";
@@ -432,6 +435,11 @@ const App = () => (
               <Route path="/task-pipeline" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager"]}><TaskPipelinePage /></ProtectedRoute>
               } />
+              <Route path="/task/:taskId" element={<TaskDetailPage />} />
+              <Route path="/team-hierarchy" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager", "manager"]}><TeamHierarchyPage /></ProtectedRoute>
+              } />
+              <Route path="/cross-dept-requests" element={<CrossDeptRequestsPage />} />
               <Route path="/workload-monitor" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><WorkloadMonitorPage /></ProtectedRoute>
               } />
