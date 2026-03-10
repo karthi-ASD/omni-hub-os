@@ -232,9 +232,11 @@ const tenantAdminSections: MenuSection[] = [
   },
   {
     title: "Marketing / SEO",
-    description: "SEO campaigns, keyword tracking, and reports",
+    description: "SEO projects, tasks, keyword tracking, and reports",
     items: [
       { label: "SEO Engine", icon: Globe, to: "/seo" },
+      { label: "SEO Projects", icon: FolderKanban, to: "/seo-ops" },
+      { label: "SEO Team", icon: Users, to: "/seo-team" },
       { label: "Marketing", icon: Megaphone, to: "/marketing" },
       { label: "Communications", icon: Mail, to: "/communications" },
       { label: "Reports", icon: FileBarChart, to: "/reports" },
