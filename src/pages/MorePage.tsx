@@ -138,6 +138,7 @@ const superAdminSections: MenuSection[] = [
     items: [
       { label: "Departments", icon: Building2, to: "/hr/departments" },
       { label: "Employee Dir.", icon: Users, to: "/hr/employees" },
+      { label: "Add Employee", icon: UserPlus, to: "/hr/employees" },
       { label: "Leave Mgmt", icon: CalendarDays, to: "/hr/leave" },
       { label: "Payroll", icon: DollarSign, to: "/hr/payroll" },
       { label: "Performance", icon: Trophy, to: "/hr/performance" },
