@@ -25,10 +25,10 @@ export function useAccountTimeline(clientId?: string) {
 
     // Batch 1
     const [dealsR, proposalsR, contractsR, invoicesR] = await Promise.all([
-      supabase.from("deals").select("id, title, status, created_at").eq("business_id", bizId).eq("client_id", clientId),
-      supabase.from("proposals").select("id, title, status, created_at").eq("business_id", bizId).eq("client_id", clientId),
-      supabase.from("contracts").select("id, title, status, created_at").eq("business_id", bizId).eq("client_id", clientId),
-      supabase.from("invoices").select("id, invoice_number, status, total_amount, created_at").eq("business_id", bizId).eq("client_id", clientId),
+      supabase.from("deals").select("id, title, status, created_at").eq("business_id", bizId).eq("client_id", clientId) as any,
+      supabase.from("proposals").select("id, title, status, created_at").eq("business_id", bizId).eq("client_id", clientId) as any,
+      supabase.from("contracts").select("id, title, status, created_at").eq("business_id", bizId).eq("client_id", clientId) as any,
+      supabase.from("invoices").select("id, invoice_number, status, total_amount, created_at").eq("business_id", bizId).eq("client_id", clientId) as any,
     ]);
 
     // Batch 2
