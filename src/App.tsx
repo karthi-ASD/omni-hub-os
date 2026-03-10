@@ -21,6 +21,7 @@ import UsersPage from "./pages/UsersPage";
 import SettingsPage from "./pages/SettingsPage";
 import AuditLogs from "./pages/AuditLogs";
 import RoleManagementPage from "./pages/RoleManagementPage";
+import WorkflowAutomationPage from "./pages/WorkflowAutomationPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import CalendarPage from "./pages/CalendarPage";
 import InquiriesPage from "./pages/InquiriesPage";
