@@ -183,6 +183,7 @@ const superAdminSections: MenuSection[] = [
     description: "Users, roles, integrations, and system config",
     items: [
       { label: "Users", icon: Users, to: "/users" },
+      { label: "Role Mgmt", icon: Shield, to: "/role-management" },
       { label: "Settings", icon: Settings, to: "/settings" },
       { label: "System Monitor", icon: Server, to: "/system-monitor" },
       { label: "Providers", icon: Plug, to: "/providers" },
