@@ -438,6 +438,16 @@ const App = () => (
               <Route path="/governance-controls" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><GovernanceDashboardPage /></ProtectedRoute>
               } />
+              <Route path="/saas-plans" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><SaasPlansPage /></ProtectedRoute>
+              } />
+              <Route path="/subscriptions" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><SubscriptionsPage /></ProtectedRoute>
+              } />
+              <Route path="/company-billing" element={<CompanyBillingPortalPage />} />
+              <Route path="/white-label-settings" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><WhiteLabelSettingsPage /></ProtectedRoute>
+              } />
               <Route
                 path="/businesses"
                 element={
