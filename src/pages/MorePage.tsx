@@ -155,6 +155,7 @@ const superAdminSections: MenuSection[] = [
     description: "AI Brain, agents, learning, and growth engine",
     items: [
       { label: "AI Brain", icon: Brain, to: "/ai-brain" },
+      { label: "Agency Brain", icon: Brain, to: "/ai-agency-brain" },
       { label: "AI Sales Brain", icon: Sparkles, to: "/ai-sales-brain" },
       { label: "AI Learning", icon: BookOpen, to: "/ai-learning" },
       { label: "AI Intelligence", icon: Brain, to: "/ai-intelligence" },
