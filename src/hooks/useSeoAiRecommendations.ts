@@ -42,24 +42,22 @@ export function useSeoAiRecommendations(projectId?: string) {
       const { data, error } = await supabase.functions.invoke("ai-engine", {
         body: {
           task_type: "seo_advisor",
-          business_id: profile.business_id,
-          project_id: projectId,
-          project_data: projectData,
+          payload: { project_data: projectData },
         },
       });
       if (error) throw error;
 
-      // Parse and insert recommendations
-      const recs = data?.recommendations || [];
+      // Parse tool call result
+      const recs = data?.result?.recommendations || [];
       for (const rec of recs) {
-        await supabase.from("seo_ai_recommendations").insert({
+        await (supabase.from("seo_ai_recommendations") as any).insert({
           business_id: profile.business_id,
           seo_project_id: projectId,
           recommendation_type: rec.type || "OPTIMIZATION",
           title: rec.title,
           description: rec.description,
           priority: rec.priority || "MEDIUM",
-        } as any);
+        });
       }
       toast.success(`${recs.length} AI recommendations generated`);
       fetch();
