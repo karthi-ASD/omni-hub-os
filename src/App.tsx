@@ -441,6 +441,7 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager", "manager"]}><TeamHierarchyPage /></ProtectedRoute>
               } />
               <Route path="/cross-dept-requests" element={<CrossDeptRequestsPage />} />
+              <Route path="/dept-dashboard" element={<DepartmentDashboardPage />} />
               <Route path="/workload-monitor" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><WorkloadMonitorPage /></ProtectedRoute>
               } />
