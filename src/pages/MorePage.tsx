@@ -104,7 +104,7 @@ const superAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "6 · Marketing & SEO Operations",
+    title: "7 · Marketing & SEO Operations",
     description: "SEO projects, tasks, blogs, GMB, social media, rankings, AI & execution",
     items: [
       { label: "SEO Engine", icon: Globe, to: "/seo" },
