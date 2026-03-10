@@ -13,8 +13,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
   ArrowLeft, Globe, Smartphone, Search, FileText, Ticket, Clock,
-  Mail, Phone, Building2, MapPin, Plus, ExternalLink
+  Mail, Phone, Building2, MapPin, Plus, ExternalLink, DollarSign, CreditCard, TrendingUp, AlertTriangle
 } from "lucide-react";
+import { useClientFinancials } from "@/hooks/useClientFinancials";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 
 const statusColor = (s: string) => {
