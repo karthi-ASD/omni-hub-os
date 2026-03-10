@@ -32,6 +32,7 @@ import DealsPage from "./pages/DealsPage";
 import ProposalsPage from "./pages/ProposalsPage";
 import ContractsPage from "./pages/ContractsPage";
 import ClientsPage from "./pages/ClientsPage";
+import ClientProfilePage from "./pages/ClientProfilePage";
 import ProjectsPage from "./pages/ProjectsPage";
 import InvoicesPage from "./pages/InvoicesPage";
 import PaymentsPage from "./pages/PaymentsPage";
