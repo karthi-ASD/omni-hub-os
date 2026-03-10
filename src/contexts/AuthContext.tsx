@@ -30,6 +30,7 @@ interface AuthContextType {
   hasRole: (role: AppRole) => boolean;
   isSuperAdmin: boolean;
   isBusinessAdmin: boolean;
+  isHRManager: boolean;
   /** All businesses — only populated for super_admin */
   allBusinesses: TenantBusiness[];
   /** Selected tenant for super_admin context switching */
