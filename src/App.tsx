@@ -360,6 +360,15 @@ const App = () => (
               <Route path="/ticket/:id" element={<TicketDetailPage />} />
               <Route path="/customer-app" element={<CustomerMobileAppPage />} />
               <Route path="/staff-app" element={<StaffMobileAppPage />} />
+              <Route path="/hr/departments" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HRDepartmentsPage /></ProtectedRoute>
+              } />
+              <Route path="/hr/employees" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HREmployeeListPage /></ProtectedRoute>
+              } />
+              <Route path="/hr/employee/:employeeId" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HREmployeeProfilePage /></ProtectedRoute>
+              } />
               <Route path="/usage-analytics" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><UsageAnalyticsPage /></ProtectedRoute>
               } />

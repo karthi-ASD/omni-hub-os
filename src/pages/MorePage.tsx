@@ -255,9 +255,11 @@ const tenantAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "Employees",
-    description: "Manage your team, attendance, and payroll",
+    title: "HR & Employees",
+    description: "Departments, employee management, attendance, and payroll",
     items: [
+      { label: "Departments", icon: Building2, to: "/hr/departments" },
+      { label: "Employee Dir.", icon: Users, to: "/hr/employees" },
       { label: "Workforce", icon: UserCog, to: "/workforce" },
       { label: "Leave", icon: CalendarDays, to: "/leave" },
       { label: "Payroll", icon: DollarSign, to: "/payroll" },
