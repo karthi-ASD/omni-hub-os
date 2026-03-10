@@ -445,6 +445,7 @@ const App = () => (
               <Route path="/cross-dept-requests" element={<CrossDeptRequestsPage />} />
               <Route path="/dept-dashboard" element={<DepartmentDashboardPage />} />
               <Route path="/workflow-map" element={<WorkflowMapPage />} />
+              <Route path="/account-timeline" element={<AccountTimelinePage />} />
               <Route path="/workload-monitor" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><WorkloadMonitorPage /></ProtectedRoute>
               } />
