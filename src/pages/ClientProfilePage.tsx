@@ -46,6 +46,7 @@ const ClientProfilePage = () => {
     services, websites, apps, seoProjects, invoices, contracts, tickets, timeline,
     loading, addWebsite, addApp,
   } = useClientProfile(id);
+  const financials = useClientFinancials(id);
 
   const [websiteDialog, setWebsiteDialog] = useState(false);
   const [appDialog, setAppDialog] = useState(false);
