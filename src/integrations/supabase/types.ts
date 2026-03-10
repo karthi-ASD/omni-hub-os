@@ -4429,6 +4429,69 @@ export type Database = {
           },
         ]
       }
+      client_mobile_apps: {
+        Row: {
+          app_category: string | null
+          app_name: string
+          app_status: string
+          app_store_link: string | null
+          business_id: string
+          client_id: string
+          created_at: string
+          features_json: Json | null
+          id: string
+          notes: string | null
+          platform: string
+          play_store_link: string | null
+          updated_at: string
+        }
+        Insert: {
+          app_category?: string | null
+          app_name: string
+          app_status?: string
+          app_store_link?: string | null
+          business_id: string
+          client_id: string
+          created_at?: string
+          features_json?: Json | null
+          id?: string
+          notes?: string | null
+          platform?: string
+          play_store_link?: string | null
+          updated_at?: string
+        }
+        Update: {
+          app_category?: string | null
+          app_name?: string
+          app_status?: string
+          app_store_link?: string | null
+          business_id?: string
+          client_id?: string
+          created_at?: string
+          features_json?: Json | null
+          id?: string
+          notes?: string | null
+          platform?: string
+          play_store_link?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_mobile_apps_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_mobile_apps_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_pipeline_stages: {
         Row: {
           business_id: string
@@ -4634,29 +4697,38 @@ export type Database = {
       }
       client_services: {
         Row: {
+          assigned_department: string | null
           business_id: string
           client_id: string
           created_at: string
           id: string
+          service_category: string | null
           service_details_json: Json | null
+          service_status: string
           service_subtype: string | null
           service_type: string
         }
         Insert: {
+          assigned_department?: string | null
           business_id: string
           client_id: string
           created_at?: string
           id?: string
+          service_category?: string | null
           service_details_json?: Json | null
+          service_status?: string
           service_subtype?: string | null
           service_type: string
         }
         Update: {
+          assigned_department?: string | null
           business_id?: string
           client_id?: string
           created_at?: string
           id?: string
+          service_category?: string | null
           service_details_json?: Json | null
+          service_status?: string
           service_subtype?: string | null
           service_type?: string
         }
@@ -4670,6 +4742,63 @@ export type Database = {
           },
           {
             foreignKeyName: "client_services_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_websites: {
+        Row: {
+          business_id: string
+          client_id: string
+          cms_type: string | null
+          created_at: string
+          domain_provider: string | null
+          hosting_provider: string | null
+          id: string
+          notes: string | null
+          updated_at: string
+          website_status: string
+          website_url: string
+        }
+        Insert: {
+          business_id: string
+          client_id: string
+          cms_type?: string | null
+          created_at?: string
+          domain_provider?: string | null
+          hosting_provider?: string | null
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          website_status?: string
+          website_url: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string
+          cms_type?: string | null
+          created_at?: string
+          domain_provider?: string | null
+          hosting_provider?: string | null
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          website_status?: string
+          website_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_websites_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_websites_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -5448,6 +5577,7 @@ export type Database = {
       contracts: {
         Row: {
           business_id: string
+          client_id: string | null
           contract_content: string | null
           contract_number: number
           created_at: string
@@ -5461,6 +5591,7 @@ export type Database = {
         }
         Insert: {
           business_id: string
+          client_id?: string | null
           contract_content?: string | null
           contract_number?: number
           created_at?: string
@@ -5474,6 +5605,7 @@ export type Database = {
         }
         Update: {
           business_id?: string
+          client_id?: string | null
           contract_content?: string | null
           contract_number?: number
           created_at?: string
@@ -5491,6 +5623,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {
@@ -16339,6 +16478,7 @@ export type Database = {
           business_id: string
           category: string
           channel: string | null
+          client_id: string | null
           closed_at: string | null
           company_account_id: string | null
           created_at: string
@@ -16365,6 +16505,7 @@ export type Database = {
           business_id: string
           category?: string
           channel?: string | null
+          client_id?: string | null
           closed_at?: string | null
           company_account_id?: string | null
           created_at?: string
@@ -16391,6 +16532,7 @@ export type Database = {
           business_id?: string
           category?: string
           channel?: string | null
+          client_id?: string | null
           closed_at?: string | null
           company_account_id?: string | null
           created_at?: string
@@ -16416,6 +16558,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {
