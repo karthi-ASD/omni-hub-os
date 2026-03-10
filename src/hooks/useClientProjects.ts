@@ -27,8 +27,8 @@ export function useClientProjects() {
       .select("*, departments(name)")
       .eq("business_id", profile.business_id)
       .order("created_at", { ascending: false });
-    const dRes = await supabase
-      .from("departments")
+    const dRes = await (supabase
+      .from("departments") as any)
       .select("id, name")
       .eq("business_id", profile.business_id)
       .eq("is_active", true);
