@@ -93,10 +93,12 @@ const superAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "6 · Marketing Operations",
-    description: "SEO, campaigns, competitor analysis, and reports",
+    title: "6 · Marketing & SEO Operations",
+    description: "SEO projects, tasks, blogs, GMB, social media, rankings & AI",
     items: [
       { label: "SEO Engine", icon: Globe, to: "/seo" },
+      { label: "SEO Projects", icon: FolderKanban, to: "/seo-ops" },
+      { label: "SEO Team", icon: Users, to: "/seo-team" },
       { label: "Marketing", icon: Megaphone, to: "/marketing" },
       { label: "Geo Engine", icon: Map, to: "/geo-engine" },
       { label: "Competitive Intel", icon: TargetIcon, to: "/competitive-intel" },
@@ -230,9 +232,11 @@ const tenantAdminSections: MenuSection[] = [
   },
   {
     title: "Marketing / SEO",
-    description: "SEO campaigns, keyword tracking, and reports",
+    description: "SEO projects, tasks, keyword tracking, and reports",
     items: [
       { label: "SEO Engine", icon: Globe, to: "/seo" },
+      { label: "SEO Projects", icon: FolderKanban, to: "/seo-ops" },
+      { label: "SEO Team", icon: Users, to: "/seo-team" },
       { label: "Marketing", icon: Megaphone, to: "/marketing" },
       { label: "Communications", icon: Mail, to: "/communications" },
       { label: "Reports", icon: FileBarChart, to: "/reports" },

@@ -675,6 +675,40 @@ serve(async (req) => {
       }];
       toolChoice = { type: "function", function: { name: "suggest_replies" } };
 
+    } else if (task_type === "seo_advisor") {
+      const pd = payload?.project_data || payload;
+      systemPrompt = `You are an expert SEO consultant for a digital agency. Analyze the SEO project data and provide 3-5 actionable recommendations. Consider: keyword strategy, content gaps, technical issues, local SEO opportunities, competitor positioning, and link building.`;
+      userPrompt = `Analyze this SEO project and provide recommendations:\n${JSON.stringify(pd)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "seo_advisor_recommendations",
+          description: "Return 3-5 actionable SEO recommendations",
+          parameters: {
+            type: "object",
+            properties: {
+              recommendations: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    type: { type: "string", enum: ["KEYWORD_OPPORTUNITY", "CONTENT_GAP", "TECHNICAL_ISSUE", "LOCAL_SEO", "LINK_BUILDING", "OPTIMIZATION"] },
+                    title: { type: "string" },
+                    description: { type: "string" },
+                    priority: { type: "string", enum: ["LOW", "MEDIUM", "HIGH"] },
+                  },
+                  required: ["type", "title", "description", "priority"],
+                  additionalProperties: false,
+                },
+              },
+            },
+            required: ["recommendations"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "seo_advisor_recommendations" } };
+
     } else {
       return new Response(JSON.stringify({ error: "Unknown task_type" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },

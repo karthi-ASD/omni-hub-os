@@ -3931,6 +3931,44 @@ export type Database = {
           },
         ]
       }
+      competitor_keyword_rankings: {
+        Row: {
+          competitor_id: string
+          created_at: string
+          date_checked: string
+          id: string
+          keyword: string
+          rank_position: number | null
+          search_engine: string | null
+        }
+        Insert: {
+          competitor_id: string
+          created_at?: string
+          date_checked?: string
+          id?: string
+          keyword: string
+          rank_position?: number | null
+          search_engine?: string | null
+        }
+        Update: {
+          competitor_id?: string
+          created_at?: string
+          date_checked?: string
+          id?: string
+          keyword?: string
+          rank_position?: number | null
+          search_engine?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitor_keyword_rankings_competitor_id_fkey"
+            columns: ["competitor_id"]
+            isOneToOne: false
+            referencedRelation: "seo_competitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       competitors: {
         Row: {
           company_name: string
@@ -6058,6 +6096,73 @@ export type Database = {
           },
         ]
       }
+      gmb_tasks: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          cta_text: string | null
+          id: string
+          image_urls_json: Json | null
+          post_caption: string | null
+          post_type: string
+          scheduled_date: string | null
+          seo_project_id: string
+          status: string
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          cta_text?: string | null
+          id?: string
+          image_urls_json?: Json | null
+          post_caption?: string | null
+          post_type?: string
+          scheduled_date?: string | null
+          seo_project_id: string
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          cta_text?: string | null
+          id?: string
+          image_urls_json?: Json | null
+          post_caption?: string | null
+          post_type?: string
+          scheduled_date?: string | null
+          seo_project_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gmb_tasks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gmb_tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gmb_tasks_seo_project_id_fkey"
+            columns: ["seo_project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       go_live_checklist: {
         Row: {
           category: string
@@ -6205,6 +6310,70 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gsc_data: {
+        Row: {
+          business_id: string
+          clicks: number | null
+          client_id: string | null
+          created_at: string
+          ctr: number | null
+          date: string
+          id: string
+          impressions: number | null
+          position: number | null
+          query: string
+          seo_project_id: string | null
+        }
+        Insert: {
+          business_id: string
+          clicks?: number | null
+          client_id?: string | null
+          created_at?: string
+          ctr?: number | null
+          date: string
+          id?: string
+          impressions?: number | null
+          position?: number | null
+          query: string
+          seo_project_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          clicks?: number | null
+          client_id?: string | null
+          created_at?: string
+          ctr?: number | null
+          date?: string
+          id?: string
+          impressions?: number | null
+          position?: number | null
+          query?: string
+          seo_project_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gsc_data_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gsc_data_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gsc_data_seo_project_id_fkey"
+            columns: ["seo_project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
             referencedColumns: ["id"]
           },
         ]
@@ -7137,6 +7306,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "kb_articles_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      keyword_ranking_history: {
+        Row: {
+          business_id: string
+          created_at: string
+          date_checked: string
+          device: string | null
+          id: string
+          keyword_id: string
+          rank_position: number | null
+          search_engine: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          date_checked?: string
+          device?: string | null
+          id?: string
+          keyword_id: string
+          rank_position?: number | null
+          search_engine?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          date_checked?: string
+          device?: string | null
+          id?: string
+          keyword_id?: string
+          rank_position?: number | null
+          search_engine?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "keyword_ranking_history_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -9604,6 +9814,7 @@ export type Database = {
           page_url: string | null
           recommendation_type: string
           recommendations_json: Json | null
+          status: string | null
         }
         Insert: {
           business_id: string
@@ -9613,6 +9824,7 @@ export type Database = {
           page_url?: string | null
           recommendation_type: string
           recommendations_json?: Json | null
+          status?: string | null
         }
         Update: {
           business_id?: string
@@ -9622,6 +9834,7 @@ export type Database = {
           page_url?: string | null
           recommendation_type?: string
           recommendations_json?: Json | null
+          status?: string | null
         }
         Relationships: [
           {
@@ -9683,6 +9896,76 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_blogs: {
+        Row: {
+          author_employee_id: string | null
+          blog_title: string
+          blog_topic: string | null
+          business_id: string
+          client_id: string | null
+          content_text: string | null
+          created_at: string
+          id: string
+          publish_date: string | null
+          seo_project_id: string
+          seo_score: number | null
+          status: string
+          target_keywords_json: Json | null
+        }
+        Insert: {
+          author_employee_id?: string | null
+          blog_title: string
+          blog_topic?: string | null
+          business_id: string
+          client_id?: string | null
+          content_text?: string | null
+          created_at?: string
+          id?: string
+          publish_date?: string | null
+          seo_project_id: string
+          seo_score?: number | null
+          status?: string
+          target_keywords_json?: Json | null
+        }
+        Update: {
+          author_employee_id?: string | null
+          blog_title?: string
+          blog_topic?: string | null
+          business_id?: string
+          client_id?: string | null
+          content_text?: string | null
+          created_at?: string
+          id?: string
+          publish_date?: string | null
+          seo_project_id?: string
+          seo_score?: number | null
+          status?: string
+          target_keywords_json?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_blogs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_blogs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_blogs_seo_project_id_fkey"
+            columns: ["seo_project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
             referencedColumns: ["id"]
           },
         ]
@@ -9802,6 +10085,64 @@ export type Database = {
           },
         ]
       }
+      seo_client_messages: {
+        Row: {
+          attachment_url: string | null
+          business_id: string
+          client_id: string | null
+          created_at: string
+          id: string
+          message_text: string
+          sent_by_role: string
+          seo_project_id: string
+          status: string
+        }
+        Insert: {
+          attachment_url?: string | null
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          message_text: string
+          sent_by_role?: string
+          seo_project_id: string
+          status?: string
+        }
+        Update: {
+          attachment_url?: string | null
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          message_text?: string
+          sent_by_role?: string
+          seo_project_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_client_messages_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_client_messages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_client_messages_seo_project_id_fkey"
+            columns: ["seo_project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_client_requests: {
         Row: {
           business_id: string
@@ -9903,6 +10244,58 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "seo_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_competitors: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          competitor_domain: string
+          competitor_name: string | null
+          created_at: string
+          id: string
+          seo_project_id: string
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          competitor_domain: string
+          competitor_name?: string | null
+          created_at?: string
+          id?: string
+          seo_project_id: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          competitor_domain?: string
+          competitor_name?: string | null
+          created_at?: string
+          id?: string
+          seo_project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_competitors_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_competitors_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_competitors_seo_project_id_fkey"
+            columns: ["seo_project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
             referencedColumns: ["id"]
           },
         ]
@@ -10159,6 +10552,64 @@ export type Database = {
           },
         ]
       }
+      seo_monthly_reports: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          created_at: string
+          generated_at: string
+          id: string
+          report_data_json: Json | null
+          report_month: string
+          report_pdf_url: string | null
+          seo_project_id: string
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          generated_at?: string
+          id?: string
+          report_data_json?: Json | null
+          report_month: string
+          report_pdf_url?: string | null
+          seo_project_id: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          generated_at?: string
+          id?: string
+          report_data_json?: Json | null
+          report_month?: string
+          report_pdf_url?: string | null
+          seo_project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_monthly_reports_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_monthly_reports_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_monthly_reports_seo_project_id_fkey"
+            columns: ["seo_project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_offpage_items: {
         Row: {
           anchor_text: string | null
@@ -10270,6 +10721,78 @@ export type Database = {
           },
         ]
       }
+      seo_projects: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          contract_end: string | null
+          contract_start: string | null
+          created_at: string
+          id: string
+          primary_keyword: string | null
+          project_name: string
+          project_status: string
+          seo_manager_id: string | null
+          seo_specialist_id: string | null
+          service_package: string | null
+          target_keywords_json: Json | null
+          target_location: string | null
+          updated_at: string
+          website_domain: string
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          contract_end?: string | null
+          contract_start?: string | null
+          created_at?: string
+          id?: string
+          primary_keyword?: string | null
+          project_name: string
+          project_status?: string
+          seo_manager_id?: string | null
+          seo_specialist_id?: string | null
+          service_package?: string | null
+          target_keywords_json?: Json | null
+          target_location?: string | null
+          updated_at?: string
+          website_domain: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          contract_end?: string | null
+          contract_start?: string | null
+          created_at?: string
+          id?: string
+          primary_keyword?: string | null
+          project_name?: string
+          project_status?: string
+          seo_manager_id?: string | null
+          seo_specialist_id?: string | null
+          service_package?: string | null
+          target_keywords_json?: Json | null
+          target_location?: string | null
+          updated_at?: string
+          website_domain?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_projects_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_projects_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_rankings: {
         Row: {
           business_id: string
@@ -10376,6 +10899,85 @@ export type Database = {
           },
         ]
       }
+      seo_tasks: {
+        Row: {
+          assigned_to_employee_id: string | null
+          business_id: string
+          client_id: string | null
+          created_at: string
+          deadline: string | null
+          id: string
+          is_visible_to_client: boolean | null
+          priority: string
+          progress_percent: number | null
+          result_notes: string | null
+          seo_project_id: string
+          status: string
+          task_category: string
+          task_description: string | null
+          task_title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to_employee_id?: string | null
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          is_visible_to_client?: boolean | null
+          priority?: string
+          progress_percent?: number | null
+          result_notes?: string | null
+          seo_project_id: string
+          status?: string
+          task_category?: string
+          task_description?: string | null
+          task_title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to_employee_id?: string | null
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          is_visible_to_client?: boolean | null
+          priority?: string
+          progress_percent?: number | null
+          result_notes?: string | null
+          seo_project_id?: string
+          status?: string
+          task_category?: string
+          task_description?: string | null
+          task_title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_tasks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_tasks_seo_project_id_fkey"
+            columns: ["seo_project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_technical_audits: {
         Row: {
           broken_links_count: number | null
@@ -10441,6 +11043,70 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "seo_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_updates: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          created_at: string
+          created_by_employee_id: string | null
+          description: string | null
+          id: string
+          metrics_json: Json | null
+          seo_project_id: string
+          title: string
+          update_type: string
+          visible_to_client: boolean | null
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          created_by_employee_id?: string | null
+          description?: string | null
+          id?: string
+          metrics_json?: Json | null
+          seo_project_id: string
+          title: string
+          update_type?: string
+          visible_to_client?: boolean | null
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          created_by_employee_id?: string | null
+          description?: string | null
+          id?: string
+          metrics_json?: Json | null
+          seo_project_id?: string
+          title?: string
+          update_type?: string
+          visible_to_client?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_updates_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_updates_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_updates_seo_project_id_fkey"
+            columns: ["seo_project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
             referencedColumns: ["id"]
           },
         ]
@@ -10599,6 +11265,73 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_media_tasks: {
+        Row: {
+          assigned_employee_id: string | null
+          business_id: string
+          client_id: string | null
+          created_at: string
+          hashtags: string | null
+          id: string
+          image_url: string | null
+          platform: string
+          post_caption: string | null
+          post_date: string | null
+          seo_project_id: string | null
+          status: string
+        }
+        Insert: {
+          assigned_employee_id?: string | null
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          hashtags?: string | null
+          id?: string
+          image_url?: string | null
+          platform?: string
+          post_caption?: string | null
+          post_date?: string | null
+          seo_project_id?: string | null
+          status?: string
+        }
+        Update: {
+          assigned_employee_id?: string | null
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          hashtags?: string | null
+          id?: string
+          image_url?: string | null
+          platform?: string
+          post_caption?: string | null
+          post_date?: string | null
+          seo_project_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_media_tasks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_media_tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_media_tasks_seo_project_id_fkey"
+            columns: ["seo_project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
             referencedColumns: ["id"]
           },
         ]
