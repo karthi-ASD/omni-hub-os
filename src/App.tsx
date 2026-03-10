@@ -97,6 +97,7 @@ import TasksPage from "./pages/TasksPage";
 import TicketsPage from "./pages/TicketsPage";
 import InternalTicketsPage from "./pages/InternalTicketsPage";
 import InternalTicketDetailPage from "./pages/InternalTicketDetailPage";
+import ReportsPage from "./pages/ReportsPage";
 import MarketingPage from "./pages/MarketingPage";
 import MorePage from "./pages/MorePage";
 import AboutPage from "./pages/AboutPage";
