@@ -82,7 +82,7 @@ const ClientsPage = () => {
       ) : (
         <div className="space-y-2">
           {filtered.map(c => (
-            <Card key={c.id} className="rounded-xl overflow-hidden">
+            <Card key={c.id} className="rounded-xl overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/clients/${c.id}`)}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
