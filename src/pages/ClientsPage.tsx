@@ -18,8 +18,9 @@ const onboardingColors: Record<string, string> = {
 };
 
 const ClientsPage = () => {
-  const { clients, loading, createClient, updateOnboardingStatus } = useClients();
+  const { clients, loading, createClient, updateOnboardingStatus, refetch } = useClients();
   const [createOpen, setCreateOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState({ contact_name: "", email: "", phone: "", company_name: "", address: "" });
 
