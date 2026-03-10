@@ -117,10 +117,19 @@ const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ open, onOpenChange, o
           company_name: r.contact_name || null,
         }));
         
-        const { error } = await supabase.from("clients").insert(batch as any);
+        // Use upsert with onConflict to skip duplicates by email
+        const { data: insertedData, error } = await supabase.from("clients").upsert(batch as any, { onConflict: 'email,business_id', ignoreDuplicates: true });
         if (error) {
           console.error("Batch error:", error);
-          skipped += batch.length;
+          // Fallback: insert one by one to skip only failures
+          for (const row of batch) {
+            const { error: singleErr } = await supabase.from("clients").insert(row as any);
+            if (singleErr) {
+              skipped++;
+            } else {
+              imported++;
+            }
+          }
         } else {
           imported += batch.length;
         }
