@@ -40,10 +40,10 @@ const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ open, onOpenChange, o
     setImportResult(null);
   };
 
-  const handleFileSelected = (_file: File, text: string) => {
-    const { headers, rows } = parseCSV(text);
+  const handleFileSelected = async (file: File) => {
+    const { headers, rows } = await parseImportFile(file);
     if (headers.length === 0) {
-      toast.error("Could not parse CSV headers");
+      toast.error("Could not parse file headers");
       return;
     }
     setCsvHeaders(headers);
