@@ -308,7 +308,7 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><SLAPage /></ProtectedRoute>
               } />
               <Route path="/org-chart" element={
-                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><OrgChartPage /></ProtectedRoute>
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><OrgChartPage /></ProtectedRoute>
               } />
               <Route path="/client-360" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><Client360Page /></ProtectedRoute>
