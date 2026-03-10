@@ -487,6 +487,14 @@ const App = () => (
                 }
               />
               <Route
+                path="/role-management"
+                element={
+                  <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}>
+                    <RoleManagementPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/system-monitor"
                 element={
                   <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}>
