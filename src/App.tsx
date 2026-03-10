@@ -22,6 +22,7 @@ import SettingsPage from "./pages/SettingsPage";
 import AuditLogs from "./pages/AuditLogs";
 import RoleManagementPage from "./pages/RoleManagementPage";
 import WorkflowAutomationPage from "./pages/WorkflowAutomationPage";
+import AIAgencyBrainPage from "./pages/AIAgencyBrainPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import CalendarPage from "./pages/CalendarPage";
 import InquiriesPage from "./pages/InquiriesPage";
@@ -354,6 +355,9 @@ const App = () => (
               <Route path="/autopilot/inbox" element={<AutopilotInboxPage />} />
               <Route path="/ai-brain" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AIBrainPage /></ProtectedRoute>
+              } />
+              <Route path="/ai-agency-brain" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager"]}><AIAgencyBrainPage /></ProtectedRoute>
               } />
               <Route path="/ai-learning" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AILearningPage /></ProtectedRoute>

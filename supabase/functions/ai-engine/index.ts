@@ -909,6 +909,184 @@ serve(async (req) => {
       }];
       toolChoice = { type: "function", function: { name: "generate_roadmap" } };
 
+    } else if (task_type === "agency_project_risk") {
+      systemPrompt = `You are an agency project risk analyst AI. Analyze the project data including tasks, deadlines, workloads, and SLA status to predict project delays and risks. Return a risk score (0-100), risk status, key risk factors, and recommended actions. Be specific about which tasks or areas are causing risk.`;
+      userPrompt = `Assess project risk:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "assess_project_risk",
+          description: "Return project risk assessment",
+          parameters: {
+            type: "object",
+            properties: {
+              risk_score: { type: "number", description: "0-100 risk score" },
+              risk_status: { type: "string", enum: ["on_track", "at_risk", "delayed", "critical"] },
+              risk_factors: { type: "array", items: { type: "string" } },
+              recommended_actions: { type: "array", items: { type: "object", properties: { action: { type: "string" }, priority: { type: "string", enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"] }, department: { type: "string" } }, required: ["action", "priority"], additionalProperties: false } },
+              summary: { type: "string" },
+              estimated_delay_days: { type: "number" },
+            },
+            required: ["risk_score", "risk_status", "risk_factors", "recommended_actions", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "assess_project_risk" } };
+
+    } else if (task_type === "agency_workload_optimize") {
+      systemPrompt = `You are an intelligent workload optimization AI for a digital agency. Analyze employee workloads, skills, current task counts, and department capacity. For the given task, recommend the best employee to assign based on availability, skill match, and deadline urgency. Return the recommendation with reasoning.`;
+      userPrompt = `Optimize workload assignment:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "optimize_workload",
+          description: "Return workload assignment recommendation",
+          parameters: {
+            type: "object",
+            properties: {
+              recommended_employee: { type: "string", description: "Name of recommended employee" },
+              recommended_employee_id: { type: "string" },
+              confidence: { type: "number", description: "0-100" },
+              reasoning: { type: "string" },
+              current_capacity_percent: { type: "number" },
+              alternative_employees: { type: "array", items: { type: "object", properties: { name: { type: "string" }, capacity_percent: { type: "number" }, reason: { type: "string" } }, required: ["name", "capacity_percent"], additionalProperties: false } },
+              overloaded_employees: { type: "array", items: { type: "string" } },
+              summary: { type: "string" },
+            },
+            required: ["recommended_employee", "confidence", "reasoning", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "optimize_workload" } };
+
+    } else if (task_type === "agency_task_suggest") {
+      systemPrompt = `You are an AI task suggestion engine for a digital agency. Analyze the project type, current pipeline, SEO data, client status, and past performance. Suggest 3-7 actionable tasks that should be created next. Each task should include title, description, department, priority, suggested deadline (in days from now), and the reason for the suggestion.`;
+      userPrompt = `Suggest next tasks:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "suggest_tasks",
+          description: "Return suggested tasks",
+          parameters: {
+            type: "object",
+            properties: {
+              suggestions: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    description: { type: "string" },
+                    department: { type: "string" },
+                    priority: { type: "string", enum: ["LOW", "MEDIUM", "HIGH", "URGENT"] },
+                    deadline_days: { type: "number", description: "Days from now" },
+                    reason: { type: "string" },
+                    category: { type: "string", enum: ["seo", "content", "technical", "design", "marketing", "billing", "support", "general"] },
+                  },
+                  required: ["title", "description", "department", "priority", "reason"],
+                  additionalProperties: false,
+                },
+              },
+              summary: { type: "string" },
+            },
+            required: ["suggestions", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "suggest_tasks" } };
+
+    } else if (task_type === "agency_client_report") {
+      systemPrompt = `You are a professional report writer for a digital agency. Generate a monthly client report based on the provided data. Include: performance summary (traffic, rankings, tasks completed), completed work this month, issues resolved, and next month strategy with priority actions. Make the report client-friendly and professional. Return both a detailed internal version and a simplified client-facing version.`;
+      userPrompt = `Generate monthly client report:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "generate_client_report",
+          description: "Return generated client report",
+          parameters: {
+            type: "object",
+            properties: {
+              report_title: { type: "string" },
+              period: { type: "string" },
+              performance_summary: { type: "string" },
+              key_metrics: { type: "array", items: { type: "object", properties: { metric: { type: "string" }, value: { type: "string" }, trend: { type: "string", enum: ["up", "down", "stable"] } }, required: ["metric", "value", "trend"], additionalProperties: false } },
+              completed_work: { type: "array", items: { type: "string" } },
+              issues_resolved: { type: "array", items: { type: "string" } },
+              next_month_strategy: { type: "array", items: { type: "object", properties: { action: { type: "string" }, priority: { type: "string" } }, required: ["action", "priority"], additionalProperties: false } },
+              client_summary: { type: "string", description: "Simplified client-facing summary" },
+              internal_notes: { type: "string", description: "Internal team notes" },
+            },
+            required: ["report_title", "performance_summary", "key_metrics", "completed_work", "next_month_strategy", "client_summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "generate_client_report" } };
+
+    } else if (task_type === "agency_seo_issues") {
+      systemPrompt = `You are an SEO issue detection AI for a digital agency. Analyze the provided SEO project data (pages, rankings, tasks, audit results) and detect all SEO issues. For each issue, provide the issue type, affected pages/items, severity, and suggested fix. Cover: missing meta titles/descriptions, duplicate content, missing H1 tags, thin content, internal linking gaps, schema issues, and indexing problems.`;
+      userPrompt = `Detect SEO issues:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "detect_seo_issues",
+          description: "Return detected SEO issues",
+          parameters: {
+            type: "object",
+            properties: {
+              issues: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    issue_type: { type: "string", enum: ["missing_meta_title", "missing_meta_description", "duplicate_title", "duplicate_description", "missing_h1", "broken_links", "slow_speed", "missing_alt_text", "thin_content", "indexing_issue", "sitemap_issue", "robots_issue", "keyword_cannibalization", "low_word_count", "internal_linking_gap", "missing_schema"] },
+                    severity: { type: "string", enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+                    affected_count: { type: "number" },
+                    description: { type: "string" },
+                    suggested_fix: { type: "string" },
+                  },
+                  required: ["issue_type", "severity", "description", "suggested_fix"],
+                  additionalProperties: false,
+                },
+              },
+              seo_health_score: { type: "number", description: "Overall SEO health 0-100" },
+              summary: { type: "string" },
+            },
+            required: ["issues", "seo_health_score", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "detect_seo_issues" } };
+
+    } else if (task_type === "agency_churn_risk") {
+      systemPrompt = `You are a client churn prediction AI for a digital agency. Analyze client data including activity, task completion, communication frequency, payment history, and project progress. Return a churn risk score, risk level, specific risk factors, and recommended retention actions.`;
+      userPrompt = `Predict client churn risk:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "predict_churn",
+          description: "Return client churn risk assessment",
+          parameters: {
+            type: "object",
+            properties: {
+              churn_score: { type: "number", description: "Churn risk 0-100" },
+              risk_level: { type: "string", enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+              risk_factors: { type: "array", items: { type: "string" } },
+              retention_actions: { type: "array", items: { type: "object", properties: { action: { type: "string" }, priority: { type: "string" }, owner: { type: "string" } }, required: ["action", "priority"], additionalProperties: false } },
+              engagement_score: { type: "number" },
+              summary: { type: "string" },
+            },
+            required: ["churn_score", "risk_level", "risk_factors", "retention_actions", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "predict_churn" } };
+
     } else if (task_type === "seo_advisor") {
       const pd = payload?.project_data || payload;
       systemPrompt = `You are an expert SEO consultant for a digital agency. Analyze the SEO project data and provide 3-5 actionable recommendations. Consider: keyword strategy, content gaps, technical issues, local SEO opportunities, competitor positioning, and link building.`;
