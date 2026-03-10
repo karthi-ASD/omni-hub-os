@@ -356,6 +356,9 @@ const App = () => (
               <Route path="/ai-brain" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AIBrainPage /></ProtectedRoute>
               } />
+              <Route path="/ai-agency-brain" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager"]}><AIAgencyBrainPage /></ProtectedRoute>
+              } />
               <Route path="/ai-learning" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AILearningPage /></ProtectedRoute>
               } />
