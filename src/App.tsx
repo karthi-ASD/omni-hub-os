@@ -374,22 +374,25 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HREmployeeListPage /></ProtectedRoute>
               } />
               <Route path="/hr/employee/:employeeId" element={
-                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HREmployeeProfilePage /></ProtectedRoute>
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager"]}><HREmployeeProfilePage /></ProtectedRoute>
               } />
               <Route path="/hr/leave" element={
-                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HRLeaveManagementPage /></ProtectedRoute>
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager"]}><HRLeaveManagementPage /></ProtectedRoute>
               } />
               <Route path="/hr/payroll" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HRPayrollPage /></ProtectedRoute>
               } />
               <Route path="/hr/performance" element={
-                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HRPerformancePage /></ProtectedRoute>
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager"]}><HRPerformancePage /></ProtectedRoute>
               } />
               <Route path="/hr/tasks" element={
-                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HRTaskTrackingPage /></ProtectedRoute>
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager"]}><HRTaskTrackingPage /></ProtectedRoute>
               } />
               <Route path="/hr/analytics" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HRAnalyticsDashboardPage /></ProtectedRoute>
+              } />
+              <Route path="/manager-dashboard" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager"]}><ManagerDashboardPage /></ProtectedRoute>
               } />
               <Route path="/my-dashboard" element={<EmployeeSelfServicePage />} />
               <Route path="/usage-analytics" element={
