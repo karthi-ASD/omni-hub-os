@@ -770,6 +770,145 @@ serve(async (req) => {
       }];
       toolChoice = { type: "function", function: { name: "analyze_gaps" } };
 
+    } else if (task_type === "seo_outreach_email") {
+      systemPrompt = `You are an SEO outreach specialist. Generate a personalized, professional outreach email for link building. The email should be concise, value-driven, and not spammy. Tailor the pitch to the target website and the client's industry.`;
+      userPrompt = `Generate outreach email:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "generate_outreach_email",
+          description: "Return outreach email subject and body",
+          parameters: {
+            type: "object",
+            properties: {
+              subject: { type: "string" },
+              body: { type: "string" },
+              follow_up_subject: { type: "string" },
+              follow_up_body: { type: "string" },
+            },
+            required: ["subject", "body"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "generate_outreach_email" } };
+
+    } else if (task_type === "seo_internal_links") {
+      systemPrompt = `You are an internal linking strategist. Analyze the website structure and suggest 3-7 internal link opportunities. For each suggestion, provide source page, target page, recommended anchor text, and reasoning.`;
+      userPrompt = `Suggest internal links for:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "suggest_internal_links",
+          description: "Return internal link suggestions",
+          parameters: {
+            type: "object",
+            properties: {
+              suggestions: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    source_url: { type: "string" },
+                    target_url: { type: "string" },
+                    anchor_text: { type: "string" },
+                    reason: { type: "string" },
+                  },
+                  required: ["source_url", "target_url", "anchor_text", "reason"],
+                  additionalProperties: false,
+                },
+              },
+            },
+            required: ["suggestions"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "suggest_internal_links" } };
+
+    } else if (task_type === "seo_page_audit") {
+      systemPrompt = `You are an SEO page auditor. Analyze the given page URL and return a comprehensive audit with scores and detected issues. Simulate realistic results based on the URL structure and common SEO patterns.`;
+      userPrompt = `Audit this page:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "audit_page",
+          description: "Return page audit results",
+          parameters: {
+            type: "object",
+            properties: {
+              title_tag: { type: "string" },
+              meta_description: { type: "string" },
+              h1_tag: { type: "string" },
+              word_count: { type: "number" },
+              internal_links_count: { type: "number" },
+              external_links_count: { type: "number" },
+              image_count: { type: "number" },
+              missing_alt_tags_count: { type: "number" },
+              canonical_url: { type: "string" },
+              page_speed_score: { type: "number" },
+              mobile_friendly: { type: "boolean" },
+              schema_present: { type: "boolean" },
+              broken_links_count: { type: "number" },
+              seo_score: { type: "number" },
+              issues: {
+                type: "array",
+                items: { type: "object", properties: { issue: { type: "string" }, severity: { type: "string", enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"] }, fix: { type: "string" } }, required: ["issue", "severity", "fix"], additionalProperties: false },
+              },
+            },
+            required: ["seo_score", "issues"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "audit_page" } };
+
+    } else if (task_type === "seo_roadmap_generate") {
+      systemPrompt = `You are an SEO strategist. Generate a detailed SEO roadmap broken into monthly phases. Each phase should include specific tasks across: technical SEO, content, on-page, off-page, local SEO, and monitoring. Make it actionable and realistic for a digital agency executing for a client.`;
+      userPrompt = `Generate SEO roadmap:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "generate_roadmap",
+          description: "Return structured SEO roadmap",
+          parameters: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              roadmap: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    phase: { type: "string" },
+                    month: { type: "number" },
+                    goals: { type: "array", items: { type: "string" } },
+                    tasks: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          category: { type: "string" },
+                          task: { type: "string" },
+                          priority: { type: "string", enum: ["LOW", "MEDIUM", "HIGH"] },
+                        },
+                        required: ["category", "task"],
+                        additionalProperties: false,
+                      },
+                    },
+                  },
+                  required: ["phase", "month", "goals", "tasks"],
+                  additionalProperties: false,
+                },
+              },
+            },
+            required: ["title", "roadmap"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "generate_roadmap" } };
+
     } else if (task_type === "seo_advisor") {
       const pd = payload?.project_data || payload;
       systemPrompt = `You are an expert SEO consultant for a digital agency. Analyze the SEO project data and provide 3-5 actionable recommendations. Consider: keyword strategy, content gaps, technical issues, local SEO opportunities, competitor positioning, and link building.`;

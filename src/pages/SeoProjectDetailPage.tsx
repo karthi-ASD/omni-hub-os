@@ -91,6 +91,9 @@ const SeoProjectDetailPage = () => {
         <Button variant="outline" size="sm" onClick={() => navigate(`/seo-intel/${projectId}`)}>
           <Sparkles className="h-3 w-3 mr-1" /> SEO Intelligence
         </Button>
+        <Button variant="outline" size="sm" onClick={() => navigate(`/seo-exec/${projectId}`)}>
+          <Sparkles className="h-3 w-3 mr-1" /> Execution Hub
+        </Button>
         <div className="text-right">
           <p className="text-sm text-muted-foreground">Progress</p>
           <p className="text-lg font-bold">{progressPct}%</p>

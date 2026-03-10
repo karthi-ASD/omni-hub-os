@@ -94,7 +94,7 @@ const superAdminSections: MenuSection[] = [
   },
   {
     title: "6 · Marketing & SEO Operations",
-    description: "SEO projects, tasks, blogs, GMB, social media, rankings & AI",
+    description: "SEO projects, tasks, blogs, GMB, social media, rankings, AI & execution",
     items: [
       { label: "SEO Engine", icon: Globe, to: "/seo" },
       { label: "SEO Projects", icon: FolderKanban, to: "/seo-ops" },
