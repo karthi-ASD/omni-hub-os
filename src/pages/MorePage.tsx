@@ -236,8 +236,12 @@ const tenantAdminSections: MenuSection[] = [
     description: "Your business overview and key metrics",
     items: [
       { label: "Dashboard", icon: BarChart3, to: "/dashboard" },
+      { label: "Admin Ops", icon: Gauge, to: "/admin-operations" },
       { label: "Notifications", icon: Bell, to: "/notifications" },
       { label: "Calendar", icon: Calendar, to: "/calendar" },
+      { label: "Daily Reports", icon: FileBarChart, to: "/daily-work-reports" },
+      { label: "Employee Monitor", icon: Eye, to: "/employee-activity-monitor" },
+      { label: "Dept Performance", icon: TrendingUp, to: "/department-performance" },
     ],
   },
   {
