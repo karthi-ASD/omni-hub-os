@@ -122,10 +122,12 @@ const superAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "8 · Workforce Management",
-    description: "Employees, attendance, leave, payroll, and org chart",
+    title: "8 · HR & Workforce",
+    description: "HR management, departments, employees, attendance, leave, payroll",
     items: [
-      { label: "Employees", icon: UserCog, to: "/workforce" },
+      { label: "Departments", icon: Building2, to: "/hr/departments" },
+      { label: "Employee Dir.", icon: Users, to: "/hr/employees" },
+      { label: "Workforce", icon: UserCog, to: "/workforce" },
       { label: "Leave", icon: CalendarDays, to: "/leave" },
       { label: "Payroll", icon: DollarSign, to: "/payroll" },
       { label: "Org Chart", icon: Network, to: "/org-chart" },
@@ -253,9 +255,11 @@ const tenantAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "Employees",
-    description: "Manage your team, attendance, and payroll",
+    title: "HR & Employees",
+    description: "Departments, employee management, attendance, and payroll",
     items: [
+      { label: "Departments", icon: Building2, to: "/hr/departments" },
+      { label: "Employee Dir.", icon: Users, to: "/hr/employees" },
       { label: "Workforce", icon: UserCog, to: "/workforce" },
       { label: "Leave", icon: CalendarDays, to: "/leave" },
       { label: "Payroll", icon: DollarSign, to: "/payroll" },
