@@ -133,7 +133,7 @@ const superAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "8 · HR & Workforce",
+    title: "9 · HR & Workforce",
     description: "HR management, departments, employees, leave, payroll, performance, tasks, analytics",
     items: [
       { label: "Departments", icon: Building2, to: "/hr/departments" },
