@@ -328,6 +328,7 @@ const tenantAdminSections: MenuSection[] = [
     description: "Users, settings, audit logs, and integrations",
     items: [
       { label: "Users", icon: Users, to: "/users" },
+      { label: "Role Mgmt", icon: Shield, to: "/role-management" },
       { label: "Settings", icon: Settings, to: "/settings" },
       { label: "Websites", icon: Globe, to: "/websites" },
       { label: "Audit Logs", icon: Shield, to: "/audit-logs" },
