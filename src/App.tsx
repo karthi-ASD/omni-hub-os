@@ -314,6 +314,8 @@ const App = () => (
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/tasks" element={<TasksPage />} />
               <Route path="/tickets" element={<TicketsPage />} />
+              <Route path="/internal-tickets" element={<InternalTicketsPage />} />
+              <Route path="/internal-ticket/:id" element={<InternalTicketDetailPage />} />
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/marketing" element={<MarketingPage />} />
               <Route path="/workforce" element={<WorkforcePage />} />
