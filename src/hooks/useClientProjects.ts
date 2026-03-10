@@ -52,7 +52,7 @@ export function useClientProjects() {
         if (found) deptId = found.id;
       }
     }
-    await supabase.from("client_projects").insert([{
+    await supabase.from("client_projects" as any).insert([{
       ...values,
       business_id: profile.business_id,
       assigned_department_id: deptId || null,
