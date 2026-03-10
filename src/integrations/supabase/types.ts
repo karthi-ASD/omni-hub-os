@@ -4632,6 +4632,51 @@ export type Database = {
           },
         ]
       }
+      client_services: {
+        Row: {
+          business_id: string
+          client_id: string
+          created_at: string
+          id: string
+          service_details_json: Json | null
+          service_subtype: string | null
+          service_type: string
+        }
+        Insert: {
+          business_id: string
+          client_id: string
+          created_at?: string
+          id?: string
+          service_details_json?: Json | null
+          service_subtype?: string | null
+          service_type: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          service_details_json?: Json | null
+          service_subtype?: string | null
+          service_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_services_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_services_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
