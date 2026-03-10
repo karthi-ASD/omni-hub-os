@@ -138,6 +138,7 @@ import HRPerformancePage from "./pages/HRPerformancePage";
 import HRTaskTrackingPage from "./pages/HRTaskTrackingPage";
 import HRAnalyticsDashboardPage from "./pages/HRAnalyticsDashboardPage";
 import EmployeeSelfServicePage from "./pages/EmployeeSelfServicePage";
+import ManagerDashboardPage from "./pages/ManagerDashboardPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
