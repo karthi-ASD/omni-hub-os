@@ -149,7 +149,7 @@ const superAdminSections: MenuSection[] = [
     ],
   },
   {
-    title: "9 · Intelligence & AI",
+    title: "10 · Intelligence & AI",
     description: "AI Brain, agents, learning, and growth engine",
     items: [
       { label: "AI Brain", icon: Brain, to: "/ai-brain" },
