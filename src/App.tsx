@@ -95,6 +95,8 @@ import ActivityTimelinePage from "./pages/ActivityTimelinePage";
 import GovernanceDashboardPage from "./pages/GovernanceDashboardPage";
 import TasksPage from "./pages/TasksPage";
 import TicketsPage from "./pages/TicketsPage";
+import InternalTicketsPage from "./pages/InternalTicketsPage";
+import InternalTicketDetailPage from "./pages/InternalTicketDetailPage";
 import ReportsPage from "./pages/ReportsPage";
 import MarketingPage from "./pages/MarketingPage";
 import MorePage from "./pages/MorePage";
@@ -313,6 +315,8 @@ const App = () => (
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/tasks" element={<TasksPage />} />
               <Route path="/tickets" element={<TicketsPage />} />
+              <Route path="/internal-tickets" element={<InternalTicketsPage />} />
+              <Route path="/internal-ticket/:id" element={<InternalTicketDetailPage />} />
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/marketing" element={<MarketingPage />} />
               <Route path="/workforce" element={<WorkforcePage />} />

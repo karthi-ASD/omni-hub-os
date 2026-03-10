@@ -1121,6 +1121,117 @@ serve(async (req) => {
       }];
       toolChoice = { type: "function", function: { name: "seo_advisor_recommendations" } };
 
+    } else if (task_type === "ticket_pattern_analysis") {
+      systemPrompt = `You are an internal operations analyst AI. Analyze the batch of internal tickets to detect patterns: frequently requested features, repeated issues, department pain points, and trending topics. Return actionable insights for management.`;
+      userPrompt = `Analyze these internal tickets for patterns:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "analyze_ticket_patterns",
+          description: "Return ticket pattern analysis",
+          parameters: {
+            type: "object",
+            properties: {
+              patterns: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    pattern_type: { type: "string", enum: ["feature_request", "recurring_issue", "department_pain_point", "trending_topic"] },
+                    title: { type: "string" },
+                    count: { type: "number" },
+                    department: { type: "string" },
+                    description: { type: "string" },
+                    recommendation: { type: "string" },
+                    priority: { type: "string", enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+                  },
+                  required: ["pattern_type", "title", "description", "recommendation", "priority"],
+                  additionalProperties: false,
+                },
+              },
+              summary: { type: "string" },
+              top_departments: { type: "array", items: { type: "string" } },
+            },
+            required: ["patterns", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "analyze_ticket_patterns" } };
+
+    } else if (task_type === "autonomous_task_detect") {
+      systemPrompt = `You are an autonomous operations AI for a digital agency. Based on the provided business data (SEO audits, project status, workloads, client metrics), detect issues that need immediate action. For each issue found, create an autonomous task with title, description, department, priority, and confidence score. Only create tasks for real, actionable problems.`;
+      userPrompt = `Detect issues and create autonomous tasks:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "detect_autonomous_tasks",
+          description: "Return detected tasks for autonomous execution",
+          parameters: {
+            type: "object",
+            properties: {
+              tasks: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    description: { type: "string" },
+                    department: { type: "string" },
+                    priority: { type: "string", enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+                    confidence: { type: "number", description: "0-100" },
+                    source_module: { type: "string" },
+                    deadline_hours: { type: "number" },
+                  },
+                  required: ["title", "description", "department", "priority", "confidence"],
+                  additionalProperties: false,
+                },
+              },
+              alerts: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    severity: { type: "string", enum: ["info", "warning", "critical"] },
+                    target_role: { type: "string" },
+                  },
+                  required: ["message", "severity"],
+                  additionalProperties: false,
+                },
+              },
+              summary: { type: "string" },
+            },
+            required: ["tasks", "summary"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "detect_autonomous_tasks" } };
+
+    } else if (task_type === "autonomous_email_draft") {
+      systemPrompt = `You are a professional email writer for a digital agency. Generate a client-friendly email draft based on the provided context (report data, project updates, delay explanations, or strategy updates). The email must be professional, clear, and actionable. Return the subject line and body separately.`;
+      userPrompt = `Generate email draft:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "draft_email",
+          description: "Return email draft",
+          parameters: {
+            type: "object",
+            properties: {
+              subject: { type: "string" },
+              body: { type: "string" },
+              tone: { type: "string", enum: ["professional", "friendly", "urgent", "apologetic"] },
+              call_to_action: { type: "string" },
+            },
+            required: ["subject", "body"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "draft_email" } };
+
     } else {
       return new Response(JSON.stringify({ error: "Unknown task_type" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
