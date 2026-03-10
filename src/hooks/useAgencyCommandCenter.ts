@@ -7,25 +7,21 @@ export function useAgencyCommandCenter() {
   const [projects, setProjects] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [slaItems, setSlaItems] = useState<any[]>([]);
-  const [workloads, setWorkloads] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetch = useCallback(async () => {
     if (!profile?.business_id) return;
     setLoading(true);
-    const [pRes, tRes, sRes, wRes, eRes] = await Promise.all([
-      supabase.from("client_projects").select("*, departments(name)").eq("business_id", profile.business_id),
-      supabase.from("project_tasks").select("*, departments(name), hr_employees(full_name)").eq("business_id", profile.business_id),
-      supabase.from("sla_tracking").select("*, client_projects(client_name), project_tasks(title), departments(name)").eq("business_id", profile.business_id),
-      supabase.from("employee_workloads").select("*, hr_employees(full_name, employee_code, department_id, departments(name))").eq("business_id", profile.business_id),
-      supabase.from("hr_employees").select("id, full_name, employee_code, department_id, employment_status, departments(name)").eq("business_id", profile.business_id).eq("employment_status", "active"),
-    ]);
-    setProjects((pRes.data as any[]) ?? []);
-    setTasks((tRes.data as any[]) ?? []);
-    setSlaItems((sRes.data as any[]) ?? []);
-    setWorkloads((wRes.data as any[]) ?? []);
-    setEmployees((eRes.data as any[]) ?? []);
+    const bid = profile.business_id;
+    const pRes = await (supabase.from("client_projects" as any) as any).select("*, departments(name)").eq("business_id", bid);
+    const tRes = await (supabase.from("project_tasks" as any) as any).select("*, departments(name), hr_employees(full_name)").eq("business_id", bid);
+    const sRes = await (supabase.from("sla_tracking" as any) as any).select("*, client_projects(client_name), project_tasks(title), departments(name)").eq("business_id", bid);
+    const eRes = await (supabase.from("hr_employees") as any).select("id, full_name, employee_code, department_id, employment_status, departments(name)").eq("business_id", bid).eq("employment_status", "active");
+    setProjects(pRes.data ?? []);
+    setTasks(tRes.data ?? []);
+    setSlaItems(sRes.data ?? []);
+    setEmployees(eRes.data ?? []);
     setLoading(false);
   }, [profile?.business_id]);
 
@@ -33,28 +29,19 @@ export function useAgencyCommandCenter() {
 
   const stats = useMemo(() => {
     const activeProjects = projects.filter(p => p.status === "in_progress").length;
-    const totalProjects = projects.length;
     const tasksInProgress = tasks.filter(t => t.status === "in_progress").length;
     const tasksOverdue = tasks.filter(t => t.status === "overdue" || (t.deadline && new Date(t.deadline) < new Date() && t.status !== "completed")).length;
     const tasksCompleted = tasks.filter(t => t.status === "completed").length;
     const slaBreached = slaItems.filter(s => s.status === "breached").length;
     const slaAtRisk = slaItems.filter(s => s.status === "at_risk").length;
-    const totalEmployees = employees.length;
-
-    // Department breakdown
     const deptMap: Record<string, number> = {};
-    projects.forEach(p => {
-      const name = p.departments?.name || "Unassigned";
-      deptMap[name] = (deptMap[name] || 0) + 1;
-    });
-
+    projects.forEach(p => { const n = p.departments?.name || "Unassigned"; deptMap[n] = (deptMap[n] || 0) + 1; });
     return {
-      totalProjects, activeProjects, tasksInProgress, tasksOverdue, tasksCompleted,
-      slaBreached, slaAtRisk, totalEmployees,
-      totalTasks: tasks.length,
+      totalProjects: projects.length, activeProjects, tasksInProgress, tasksOverdue, tasksCompleted,
+      slaBreached, slaAtRisk, totalEmployees: employees.length, totalTasks: tasks.length,
       projectsByDepartment: Object.entries(deptMap).map(([name, count]) => ({ name, count })),
     };
   }, [projects, tasks, slaItems, employees]);
 
-  return { projects, tasks, slaItems, workloads, employees, loading, stats, refresh: fetch };
+  return { projects, tasks, slaItems, employees, loading, stats, refresh: fetch };
 }

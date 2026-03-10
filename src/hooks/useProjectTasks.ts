@@ -10,8 +10,7 @@ export function useProjectTasks(projectId?: string) {
   const fetch = useCallback(async () => {
     if (!profile?.business_id) return;
     setLoading(true);
-    let q = supabase
-      .from("project_tasks")
+    let q = (supabase.from("project_tasks" as any) as any)
       .select("*, client_projects(client_name, service_type), departments(name), hr_employees(full_name, employee_code)")
       .eq("business_id", profile.business_id)
       .order("created_at", { ascending: false });
@@ -25,24 +24,23 @@ export function useProjectTasks(projectId?: string) {
 
   const create = async (values: Record<string, any>) => {
     if (!profile?.business_id) return;
-    await supabase.from("project_tasks").insert([{
+    await (supabase.from("project_tasks" as any) as any).insert([{
       ...values,
       business_id: profile.business_id,
-    } as any]);
+    }]);
     fetch();
   };
 
   const update = async (id: string, values: Record<string, any>) => {
-    await supabase.from("project_tasks").update(values as any).eq("id", id);
+    await (supabase.from("project_tasks" as any) as any).update(values).eq("id", id);
     fetch();
   };
 
   const remove = async (id: string) => {
-    await supabase.from("project_tasks").delete().eq("id", id);
+    await (supabase.from("project_tasks" as any) as any).delete().eq("id", id);
     fetch();
   };
 
-  // Group by status for kanban
   const tasksByStatus = {
     new: tasks.filter(t => t.status === "new"),
     assigned: tasks.filter(t => t.status === "assigned"),
