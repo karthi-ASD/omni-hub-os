@@ -345,6 +345,56 @@ export type Database = {
         }
         Relationships: []
       }
+      agency_expenses: {
+        Row: {
+          amount: number
+          business_id: string
+          category: string
+          created_at: string | null
+          created_by: string | null
+          department: string | null
+          description: string | null
+          expense_date: string
+          id: string
+          is_recurring: boolean | null
+          recurring_frequency: string | null
+        }
+        Insert: {
+          amount?: number
+          business_id: string
+          category: string
+          created_at?: string | null
+          created_by?: string | null
+          department?: string | null
+          description?: string | null
+          expense_date?: string
+          id?: string
+          is_recurring?: boolean | null
+          recurring_frequency?: string | null
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          department?: string | null
+          description?: string | null
+          expense_date?: string
+          id?: string
+          is_recurring?: boolean | null
+          recurring_frequency?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_expenses_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_interactions: {
         Row: {
           context_json: Json | null
@@ -4388,6 +4438,63 @@ export type Database = {
           },
         ]
       }
+      client_billing_schedules: {
+        Row: {
+          billing_cycle: string | null
+          business_id: string
+          client_id: string
+          contract_end_date: string | null
+          contract_start_date: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          monthly_fee: number | null
+          next_billing_date: string | null
+          service_type: string
+        }
+        Insert: {
+          billing_cycle?: string | null
+          business_id: string
+          client_id: string
+          contract_end_date?: string | null
+          contract_start_date?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          monthly_fee?: number | null
+          next_billing_date?: string | null
+          service_type: string
+        }
+        Update: {
+          billing_cycle?: string | null
+          business_id?: string
+          client_id?: string
+          contract_end_date?: string | null
+          contract_start_date?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          monthly_fee?: number | null
+          next_billing_date?: string | null
+          service_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_billing_schedules_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_billing_schedules_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_health_scores: {
         Row: {
           business_id: string
@@ -4809,6 +4916,7 @@ export type Database = {
       clients: {
         Row: {
           address: string | null
+          billing_address: string | null
           business_id: string
           city: string | null
           company_name: string | null
@@ -4822,12 +4930,15 @@ export type Database = {
           onboarding_status: Database["public"]["Enums"]["onboarding_status"]
           phone: string | null
           state: string | null
+          tax_number: string | null
           updated_at: string
           user_id: string | null
           website: string | null
+          xero_contact_id: string | null
         }
         Insert: {
           address?: string | null
+          billing_address?: string | null
           business_id: string
           city?: string | null
           company_name?: string | null
@@ -4841,12 +4952,15 @@ export type Database = {
           onboarding_status?: Database["public"]["Enums"]["onboarding_status"]
           phone?: string | null
           state?: string | null
+          tax_number?: string | null
           updated_at?: string
           user_id?: string | null
           website?: string | null
+          xero_contact_id?: string | null
         }
         Update: {
           address?: string | null
+          billing_address?: string | null
           business_id?: string
           city?: string | null
           company_name?: string | null
@@ -4860,9 +4974,11 @@ export type Database = {
           onboarding_status?: Database["public"]["Enums"]["onboarding_status"]
           phone?: string | null
           state?: string | null
+          tax_number?: string | null
           updated_at?: string
           user_id?: string | null
           website?: string | null
+          xero_contact_id?: string | null
         }
         Relationships: [
           {
@@ -18395,6 +18511,248 @@ export type Database = {
             foreignKeyName: "white_label_settings_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      xero_connections: {
+        Row: {
+          access_token: string | null
+          business_id: string
+          created_at: string | null
+          id: string
+          is_connected: boolean | null
+          last_sync_at: string | null
+          redirect_url: string | null
+          refresh_token: string | null
+          token_expires_at: string | null
+          updated_at: string | null
+          xero_tenant_id: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          business_id: string
+          created_at?: string | null
+          id?: string
+          is_connected?: boolean | null
+          last_sync_at?: string | null
+          redirect_url?: string | null
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          xero_tenant_id?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          is_connected?: boolean | null
+          last_sync_at?: string | null
+          redirect_url?: string | null
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          xero_tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xero_connections_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      xero_invoices: {
+        Row: {
+          amount_due: number | null
+          amount_paid: number | null
+          business_id: string
+          client_id: string | null
+          contact_name: string | null
+          created_at: string | null
+          currency: string | null
+          department_category: string | null
+          due_date: string | null
+          id: string
+          invoice_date: string | null
+          invoice_number: string | null
+          line_items_json: Json | null
+          reference: string | null
+          status: string | null
+          synced_at: string | null
+          total_amount: number | null
+          xero_contact_id: string | null
+          xero_invoice_id: string
+        }
+        Insert: {
+          amount_due?: number | null
+          amount_paid?: number | null
+          business_id: string
+          client_id?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          currency?: string | null
+          department_category?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          line_items_json?: Json | null
+          reference?: string | null
+          status?: string | null
+          synced_at?: string | null
+          total_amount?: number | null
+          xero_contact_id?: string | null
+          xero_invoice_id: string
+        }
+        Update: {
+          amount_due?: number | null
+          amount_paid?: number | null
+          business_id?: string
+          client_id?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          currency?: string | null
+          department_category?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          line_items_json?: Json | null
+          reference?: string | null
+          status?: string | null
+          synced_at?: string | null
+          total_amount?: number | null
+          xero_contact_id?: string | null
+          xero_invoice_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xero_invoices_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "xero_invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      xero_payments: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          created_at: string | null
+          id: string
+          invoice_id: string | null
+          payment_amount: number | null
+          payment_date: string | null
+          payment_method: string | null
+          synced_at: string | null
+          transaction_reference: string | null
+          xero_invoice_id: string | null
+          xero_payment_id: string
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          created_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          payment_amount?: number | null
+          payment_date?: string | null
+          payment_method?: string | null
+          synced_at?: string | null
+          transaction_reference?: string | null
+          xero_invoice_id?: string | null
+          xero_payment_id: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          created_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          payment_amount?: number | null
+          payment_date?: string | null
+          payment_method?: string | null
+          synced_at?: string | null
+          transaction_reference?: string | null
+          xero_invoice_id?: string | null
+          xero_payment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xero_payments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "xero_payments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "xero_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "xero_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      xero_sync_logs: {
+        Row: {
+          business_id: string
+          completed_at: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          records_synced: number | null
+          started_at: string | null
+          status: string
+          sync_type: string
+        }
+        Insert: {
+          business_id: string
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          records_synced?: number | null
+          started_at?: string | null
+          status?: string
+          sync_type: string
+        }
+        Update: {
+          business_id?: string
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          records_synced?: number | null
+          started_at?: string | null
+          status?: string
+          sync_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xero_sync_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
