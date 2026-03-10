@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useClients, Client, OnboardingStatus } from "@/hooks/useClients";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ const onboardingColors: Record<string, string> = {
 };
 
 const ClientsPage = () => {
+  const navigate = useNavigate();
   const { clients, loading, createClient, updateOnboardingStatus, refetch } = useClients();
   const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -80,7 +82,7 @@ const ClientsPage = () => {
       ) : (
         <div className="space-y-2">
           {filtered.map(c => (
-            <Card key={c.id} className="rounded-xl overflow-hidden">
+            <Card key={c.id} className="rounded-xl overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/clients/${c.id}`)}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
