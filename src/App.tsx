@@ -158,6 +158,7 @@ import DepartmentDashboardPage from "./pages/DepartmentDashboardPage";
 import WorkflowMapPage from "./pages/WorkflowMapPage";
 import WorkloadMonitorPage from "./pages/WorkloadMonitorPage";
 import SLAMonitorPage from "./pages/SLAMonitorPage";
+import AccountTimelinePage from "./pages/AccountTimelinePage";
 import CompanyLoginPage from "./pages/CompanyLoginPage";
 import CompanySignupPage from "./pages/CompanySignupPage";
 import DepartmentSignupPage from "./pages/DepartmentSignupPage";
