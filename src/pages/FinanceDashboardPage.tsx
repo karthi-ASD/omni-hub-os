@@ -77,9 +77,8 @@ const FinanceDashboardPage = () => {
   }, [profile?.business_id, refresh]);
 
   const handleConnectXero = useCallback(() => {
-    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
     const redirectUri = `${window.location.origin}/finance`;
-    const clientId = "YOUR_XERO_CLIENT_ID"; // Will be replaced after secrets are configured
+    const clientId = "1A76351349884DE19A30ED4EB47D8556";
     const scopes = "openid profile email accounting.transactions accounting.contacts offline_access";
     const authUrl = `https://login.xero.com/identity/connect/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
     window.open(authUrl, "_blank", "width=600,height=700");
