@@ -482,6 +482,9 @@ const App = () => (
               <Route path="/revenue-intelligence" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><RevenueIntelligencePage /></ProtectedRoute>
               } />
+              <Route path="/finance" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><FinanceDashboardPage /></ProtectedRoute>
+              } />
               <Route path="/activity-timeline" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><ActivityTimelinePage /></ProtectedRoute>
               } />
