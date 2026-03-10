@@ -185,6 +185,7 @@ const superAdminSections: MenuSection[] = [
       { label: "Users", icon: Users, to: "/users" },
       { label: "Role Mgmt", icon: Shield, to: "/role-management" },
       { label: "Settings", icon: Settings, to: "/settings" },
+      { label: "Workflows", icon: Zap, to: "/workflow-automation" },
       { label: "System Monitor", icon: Server, to: "/system-monitor" },
       { label: "Providers", icon: Plug, to: "/providers" },
       { label: "Marketplace", icon: Store, to: "/marketplace" },
