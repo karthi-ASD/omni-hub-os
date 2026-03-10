@@ -88,6 +88,7 @@ const superAdminSections: MenuSection[] = [
     title: "5 · Agency Operations",
     description: "Command center, client projects, task pipeline, workload, and SLA",
     items: [
+      { label: "Workflow Map", icon: Workflow, to: "/workflow-map" },
       { label: "Command Center", icon: Gauge, to: "/agency-command" },
       { label: "Client Projects", icon: Briefcase, to: "/client-projects" },
       { label: "Task Pipeline", icon: FolderKanban, to: "/task-pipeline" },
