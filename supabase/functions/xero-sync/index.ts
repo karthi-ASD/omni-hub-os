@@ -287,7 +287,60 @@ Deno.serve(async (req) => {
       });
     }
 
-    // --- SYNC ---
+    // --- SYNC ALL BUSINESSES (cron job) ---
+    if (action === "sync_all_businesses") {
+      const { data: connections } = await supabase
+        .from("xero_connections").select("business_id")
+        .eq("is_connected", true);
+
+      const results = [];
+      for (const c of (connections || [])) {
+        try {
+          const { data: conn } = await supabase
+            .from("xero_connections").select("*")
+            .eq("business_id", c.business_id)
+            .eq("is_connected", true)
+            .single();
+          if (!conn) continue;
+
+          const accessToken = await getAccessToken(supabase, conn);
+          const xeroHeaders = {
+            Authorization: `Bearer ${accessToken}`,
+            "Xero-Tenant-Id": conn.xero_tenant_id,
+            Accept: "application/json",
+          };
+
+          const syncErrors: string[] = [];
+          let contactsSynced = 0, invoicesSynced = 0, paymentsSynced = 0;
+
+          try { contactsSynced = await syncContacts(supabase, c.business_id, xeroHeaders); }
+          catch (e) { syncErrors.push(`Contacts: ${e.message}`); }
+          try { invoicesSynced = await syncInvoices(supabase, c.business_id, xeroHeaders); }
+          catch (e) { syncErrors.push(`Invoices: ${e.message}`); }
+          try { paymentsSynced = await syncPayments(supabase, c.business_id, xeroHeaders); }
+          catch (e) { syncErrors.push(`Payments: ${e.message}`); }
+          try { await handleOverdueInvoices(supabase, c.business_id); }
+          catch (e) { syncErrors.push(`Overdue: ${e.message}`); }
+
+          await supabase.from("xero_sync_logs").insert({
+            business_id: c.business_id, sync_type: "scheduled", 
+            status: syncErrors.length === 0 ? "success" : "partial",
+            records_synced: contactsSynced + invoicesSynced + paymentsSynced,
+            error_message: syncErrors.length > 0 ? syncErrors.join("; ") : null,
+          });
+          await supabase.from("xero_connections").update({ last_sync_at: new Date().toISOString() }).eq("business_id", c.business_id);
+          results.push({ business_id: c.business_id, success: true });
+        } catch (e) {
+          results.push({ business_id: c.business_id, error: e.message });
+        }
+      }
+
+      return new Response(JSON.stringify({ success: true, results }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // --- SYNC (single business) ---
     if (action === "sync") {
       const { data: conn } = await supabase
         .from("xero_connections").select("*")
@@ -317,11 +370,9 @@ Deno.serve(async (req) => {
       try { paymentsSynced = await syncPayments(supabase, business_id, xeroHeaders); }
       catch (e) { syncErrors.push(`Payments: ${e.message}`); }
 
-      // Handle overdue invoices
       try { await handleOverdueInvoices(supabase, business_id); }
       catch (e) { syncErrors.push(`Overdue check: ${e.message}`); }
 
-      // Log sync result
       const syncStatus = syncErrors.length === 0 ? "success" : "partial";
       await supabase.from("xero_sync_logs").insert({
         business_id,
