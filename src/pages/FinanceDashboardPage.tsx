@@ -12,11 +12,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import {
   DollarSign, TrendingUp, TrendingDown, AlertTriangle, CheckCircle,
   Clock, FileText, BarChart3, PieChart, RefreshCw, Plus, Wallet,
-  Building2, Users, ArrowUpRight, ArrowDownRight, Calendar
+  Building2, Users, ArrowUpRight, ArrowDownRight, Calendar, Brain, Link, Unlink, Zap
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend } from "recharts";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const COLORS = [
   "hsl(252, 85%, 60%)", "hsl(199, 89%, 48%)", "hsl(152, 60%, 42%)",
@@ -27,6 +29,7 @@ const COLORS = [
 const fmt = (n: number) => `$${n.toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const FinanceDashboardPage = () => {
+  const { profile } = useAuth();
   const {
     loading, xeroInvoices, xeroPayments, expenses, billingSchedules,
     xeroConnection, syncLogs,
@@ -39,6 +42,9 @@ const FinanceDashboardPage = () => {
 
   const [expenseForm, setExpenseForm] = useState({ category: "", department: "", description: "", amount: "", expense_date: format(new Date(), "yyyy-MM-dd") });
   const [expenseOpen, setExpenseOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [forecasting, setForecasting] = useState(false);
+  const [forecast, setForecast] = useState<any>(null);
 
   const handleAddExpense = async () => {
     if (!expenseForm.category || !expenseForm.amount) return;
@@ -52,6 +58,50 @@ const FinanceDashboardPage = () => {
     setExpenseForm({ category: "", department: "", description: "", amount: "", expense_date: format(new Date(), "yyyy-MM-dd") });
     setExpenseOpen(false);
   };
+
+  const handleXeroSync = useCallback(async () => {
+    if (!profile?.business_id) return;
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("xero-sync", {
+        body: { action: "sync", business_id: profile.business_id },
+      });
+      if (error) throw error;
+      toast.success(`Synced: ${data.contactsSynced} contacts, ${data.invoicesSynced} invoices, ${data.paymentsSynced} payments`);
+      refresh();
+    } catch (e: any) {
+      toast.error(e.message || "Sync failed");
+    } finally {
+      setSyncing(false);
+    }
+  }, [profile?.business_id, refresh]);
+
+  const handleConnectXero = useCallback(() => {
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    const redirectUri = `${window.location.origin}/finance`;
+    const clientId = "YOUR_XERO_CLIENT_ID"; // Will be replaced after secrets are configured
+    const scopes = "openid profile email accounting.transactions accounting.contacts offline_access";
+    const authUrl = `https://login.xero.com/identity/connect/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
+    window.open(authUrl, "_blank", "width=600,height=700");
+  }, []);
+
+  const handleRunForecast = useCallback(async () => {
+    if (!profile?.business_id) return;
+    setForecasting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke("ai-finance-forecast", {
+        body: { business_id: profile.business_id },
+      });
+      if (error) throw error;
+      setForecast(data.forecast);
+      toast.success("Forecast generated successfully");
+    } catch (e: any) {
+      toast.error(e.message || "Forecast failed");
+    } finally {
+      setForecasting(false);
+    }
+  }, [profile?.business_id]);
 
   const statCards = [
     { title: "Total Revenue", value: fmt(totalRevenue), icon: DollarSign, sub: "From paid invoices", trend: revenueGrowth },
@@ -71,15 +121,20 @@ const FinanceDashboardPage = () => {
           <h1 className="text-2xl font-bold">Finance Intelligence</h1>
           <p className="text-muted-foreground">Agency financial analytics · Read-only from Xero</p>
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
           {xeroConnection?.is_connected ? (
-            <Badge variant="outline" className="text-[hsl(var(--success))] border-[hsl(var(--success))]">
-              <CheckCircle className="h-3 w-3 mr-1" /> Xero Connected
-            </Badge>
+            <>
+              <Badge variant="outline" className="text-[hsl(var(--success))] border-[hsl(var(--success))]">
+                <CheckCircle className="h-3 w-3 mr-1" /> Xero Connected
+              </Badge>
+              <Button variant="outline" size="sm" onClick={handleXeroSync} disabled={syncing}>
+                <RefreshCw className={`h-4 w-4 mr-1 ${syncing ? "animate-spin" : ""}`} /> {syncing ? "Syncing…" : "Sync Now"}
+              </Button>
+            </>
           ) : (
-            <Badge variant="outline" className="text-muted-foreground">
-              <Clock className="h-3 w-3 mr-1" /> Xero Not Connected
-            </Badge>
+            <Button variant="outline" size="sm" onClick={handleConnectXero}>
+              <Link className="h-4 w-4 mr-1" /> Connect Xero
+            </Button>
           )}
           {xeroConnection?.last_sync_at && (
             <span className="text-xs text-muted-foreground">
@@ -127,6 +182,8 @@ const FinanceDashboardPage = () => {
           <TabsTrigger value="expenses"><Wallet className="h-4 w-4 mr-1" /> Expenses</TabsTrigger>
           <TabsTrigger value="recurring"><RefreshCw className="h-4 w-4 mr-1" /> Recurring</TabsTrigger>
           <TabsTrigger value="profit"><PieChart className="h-4 w-4 mr-1" /> Profit</TabsTrigger>
+          <TabsTrigger value="forecast"><Brain className="h-4 w-4 mr-1" /> AI Forecast</TabsTrigger>
+          <TabsTrigger value="sync"><Zap className="h-4 w-4 mr-1" /> Sync Logs</TabsTrigger>
         </TabsList>
 
         {/* Overview */}
@@ -404,7 +461,7 @@ const FinanceDashboardPage = () => {
                     <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                       <Cell fill="hsl(var(--primary))" />
                       <Cell fill="hsl(var(--destructive))" />
-                      <Cell fill="hsl(var(--success))" />
+                      <Cell fill="hsl(var(--success, 152 60% 42%))" />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -423,15 +480,161 @@ const FinanceDashboardPage = () => {
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-border">
                   <span className="text-muted-foreground">Net Profit</span>
-                  <span className={`font-bold text-xl ${grossProfit >= 0 ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]"}`}>{fmt(grossProfit)}</span>
+                  <span className={`font-bold text-xl ${grossProfit >= 0 ? "text-[hsl(152,60%,42%)]" : "text-[hsl(var(--destructive))]"}`}>{fmt(grossProfit)}</span>
                 </div>
                 <div className="flex justify-between items-center py-2">
                   <span className="text-muted-foreground">Profit Margin</span>
-                  <span className={`font-bold text-xl ${profitMargin >= 0 ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]"}`}>{profitMargin.toFixed(1)}%</span>
+                  <span className={`font-bold text-xl ${profitMargin >= 0 ? "text-[hsl(152,60%,42%)]" : "text-[hsl(var(--destructive))]"}`}>{profitMargin.toFixed(1)}%</span>
                 </div>
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* AI Forecast */}
+        <TabsContent value="forecast">
+          <div className="space-y-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">AI Financial Forecasting</CardTitle>
+                <Button size="sm" onClick={handleRunForecast} disabled={forecasting}>
+                  <Brain className={`h-4 w-4 mr-1 ${forecasting ? "animate-pulse" : ""}`} />
+                  {forecasting ? "Analyzing…" : "Generate Forecast"}
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {forecast ? (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <Card className="bg-muted/50">
+                        <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">3-Month Forecast</CardTitle></CardHeader>
+                        <CardContent><p className="text-2xl font-bold">{fmt(forecast.forecast_3m || 0)}</p></CardContent>
+                      </Card>
+                      <Card className="bg-muted/50">
+                        <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">6-Month Forecast</CardTitle></CardHeader>
+                        <CardContent><p className="text-2xl font-bold">{fmt(forecast.forecast_6m || 0)}</p></CardContent>
+                      </Card>
+                      <Card className="bg-muted/50">
+                        <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">12-Month Forecast</CardTitle></CardHeader>
+                        <CardContent><p className="text-2xl font-bold">{fmt(forecast.forecast_12m || 0)}</p></CardContent>
+                      </Card>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <Card className="bg-muted/50">
+                        <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Projected MRR (3m)</CardTitle></CardHeader>
+                        <CardContent><p className="text-xl font-bold">{fmt(forecast.projected_mrr_3m || 0)}</p></CardContent>
+                      </Card>
+                      <Card className="bg-muted/50">
+                        <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Projected Clients (3m)</CardTitle></CardHeader>
+                        <CardContent><p className="text-xl font-bold">{forecast.projected_client_count_3m || 0}</p></CardContent>
+                      </Card>
+                      <Card className="bg-muted/50">
+                        <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Growth Trend</CardTitle></CardHeader>
+                        <CardContent>
+                          <Badge variant={forecast.growth_trend === "increasing" ? "default" : forecast.growth_trend === "declining" ? "destructive" : "secondary"} className="text-sm">
+                            {forecast.growth_trend === "increasing" ? "↑" : forecast.growth_trend === "declining" ? "↓" : "→"} {forecast.growth_trend || "N/A"}
+                          </Badge>
+                          {forecast.confidence_score && (
+                            <p className="text-xs text-muted-foreground mt-1">Confidence: {forecast.confidence_score}%</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {forecast.department_forecasts && Object.keys(forecast.department_forecasts).length > 0 && (
+                      <Card>
+                        <CardHeader><CardTitle className="text-sm">Department Revenue Forecasts (3m)</CardTitle></CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {Object.entries(forecast.department_forecasts).map(([dept, val]: [string, any]) => (
+                              <div key={dept} className="p-3 rounded-lg bg-muted/30 border border-border">
+                                <p className="text-xs text-muted-foreground">{dept}</p>
+                                <p className="text-lg font-semibold">{fmt(val)}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {(forecast.risk_factors?.length > 0 || forecast.opportunities?.length > 0) && (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {forecast.risk_factors?.length > 0 && (
+                          <Card className="border-[hsl(var(--destructive))]/20">
+                            <CardHeader><CardTitle className="text-sm text-[hsl(var(--destructive))]">⚠ Risk Factors</CardTitle></CardHeader>
+                            <CardContent>
+                              <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                                {forecast.risk_factors.map((r: string, i: number) => <li key={i}>{r}</li>)}
+                              </ul>
+                            </CardContent>
+                          </Card>
+                        )}
+                        {forecast.opportunities?.length > 0 && (
+                          <Card className="border-[hsl(152,60%,42%)]/20">
+                            <CardHeader><CardTitle className="text-sm text-[hsl(152,60%,42%)]">✦ Opportunities</CardTitle></CardHeader>
+                            <CardContent>
+                              <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                                {forecast.opportunities.map((o: string, i: number) => <li key={i}>{o}</li>)}
+                              </ul>
+                            </CardContent>
+                          </Card>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Brain className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                    <p className="text-lg font-medium mb-2">AI Financial Forecasting</p>
+                    <p className="text-sm mb-4">Analyze historical invoice data to forecast revenue, recurring revenue, department growth, and client trends.</p>
+                    <Button onClick={handleRunForecast} disabled={forecasting}>
+                      {forecasting ? "Analyzing…" : "Generate Forecast"}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Sync Logs */}
+        <TabsContent value="sync">
+          <Card>
+            <CardHeader><CardTitle className="text-base">Xero Sync Logs</CardTitle></CardHeader>
+            <CardContent>
+              {syncLogs.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Records</TableHead>
+                      <TableHead>Error</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {syncLogs.map((log: any) => (
+                      <TableRow key={log.id}>
+                        <TableCell className="text-sm">{log.created_at ? format(new Date(log.created_at), "dd MMM yyyy HH:mm") : "—"}</TableCell>
+                        <TableCell className="capitalize">{log.sync_type || "full"}</TableCell>
+                        <TableCell>
+                          <Badge variant={log.status === "success" ? "default" : log.status === "partial" ? "secondary" : "destructive"}>
+                            {log.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{log.records_synced || 0}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">{log.error_message || "—"}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p className="text-muted-foreground py-8 text-center">No sync logs yet. Connect Xero and run a sync.</p>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
