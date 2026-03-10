@@ -139,6 +139,11 @@ import HRTaskTrackingPage from "./pages/HRTaskTrackingPage";
 import HRAnalyticsDashboardPage from "./pages/HRAnalyticsDashboardPage";
 import EmployeeSelfServicePage from "./pages/EmployeeSelfServicePage";
 import ManagerDashboardPage from "./pages/ManagerDashboardPage";
+import AgencyCommandCenterPage from "./pages/AgencyCommandCenterPage";
+import ClientProjectsPage from "./pages/ClientProjectsPage";
+import TaskPipelinePage from "./pages/TaskPipelinePage";
+import WorkloadMonitorPage from "./pages/WorkloadMonitorPage";
+import SLAMonitorPage from "./pages/SLAMonitorPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
