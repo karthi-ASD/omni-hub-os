@@ -3255,6 +3255,7 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          slug: string | null
           status: Database["public"]["Enums"]["business_status"]
           updated_at: string
         }
@@ -3264,6 +3265,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          slug?: string | null
           status?: Database["public"]["Enums"]["business_status"]
           updated_at?: string
         }
@@ -3273,6 +3275,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          slug?: string | null
           status?: Database["public"]["Enums"]["business_status"]
           updated_at?: string
         }
@@ -14907,6 +14910,15 @@ export type Database = {
     }
     Functions: {
       get_user_business_id: { Args: { _user_id: string }; Returns: string }
+      handle_company_signup: {
+        Args: {
+          _business_slug: string
+          _email: string
+          _full_name: string
+          _user_id: string
+        }
+        Returns: string
+      }
       handle_signup: {
         Args: { _business_name: string; _email: string; _user_id: string }
         Returns: string
