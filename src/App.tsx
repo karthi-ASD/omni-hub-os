@@ -132,6 +132,12 @@ import StaffMobileAppPage from "./pages/StaffMobileAppPage";
 import HRDepartmentsPage from "./pages/HRDepartmentsPage";
 import HREmployeeListPage from "./pages/HREmployeeListPage";
 import HREmployeeProfilePage from "./pages/HREmployeeProfilePage";
+import HRLeaveManagementPage from "./pages/HRLeaveManagementPage";
+import HRPayrollPage from "./pages/HRPayrollPage";
+import HRPerformancePage from "./pages/HRPerformancePage";
+import HRTaskTrackingPage from "./pages/HRTaskTrackingPage";
+import HRAnalyticsDashboardPage from "./pages/HRAnalyticsDashboardPage";
+import EmployeeSelfServicePage from "./pages/EmployeeSelfServicePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
