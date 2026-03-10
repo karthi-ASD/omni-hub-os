@@ -93,6 +93,7 @@ import UsageAnalyticsPage from "./pages/UsageAnalyticsPage";
 import DemoModePage from "./pages/DemoModePage";
 import RevenueIntelligencePage from "./pages/RevenueIntelligencePage";
 import FinanceDashboardPage from "./pages/FinanceDashboardPage";
+import ClientBillingPortalPage from "./pages/ClientBillingPortalPage";
 import ActivityTimelinePage from "./pages/ActivityTimelinePage";
 import GovernanceDashboardPage from "./pages/GovernanceDashboardPage";
 import TasksPage from "./pages/TasksPage";
