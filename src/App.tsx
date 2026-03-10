@@ -144,6 +144,8 @@ import ClientProjectsPage from "./pages/ClientProjectsPage";
 import TaskPipelinePage from "./pages/TaskPipelinePage";
 import WorkloadMonitorPage from "./pages/WorkloadMonitorPage";
 import SLAMonitorPage from "./pages/SLAMonitorPage";
+import CompanyLoginPage from "./pages/CompanyLoginPage";
+import CompanySignupPage from "./pages/CompanySignupPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
