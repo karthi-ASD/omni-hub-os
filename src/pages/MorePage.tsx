@@ -350,6 +350,7 @@ const hrManagerSections: MenuSection[] = [
     description: "All employees across every department",
     items: [
       { label: "Employee Dir.", icon: Users, to: "/hr/employees" },
+      { label: "Add Employee", icon: UserPlus, to: "/hr/employees" },
       { label: "Departments", icon: Building2, to: "/hr/departments" },
       { label: "Org Chart", icon: Network, to: "/org-chart" },
       { label: "Workforce", icon: UserCog, to: "/workforce" },
