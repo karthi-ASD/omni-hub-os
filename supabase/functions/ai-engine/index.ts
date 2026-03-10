@@ -1232,6 +1232,138 @@ serve(async (req) => {
       }];
       toolChoice = { type: "function", function: { name: "draft_email" } };
 
+    } else if (task_type === "autonomous_seo_audit") {
+      systemPrompt = `You are an expert SEO auditor. Analyze the provided website domain and business context to generate a comprehensive SEO audit. Detect issues across: title tags, meta descriptions, H1 tags, internal/external links, alt text, page speed, content depth, orphan pages, indexing, sitemap, robots.txt, schema, mobile usability, and Core Web Vitals. Return a health score (0-100) and detailed issues list.`;
+      userPrompt = `Run an SEO audit for:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function", function: {
+          name: "seo_audit_results", description: "Return SEO audit results",
+          parameters: { type: "object", properties: {
+            health_score: { type: "number", description: "Overall SEO health 0-100" },
+            issues: { type: "array", items: { type: "object", properties: {
+              issue: { type: "string" }, category: { type: "string" },
+              severity: { type: "string", enum: ["low", "medium", "high", "critical"] },
+              affected_pages: { type: "number" }, suggested_action: { type: "string" },
+            }, required: ["issue", "category", "severity", "suggested_action"], additionalProperties: false } },
+            summary: { type: "string" },
+          }, required: ["health_score", "issues", "summary"], additionalProperties: false },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "seo_audit_results" } };
+
+    } else if (task_type === "autonomous_keyword_cluster") {
+      systemPrompt = `You are an expert SEO keyword researcher. Generate comprehensive keyword clusters for the provided business niche and location. Create clusters for: services, locations/suburbs, blog topics, competitor gaps, and transactional queries. Each cluster should have a primary keyword, secondary keywords, long-tail variations, search intent, and suggested page type.`;
+      userPrompt = `Generate keyword clusters for:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function", function: {
+          name: "keyword_clusters", description: "Return keyword clusters",
+          parameters: { type: "object", properties: {
+            clusters: { type: "array", items: { type: "object", properties: {
+              cluster_name: { type: "string" }, cluster_type: { type: "string", enum: ["service", "location", "blog", "competitor_gap", "transactional"] },
+              primary_keyword: { type: "string" }, keywords: { type: "array", items: { type: "string" } },
+              search_intent: { type: "string", enum: ["transactional", "informational", "navigational", "commercial"] },
+              suggested_page_type: { type: "string" }, priority: { type: "string", enum: ["low", "medium", "high"] },
+            }, required: ["cluster_name", "cluster_type", "primary_keyword", "keywords"], additionalProperties: false } },
+          }, required: ["clusters"], additionalProperties: false },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "keyword_clusters" } };
+
+    } else if (task_type === "autonomous_content_brief") {
+      systemPrompt = `You are an expert SEO content strategist. Generate a detailed content brief for the provided target keyword and page type. Include: recommended title, secondary keywords, search intent analysis, H2/H3 headings, page structure, internal link suggestions, CTA recommendations, word count, and schema markup recommendations.`;
+      userPrompt = `Generate a content brief for:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function", function: {
+          name: "content_brief", description: "Return content brief",
+          parameters: { type: "object", properties: {
+            recommended_title: { type: "string" }, secondary_keywords: { type: "array", items: { type: "string" } },
+            search_intent: { type: "string" }, headings: { type: "array", items: { type: "object", properties: {
+              level: { type: "string", enum: ["h2", "h3"] }, text: { type: "string" }, notes: { type: "string" },
+            }, required: ["level", "text"], additionalProperties: false } },
+            structure: { type: "object", properties: {
+              intro: { type: "string" }, sections: { type: "array", items: { type: "string" } }, cta: { type: "string" },
+            }, additionalProperties: false },
+            word_count: { type: "number" }, schema_recommendation: { type: "string" },
+            internal_links: { type: "array", items: { type: "string" } },
+          }, required: ["recommended_title", "secondary_keywords", "headings", "word_count"], additionalProperties: false },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "content_brief" } };
+
+    } else if (task_type === "autonomous_blog_draft") {
+      systemPrompt = `You are an expert SEO content writer. Write a complete, SEO-optimized blog post or page draft based on the provided keyword and specifications. Include: engaging title, meta title, meta description, full article content with proper heading structure, natural keyword integration, and compelling CTAs. The content must be original, informative, and ready for editorial review.`;
+      userPrompt = `Write a blog draft for:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function", function: {
+          name: "blog_draft", description: "Return blog draft",
+          parameters: { type: "object", properties: {
+            title: { type: "string" }, meta_title: { type: "string" }, meta_description: { type: "string" },
+            content: { type: "string", description: "Full article in markdown" },
+            word_count: { type: "number" },
+          }, required: ["title", "meta_title", "meta_description", "content", "word_count"], additionalProperties: false },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "blog_draft" } };
+
+    } else if (task_type === "autonomous_outreach") {
+      systemPrompt = `You are an expert link builder and outreach strategist. Based on the provided niche, identify 5-10 realistic backlink outreach prospects. For each, provide: domain name, category (guest_post, directory, local_citation, niche_edit, partnership), quality score, relevance score, suggested anchor text, and target URL. Focus on realistic, achievable opportunities.`;
+      userPrompt = `Find outreach prospects for:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function", function: {
+          name: "outreach_prospects", description: "Return outreach prospects",
+          parameters: { type: "object", properties: {
+            prospects: { type: "array", items: { type: "object", properties: {
+              domain: { type: "string" }, category: { type: "string", enum: ["guest_post", "directory", "local_citation", "niche_edit", "partnership"] },
+              quality_score: { type: "number" }, relevance_score: { type: "number" },
+              contact_email: { type: "string" }, anchor_text: { type: "string" }, target_url: { type: "string" },
+            }, required: ["domain", "category", "quality_score", "relevance_score"], additionalProperties: false } },
+          }, required: ["prospects"], additionalProperties: false },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "outreach_prospects" } };
+
+    } else if (task_type === "autonomous_social_post") {
+      systemPrompt = `You are a social media content expert for a digital agency. Generate 3-5 engaging social media posts for the specified platform, content type, and topic. Each post should include: platform-optimized caption, relevant hashtags, image brief description, and a CTA. Tailor tone and format to the platform (short for Twitter, professional for LinkedIn, visual for Instagram).`;
+      userPrompt = `Generate social posts for:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function", function: {
+          name: "social_posts", description: "Return social posts",
+          parameters: { type: "object", properties: {
+            posts: { type: "array", items: { type: "object", properties: {
+              platform: { type: "string" }, caption: { type: "string" },
+              hashtags: { type: "array", items: { type: "string" } },
+              image_brief: { type: "string" }, cta: { type: "string" },
+            }, required: ["platform", "caption"], additionalProperties: false } },
+          }, required: ["posts"], additionalProperties: false },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "social_posts" } };
+
+    } else if (task_type === "autonomous_competitor_analysis") {
+      systemPrompt = `You are an expert SEO competitive analyst. Analyze the competitor domain and compare it against the client domain. Identify: keyword gaps (keywords competitor ranks for but client doesn't), content gaps (topics/pages competitor has), backlink opportunities, and actionable recommendations. Provide a structured analysis with clear opportunities.`;
+      userPrompt = `Analyze competitor:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function", function: {
+          name: "competitor_analysis", description: "Return competitor analysis",
+          parameters: { type: "object", properties: {
+            overview: { type: "object", properties: {
+              strengths: { type: "array", items: { type: "string" } },
+              weaknesses: { type: "array", items: { type: "string" } },
+            }, additionalProperties: false },
+            keyword_gaps: { type: "array", items: { type: "object", properties: {
+              keyword: { type: "string" }, estimated_volume: { type: "number" }, difficulty: { type: "string" },
+            }, required: ["keyword"], additionalProperties: false } },
+            content_gaps: { type: "array", items: { type: "object", properties: {
+              topic: { type: "string" }, page_type: { type: "string" }, priority: { type: "string" },
+            }, required: ["topic"], additionalProperties: false } },
+            opportunities: { type: "array", items: { type: "object", properties: {
+              recommendation: { type: "string" }, category: { type: "string" }, impact: { type: "string" },
+            }, required: ["recommendation"], additionalProperties: false } },
+          }, required: ["keyword_gaps", "content_gaps", "opportunities"], additionalProperties: false },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "competitor_analysis" } };
+
     } else {
       return new Response(JSON.stringify({ error: "Unknown task_type" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },

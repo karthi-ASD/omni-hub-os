@@ -161,7 +161,7 @@ const superAdminSections: MenuSection[] = [
       { label: "AI Learning", icon: BookOpen, to: "/ai-learning" },
       { label: "AI Intelligence", icon: Brain, to: "/ai-intelligence" },
       { label: "AI Insights", icon: Sparkles, to: "/ai-insights" },
-      { label: "AI Agents", icon: Bot, to: "/autonomous-agents" },
+      { label: "Autonomous Agency", icon: Bot, to: "/autonomous-agents" },
       { label: "AI Voice", icon: Phone, to: "/ai-voice-agents" },
       { label: "Agent Factory", icon: Factory, to: "/agent-factory" },
       { label: "Voice Agent", icon: PhoneCall, to: "/voice-agent" },
