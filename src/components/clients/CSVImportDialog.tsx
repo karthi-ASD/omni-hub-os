@@ -23,6 +23,8 @@ const FIELD_MAP: Record<string, string> = {
   "PORegion": "state",
   "POCountry": "country",
   "POAddressLine1": "address",
+  "FirstName": "first_name",
+  "LastName": "last_name",
 };
 
 function parseCSV(text: string): Record<string, string>[] {
@@ -54,6 +56,14 @@ function mapRow(csvRow: Record<string, string>): Record<string, string> {
   const addrParts = [csvRow["POAddressLine1"], csvRow["POAddressLine2"], csvRow["POAddressLine3"], csvRow["POAddressLine4"]].filter(Boolean);
   if (addrParts.length > 0) {
     mapped["address"] = addrParts.join(", ");
+  }
+  // Fallback: if no contact_name, build from first+last
+  if (!mapped["contact_name"] && (mapped["first_name"] || mapped["last_name"])) {
+    mapped["contact_name"] = [mapped["first_name"], mapped["last_name"]].filter(Boolean).join(" ");
+  }
+  // Use contact_name from *ContactName column (Xero uses asterisk prefix)
+  if (!mapped["contact_name"] && csvRow["*ContactName"]) {
+    mapped["contact_name"] = csvRow["*ContactName"];
   }
   return mapped;
 }
@@ -107,10 +117,19 @@ const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ open, onOpenChange, o
           company_name: r.contact_name || null,
         }));
         
-        const { error } = await supabase.from("clients").insert(batch as any);
+        // Use upsert with onConflict to skip duplicates by email
+        const { data: insertedData, error } = await supabase.from("clients").upsert(batch as any, { onConflict: 'email,business_id', ignoreDuplicates: true });
         if (error) {
           console.error("Batch error:", error);
-          skipped += batch.length;
+          // Fallback: insert one by one to skip only failures
+          for (const row of batch) {
+            const { error: singleErr } = await supabase.from("clients").insert(row as any);
+            if (singleErr) {
+              skipped++;
+            } else {
+              imported++;
+            }
+          }
         } else {
           imported += batch.length;
         }

@@ -3487,6 +3487,64 @@ export type Database = {
           },
         ]
       }
+      client_pipeline_stages: {
+        Row: {
+          business_id: string
+          client_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          seo_project_id: string | null
+          stage_name: string
+          stage_order: number
+          status: string
+        }
+        Insert: {
+          business_id: string
+          client_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          seo_project_id?: string | null
+          stage_name: string
+          stage_order?: number
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          seo_project_id?: string | null
+          stage_name?: string
+          stage_order?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_pipeline_stages_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_pipeline_stages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_pipeline_stages_seo_project_id_fkey"
+            columns: ["seo_project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_profiles: {
         Row: {
           address_json: Json | null
