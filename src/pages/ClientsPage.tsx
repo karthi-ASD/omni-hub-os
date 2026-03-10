@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Plus, Mail, Phone, Building2, Search, ChevronRight } from "lucide-react";
+import { Users, Plus, Mail, Phone, Building2, Search, ChevronRight, Upload } from "lucide-react";
+import CSVImportDialog from "@/components/clients/CSVImportDialog";
 
 const onboardingColors: Record<string, string> = {
   pending: "bg-amber-500/10 text-amber-600",
@@ -17,8 +18,9 @@ const onboardingColors: Record<string, string> = {
 };
 
 const ClientsPage = () => {
-  const { clients, loading, createClient, updateOnboardingStatus } = useClients();
+  const { clients, loading, createClient, updateOnboardingStatus, refetch } = useClients();
   const [createOpen, setCreateOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState({ contact_name: "", email: "", phone: "", company_name: "", address: "" });
 
@@ -53,9 +55,14 @@ const ClientsPage = () => {
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" /> Clients
         </h1>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" /> New
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+            <Upload className="h-4 w-4 mr-1" /> Import
+          </Button>
+          <Button size="sm" onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" /> New
+          </Button>
+        </div>
       </div>
 
       {/* Summary chips */}
@@ -148,6 +155,8 @@ const ClientsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CSVImportDialog open={importOpen} onOpenChange={setImportOpen} onComplete={refetch} />
     </div>
   );
 };

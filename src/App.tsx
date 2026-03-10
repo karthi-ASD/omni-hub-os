@@ -150,6 +150,8 @@ import WorkloadMonitorPage from "./pages/WorkloadMonitorPage";
 import SLAMonitorPage from "./pages/SLAMonitorPage";
 import CompanyLoginPage from "./pages/CompanyLoginPage";
 import CompanySignupPage from "./pages/CompanySignupPage";
+import DepartmentSignupPage from "./pages/DepartmentSignupPage";
+import ClientLoginPage from "./pages/ClientLoginPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -165,6 +167,7 @@ const App = () => (
             {/* Public routes */}
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/admin" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
@@ -183,6 +186,8 @@ const App = () => (
             <Route path="/automation" element={<AutomationPage />} />
             <Route path="/company/:slug/login" element={<CompanyLoginPage />} />
             <Route path="/company/:slug/signup" element={<CompanySignupPage />} />
+            <Route path="/company/:slug/:department" element={<DepartmentSignupPage />} />
+            <Route path="/client/login" element={<ClientLoginPage />} />
 
             {/* Protected app shell */}
             <Route
