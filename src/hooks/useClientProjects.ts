@@ -22,18 +22,16 @@ export function useClientProjects() {
   const fetch = useCallback(async () => {
     if (!profile?.business_id) return;
     setLoading(true);
-    const [pRes, dRes] = await Promise.all([
-      supabase
-        .from("client_projects" as any)
-        .select("*, departments(name)")
-        .eq("business_id", profile.business_id)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("departments")
-        .select("id, name")
-        .eq("business_id", profile.business_id)
-        .eq("is_active", true),
-    ]);
+    const pRes = await supabase
+      .from("client_projects" as any)
+      .select("*, departments(name)")
+      .eq("business_id", profile.business_id)
+      .order("created_at", { ascending: false });
+    const dRes = await supabase
+      .from("departments")
+      .select("id, name")
+      .eq("business_id", profile.business_id)
+      .eq("is_active", true);
     setProjects((pRes.data as any[]) ?? []);
     setDepartments((dRes.data as any[]) ?? []);
     setLoading(false);
