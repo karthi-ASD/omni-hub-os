@@ -58,10 +58,14 @@ const StepPreview: React.FC<Props> = ({ validatedRows }) => {
                   <td className="p-2">{r.data.phone || r.data.mobile || "—"}</td>
                   <td className="p-2">{r.data.city || "—"}</td>
                   <td className="p-2">
-                    {r.errors.length > 0 ? (
-                      <Badge variant="destructive" className="text-[9px] px-1">Error</Badge>
+                    {r.isValid ? (
+                      r.errors.length > 0 ? (
+                        <Badge className="bg-amber-500/10 text-amber-600 text-[9px] px-1">Warn</Badge>
+                      ) : (
+                        <Badge className="bg-green-500/10 text-green-600 text-[9px] px-1">OK</Badge>
+                      )
                     ) : (
-                      <Badge className="bg-green-500/10 text-green-600 text-[9px] px-1">OK</Badge>
+                      <Badge variant="destructive" className="text-[9px] px-1">Skip</Badge>
                     )}
                   </td>
                 </tr>
