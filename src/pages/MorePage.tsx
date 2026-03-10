@@ -33,10 +33,14 @@ const superAdminSections: MenuSection[] = [
     description: "Overall platform health and activity",
     items: [
       { label: "Dashboard", icon: BarChart3, to: "/dashboard" },
+      { label: "Admin Ops", icon: Gauge, to: "/admin-operations" },
       { label: "Activity Timeline", icon: Activity, to: "/activity-timeline" },
       { label: "Notifications", icon: Bell, to: "/notifications" },
       { label: "Calendar", icon: Calendar, to: "/calendar" },
       { label: "Analytics", icon: BarChart2, to: "/analytics" },
+      { label: "Daily Reports", icon: FileBarChart, to: "/daily-work-reports" },
+      { label: "Employee Monitor", icon: Eye, to: "/employee-activity-monitor" },
+      { label: "Dept Performance", icon: TrendingUp, to: "/department-performance" },
     ],
   },
   {
