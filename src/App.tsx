@@ -154,6 +154,7 @@ import TaskPipelinePage from "./pages/TaskPipelinePage";
 import TaskDetailPage from "./pages/TaskDetailPage";
 import TeamHierarchyPage from "./pages/TeamHierarchyPage";
 import CrossDeptRequestsPage from "./pages/CrossDeptRequestsPage";
+import DepartmentDashboardPage from "./pages/DepartmentDashboardPage";
 import WorkloadMonitorPage from "./pages/WorkloadMonitorPage";
 import SLAMonitorPage from "./pages/SLAMonitorPage";
 import CompanyLoginPage from "./pages/CompanyLoginPage";
