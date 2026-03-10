@@ -24,8 +24,8 @@ export function useSeoAiRecommendations(projectId?: string) {
   const fetch = useCallback(async () => {
     if (!projectId) { setRecommendations([]); setLoading(false); return; }
     setLoading(true);
-    const { data } = await supabase
-      .from("seo_ai_recommendations")
+    const { data } = await (supabase
+      .from("seo_ai_recommendations") as any)
       .select("*")
       .eq("seo_project_id", projectId)
       .order("created_at", { ascending: false });
