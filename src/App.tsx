@@ -159,6 +159,10 @@ import WorkflowMapPage from "./pages/WorkflowMapPage";
 import WorkloadMonitorPage from "./pages/WorkloadMonitorPage";
 import SLAMonitorPage from "./pages/SLAMonitorPage";
 import AccountTimelinePage from "./pages/AccountTimelinePage";
+import AdminOperationsDashboardPage from "./pages/AdminOperationsDashboardPage";
+import DailyWorkReportsPage from "./pages/DailyWorkReportsPage";
+import EmployeeActivityMonitorPage from "./pages/EmployeeActivityMonitorPage";
+import DepartmentPerformancePage from "./pages/DepartmentPerformancePage";
 import CompanyLoginPage from "./pages/CompanyLoginPage";
 import CompanySignupPage from "./pages/CompanySignupPage";
 import DepartmentSignupPage from "./pages/DepartmentSignupPage";
@@ -446,6 +450,16 @@ const App = () => (
               <Route path="/dept-dashboard" element={<DepartmentDashboardPage />} />
               <Route path="/workflow-map" element={<WorkflowMapPage />} />
               <Route path="/account-timeline" element={<AccountTimelinePage />} />
+              <Route path="/admin-operations" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AdminOperationsDashboardPage /></ProtectedRoute>
+              } />
+              <Route path="/daily-work-reports" element={<DailyWorkReportsPage />} />
+              <Route path="/employee-activity-monitor" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><EmployeeActivityMonitorPage /></ProtectedRoute>
+              } />
+              <Route path="/department-performance" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><DepartmentPerformancePage /></ProtectedRoute>
+              } />
               <Route path="/workload-monitor" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><WorkloadMonitorPage /></ProtectedRoute>
               } />
