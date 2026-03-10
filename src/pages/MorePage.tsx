@@ -99,6 +99,7 @@ const superAdminSections: MenuSection[] = [
       { label: "SEO Engine", icon: Globe, to: "/seo" },
       { label: "SEO Projects", icon: FolderKanban, to: "/seo-ops" },
       { label: "SEO Team", icon: Users, to: "/seo-team" },
+      { label: "SEO Intel", icon: Sparkles, to: "/seo-ops" },
       { label: "Marketing", icon: Megaphone, to: "/marketing" },
       { label: "Geo Engine", icon: Map, to: "/geo-engine" },
       { label: "Competitive Intel", icon: TargetIcon, to: "/competitive-intel" },
