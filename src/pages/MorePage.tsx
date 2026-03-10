@@ -4,7 +4,7 @@ import {
   MessageSquare, FolderKanban, FileText, Briefcase, Receipt, BarChart3,
   PieChart, Globe, Mail, TrendingUp, Brain, Bot, Store, Calendar, Clock,
   Shield, Settings, LogOut, Users, Building2, Activity, Palette, Megaphone,
-  UserCog, CalendarDays, Ticket, Phone, DollarSign,
+  UserCog, CalendarDays, Ticket, Phone, DollarSign, UserPlus,
   Sparkles, MessageCircle, Plug, ShieldCheck, Factory, PhoneCall, Zap, Workflow, Inbox,
   Route, CreditCard, Gauge, Eye, Server, Landmark, Scale, Map, Target as TargetIcon,
   Rocket, GitBranch, Trophy, Layers, Umbrella, BarChart2, BookOpen, Lock, Cpu,
@@ -138,6 +138,7 @@ const superAdminSections: MenuSection[] = [
     items: [
       { label: "Departments", icon: Building2, to: "/hr/departments" },
       { label: "Employee Dir.", icon: Users, to: "/hr/employees" },
+      { label: "Add Employee", icon: UserPlus, to: "/hr/employees" },
       { label: "Leave Mgmt", icon: CalendarDays, to: "/hr/leave" },
       { label: "Payroll", icon: DollarSign, to: "/hr/payroll" },
       { label: "Performance", icon: Trophy, to: "/hr/performance" },
@@ -286,6 +287,7 @@ const tenantAdminSections: MenuSection[] = [
     items: [
       { label: "Departments", icon: Building2, to: "/hr/departments" },
       { label: "Employee Dir.", icon: Users, to: "/hr/employees" },
+      { label: "Add Employee", icon: UserPlus, to: "/hr/employees" },
       { label: "Leave Mgmt", icon: CalendarDays, to: "/hr/leave" },
       { label: "Payroll", icon: DollarSign, to: "/hr/payroll" },
       { label: "Performance", icon: Trophy, to: "/hr/performance" },
@@ -348,6 +350,7 @@ const hrManagerSections: MenuSection[] = [
     description: "All employees across every department",
     items: [
       { label: "Employee Dir.", icon: Users, to: "/hr/employees" },
+      { label: "Add Employee", icon: UserPlus, to: "/hr/employees" },
       { label: "Departments", icon: Building2, to: "/hr/departments" },
       { label: "Org Chart", icon: Network, to: "/org-chart" },
       { label: "Workforce", icon: UserCog, to: "/workforce" },
