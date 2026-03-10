@@ -155,6 +155,8 @@ const ClientsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CSVImportDialog open={importOpen} onOpenChange={setImportOpen} onComplete={refetch} />
     </div>
   );
 };
