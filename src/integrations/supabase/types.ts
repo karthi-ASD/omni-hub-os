@@ -5953,6 +5953,89 @@ export type Database = {
           },
         ]
       }
+      daily_work_reports: {
+        Row: {
+          business_id: string
+          calls_made: number | null
+          created_at: string
+          deals_closed: number | null
+          demos_done: number | null
+          department_id: string | null
+          employee_id: string
+          id: string
+          leads_handled: number | null
+          meetings_conducted: number | null
+          notes: string | null
+          proposals_sent: number | null
+          report_date: string
+          status: string | null
+          submitted_at: string | null
+          tasks_assigned: number | null
+          tasks_completed: number | null
+          tasks_pending: number | null
+          tickets_created: number | null
+          tickets_handled: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          business_id: string
+          calls_made?: number | null
+          created_at?: string
+          deals_closed?: number | null
+          demos_done?: number | null
+          department_id?: string | null
+          employee_id: string
+          id?: string
+          leads_handled?: number | null
+          meetings_conducted?: number | null
+          notes?: string | null
+          proposals_sent?: number | null
+          report_date?: string
+          status?: string | null
+          submitted_at?: string | null
+          tasks_assigned?: number | null
+          tasks_completed?: number | null
+          tasks_pending?: number | null
+          tickets_created?: number | null
+          tickets_handled?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          calls_made?: number | null
+          created_at?: string
+          deals_closed?: number | null
+          demos_done?: number | null
+          department_id?: string | null
+          employee_id?: string
+          id?: string
+          leads_handled?: number | null
+          meetings_conducted?: number | null
+          notes?: string | null
+          proposals_sent?: number | null
+          report_date?: string
+          status?: string | null
+          submitted_at?: string | null
+          tasks_assigned?: number | null
+          tasks_completed?: number | null
+          tasks_pending?: number | null
+          tickets_created?: number | null
+          tickets_handled?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_work_reports_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       data_requests: {
         Row: {
           business_id: string | null
