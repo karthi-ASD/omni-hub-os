@@ -351,6 +351,7 @@ const managerSections: MenuSection[] = [
       { label: "Client Projects", icon: Briefcase, to: "/client-projects" },
       { label: "Task Pipeline", icon: FolderKanban, to: "/task-pipeline" },
     ],
+  },
   {
     title: "My Work",
     description: "Your tasks, calendar, and reminders",
