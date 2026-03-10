@@ -33,6 +33,7 @@ const superAdminSections: MenuSection[] = [
     description: "Overall platform health and activity",
     items: [
       { label: "Dashboard", icon: BarChart3, to: "/dashboard" },
+      { label: "CEO Dashboard", icon: Brain, to: "/ceo-dashboard" },
       { label: "Admin Ops", icon: Gauge, to: "/admin-operations" },
       { label: "Activity Timeline", icon: Activity, to: "/activity-timeline" },
       { label: "Notifications", icon: Bell, to: "/notifications" },
