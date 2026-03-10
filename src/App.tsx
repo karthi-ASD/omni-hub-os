@@ -129,6 +129,9 @@ import SatisfactionSurveysPage from "./pages/SatisfactionSurveysPage";
 import TicketDetailPage from "./pages/TicketDetailPage";
 import CustomerMobileAppPage from "./pages/CustomerMobileAppPage";
 import StaffMobileAppPage from "./pages/StaffMobileAppPage";
+import HRDepartmentsPage from "./pages/HRDepartmentsPage";
+import HREmployeeListPage from "./pages/HREmployeeListPage";
+import HREmployeeProfilePage from "./pages/HREmployeeProfilePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
