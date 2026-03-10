@@ -57,6 +57,14 @@ function mapRow(csvRow: Record<string, string>): Record<string, string> {
   if (addrParts.length > 0) {
     mapped["address"] = addrParts.join(", ");
   }
+  // Fallback: if no contact_name, build from first+last
+  if (!mapped["contact_name"] && (mapped["first_name"] || mapped["last_name"])) {
+    mapped["contact_name"] = [mapped["first_name"], mapped["last_name"]].filter(Boolean).join(" ");
+  }
+  // Use contact_name from *ContactName column (Xero uses asterisk prefix)
+  if (!mapped["contact_name"] && csvRow["*ContactName"]) {
+    mapped["contact_name"] = csvRow["*ContactName"];
+  }
   return mapped;
 }
 
