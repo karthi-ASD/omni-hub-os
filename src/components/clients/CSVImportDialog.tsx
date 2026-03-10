@@ -27,15 +27,47 @@ const FIELD_MAP: Record<string, string> = {
   "LastName": "last_name",
 };
 
+function parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let current = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (i + 1 < line.length && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        current += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',') {
+        result.push(current.trim());
+        current = "";
+      } else {
+        current += ch;
+      }
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
+
 function parseCSV(text: string): Record<string, string>[] {
   const lines = text.split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) return [];
   
-  const headers = lines[0].split(",");
+  const headers = parseCSVLine(lines[0]);
   const rows: Record<string, string>[] = [];
   
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(",");
+    const values = parseCSVLine(lines[i]);
     const row: Record<string, string> = {};
     headers.forEach((h, idx) => {
       row[h.trim()] = (values[idx] || "").trim();
@@ -100,7 +132,7 @@ const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ open, onOpenChange, o
       
       let imported = 0;
       let skipped = 0;
-      const batchSize = 50;
+      const batchSize = 25;
       
       for (let i = 0; i < mapped.length; i += batchSize) {
         const batch = mapped.slice(i, i + batchSize).map(r => ({
@@ -117,26 +149,20 @@ const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ open, onOpenChange, o
           company_name: r.contact_name || null,
         }));
         
-        // Use upsert with onConflict to skip duplicates by email
-        const { data: insertedData, error } = await supabase.from("clients").upsert(batch as any, { onConflict: 'email,business_id', ignoreDuplicates: true });
-        if (error) {
-          console.error("Batch error:", error);
-          // Fallback: insert one by one to skip only failures
-          for (const row of batch) {
-            const { error: singleErr } = await supabase.from("clients").insert(row as any);
-            if (singleErr) {
-              skipped++;
-            } else {
-              imported++;
-            }
+        // Insert one-by-one to gracefully skip duplicates/errors
+        for (const row of batch) {
+          const { error } = await supabase.from("clients").insert(row as any);
+          if (error) {
+            console.warn("Row skipped:", row.contact_name, error.message);
+            skipped++;
+          } else {
+            imported++;
           }
-        } else {
-          imported += batch.length;
         }
       }
       
       setResult({ imported, skipped });
-      toast.success(`Imported ${imported} clients`);
+      toast.success(`Imported ${imported} clients${skipped > 0 ? `, ${skipped} skipped` : ""}`);
       onComplete();
     } catch (err: any) {
       toast.error("Import failed: " + (err.message || "Unknown error"));
