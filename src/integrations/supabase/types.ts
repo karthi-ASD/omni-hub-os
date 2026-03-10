@@ -14937,6 +14937,7 @@ export type Database = {
         | "manager"
         | "employee"
         | "client"
+        | "hr_manager"
       billing_frequency: "monthly" | "yearly"
       billing_type: "one_time" | "recurring" | "prepaid" | "milestone"
       business_status: "active" | "suspended" | "cancelled"
@@ -15188,6 +15189,7 @@ export const Constants = {
         "manager",
         "employee",
         "client",
+        "hr_manager",
       ],
       billing_frequency: ["monthly", "yearly"],
       billing_type: ["one_time", "recurring", "prepaid", "milestone"],

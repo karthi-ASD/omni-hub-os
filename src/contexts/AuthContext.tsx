@@ -30,6 +30,7 @@ interface AuthContextType {
   hasRole: (role: AppRole) => boolean;
   isSuperAdmin: boolean;
   isBusinessAdmin: boolean;
+  isHRManager: boolean;
   /** All businesses — only populated for super_admin */
   allBusinesses: TenantBusiness[];
   /** Selected tenant for super_admin context switching */
@@ -145,6 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const hasRole = (role: AppRole) => roles.includes(role);
   const isSuperAdmin = hasRole("super_admin");
   const isBusinessAdmin = hasRole("business_admin");
+  const isHRManager = hasRole("hr_manager");
 
   // KEY FIX: For super_admin, override profile.business_id with selected tenant
   // This makes ALL hooks that use profile.business_id work automatically
@@ -160,7 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider value={{
       session, user, profile, roles, loading, signOut,
-      hasRole, isSuperAdmin, isBusinessAdmin,
+      hasRole, isSuperAdmin, isBusinessAdmin, isHRManager,
       allBusinesses, selectedTenantId, selectTenant: setSelectedTenantId,
     }}>
       {children}

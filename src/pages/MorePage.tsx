@@ -332,6 +332,63 @@ const tenantAdminSections: MenuSection[] = [
   },
 ];
 
+const hrManagerSections: MenuSection[] = [
+  {
+    title: "HR Overview",
+    description: "Company-wide HR analytics and workforce insights",
+    items: [
+      { label: "HR Analytics", icon: BarChart2, to: "/hr/analytics" },
+      { label: "Dashboard", icon: BarChart3, to: "/dashboard" },
+      { label: "Notifications", icon: Bell, to: "/notifications" },
+      { label: "Calendar", icon: Calendar, to: "/calendar" },
+    ],
+  },
+  {
+    title: "Employee Management",
+    description: "All employees across every department",
+    items: [
+      { label: "Employee Dir.", icon: Users, to: "/hr/employees" },
+      { label: "Departments", icon: Building2, to: "/hr/departments" },
+      { label: "Org Chart", icon: Network, to: "/org-chart" },
+      { label: "Workforce", icon: UserCog, to: "/workforce" },
+    ],
+  },
+  {
+    title: "Leave & Payroll",
+    description: "Leave approvals, payroll processing, and salary management",
+    items: [
+      { label: "Leave Mgmt", icon: CalendarDays, to: "/hr/leave" },
+      { label: "Payroll", icon: DollarSign, to: "/hr/payroll" },
+    ],
+  },
+  {
+    title: "Performance & Tasks",
+    description: "Reviews, task tracking, and workload monitoring",
+    items: [
+      { label: "Performance", icon: Trophy, to: "/hr/performance" },
+      { label: "HR Tasks", icon: ListChecks, to: "/hr/tasks" },
+      { label: "Workload", icon: BarChart2, to: "/workload-monitor" },
+    ],
+  },
+  {
+    title: "Operations",
+    description: "Client projects and task pipeline",
+    items: [
+      { label: "Client Projects", icon: Briefcase, to: "/client-projects" },
+      { label: "Task Pipeline", icon: FolderKanban, to: "/task-pipeline" },
+    ],
+  },
+  {
+    title: "My Work",
+    description: "Your tasks, calendar, and reminders",
+    items: [
+      { label: "Tasks", icon: ListChecks, to: "/tasks" },
+      { label: "Reminders", icon: Clock, to: "/reminders" },
+      { label: "My HR Portal", icon: UserCog, to: "/my-dashboard" },
+    ],
+  },
+];
+
 const managerSections: MenuSection[] = [
   {
     title: "Department Management",
@@ -428,7 +485,7 @@ const employeeSections: MenuSection[] = [
 ];
 
 const MorePage = () => {
-  const { profile, roles, signOut, isSuperAdmin, isBusinessAdmin, hasRole } = useAuth();
+  const { profile, roles, signOut, isSuperAdmin, isBusinessAdmin, isHRManager, hasRole } = useAuth();
   const navigate = useNavigate();
   const isManager = hasRole("manager");
 
@@ -443,6 +500,8 @@ const MorePage = () => {
     ? superAdminSections
     : isBusinessAdmin
     ? tenantAdminSections
+    : isHRManager
+    ? hrManagerSections
     : isManager
     ? managerSections
     : employeeSections;
