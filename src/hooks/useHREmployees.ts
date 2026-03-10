@@ -112,8 +112,7 @@ export function useHREmployeeDetail(employeeId: string | undefined) {
 
   const addDocument = async (values: Record<string, any>) => {
     if (!employeeId) return;
-    const { profile } = useAuth();
-    await supabase.from("hr_employee_documents").insert([{ ...values, employee_id: employeeId, business_id: values.business_id } as any]);
+    await supabase.from("hr_employee_documents").insert([{ ...values, employee_id: employeeId } as any]);
     fetch();
   };
 
