@@ -25,6 +25,7 @@ const STAGES = [
 
 const TaskPipelinePage = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const projectId = searchParams.get("project") || undefined;
   const { tasksByStatus, loading, create, update } = useProjectTasks(projectId);
   const { projects, departments } = useClientProjects();
