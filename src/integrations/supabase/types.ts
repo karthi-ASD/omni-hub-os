@@ -931,6 +931,68 @@ export type Database = {
           },
         ]
       }
+      ai_autonomous_tasks: {
+        Row: {
+          ai_confidence: number | null
+          approved_at: string | null
+          approved_by_user_id: string | null
+          assigned_department: string | null
+          auto_created: boolean | null
+          business_id: string
+          created_at: string
+          department: string | null
+          description: string | null
+          id: string
+          priority: string
+          source_module: string | null
+          status: string
+          task_type: string
+          title: string
+        }
+        Insert: {
+          ai_confidence?: number | null
+          approved_at?: string | null
+          approved_by_user_id?: string | null
+          assigned_department?: string | null
+          auto_created?: boolean | null
+          business_id: string
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          id?: string
+          priority?: string
+          source_module?: string | null
+          status?: string
+          task_type?: string
+          title: string
+        }
+        Update: {
+          ai_confidence?: number | null
+          approved_at?: string | null
+          approved_by_user_id?: string | null
+          assigned_department?: string | null
+          auto_created?: boolean | null
+          business_id?: string
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          id?: string
+          priority?: string
+          source_module?: string | null
+          status?: string
+          task_type?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_autonomous_tasks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_behavior_patterns: {
         Row: {
           business_id: string
@@ -1048,6 +1110,56 @@ export type Database = {
           },
         ]
       }
+      ai_content_opportunities: {
+        Row: {
+          ai_confidence: number | null
+          business_id: string
+          client_id: string | null
+          competition: string | null
+          created_at: string
+          id: string
+          keyword: string
+          opportunity_type: string
+          recommendation: string | null
+          search_volume: number | null
+          status: string
+        }
+        Insert: {
+          ai_confidence?: number | null
+          business_id: string
+          client_id?: string | null
+          competition?: string | null
+          created_at?: string
+          id?: string
+          keyword: string
+          opportunity_type?: string
+          recommendation?: string | null
+          search_volume?: number | null
+          status?: string
+        }
+        Update: {
+          ai_confidence?: number | null
+          business_id?: string
+          client_id?: string | null
+          competition?: string | null
+          created_at?: string
+          id?: string
+          keyword?: string
+          opportunity_type?: string
+          recommendation?: string | null
+          search_volume?: number | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_content_opportunities_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_conversation_insights: {
         Row: {
           business_id: string
@@ -1156,6 +1268,47 @@ export type Database = {
             foreignKeyName: "ai_cs_feature_settings_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_email_drafts: {
+        Row: {
+          body: string
+          business_id: string
+          client_id: string | null
+          created_at: string
+          draft_type: string
+          id: string
+          status: string
+          subject: string
+        }
+        Insert: {
+          body: string
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          draft_type?: string
+          id?: string
+          status?: string
+          subject: string
+        }
+        Update: {
+          body?: string
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          draft_type?: string
+          id?: string
+          status?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_email_drafts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -7750,6 +7903,110 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "integrations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      internal_ticket_comments: {
+        Row: {
+          business_id: string
+          content: string
+          created_at: string
+          id: string
+          ticket_id: string
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          business_id: string
+          content: string
+          created_at?: string
+          id?: string
+          ticket_id: string
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          business_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          ticket_id?: string
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_ticket_comments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_ticket_comments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "internal_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      internal_tickets: {
+        Row: {
+          assigned_to_user_id: string | null
+          business_id: string
+          created_at: string
+          created_by_user_id: string
+          department: string
+          description: string | null
+          id: string
+          priority: string
+          resolved_at: string | null
+          resolved_by_user_id: string | null
+          status: string
+          ticket_number: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to_user_id?: string | null
+          business_id: string
+          created_at?: string
+          created_by_user_id: string
+          department?: string
+          description?: string | null
+          id?: string
+          priority?: string
+          resolved_at?: string | null
+          resolved_by_user_id?: string | null
+          status?: string
+          ticket_number?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to_user_id?: string | null
+          business_id?: string
+          created_at?: string
+          created_by_user_id?: string
+          department?: string
+          description?: string | null
+          id?: string
+          priority?: string
+          resolved_at?: string | null
+          resolved_by_user_id?: string | null
+          status?: string
+          ticket_number?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_tickets_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
