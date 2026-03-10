@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Plus, Mail, Phone, Building2, Search, ChevronRight } from "lucide-react";
+import { Users, Plus, Mail, Phone, Building2, Search, ChevronRight, Upload } from "lucide-react";
+import CSVImportDialog from "@/components/clients/CSVImportDialog";
 
 const onboardingColors: Record<string, string> = {
   pending: "bg-amber-500/10 text-amber-600",
