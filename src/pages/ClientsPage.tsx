@@ -4,12 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Plus, Mail, Phone, Building2, Search, ChevronRight, Upload } from "lucide-react";
+import { Users, Plus, Mail, Phone, Building2, Search, Upload } from "lucide-react";
 import CSVImportDialog from "@/components/clients/CSVImportDialog";
+import UnifiedClientForm from "@/components/clients/UnifiedClientForm";
 
 const onboardingColors: Record<string, string> = {
   pending: "bg-amber-500/10 text-amber-600",
@@ -22,26 +21,12 @@ const ClientsPage = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [form, setForm] = useState({ contact_name: "", email: "", phone: "", company_name: "", address: "" });
 
   const filtered = clients.filter(c =>
     !search || [c.contact_name, c.email, c.company_name, c.phone]
       .some(f => f?.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const handleCreate = async () => {
-    await createClient({
-      contact_name: form.contact_name,
-      email: form.email,
-      phone: form.phone || undefined,
-      company_name: form.company_name || undefined,
-      address: form.address || undefined,
-    });
-    setCreateOpen(false);
-    setForm({ contact_name: "", email: "", phone: "", company_name: "", address: "" });
-  };
-
-  // Summary stats
   const statusCounts = {
     pending: clients.filter(c => c.onboarding_status === "pending").length,
     in_progress: clients.filter(c => c.onboarding_status === "in_progress").length,
@@ -138,23 +123,12 @@ const ClientsPage = () => {
         </div>
       )}
 
-      {/* Create Client */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>New Client</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div><Label>Contact Name *</Label><Input value={form.contact_name} onChange={e => setForm(p => ({ ...p, contact_name: e.target.value }))} /></div>
-            <div><Label>Email *</Label><Input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} /></div>
-            <div><Label>Phone</Label><Input value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} /></div>
-            <div><Label>Company Name</Label><Input value={form.company_name} onChange={e => setForm(p => ({ ...p, company_name: e.target.value }))} /></div>
-            <div><Label>Address</Label><Input value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={!form.contact_name || !form.email}>Create</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Unified Client Creation Form */}
+      <UnifiedClientForm
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onSubmit={createClient}
+      />
 
       <CSVImportDialog open={importOpen} onOpenChange={setImportOpen} onComplete={refetch} />
     </div>
