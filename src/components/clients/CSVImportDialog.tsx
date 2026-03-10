@@ -10,7 +10,7 @@ import StepUpload from "./csv-import/StepUpload";
 import StepMapping from "./csv-import/StepMapping";
 import StepPreview from "./csv-import/StepPreview";
 import StepResult from "./csv-import/StepResult";
-import { parseCSV } from "./csv-import/csv-parser";
+import { parseImportFile } from "./csv-import/csv-parser";
 import { mapAndValidateRows } from "./csv-import/validation";
 import { DEFAULT_FIELD_MAP, type FieldMapping, type ValidatedRow, type ImportResult, type RowError } from "./csv-import/types";
 
@@ -40,22 +40,26 @@ const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ open, onOpenChange, o
     setImportResult(null);
   };
 
-  const handleFileSelected = (_file: File, text: string) => {
-    const { headers, rows } = parseCSV(text);
-    if (headers.length === 0) {
-      toast.error("Could not parse CSV headers");
-      return;
-    }
-    setCsvHeaders(headers);
-    setCsvRows(rows);
+  const handleFileSelected = async (file: File) => {
+    try {
+      const { headers, rows } = await parseImportFile(file);
+      if (headers.length === 0) {
+        toast.error("Could not parse file headers");
+        return;
+      }
+      setCsvHeaders(headers);
+      setCsvRows(rows);
 
-    // Auto-map fields based on known mappings
-    const autoMappings: FieldMapping[] = headers.map(h => ({
-      csvField: h,
-      crmField: DEFAULT_FIELD_MAP[h] || "__skip__",
-    }));
-    setMappings(autoMappings);
-    setStep("mapping");
+      // Auto-map fields based on known mappings
+      const autoMappings: FieldMapping[] = headers.map(h => ({
+        csvField: h,
+        crmField: DEFAULT_FIELD_MAP[h] || "__skip__",
+      }));
+      setMappings(autoMappings);
+      setStep("mapping");
+    } catch {
+      toast.error("File import failed. Please use a valid CSV or Excel export.");
+    }
   };
 
   const handleUpdateMapping = (index: number, crmField: string) => {

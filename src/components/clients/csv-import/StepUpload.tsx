@@ -1,9 +1,8 @@
 import React, { useRef } from "react";
-import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 
 interface Props {
-  onFileSelected: (file: File, text: string) => void;
+  onFileSelected: (file: File) => void;
 }
 
 const StepUpload: React.FC<Props> = ({ onFileSelected }) => {
@@ -12,11 +11,7 @@ const StepUpload: React.FC<Props> = ({ onFileSelected }) => {
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      onFileSelected(f, ev.target?.result as string);
-    };
-    reader.readAsText(f);
+    onFileSelected(f);
   };
 
   return (
@@ -26,9 +21,9 @@ const StepUpload: React.FC<Props> = ({ onFileSelected }) => {
         onClick={() => fileRef.current?.click()}
       >
         <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-        <p className="text-sm font-medium">Click to upload CSV file</p>
-        <p className="text-xs text-muted-foreground mt-1">Supports Xero-format contact exports and standard CSV</p>
-        <input ref={fileRef} type="file" accept=".csv,.txt" className="hidden" onChange={handleFile} />
+        <p className="text-sm font-medium">Click to upload CSV or Excel file</p>
+        <p className="text-xs text-muted-foreground mt-1">Supports Xero Contacts exports (.xlsx/.csv)</p>
+        <input ref={fileRef} type="file" accept=".csv,.txt,.xlsx,.xls" className="hidden" onChange={handleFile} />
       </div>
     </div>
   );
