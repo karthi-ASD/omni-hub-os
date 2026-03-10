@@ -375,6 +375,22 @@ const App = () => (
               <Route path="/hr/employee/:employeeId" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HREmployeeProfilePage /></ProtectedRoute>
               } />
+              <Route path="/hr/leave" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HRLeaveManagementPage /></ProtectedRoute>
+              } />
+              <Route path="/hr/payroll" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HRPayrollPage /></ProtectedRoute>
+              } />
+              <Route path="/hr/performance" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HRPerformancePage /></ProtectedRoute>
+              } />
+              <Route path="/hr/tasks" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HRTaskTrackingPage /></ProtectedRoute>
+              } />
+              <Route path="/hr/analytics" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HRAnalyticsDashboardPage /></ProtectedRoute>
+              } />
+              <Route path="/my-dashboard" element={<EmployeeSelfServicePage />} />
               <Route path="/usage-analytics" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><UsageAnalyticsPage /></ProtectedRoute>
               } />
