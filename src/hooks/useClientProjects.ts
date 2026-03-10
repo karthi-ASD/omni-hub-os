@@ -24,7 +24,7 @@ export function useClientProjects() {
     setLoading(true);
     const [pRes, dRes] = await Promise.all([
       supabase
-        .from("client_projects")
+        .from("client_projects" as any)
         .select("*, departments(name)")
         .eq("business_id", profile.business_id)
         .order("created_at", { ascending: false }),
