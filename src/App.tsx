@@ -454,6 +454,9 @@ const App = () => (
               <Route path="/admin-operations" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AdminOperationsDashboardPage /></ProtectedRoute>
               } />
+              <Route path="/ceo-dashboard" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><CEODashboardPage /></ProtectedRoute>
+              } />
               <Route path="/daily-work-reports" element={<DailyWorkReportsPage />} />
               <Route path="/employee-activity-monitor" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><EmployeeActivityMonitorPage /></ProtectedRoute>
