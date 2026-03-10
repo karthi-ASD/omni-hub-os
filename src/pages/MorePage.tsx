@@ -239,6 +239,17 @@ const tenantAdminSections: MenuSection[] = [
     ],
   },
   {
+    title: "Agency Operations",
+    description: "Command center, client projects, task pipeline, workload, and SLA",
+    items: [
+      { label: "Command Center", icon: Gauge, to: "/agency-command" },
+      { label: "Client Projects", icon: Briefcase, to: "/client-projects" },
+      { label: "Task Pipeline", icon: FolderKanban, to: "/task-pipeline" },
+      { label: "Workload Monitor", icon: BarChart2, to: "/workload-monitor" },
+      { label: "SLA Monitor", icon: Gauge, to: "/sla-monitor" },
+    ],
+  },
+  {
     title: "Jobs / Projects",
     description: "Track projects, assign tasks, and monitor delivery",
     items: [
