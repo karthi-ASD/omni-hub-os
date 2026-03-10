@@ -496,6 +496,14 @@ const App = () => (
                 }
               />
               <Route
+                path="/workflow-automation"
+                element={
+                  <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}>
+                    <WorkflowAutomationPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/system-monitor"
                 element={
                   <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}>
