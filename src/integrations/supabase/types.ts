@@ -3636,44 +3636,59 @@ export type Database = {
         Row: {
           address: string | null
           business_id: string
+          city: string | null
           company_name: string | null
           contact_name: string
+          country: string | null
           created_at: string
           deal_id: string | null
           email: string
           id: string
+          mobile: string | null
           onboarding_status: Database["public"]["Enums"]["onboarding_status"]
           phone: string | null
+          state: string | null
           updated_at: string
           user_id: string | null
+          website: string | null
         }
         Insert: {
           address?: string | null
           business_id: string
+          city?: string | null
           company_name?: string | null
           contact_name: string
+          country?: string | null
           created_at?: string
           deal_id?: string | null
           email: string
           id?: string
+          mobile?: string | null
           onboarding_status?: Database["public"]["Enums"]["onboarding_status"]
           phone?: string | null
+          state?: string | null
           updated_at?: string
           user_id?: string | null
+          website?: string | null
         }
         Update: {
           address?: string | null
           business_id?: string
+          city?: string | null
           company_name?: string | null
           contact_name?: string
+          country?: string | null
           created_at?: string
           deal_id?: string | null
           email?: string
           id?: string
+          mobile?: string | null
           onboarding_status?: Database["public"]["Enums"]["onboarding_status"]
           phone?: string | null
+          state?: string | null
           updated_at?: string
           user_id?: string | null
+          website?: string | null
         }
         Relationships: [
           {
