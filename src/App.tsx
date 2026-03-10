@@ -435,6 +435,11 @@ const App = () => (
               <Route path="/task-pipeline" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager"]}><TaskPipelinePage /></ProtectedRoute>
               } />
+              <Route path="/task/:taskId" element={<TaskDetailPage />} />
+              <Route path="/team-hierarchy" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager", "manager"]}><TeamHierarchyPage /></ProtectedRoute>
+              } />
+              <Route path="/cross-dept-requests" element={<CrossDeptRequestsPage />} />
               <Route path="/workload-monitor" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><WorkloadMonitorPage /></ProtectedRoute>
               } />
