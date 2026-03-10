@@ -6757,6 +6757,7 @@ export type Database = {
       }
       hr_employee_tasks: {
         Row: {
+          assigned_by_name: string | null
           business_id: string
           created_at: string
           created_by: string | null
@@ -6772,6 +6773,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assigned_by_name?: string | null
           business_id: string
           created_at?: string
           created_by?: string | null
@@ -6787,6 +6789,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assigned_by_name?: string | null
           business_id?: string
           created_at?: string
           created_by?: string | null
@@ -7170,6 +7173,58 @@ export type Database = {
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "hr_employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_task_updates: {
+        Row: {
+          business_id: string
+          created_at: string
+          employee_id: string
+          id: string
+          note: string
+          status_change: string | null
+          task_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          employee_id: string
+          id?: string
+          note: string
+          status_change?: string | null
+          task_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          employee_id?: string
+          id?: string
+          note?: string
+          status_change?: string | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_task_updates_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_task_updates_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "hr_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_task_updates_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "hr_employee_tasks"
             referencedColumns: ["id"]
           },
         ]
