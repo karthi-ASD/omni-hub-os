@@ -18,7 +18,7 @@ import { useNavigate } from "react-router-dom";
 const HREmployeeListPage = () => {
   const { employees, loading, create, deactivate } = useHREmployees();
   const { departments } = useHRDepartments();
-  const { isSuperAdmin, isBusinessAdmin } = useAuth();
+  const { isSuperAdmin, isBusinessAdmin, isHRManager } = useAuth();
   const navigate = useNavigate();
 
   const [addOpen, setAddOpen] = useState(false);
@@ -32,7 +32,7 @@ const HREmployeeListPage = () => {
     joining_date: format(new Date(), "yyyy-MM-dd"),
   });
 
-  const canManage = isSuperAdmin || isBusinessAdmin;
+  const canManage = isSuperAdmin || isBusinessAdmin || isHRManager;
 
   const filtered = useMemo(() => {
     return employees.filter(e => {

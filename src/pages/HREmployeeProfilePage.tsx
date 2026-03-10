@@ -17,8 +17,8 @@ import { toast } from "sonner";
 const HREmployeeProfilePage = () => {
   const { employeeId } = useParams();
   const navigate = useNavigate();
-  const { profile, isSuperAdmin, isBusinessAdmin } = useAuth();
-  const canManage = isSuperAdmin || isBusinessAdmin;
+  const { profile, isSuperAdmin, isBusinessAdmin, isHRManager } = useAuth();
+  const canManage = isSuperAdmin || isBusinessAdmin || isHRManager;
 
   const [employee, setEmployee] = useState<any>(null);
   const [education, setEducation] = useState<any[]>([]);
