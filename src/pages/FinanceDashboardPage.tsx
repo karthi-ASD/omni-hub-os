@@ -46,6 +46,31 @@ const FinanceDashboardPage = () => {
   const [syncing, setSyncing] = useState(false);
   const [forecasting, setForecasting] = useState(false);
   const [forecast, setForecast] = useState<any>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle OAuth callback code
+  useEffect(() => {
+    const code = searchParams.get("code");
+    if (code && profile?.business_id) {
+      const redirectUri = `${window.location.origin}/finance`;
+      (async () => {
+        setSyncing(true);
+        try {
+          const { data, error } = await supabase.functions.invoke("xero-sync", {
+            body: { action: "oauth_callback", business_id: profile.business_id, code, redirect_uri: redirectUri },
+          });
+          if (error) throw error;
+          toast.success("Xero connected successfully!");
+          setSearchParams({});
+          refresh();
+        } catch (e: any) {
+          toast.error(e.message || "OAuth connection failed");
+        } finally {
+          setSyncing(false);
+        }
+      })();
+    }
+  }, [searchParams, profile?.business_id]);
 
   const handleAddExpense = async () => {
     if (!expenseForm.category || !expenseForm.amount) return;
