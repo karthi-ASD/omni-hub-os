@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 
 interface Props {
-  onFileSelected: (file: File, text: string) => void;
+  onFileSelected: (file: File) => void;
 }
 
 const StepUpload: React.FC<Props> = ({ onFileSelected }) => {
@@ -12,11 +12,7 @@ const StepUpload: React.FC<Props> = ({ onFileSelected }) => {
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      onFileSelected(f, ev.target?.result as string);
-    };
-    reader.readAsText(f);
+    onFileSelected(f);
   };
 
   return (

@@ -10,7 +10,7 @@ import StepUpload from "./csv-import/StepUpload";
 import StepMapping from "./csv-import/StepMapping";
 import StepPreview from "./csv-import/StepPreview";
 import StepResult from "./csv-import/StepResult";
-import { parseCSV } from "./csv-import/csv-parser";
+import { parseImportFile } from "./csv-import/csv-parser";
 import { mapAndValidateRows } from "./csv-import/validation";
 import { DEFAULT_FIELD_MAP, type FieldMapping, type ValidatedRow, type ImportResult, type RowError } from "./csv-import/types";
 
