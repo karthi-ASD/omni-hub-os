@@ -10621,6 +10621,57 @@ export type Database = {
         }
         Relationships: []
       }
+      saas_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          features_json: Json | null
+          id: string
+          is_active: boolean
+          monthly_price: number
+          name: string
+          project_limit: number
+          slug: string
+          sort_order: number
+          storage_limit_gb: number
+          updated_at: string
+          user_limit: number
+          yearly_price: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          features_json?: Json | null
+          id?: string
+          is_active?: boolean
+          monthly_price?: number
+          name: string
+          project_limit?: number
+          slug: string
+          sort_order?: number
+          storage_limit_gb?: number
+          updated_at?: string
+          user_limit?: number
+          yearly_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          features_json?: Json | null
+          id?: string
+          is_active?: boolean
+          monthly_price?: number
+          name?: string
+          project_limit?: number
+          slug?: string
+          sort_order?: number
+          storage_limit_gb?: number
+          updated_at?: string
+          user_limit?: number
+          yearly_price?: number
+        }
+        Relationships: []
+      }
       salary_profiles: {
         Row: {
           allowances_json: Json | null
@@ -13346,6 +13397,69 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          billing_cycle: string
+          business_id: string
+          cancelled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          billing_cycle?: string
+          business_id: string
+          cancelled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          billing_cycle?: string
+          business_id?: string
+          cancelled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "saas_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_tickets: {
         Row: {
           ai_summary: string | null
@@ -14900,6 +15014,65 @@ export type Database = {
             columns: ["website_id"]
             isOneToOne: false
             referencedRelation: "tenant_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      white_label_settings: {
+        Row: {
+          business_id: string
+          company_display_name: string | null
+          created_at: string
+          custom_domain: string | null
+          custom_favicon_url: string | null
+          custom_logo_url: string | null
+          domain_verified: boolean
+          email_footer_html: string | null
+          hide_platform_branding: boolean
+          id: string
+          login_page_html: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          company_display_name?: string | null
+          created_at?: string
+          custom_domain?: string | null
+          custom_favicon_url?: string | null
+          custom_logo_url?: string | null
+          domain_verified?: boolean
+          email_footer_html?: string | null
+          hide_platform_branding?: boolean
+          id?: string
+          login_page_html?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          company_display_name?: string | null
+          created_at?: string
+          custom_domain?: string | null
+          custom_favicon_url?: string | null
+          custom_logo_url?: string | null
+          domain_verified?: boolean
+          email_footer_html?: string | null
+          hide_platform_branding?: boolean
+          id?: string
+          login_page_html?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "white_label_settings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]

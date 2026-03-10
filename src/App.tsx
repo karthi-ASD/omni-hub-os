@@ -1,6 +1,10 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import SaasPlansPage from "./pages/SaasPlansPage";
+import SubscriptionsPage from "./pages/SubscriptionsPage";
+import CompanyBillingPortalPage from "./pages/CompanyBillingPortalPage";
+import WhiteLabelSettingsPage from "./pages/WhiteLabelSettingsPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -433,6 +437,16 @@ const App = () => (
               } />
               <Route path="/governance-controls" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><GovernanceDashboardPage /></ProtectedRoute>
+              } />
+              <Route path="/saas-plans" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><SaasPlansPage /></ProtectedRoute>
+              } />
+              <Route path="/subscriptions" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><SubscriptionsPage /></ProtectedRoute>
+              } />
+              <Route path="/company-billing" element={<CompanyBillingPortalPage />} />
+              <Route path="/white-label-settings" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><WhiteLabelSettingsPage /></ProtectedRoute>
               } />
               <Route
                 path="/businesses"
