@@ -55,9 +55,14 @@ const ClientsPage = () => {
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" /> Clients
         </h1>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" /> New
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+            <Upload className="h-4 w-4 mr-1" /> Import
+          </Button>
+          <Button size="sm" onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" /> New
+          </Button>
+        </div>
       </div>
 
       {/* Summary chips */}
