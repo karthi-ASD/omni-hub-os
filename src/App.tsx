@@ -410,7 +410,7 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager"]}><TaskPipelinePage /></ProtectedRoute>
               } />
               <Route path="/workload-monitor" element={
-                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><WorkloadMonitorPage /></ProtectedRoute>
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><WorkloadMonitorPage /></ProtectedRoute>
               } />
               <Route path="/sla-monitor" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><SLAMonitorPage /></ProtectedRoute>

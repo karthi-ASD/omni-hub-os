@@ -162,7 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider value={{
       session, user, profile, roles, loading, signOut,
-      hasRole, isSuperAdmin, isBusinessAdmin,
+      hasRole, isSuperAdmin, isBusinessAdmin, isHRManager,
       allBusinesses, selectedTenantId, selectTenant: setSelectedTenantId,
     }}>
       {children}

@@ -485,7 +485,7 @@ const employeeSections: MenuSection[] = [
 ];
 
 const MorePage = () => {
-  const { profile, roles, signOut, isSuperAdmin, isBusinessAdmin, hasRole } = useAuth();
+  const { profile, roles, signOut, isSuperAdmin, isBusinessAdmin, isHRManager, hasRole } = useAuth();
   const navigate = useNavigate();
   const isManager = hasRole("manager");
 
@@ -500,6 +500,8 @@ const MorePage = () => {
     ? superAdminSections
     : isBusinessAdmin
     ? tenantAdminSections
+    : isHRManager
+    ? hrManagerSections
     : isManager
     ? managerSections
     : employeeSections;
