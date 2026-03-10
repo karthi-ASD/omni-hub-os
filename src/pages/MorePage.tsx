@@ -590,6 +590,11 @@ const MorePage = () => {
   const { profile, roles, signOut, isSuperAdmin, isBusinessAdmin, isHRManager, hasRole } = useAuth();
   const navigate = useNavigate();
   const isManager = hasRole("manager");
+  const { departmentName } = useEmployeeDepartment();
+
+  const deptLower = departmentName?.toLowerCase() ?? "";
+  const isFinanceDept = deptLower.includes("finance") || deptLower.includes("accounts");
+  const isSeoDept = deptLower.includes("seo");
 
   const initials = profile?.full_name
     ?.split(" ")
@@ -604,6 +609,10 @@ const MorePage = () => {
     ? tenantAdminSections
     : isHRManager
     ? hrManagerSections
+    : isManager && isFinanceDept
+    ? financeManagerSections
+    : isManager && isSeoDept
+    ? seoManagerSections
     : isManager
     ? managerSections
     : employeeSections;
