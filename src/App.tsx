@@ -163,6 +163,7 @@ import AdminOperationsDashboardPage from "./pages/AdminOperationsDashboardPage";
 import DailyWorkReportsPage from "./pages/DailyWorkReportsPage";
 import EmployeeActivityMonitorPage from "./pages/EmployeeActivityMonitorPage";
 import DepartmentPerformancePage from "./pages/DepartmentPerformancePage";
+import CEODashboardPage from "./pages/CEODashboardPage";
 import CompanyLoginPage from "./pages/CompanyLoginPage";
 import CompanySignupPage from "./pages/CompanySignupPage";
 import DepartmentSignupPage from "./pages/DepartmentSignupPage";
@@ -452,6 +453,9 @@ const App = () => (
               <Route path="/account-timeline" element={<AccountTimelinePage />} />
               <Route path="/admin-operations" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AdminOperationsDashboardPage /></ProtectedRoute>
+              } />
+              <Route path="/ceo-dashboard" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><CEODashboardPage /></ProtectedRoute>
               } />
               <Route path="/daily-work-reports" element={<DailyWorkReportsPage />} />
               <Route path="/employee-activity-monitor" element={
