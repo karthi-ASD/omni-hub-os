@@ -73,36 +73,75 @@ const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ open, onOpenChange, o
     setStep("importing");
 
     const rowsToImport = validatedRows.filter(r => r.isValid);
-    const allErrors: RowError[] = validatedRows.flatMap(r => r.errors);
+    const allErrors: RowError[] = validatedRows.filter(r => !r.isValid).flatMap(r => r.errors);
     let imported = 0;
     let skipped = validatedRows.filter(r => !r.isValid).length;
+    let duplicates = 0;
+    const seenEmails = new Set<string>();
 
-    for (const row of rowsToImport) {
-      const d = row.data;
-      const insertData = {
-        business_id: profile.business_id,
-        contact_name: d.contact_name || "Unknown",
-        email: d.email || `noemail-${Date.now()}-${Math.random().toString(36).slice(2)}@placeholder.local`,
-        phone: d.phone || null,
-        mobile: d.mobile || null,
-        website: d.website || null,
-        city: d.city || null,
-        state: d.state || null,
-        country: d.country || null,
-        address: d.address || null,
-        company_name: d.company_name || d.contact_name || null,
-      };
+    // Batch in chunks of 50 for performance
+    const BATCH_SIZE = 50;
+    for (let i = 0; i < rowsToImport.length; i += BATCH_SIZE) {
+      const batch = rowsToImport.slice(i, i + BATCH_SIZE);
+      const batchInserts = [];
 
-      const { error } = await supabase.from("clients").insert(insertData as any);
-      if (error) {
-        skipped++;
-        allErrors.push({
-          row: row.rowIndex + 2,
-          field: "Database",
-          error: error.message,
+      for (const row of batch) {
+        const d = row.data;
+        const email = d.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)
+          ? d.email.toLowerCase().trim()
+          : `import-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@placeholder.local`;
+
+        // Skip duplicate emails within this import
+        if (seenEmails.has(email) && !email.includes("@placeholder.local")) {
+          duplicates++;
+          skipped++;
+          allErrors.push({ row: row.rowIndex + 2, field: "Email", error: `Duplicate email skipped: ${email}` });
+          continue;
+        }
+        seenEmails.add(email);
+
+        batchInserts.push({
+          business_id: profile.business_id,
+          contact_name: d.contact_name || "Unknown",
+          email,
+          phone: d.phone || null,
+          mobile: d.mobile || null,
+          website: d.website || null,
+          city: d.city || null,
+          state: d.state || null,
+          country: d.country || null,
+          address: d.address || null,
+          company_name: d.company_name || d.contact_name || null,
         });
+      }
+
+      if (batchInserts.length === 0) continue;
+
+      const { data: insertedData, error } = await supabase
+        .from("clients")
+        .insert(batchInserts as any)
+        .select("id");
+
+      if (error) {
+        // If batch fails, fall back to individual inserts
+        for (let j = 0; j < batchInserts.length; j++) {
+          const { error: singleError } = await supabase
+            .from("clients")
+            .insert(batchInserts[j] as any);
+          if (singleError) {
+            skipped++;
+            const rowIdx = batch[j]?.rowIndex ?? 0;
+            allErrors.push({
+              row: rowIdx + 2,
+              field: "Database",
+              error: singleError.message,
+            });
+          } else {
+            imported++;
+          }
+        }
       } else {
-        imported++;
+        imported += insertedData?.length ?? batchInserts.length;
       }
     }
 
@@ -114,7 +153,7 @@ const CSVImportDialog: React.FC<CSVImportDialogProps> = ({ open, onOpenChange, o
     };
     setImportResult(result);
     setStep("result");
-    toast.success(`Imported ${imported} clients${skipped > 0 ? `, ${skipped} skipped` : ""}`);
+    toast.success(`Imported ${imported} clients${skipped > 0 ? `, ${skipped} skipped` : ""}${duplicates > 0 ? `, ${duplicates} duplicates` : ""}`);
     onComplete();
   };
 

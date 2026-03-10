@@ -9,12 +9,11 @@ export function mapAndValidateRows(
   return rawRows.map((raw, idx) => {
     const data: Record<string, string> = {};
     const errors: RowError[] = [];
-    const rowNum = idx + 2; // +2 for header row + 1-indexed
+    const rowNum = idx + 2;
 
     let firstName = "";
     let lastName = "";
 
-    // Apply mappings
     for (const m of mappings) {
       if (m.crmField === "__skip__" || !m.crmField) continue;
       const val = raw[m.csvField] || "";
@@ -43,26 +42,36 @@ export function mapAndValidateRows(
       data["company_name"] = data["contact_name"];
     }
 
-    // --- Validation ---
-    if (!data["contact_name"]) {
-      errors.push({ row: rowNum, field: "Client Name", error: "Required field missing" });
-    }
-
-    if (!data["email"]) {
-      // We'll generate a placeholder, but warn
-      errors.push({ row: rowNum, field: "Email", error: "Missing email – placeholder will be used" });
-    } else if (!EMAIL_RE.test(data["email"])) {
-      errors.push({ row: rowNum, field: "Email", error: `Invalid email format: "${data["email"]}"` });
-    }
-
-    // Check if entire row is empty
+    // --- Lenient Validation ---
+    // Only truly invalid if BOTH contact_name AND email are missing
+    const hasName = !!data["contact_name"];
+    const hasEmail = !!data["email"];
     const allEmpty = Object.values(data).every(v => !v);
+
+    if (!hasName && !hasEmail) {
+      errors.push({ row: rowNum, field: "Row", error: "Both Client Name and Email missing – will be skipped" });
+    }
+
+    if (!hasName && hasEmail) {
+      // Use email prefix as name
+      data["contact_name"] = data["email"].split("@")[0].replace(/[._-]/g, " ");
+      errors.push({ row: rowNum, field: "Client Name", error: "Missing – derived from email (warning)" });
+    }
+
+    if (!hasEmail) {
+      errors.push({ row: rowNum, field: "Email", error: "Missing email – placeholder will be generated" });
+    } else if (!EMAIL_RE.test(data["email"])) {
+      errors.push({ row: rowNum, field: "Email", error: `Invalid email format: "${data["email"]}" – will be cleaned` });
+    }
+
+    // Row is valid as long as it's not completely empty and has at least name OR email
+    const isValid = !allEmpty && (hasName || hasEmail);
 
     return {
       rowIndex: idx,
       data,
       errors: allEmpty ? [{ row: rowNum, field: "Row", error: "Empty row – will be skipped" }] : errors,
-      isValid: !allEmpty && errors.filter(e => !e.error.includes("placeholder")).length === 0,
+      isValid,
     };
   });
 }
