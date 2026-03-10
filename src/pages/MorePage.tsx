@@ -93,6 +93,7 @@ const superAdminSections: MenuSection[] = [
       { label: "Task Pipeline", icon: FolderKanban, to: "/task-pipeline" },
       { label: "Team Hierarchy", icon: Network, to: "/team-hierarchy" },
       { label: "Cross-Dept Requests", icon: GitBranch, to: "/cross-dept-requests" },
+      { label: "Dept Dashboard", icon: BarChart3, to: "/dept-dashboard" },
       { label: "Workload Monitor", icon: BarChart2, to: "/workload-monitor" },
       { label: "SLA Monitor", icon: Gauge, to: "/sla-monitor" },
     ],
