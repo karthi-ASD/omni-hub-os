@@ -393,6 +393,104 @@ const hrManagerSections: MenuSection[] = [
   },
 ];
 
+const financeManagerSections: MenuSection[] = [
+  {
+    title: "Finance Dashboard",
+    description: "Billing, invoicing, and financial overview",
+    items: [
+      { label: "Dashboard", icon: BarChart3, to: "/dashboard" },
+      { label: "Billing", icon: CreditCard, to: "/billing" },
+      { label: "Invoices", icon: Receipt, to: "/invoices" },
+      { label: "Payments", icon: DollarSign, to: "/payments" },
+      { label: "Revenue Intel", icon: TrendingUp, to: "/revenue-intelligence" },
+      { label: "Notifications", icon: Bell, to: "/notifications" },
+    ],
+  },
+  {
+    title: "Client Management",
+    description: "Clients, deals, and subscriptions",
+    items: [
+      { label: "Clients", icon: Users, to: "/clients" },
+      { label: "Deals", icon: FolderKanban, to: "/deals" },
+      { label: "Contracts", icon: FileText, to: "/contracts" },
+      { label: "Subscriptions", icon: CreditCard, to: "/subscriptions" },
+    ],
+  },
+  {
+    title: "Reporting",
+    description: "Financial reports and analytics",
+    items: [
+      { label: "Reports", icon: FileBarChart, to: "/reports" },
+      { label: "Analytics", icon: BarChart2, to: "/analytics" },
+      { label: "Calendar", icon: Calendar, to: "/calendar" },
+    ],
+  },
+  {
+    title: "My Work",
+    description: "Your tasks, reminders, and HR portal",
+    items: [
+      { label: "Tasks", icon: ListChecks, to: "/tasks" },
+      { label: "Reminders", icon: Clock, to: "/reminders" },
+      { label: "My HR Portal", icon: UserCog, to: "/my-dashboard" },
+      { label: "Inbox", icon: Inbox, to: "/autopilot/inbox" },
+    ],
+  },
+];
+
+const seoManagerSections: MenuSection[] = [
+  {
+    title: "SEO Dashboard",
+    description: "SEO projects, keyword rankings, and campaign performance",
+    items: [
+      { label: "Dashboard", icon: BarChart3, to: "/dashboard" },
+      { label: "SEO Engine", icon: Globe, to: "/seo" },
+      { label: "SEO Projects", icon: FolderKanban, to: "/seo-ops" },
+      { label: "SEO Team", icon: Users, to: "/seo-team" },
+      { label: "Notifications", icon: Bell, to: "/notifications" },
+    ],
+  },
+  {
+    title: "SEO Operations",
+    description: "Keyword tracking, backlinks, content, and technical SEO",
+    items: [
+      { label: "SEO Intel", icon: Sparkles, to: "/seo-intelligence" },
+      { label: "Marketing", icon: Megaphone, to: "/marketing" },
+      { label: "Geo Engine", icon: Map, to: "/geo-engine" },
+      { label: "Competitive Intel", icon: TargetIcon, to: "/competitive-intel" },
+      { label: "Communications", icon: Mail, to: "/communications" },
+    ],
+  },
+  {
+    title: "Client Management",
+    description: "SEO client accounts and projects",
+    items: [
+      { label: "Clients", icon: Users, to: "/clients" },
+      { label: "Client Projects", icon: Briefcase, to: "/client-projects" },
+      { label: "Reports", icon: FileBarChart, to: "/reports" },
+    ],
+  },
+  {
+    title: "Delivery & Tasks",
+    description: "Task pipeline, project delivery, and team workload",
+    items: [
+      { label: "Tasks", icon: ListChecks, to: "/tasks" },
+      { label: "Task Pipeline", icon: FolderKanban, to: "/task-pipeline" },
+      { label: "Workload", icon: BarChart2, to: "/workload-monitor" },
+      { label: "Calendar", icon: Calendar, to: "/calendar" },
+    ],
+  },
+  {
+    title: "My Work",
+    description: "Your personal tasks, reminders, and HR portal",
+    items: [
+      { label: "Reminders", icon: Clock, to: "/reminders" },
+      { label: "My HR Portal", icon: UserCog, to: "/my-dashboard" },
+      { label: "Inbox", icon: Inbox, to: "/autopilot/inbox" },
+      { label: "Conversations", icon: MessageCircle, to: "/conversations" },
+    ],
+  },
+];
+
 const managerSections: MenuSection[] = [
   {
     title: "Department Management",
