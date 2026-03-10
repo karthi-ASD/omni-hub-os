@@ -66,7 +66,7 @@ export function useClientProjects() {
   };
 
   const remove = async (id: string) => {
-    await supabase.from("client_projects").delete().eq("id", id);
+    await supabase.from("client_projects" as any).delete().eq("id", id);
     fetch();
   };
 
