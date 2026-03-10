@@ -23,6 +23,8 @@ const FIELD_MAP: Record<string, string> = {
   "PORegion": "state",
   "POCountry": "country",
   "POAddressLine1": "address",
+  "FirstName": "first_name",
+  "LastName": "last_name",
 };
 
 function parseCSV(text: string): Record<string, string>[] {
