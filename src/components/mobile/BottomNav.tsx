@@ -14,7 +14,7 @@ export function BottomNav() {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border safe-area-bottom sf-header-shadow">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-strong safe-area-bottom">
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto">
         {tabs.map((tab) => {
           const isActive =
@@ -27,17 +27,22 @@ export function BottomNav() {
               key={tab.to}
               to={tab.to}
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-colors relative",
+                "flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-all duration-200 relative",
                 isActive
                   ? "text-primary"
-                  : "text-muted-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <tab.icon className={cn("h-5 w-5", isActive && "stroke-[2.5]")} />
-              <span className="text-[10px] font-medium">{tab.label}</span>
-              {isActive && (
-                <div className="absolute top-0 h-[3px] w-10 bg-primary rounded-b-full" />
-              )}
+              <div className={cn(
+                "relative flex items-center justify-center h-8 w-8 rounded-xl transition-all duration-300",
+                isActive && "bg-primary/10"
+              )}>
+                <tab.icon className={cn("h-[18px] w-[18px] transition-all", isActive && "stroke-[2.5]")} />
+                {isActive && (
+                  <div className="absolute -bottom-0.5 h-[3px] w-5 bg-primary rounded-full shadow-glow-sm" />
+                )}
+              </div>
+              <span className={cn("text-[10px] font-medium", isActive && "font-semibold")}>{tab.label}</span>
             </NavLink>
           );
         })}

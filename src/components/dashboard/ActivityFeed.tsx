@@ -15,47 +15,52 @@ export function ActivityFeed() {
     source === "audit" ? "secondary" : "outline";
 
   return (
-    <Card>
+    <Card className="glass-card border-0">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Activity className="h-5 w-5" /> Recent Activity
+        <CardTitle className="text-sm flex items-center gap-2">
+          <div className="h-6 w-6 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+            <Activity className="h-3.5 w-3.5 text-primary" />
+          </div>
+          Recent Activity
         </CardTitle>
       </CardHeader>
       <CardContent>
         {loading ? (
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
+              <Skeleton key={i} className="h-12 w-full rounded-lg" />
             ))}
           </div>
         ) : items.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">No recent activity</p>
         ) : (
-          <div className="space-y-1 max-h-[400px] overflow-y-auto">
+          <div className="space-y-0.5 max-h-[400px] overflow-y-auto">
             {items.map((item) => {
               const Icon = getIcon(item.source);
               return (
                 <div
                   key={`${item.source}-${item.id}`}
-                  className="flex items-center gap-3 py-2 px-2 rounded-md hover:bg-muted/50 transition-colors"
+                  className="flex items-center gap-3 py-2.5 px-2.5 rounded-lg hover:bg-muted/40 transition-all duration-200 group"
                 >
-                  <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <div className="h-8 w-8 rounded-lg bg-muted/60 flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
+                    <Icon className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">
                       {item.event_type.replace(/_/g, " ")}
                     </p>
                     {item.entity_type && (
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className="text-[11px] text-muted-foreground truncate">
                         {item.entity_type}
                         {item.entity_id && ` · ${item.entity_id.slice(0, 8)}…`}
                       </p>
                     )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <Badge variant={getBadgeVariant(item.source)} className="text-[10px]">
+                    <Badge variant={getBadgeVariant(item.source)} className="text-[9px] font-semibold rounded-md">
                       {item.source}
                     </Badge>
-                    <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">
                       {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
                     </span>
                   </div>
