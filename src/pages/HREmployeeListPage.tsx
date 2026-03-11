@@ -1,6 +1,7 @@
 import { useHREmployees } from "@/hooks/useHREmployees";
 import { useHRDepartments } from "@/hooks/useHRDepartments";
 import { useAuth } from "@/contexts/AuthContext";
+import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserPlus, Eye, Pencil, UserX, Search } from "lucide-react";
+import { UserPlus, Eye, UserX, Search, Users } from "lucide-react";
 import { format } from "date-fns";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -72,80 +73,14 @@ const HREmployeeListPage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Employee Directory</h1>
-          <p className="text-muted-foreground">Manage all employees across departments</p>
-        </div>
-        {canManage && (
-          <Dialog open={addOpen} onOpenChange={setAddOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm"><UserPlus className="h-4 w-4 mr-1" /> Add Employee</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader><DialogTitle>Add New Employee</DialogTitle></DialogHeader>
-              <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Full Name *</Label>
-                    <Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Email *</Label>
-                    <Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Mobile</Label>
-                    <Input value={form.mobile_number} onChange={e => setForm({ ...form, mobile_number: e.target.value })} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Department</Label>
-                    <Select value={form.department_id} onValueChange={v => setForm({ ...form, department_id: v })}>
-                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                      <SelectContent>
-                        {departments.filter(d => d.status === "active").map(d => (
-                          <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Designation</Label>
-                    <Input value={form.designation} onChange={e => setForm({ ...form, designation: e.target.value })} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Employment Type</Label>
-                    <Select value={form.employment_type} onValueChange={v => setForm({ ...form, employment_type: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="full_time">Full Time</SelectItem>
-                        <SelectItem value="part_time">Part Time</SelectItem>
-                        <SelectItem value="contract">Contract</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Work Location</Label>
-                    <Input value={form.work_location} onChange={e => setForm({ ...form, work_location: e.target.value })} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Joining Date</Label>
-                    <Input type="date" value={form.joining_date} onChange={e => setForm({ ...form, joining_date: e.target.value })} />
-                  </div>
-                </div>
-                <Button onClick={handleAdd} className="w-full">Add Employee</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader
+        title="Employee Directory"
+        subtitle="Manage all employees across departments"
+        icon={Users}
+        badge={`${employees.length}`}
+        actions={canManage ? [{ label: "Add Employee", icon: UserPlus, onClick: () => setAddOpen(true) }] : []}
+      />
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
@@ -173,7 +108,7 @@ const HREmployeeListPage = () => {
         </Select>
       </div>
 
-      <Card>
+      <Card className="rounded-2xl border-0 shadow-elevated">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -218,6 +153,48 @@ const HREmployeeListPage = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Add Employee Dialog */}
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Add New Employee</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Full Name *</Label><Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} /></div>
+              <div className="space-y-2"><Label>Email *</Label><Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Mobile</Label><Input value={form.mobile_number} onChange={e => setForm({ ...form, mobile_number: e.target.value })} /></div>
+              <div className="space-y-2">
+                <Label>Department</Label>
+                <Select value={form.department_id} onValueChange={v => setForm({ ...form, department_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>{departments.filter(d => d.status === "active").map(d => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Designation</Label><Input value={form.designation} onChange={e => setForm({ ...form, designation: e.target.value })} /></div>
+              <div className="space-y-2">
+                <Label>Employment Type</Label>
+                <Select value={form.employment_type} onValueChange={v => setForm({ ...form, employment_type: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="full_time">Full Time</SelectItem>
+                    <SelectItem value="part_time">Part Time</SelectItem>
+                    <SelectItem value="contract">Contract</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Work Location</Label><Input value={form.work_location} onChange={e => setForm({ ...form, work_location: e.target.value })} /></div>
+              <div className="space-y-2"><Label>Joining Date</Label><Input type="date" value={form.joining_date} onChange={e => setForm({ ...form, joining_date: e.target.value })} /></div>
+            </div>
+            <Button onClick={handleAdd} className="w-full">Add Employee</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

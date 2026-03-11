@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useSeoCampaigns } from "@/hooks/useSeo";
 import { useClients } from "@/hooks/useClients";
 import { useProjects } from "@/hooks/useProjects";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,10 +17,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 
 const statusColors: Record<string, string> = {
-  onboarding: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-  active: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  onboarding: "bg-warning/10 text-warning",
+  active: "bg-success/10 text-success",
   paused: "bg-muted text-muted-foreground",
-  completed: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  completed: "bg-primary/10 text-primary",
   on_hold: "bg-muted text-muted-foreground",
   cancelled: "bg-destructive/10 text-destructive",
 };
@@ -30,16 +32,9 @@ const SeoDashboardPage = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
-    client_id: "",
-    project_id: "",
-    primary_domain: "",
-    business_name: "",
-    package_type: "basic",
-    monthly_fee: "",
-    contract_duration_months: "12",
-    billing_type: "recurring",
-    service_areas: "",
-    target_services: "",
+    client_id: "", project_id: "", primary_domain: "", business_name: "",
+    package_type: "basic", monthly_fee: "", contract_duration_months: "12",
+    billing_type: "recurring", service_areas: "", target_services: "",
   });
 
   const handleCreate = async () => {
@@ -66,135 +61,29 @@ const SeoDashboardPage = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">SEO Operations</h1>
-          <p className="text-muted-foreground">Manage SEO campaigns, keywords, rankings & content</p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="mr-2 h-4 w-4" /> New Campaign</Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>Create SEO Campaign</DialogTitle></DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Primary Domain *</Label>
-                <Input value={form.primary_domain} onChange={(e) => setForm({ ...form, primary_domain: e.target.value })} placeholder="example.com.au" />
-              </div>
-              <div>
-                <Label>Business Name</Label>
-                <Input value={form.business_name} onChange={(e) => setForm({ ...form, business_name: e.target.value })} placeholder="Client Business Name" />
-              </div>
-              <div>
-                <Label>Client</Label>
-                <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
-                  <SelectContent>
-                    {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.contact_name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Project</Label>
-                <Select value={form.project_id} onValueChange={(v) => setForm({ ...form, project_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select project" /></SelectTrigger>
-                  <SelectContent>
-                    {projects.map((p) => <SelectItem key={p.id} value={p.id}>{p.project_name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Package Type</Label>
-                  <Select value={form.package_type} onValueChange={(v) => setForm({ ...form, package_type: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {["basic", "standard", "premium", "custom"].map((p) => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Monthly Fee</Label>
-                  <Input type="number" value={form.monthly_fee} onChange={(e) => setForm({ ...form, monthly_fee: e.target.value })} placeholder="0" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Contract (Months)</Label>
-                  <Input type="number" value={form.contract_duration_months} onChange={(e) => setForm({ ...form, contract_duration_months: e.target.value })} />
-                </div>
-                <div>
-                  <Label>Billing Type</Label>
-                  <Select value={form.billing_type} onValueChange={(v) => setForm({ ...form, billing_type: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="recurring">Recurring</SelectItem>
-                      <SelectItem value="one-time">One-time</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div>
-                <Label>Service Areas (comma-separated)</Label>
-                <Input value={form.service_areas} onChange={(e) => setForm({ ...form, service_areas: e.target.value })} placeholder="Sydney, Melbourne, Brisbane" />
-              </div>
-              <div>
-                <Label>Target Services (comma-separated)</Label>
-                <Input value={form.target_services} onChange={(e) => setForm({ ...form, target_services: e.target.value })} placeholder="Web Design, SEO, PPC" />
-              </div>
-              <Button onClick={handleCreate} className="w-full">Create Campaign</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+      <PageHeader
+        title="SEO Operations"
+        subtitle="Manage SEO campaigns, keywords, rankings & content"
+        icon={Globe}
+        actions={[{ label: "New Campaign", icon: Plus, onClick: () => setOpen(true) }]}
+      />
 
       {/* KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Campaigns</CardTitle>
-            <Globe className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent><p className="text-2xl font-bold">{campaigns.length}</p></CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Active</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent><p className="text-2xl font-bold">{activeCampaigns}</p></CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Onboarding</CardTitle>
-            <Search className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent><p className="text-2xl font-bold">{onboardingCampaigns}</p></CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Completed</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent><p className="text-2xl font-bold">{campaigns.filter((c) => c.status === "completed").length}</p></CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Monthly Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent><p className="text-2xl font-bold">${totalRevenue.toLocaleString()}</p></CardContent>
-        </Card>
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+        <StatCard label="Total Campaigns" value={campaigns.length} icon={Globe} gradient="from-primary to-accent" />
+        <StatCard label="Active" value={activeCampaigns} icon={TrendingUp} gradient="from-success to-emerald-500" />
+        <StatCard label="Onboarding" value={onboardingCampaigns} icon={Search} gradient="from-warning to-orange-500" />
+        <StatCard label="Completed" value={campaigns.filter((c) => c.status === "completed").length} icon={FileText} gradient="from-primary to-violet-500" />
+        <StatCard label="Monthly Revenue" value={`$${totalRevenue.toLocaleString()}`} icon={DollarSign} gradient="from-success to-teal-500" />
       </div>
 
       {/* Campaign List */}
       {loading ? (
         <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
       ) : campaigns.length === 0 ? (
-        <Card><CardContent className="py-12 text-center text-muted-foreground">No SEO campaigns yet. Create one to get started.</CardContent></Card>
+        <Card className="rounded-2xl"><CardContent className="py-12 text-center text-muted-foreground">No SEO campaigns yet. Create one to get started.</CardContent></Card>
       ) : (
-        <Card>
+        <Card className="rounded-2xl border-0 shadow-elevated">
           <Table>
             <TableHeader>
               <TableRow>
@@ -218,15 +107,9 @@ const SeoDashboardPage = () => {
                   <TableCell><Badge variant="secondary" className="capitalize">{c.payment_status || "pending"}</Badge></TableCell>
                   <TableCell>
                     <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                      {c.status === "onboarding" && (
-                        <Button size="sm" variant="outline" onClick={() => updateStatus(c.id, "active")}>Activate</Button>
-                      )}
-                      {c.status === "active" && (
-                        <Button size="sm" variant="outline" onClick={() => updateStatus(c.id, "paused")}>Pause</Button>
-                      )}
-                      {c.status === "paused" && (
-                        <Button size="sm" variant="outline" onClick={() => updateStatus(c.id, "active")}>Resume</Button>
-                      )}
+                      {c.status === "onboarding" && <Button size="sm" variant="outline" onClick={() => updateStatus(c.id, "active")}>Activate</Button>}
+                      {c.status === "active" && <Button size="sm" variant="outline" onClick={() => updateStatus(c.id, "paused")}>Pause</Button>}
+                      {c.status === "paused" && <Button size="sm" variant="outline" onClick={() => updateStatus(c.id, "active")}>Resume</Button>}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -235,6 +118,41 @@ const SeoDashboardPage = () => {
           </Table>
         </Card>
       )}
+
+      {/* Create Campaign Dialog */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Create SEO Campaign</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div><Label>Primary Domain *</Label><Input value={form.primary_domain} onChange={(e) => setForm({ ...form, primary_domain: e.target.value })} placeholder="example.com.au" /></div>
+            <div><Label>Business Name</Label><Input value={form.business_name} onChange={(e) => setForm({ ...form, business_name: e.target.value })} /></div>
+            <div><Label>Client</Label>
+              <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
+                <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.contact_name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div><Label>Project</Label>
+              <Select value={form.project_id} onValueChange={(v) => setForm({ ...form, project_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Select project" /></SelectTrigger>
+                <SelectContent>{projects.map((p) => <SelectItem key={p.id} value={p.id}>{p.project_name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Package Type</Label>
+                <Select value={form.package_type} onValueChange={(v) => setForm({ ...form, package_type: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{["basic", "standard", "premium", "custom"].map((p) => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div><Label>Monthly Fee</Label><Input type="number" value={form.monthly_fee} onChange={(e) => setForm({ ...form, monthly_fee: e.target.value })} /></div>
+            </div>
+            <div><Label>Service Areas (comma-separated)</Label><Input value={form.service_areas} onChange={(e) => setForm({ ...form, service_areas: e.target.value })} placeholder="Sydney, Melbourne" /></div>
+            <div><Label>Target Services (comma-separated)</Label><Input value={form.target_services} onChange={(e) => setForm({ ...form, target_services: e.target.value })} /></div>
+            <Button onClick={handleCreate} className="w-full">Create Campaign</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -1,11 +1,12 @@
 import { useSLAPolicies, useSLAEvents } from "@/hooks/useSLA";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ShieldAlert, Clock, Plus } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -38,46 +39,13 @@ const SLAPage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">SLA Management</h1>
-          <p className="text-muted-foreground">Policies, deadlines & escalation tracking</p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-1" /> New Policy</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Create SLA Policy</DialogTitle></DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Entity Type</Label>
-                <Select value={entityType} onValueChange={setEntityType}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ticket">Ticket</SelectItem>
-                    <SelectItem value="task">Task</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Priority</Label>
-                <Select value={priority} onValueChange={setPriority}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div><Label>First Response (min)</Label><Input type="number" value={responseMin} onChange={e => setResponseMin(Number(e.target.value))} /></div>
-              <div><Label>Resolution (min)</Label><Input type="number" value={resolutionMin} onChange={e => setResolutionMin(Number(e.target.value))} /></div>
-              <Button onClick={handleCreate} className="w-full">Create Policy</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader
+        title="SLA Management"
+        subtitle="Policies, deadlines & escalation tracking"
+        icon={ShieldAlert}
+        actions={[{ label: "New Policy", icon: Plus, onClick: () => setOpen(true) }]}
+      />
 
       <Tabs defaultValue="policies">
         <TabsList>
@@ -86,7 +54,7 @@ const SLAPage = () => {
         </TabsList>
 
         <TabsContent value="policies">
-          <Card>
+          <Card className="rounded-2xl border-0 shadow-elevated">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
@@ -117,7 +85,7 @@ const SLAPage = () => {
         </TabsContent>
 
         <TabsContent value="events">
-          <Card>
+          <Card className="rounded-2xl border-0 shadow-elevated">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
@@ -145,6 +113,40 @@ const SLAPage = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Create dialog */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Create SLA Policy</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Entity Type</Label>
+              <Select value={entityType} onValueChange={setEntityType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ticket">Ticket</SelectItem>
+                  <SelectItem value="task">Task</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Priority</Label>
+              <Select value={priority} onValueChange={setPriority}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>First Response (min)</Label><Input type="number" value={responseMin} onChange={e => setResponseMin(Number(e.target.value))} /></div>
+            <div><Label>Resolution (min)</Label><Input type="number" value={resolutionMin} onChange={e => setResolutionMin(Number(e.target.value))} /></div>
+            <Button onClick={handleCreate} className="w-full">Create Policy</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
