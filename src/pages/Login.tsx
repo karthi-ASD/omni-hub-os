@@ -38,10 +38,11 @@ const Login: React.FC = () => {
 
   return (
     <div className="flex min-h-screen">
-      {/* Left panel */}
+      {/* Left panel - branded */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div className="absolute inset-0 gradient-primary" />
-        <div className="absolute top-20 left-10 h-72 w-72 bg-primary-foreground/5 rounded-full blur-3xl" />
+        <div className="absolute inset-0 gradient-mesh opacity-30" />
+        <div className="absolute top-20 left-10 h-72 w-72 bg-primary-foreground/5 rounded-full blur-3xl animate-float" />
         <div className="absolute bottom-20 right-10 h-96 w-96 bg-primary-foreground/5 rounded-full blur-3xl" />
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <NWLogo size="lg" />
@@ -75,9 +76,9 @@ const Login: React.FC = () => {
         </div>
       </div>
 
-      {/* Right panel */}
+      {/* Right panel - form */}
       <div className="flex-1 flex items-center justify-center p-6 bg-background">
-        <div className="w-full max-w-md space-y-8">
+        <div className="w-full max-w-md space-y-8 animate-fade-in">
           <div className="lg:hidden"><NWLogo /></div>
           <div>
             <h2 className="text-3xl font-bold">Sign In</h2>
@@ -87,7 +88,7 @@ const Login: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">Email Address</Label>
-              <Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="john@acmecorp.com" required maxLength={255} className="h-12" />
+              <Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="john@acmecorp.com" required maxLength={255} className="h-12 rounded-xl" />
             </div>
             <div className="space-y-2">
               <div className="flex justify-between">
@@ -95,14 +96,14 @@ const Login: React.FC = () => {
                 <Link to="/forgot-password" className="text-xs text-primary hover:underline transition-colors">Forgot password?</Link>
               </div>
               <div className="relative">
-                <Input id="password" type={showPassword ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Enter your password" required className="h-12 pr-12" />
+                <Input id="password" type={showPassword ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Enter your password" required className="h-12 pr-12 rounded-xl" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors">
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
 
-            <Button type="submit" className="w-full h-12 font-semibold text-base shadow-lg" disabled={loading}>
+            <Button type="submit" className="w-full h-12 font-semibold text-base rounded-xl shadow-glow" disabled={loading}>
               {loading ? (
                 <div className="flex items-center gap-2">
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
@@ -118,7 +119,7 @@ const Login: React.FC = () => {
               <div className="relative flex justify-center"><span className="bg-background px-3 text-xs text-muted-foreground">or continue with</span></div>
             </div>
 
-            <Button type="button" variant="outline" className="w-full h-12" disabled={loading} onClick={async () => {
+            <Button type="button" variant="outline" className="w-full h-12 rounded-xl" disabled={loading} onClick={async () => {
               setLoading(true);
               try {
                 const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });

@@ -31,24 +31,25 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-6 bg-[#0a0e1a] relative overflow-hidden">
-      <div className="absolute top-20 left-1/4 h-96 w-96 bg-[#d4a853]/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-20 right-1/4 h-72 w-72 bg-[#2563eb]/5 rounded-full blur-3xl" />
+    <div className="flex min-h-screen items-center justify-center p-6 bg-background relative overflow-hidden">
+      <div className="absolute inset-0 gradient-mesh opacity-40" />
+      <div className="absolute top-20 left-1/4 h-96 w-96 bg-primary/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-20 right-1/4 h-72 w-72 bg-accent/5 rounded-full blur-3xl" />
       
-      <div className="w-full max-w-md space-y-8 relative z-10">
+      <div className="w-full max-w-md space-y-8 relative z-10 animate-fade-in">
         <NWLogo size="lg" />
 
         {sent ? (
           <div className="space-y-6">
-            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[#d4a853]/20 to-[#d4a853]/5 border border-[#d4a853]/20 flex items-center justify-center mx-auto">
-              <Mail className="h-8 w-8 text-[#d4a853]" />
+            <div className="h-16 w-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto">
+              <Mail className="h-8 w-8 text-primary" />
             </div>
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-white">Check Your Email</h2>
-              <p className="text-gray-400 mt-3">We sent a password reset link to <span className="text-[#d4a853] font-medium">{email}</span>.</p>
+              <h2 className="text-3xl font-bold">Check Your Email</h2>
+              <p className="text-muted-foreground mt-3">We sent a password reset link to <span className="text-primary font-medium">{email}</span>.</p>
             </div>
             <Link to="/login">
-              <Button variant="outline" className="w-full h-12 bg-[#111832] border-[#1e2a4a] text-gray-300 hover:bg-[#1e2a4a] hover:text-white hover:border-[#d4a853]/30">
+              <Button variant="outline" className="w-full h-12 rounded-xl">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to Sign In
               </Button>
             </Link>
@@ -56,22 +57,22 @@ const ForgotPassword = () => {
         ) : (
           <>
             <div>
-              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[#d4a853]/20 to-[#d4a853]/5 border border-[#d4a853]/20 flex items-center justify-center mb-6">
-                <Shield className="h-7 w-7 text-[#d4a853]" />
+              <div className="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-6">
+                <Shield className="h-7 w-7 text-primary" />
               </div>
-              <h2 className="text-3xl font-bold text-white">Reset Password</h2>
-              <p className="text-gray-500 mt-2">Enter your email and we'll send you a secure reset link</p>
+              <h2 className="text-3xl font-bold">Reset Password</h2>
+              <p className="text-muted-foreground mt-2">Enter your email and we'll send you a secure reset link</p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-300 text-sm">Email Address</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@acmecorp.com" required maxLength={255} className="h-12 bg-[#111832] border-[#1e2a4a] text-white placeholder:text-gray-600 focus:border-[#d4a853] focus:ring-[#d4a853]/20" />
+                <Label htmlFor="email" className="text-sm">Email Address</Label>
+                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@acmecorp.com" required maxLength={255} className="h-12 rounded-xl" />
               </div>
-              <Button type="submit" className="w-full h-12 bg-gradient-to-r from-[#d4a853] to-[#b8902e] text-[#0a0e1a] font-semibold hover:from-[#e0b85e] hover:to-[#c99d3a] shadow-lg shadow-[#d4a853]/20" disabled={loading}>
+              <Button type="submit" className="w-full h-12 rounded-xl font-semibold shadow-glow" disabled={loading}>
                 {loading ? "Sending..." : "Send Reset Link"}
               </Button>
             </form>
-            <Link to="/login" className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#d4a853] transition-colors">
+            <Link to="/login" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
               <ArrowLeft className="h-4 w-4" /> Back to Sign In
             </Link>
           </>
