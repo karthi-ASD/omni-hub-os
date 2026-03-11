@@ -11,6 +11,7 @@ export interface ClientFinancialSummary {
   avgInvoiceValue: number;
   monthsActive: number;
   lastPaymentDate: string | null;
+  clientSince: string | null;
   invoices: any[];
   payments: any[];
 }
