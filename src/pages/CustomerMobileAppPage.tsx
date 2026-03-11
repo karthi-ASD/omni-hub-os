@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Ticket, MessageSquare, BookOpen, Bot, Search, Send,
-  Clock, CheckCircle, AlertCircle, HelpCircle,
+  Clock, CheckCircle, AlertCircle, HelpCircle, BarChart3,
 } from "lucide-react";
 import { ClientNotificationBell } from "@/components/notifications/ClientNotificationBell";
 import { format } from "date-fns";
