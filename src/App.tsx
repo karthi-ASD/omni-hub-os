@@ -98,6 +98,8 @@ import RevenueIntelligencePage from "./pages/RevenueIntelligencePage";
 import FinanceDashboardPage from "./pages/FinanceDashboardPage";
 import XeroTestPage from "./pages/XeroTestPage";
 import ClientBillingPortalPage from "./pages/ClientBillingPortalPage";
+import ContentManagementPage from "./pages/ContentManagementPage";
+import WebsiteDevStagesPage from "./pages/WebsiteDevStagesPage";
 import ActivityTimelinePage from "./pages/ActivityTimelinePage";
 import GovernanceDashboardPage from "./pages/GovernanceDashboardPage";
 import TasksPage from "./pages/TasksPage";
@@ -515,6 +517,8 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><XeroTestPage /></ProtectedRoute>
               } />
               <Route path="/my-billing" element={<ClientBillingPortalPage />} />
+              <Route path="/content-management" element={<ContentManagementPage />} />
+              <Route path="/website-dev-stages" element={<WebsiteDevStagesPage />} />
               <Route path="/activity-timeline" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><ActivityTimelinePage /></ProtectedRoute>
               } />
