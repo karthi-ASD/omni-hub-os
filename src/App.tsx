@@ -93,6 +93,7 @@ import UsageAnalyticsPage from "./pages/UsageAnalyticsPage";
 import DemoModePage from "./pages/DemoModePage";
 import RevenueIntelligencePage from "./pages/RevenueIntelligencePage";
 import FinanceDashboardPage from "./pages/FinanceDashboardPage";
+import XeroTestPage from "./pages/XeroTestPage";
 import ClientBillingPortalPage from "./pages/ClientBillingPortalPage";
 import ActivityTimelinePage from "./pages/ActivityTimelinePage";
 import GovernanceDashboardPage from "./pages/GovernanceDashboardPage";
@@ -483,8 +484,11 @@ const App = () => (
               <Route path="/revenue-intelligence" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><RevenueIntelligencePage /></ProtectedRoute>
               } />
-              <Route path="/finance" element={
+               <Route path="/finance" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><FinanceDashboardPage /></ProtectedRoute>
+              } />
+              <Route path="/xero-test" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><XeroTestPage /></ProtectedRoute>
               } />
               <Route path="/my-billing" element={<ClientBillingPortalPage />} />
               <Route path="/activity-timeline" element={
