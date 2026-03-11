@@ -257,50 +257,63 @@ async function syncPayments(supabase: any, businessId: string, xeroHeaders: any)
 
     if (payments.length === 0) { hasMore = false; break; }
 
-    for (const p of payments) {
-      let clientId = null;
-      let invoiceId = null;
+    // Pre-fetch invoice and client maps for batch
+    const invoiceIds = payments.map((p: any) => p.Invoice?.InvoiceID).filter(Boolean);
+    const uniqueInvIds = [...new Set(invoiceIds)];
+    const invMap: Record<string, { id: string; client_id: string | null }> = {};
 
-      if (p.Invoice?.InvoiceID) {
-        const { data: invRecord } = await supabase
-          .from("xero_invoices").select("id, client_id")
-          .eq("business_id", businessId)
-          .eq("xero_invoice_id", p.Invoice.InvoiceID)
-          .single();
-        if (invRecord) {
-          invoiceId = invRecord.id;
-          clientId = invRecord.client_id;
-        }
+    if (uniqueInvIds.length > 0) {
+      const { data: invRecords } = await supabase
+        .from("xero_invoices").select("id, client_id, xero_invoice_id")
+        .eq("business_id", businessId)
+        .in("xero_invoice_id", uniqueInvIds);
+      for (const inv of invRecords || []) {
+        invMap[inv.xero_invoice_id] = { id: inv.id, client_id: inv.client_id };
       }
+    }
 
-      if (!clientId && p.Invoice?.Contact?.ContactID) {
-        const { data: client } = await supabase
-          .from("clients").select("id")
-          .eq("business_id", businessId)
-          .eq("xero_contact_id", p.Invoice.Contact.ContactID)
-          .single();
-        clientId = client?.id || null;
+    const contactIds = payments
+      .filter((p: any) => p.Invoice?.Contact?.ContactID && !invMap[p.Invoice?.InvoiceID]?.client_id)
+      .map((p: any) => p.Invoice.Contact.ContactID);
+    const uniqueContactIds = [...new Set(contactIds)];
+    const clientMap: Record<string, string> = {};
+
+    if (uniqueContactIds.length > 0) {
+      const { data: clients } = await supabase
+        .from("clients").select("id, xero_contact_id")
+        .eq("business_id", businessId)
+        .in("xero_contact_id", uniqueContactIds);
+      for (const c of clients || []) {
+        clientMap[c.xero_contact_id] = c.id;
       }
+    }
 
-      const { error: upsertErr } = await supabase.from("xero_payments").upsert({
+    const rows = payments.map((p: any) => {
+      const invRecord = invMap[p.Invoice?.InvoiceID];
+      return {
         business_id: businessId,
         xero_payment_id: p.PaymentID,
         xero_invoice_id: p.Invoice?.InvoiceID || null,
         xero_contact_id: p.Invoice?.Contact?.ContactID || null,
-        invoice_id: invoiceId,
-        client_id: clientId,
+        invoice_id: invRecord?.id || null,
+        client_id: invRecord?.client_id || clientMap[p.Invoice?.Contact?.ContactID] || null,
         payment_amount: p.Amount || 0,
         payment_date: p.DateString || null,
         payment_method: p.PaymentType || null,
         transaction_reference: p.Reference || null,
         synced_at: new Date().toISOString(),
-      }, { onConflict: "business_id,xero_payment_id", ignoreDuplicates: false });
+      };
+    });
 
-      if (upsertErr) {
-        console.error(`[SYNC] Payment upsert error:`, upsertErr.message);
-      }
-      paymentsSynced++;
+    const { error: upsertErr } = await supabase.from("xero_payments").upsert(rows, {
+      onConflict: "business_id,xero_payment_id",
+      ignoreDuplicates: false,
+    });
+
+    if (upsertErr) {
+      console.error(`[SYNC] Batch payment upsert error:`, upsertErr.message);
     }
+    paymentsSynced += payments.length;
 
     if (payments.length < 100) hasMore = false;
     else page++;
