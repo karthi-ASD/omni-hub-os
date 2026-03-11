@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Globe, Plus, Shield, Copy, Check, Clock, Wrench, Key } from "lucide-react";
+import { Globe, Plus, Shield, Copy, Check, Clock, Wrench, Key, Server } from "lucide-react";
 import { toast } from "sonner";
 
 const statusColors: Record<string, string> = {
