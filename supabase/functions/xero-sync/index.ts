@@ -269,7 +269,7 @@ Deno.serve(async (req) => {
       // Minimal scope to verify OAuth works first
       const scope = "openid";
       const state = crypto.randomUUID();
-      const redirectUriFixed = "https://bigappcompany.com.au/xero-test";
+      const redirectUriFixed = "https://bigappcompany.com.au/finance";
 
       const authUrl = `https://login.xero.com/identity/connect/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUriFixed)}&scope=${scope}&state=${state}`;
       
@@ -291,7 +291,7 @@ Deno.serve(async (req) => {
       const tokenBody: Record<string, string> = {
         grant_type: "authorization_code",
         code,
-        redirect_uri: "https://bigappcompany.com.au/xero-test",
+        redirect_uri: "https://bigappcompany.com.au/finance",
         client_id: clientId,
         client_secret: clientSecret,
       };
