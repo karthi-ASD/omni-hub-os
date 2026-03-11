@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Briefcase, Users, Star } from "lucide-react";
+import { Plus, Briefcase, Users, Star, Clock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +27,7 @@ const JobCRMPage = () => {
   const [jobTitle, setJobTitle] = useState("");
   const [jobDesc, setJobDesc] = useState("");
   const [jobCustId, setJobCustId] = useState("");
+  const [jobEstDuration, setJobEstDuration] = useState("");
 
   const handleCreateCustomer = async () => {
     await createCustomer({ name: custName, phone: custPhone || undefined, email: custEmail || undefined });
@@ -35,8 +36,13 @@ const JobCRMPage = () => {
   };
 
   const handleCreateJob = async () => {
-    await createJob({ job_title: jobTitle, description: jobDesc, tenant_customer_id: jobCustId || null });
-    setJobTitle(""); setJobDesc(""); setJobCustId("");
+    await createJob({
+      job_title: jobTitle,
+      description: jobDesc,
+      tenant_customer_id: jobCustId || null,
+      estimated_duration_minutes: jobEstDuration ? Number(jobEstDuration) : null,
+    });
+    setJobTitle(""); setJobDesc(""); setJobCustId(""); setJobEstDuration("");
     setJobOpen(false);
   };
 
@@ -47,6 +53,14 @@ const JobCRMPage = () => {
       case "cancelled": return "destructive";
       default: return "outline";
     }
+  };
+
+  const formatDuration = (mins: number | null) => {
+    if (!mins) return "—";
+    if (mins < 60) return `${mins}m`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
   };
 
   return (
@@ -85,6 +99,10 @@ const JobCRMPage = () => {
                       <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
+                  <div>
+                    <Label>Estimated Duration (minutes)</Label>
+                    <Input type="number" value={jobEstDuration} onChange={e => setJobEstDuration(e.target.value)} placeholder="e.g. 120" />
+                  </div>
                   <Button onClick={handleCreateJob} className="w-full" disabled={!jobTitle}>Create</Button>
                 </div>
               </DialogContent>
@@ -92,16 +110,33 @@ const JobCRMPage = () => {
           </div>
           <Card><CardContent className="p-0">
             <Table>
-              <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Customer</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>Customer</TableHead>
+                <TableHead>Est.</TableHead>
+                <TableHead>Actual</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow></TableHeader>
               <TableBody>
                 {jobLoading ? (
-                  <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
                 ) : jobs.length === 0 ? (
-                  <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No jobs</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No jobs</TableCell></TableRow>
                 ) : jobs.map(j => (
                   <TableRow key={j.id}>
                     <TableCell className="font-medium">{j.job_title}</TableCell>
                     <TableCell>{(j as any).tenant_customers?.name ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {j.estimated_duration_minutes ? (
+                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatDuration(j.estimated_duration_minutes)}</span>
+                      ) : "—"}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {j.actual_duration_minutes ? (
+                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatDuration(j.actual_duration_minutes)}</span>
+                      ) : "—"}
+                    </TableCell>
                     <TableCell><Badge variant={statusColor(j.status)}>{j.status}</Badge></TableCell>
                     <TableCell>
                       {j.status !== "completed" && j.status !== "cancelled" && (

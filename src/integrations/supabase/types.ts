@@ -345,6 +345,88 @@ export type Database = {
         }
         Relationships: []
       }
+      ads_campaigns: {
+        Row: {
+          business_id: string
+          campaign_external_id: string | null
+          campaign_name: string
+          clicks: number | null
+          client_id: string | null
+          connection_id: string | null
+          conversions: number | null
+          cpc: number | null
+          created_at: string | null
+          ctr: number | null
+          date: string
+          id: string
+          impressions: number | null
+          leads: number | null
+          platform: string
+          spend: number | null
+          status: string | null
+        }
+        Insert: {
+          business_id: string
+          campaign_external_id?: string | null
+          campaign_name: string
+          clicks?: number | null
+          client_id?: string | null
+          connection_id?: string | null
+          conversions?: number | null
+          cpc?: number | null
+          created_at?: string | null
+          ctr?: number | null
+          date?: string
+          id?: string
+          impressions?: number | null
+          leads?: number | null
+          platform?: string
+          spend?: number | null
+          status?: string | null
+        }
+        Update: {
+          business_id?: string
+          campaign_external_id?: string | null
+          campaign_name?: string
+          clicks?: number | null
+          client_id?: string | null
+          connection_id?: string | null
+          conversions?: number | null
+          cpc?: number | null
+          created_at?: string | null
+          ctr?: number | null
+          date?: string
+          id?: string
+          impressions?: number | null
+          leads?: number | null
+          platform?: string
+          spend?: number | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ads_campaigns_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ads_campaigns_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ads_campaigns_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "analytics_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_expenses: {
         Row: {
           amount: number
@@ -4922,6 +5004,7 @@ export type Database = {
           business_id: string
           client_id: string
           created_at: string
+          download_count: number | null
           features_json: Json | null
           id: string
           notes: string | null
@@ -4937,6 +5020,7 @@ export type Database = {
           business_id: string
           client_id: string
           created_at?: string
+          download_count?: number | null
           features_json?: Json | null
           id?: string
           notes?: string | null
@@ -4952,6 +5036,7 @@ export type Database = {
           business_id?: string
           client_id?: string
           created_at?: string
+          download_count?: number | null
           features_json?: Json | null
           id?: string
           notes?: string | null
@@ -7581,6 +7666,75 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_campaign_analytics: {
+        Row: {
+          bounced_at: string | null
+          business_id: string
+          campaign_name: string | null
+          click_count: number | null
+          clicked_at: string | null
+          created_at: string | null
+          delivered_at: string | null
+          delivery_status: string | null
+          id: string
+          open_count: number | null
+          opened_at: string | null
+          recipient_email: string | null
+          send_id: string | null
+          sent_at: string | null
+          unsubscribed_at: string | null
+        }
+        Insert: {
+          bounced_at?: string | null
+          business_id: string
+          campaign_name?: string | null
+          click_count?: number | null
+          clicked_at?: string | null
+          created_at?: string | null
+          delivered_at?: string | null
+          delivery_status?: string | null
+          id?: string
+          open_count?: number | null
+          opened_at?: string | null
+          recipient_email?: string | null
+          send_id?: string | null
+          sent_at?: string | null
+          unsubscribed_at?: string | null
+        }
+        Update: {
+          bounced_at?: string | null
+          business_id?: string
+          campaign_name?: string | null
+          click_count?: number | null
+          clicked_at?: string | null
+          created_at?: string | null
+          delivered_at?: string | null
+          delivery_status?: string | null
+          id?: string
+          open_count?: number | null
+          opened_at?: string | null
+          recipient_email?: string | null
+          send_id?: string | null
+          sent_at?: string | null
+          unsubscribed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_campaign_analytics_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_campaign_analytics_send_id_fkey"
+            columns: ["send_id"]
+            isOneToOne: false
+            referencedRelation: "communications_sends"
             referencedColumns: ["id"]
           },
         ]
@@ -11155,6 +11309,7 @@ export type Database = {
       }
       jobs: {
         Row: {
+          actual_duration_minutes: number | null
           business_id: string
           completed_at: string | null
           created_at: string
@@ -11162,6 +11317,7 @@ export type Database = {
           customer_confirmation_status: string
           customer_reschedule_request: string | null
           description: string | null
+          estimated_duration_minutes: number | null
           id: string
           job_address: string | null
           job_lat: number | null
@@ -11176,6 +11332,7 @@ export type Database = {
           tenant_customer_id: string | null
         }
         Insert: {
+          actual_duration_minutes?: number | null
           business_id: string
           completed_at?: string | null
           created_at?: string
@@ -11183,6 +11340,7 @@ export type Database = {
           customer_confirmation_status?: string
           customer_reschedule_request?: string | null
           description?: string | null
+          estimated_duration_minutes?: number | null
           id?: string
           job_address?: string | null
           job_lat?: number | null
@@ -11197,6 +11355,7 @@ export type Database = {
           tenant_customer_id?: string | null
         }
         Update: {
+          actual_duration_minutes?: number | null
           business_id?: string
           completed_at?: string | null
           created_at?: string
@@ -11204,6 +11363,7 @@ export type Database = {
           customer_confirmation_status?: string
           customer_reschedule_request?: string | null
           description?: string | null
+          estimated_duration_minutes?: number | null
           id?: string
           job_address?: string | null
           job_lat?: number | null
