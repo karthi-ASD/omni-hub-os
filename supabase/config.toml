@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.ai-chatbot]
 verify_jwt = false
+
+[functions.job-notifications]
+verify_jwt = false

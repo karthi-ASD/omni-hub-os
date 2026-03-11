@@ -10921,13 +10921,19 @@ export type Database = {
       jobs: {
         Row: {
           business_id: string
+          completed_at: string | null
           created_at: string
           created_by_user_id: string | null
           customer_confirmation_status: string
           customer_reschedule_request: string | null
           description: string | null
           id: string
+          job_address: string | null
+          job_lat: number | null
+          job_lng: number | null
           job_title: string
+          payment_amount: number | null
+          payment_status: string
           rescheduled_time: string | null
           scheduled_end_at: string | null
           scheduled_start_at: string | null
@@ -10936,13 +10942,19 @@ export type Database = {
         }
         Insert: {
           business_id: string
+          completed_at?: string | null
           created_at?: string
           created_by_user_id?: string | null
           customer_confirmation_status?: string
           customer_reschedule_request?: string | null
           description?: string | null
           id?: string
+          job_address?: string | null
+          job_lat?: number | null
+          job_lng?: number | null
           job_title: string
+          payment_amount?: number | null
+          payment_status?: string
           rescheduled_time?: string | null
           scheduled_end_at?: string | null
           scheduled_start_at?: string | null
@@ -10951,13 +10963,19 @@ export type Database = {
         }
         Update: {
           business_id?: string
+          completed_at?: string | null
           created_at?: string
           created_by_user_id?: string | null
           customer_confirmation_status?: string
           customer_reschedule_request?: string | null
           description?: string | null
           id?: string
+          job_address?: string | null
+          job_lat?: number | null
+          job_lng?: number | null
           job_title?: string
+          payment_amount?: number | null
+          payment_status?: string
           rescheduled_time?: string | null
           scheduled_end_at?: string | null
           scheduled_start_at?: string | null
@@ -13495,6 +13513,41 @@ export type Database = {
             columns: ["provider_connection_id"]
             isOneToOne: false
             referencedRelation: "provider_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_tokens: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          platform: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          platform?: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          platform?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_tokens_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
