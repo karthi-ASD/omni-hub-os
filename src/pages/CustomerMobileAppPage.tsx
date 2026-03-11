@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useCSTickets } from "@/hooks/useCSTickets";
 import { useKBArticles } from "@/hooks/useKBArticles";
