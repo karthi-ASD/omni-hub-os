@@ -419,6 +419,7 @@ const App = () => (
               <Route path="/satisfaction-surveys" element={<SatisfactionSurveysPage />} />
               <Route path="/ticket/:id" element={<TicketDetailPage />} />
               <Route path="/customer-app" element={<CustomerMobileAppPage />} />
+              <Route path="/client-notifications" element={<ClientNotificationsPage />} />
               <Route path="/staff-app" element={<StaffMobileAppPage />} />
               <Route path="/hr/departments" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><HRDepartmentsPage /></ProtectedRoute>
