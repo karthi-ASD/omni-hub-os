@@ -40,8 +40,6 @@ const XeroTestPage = () => {
     setStatus("connecting");
     setMessage("Exchanging authorization code for tokens...");
 
-    const storedVerifier = sessionStorage.getItem("xero_code_verifier");
-
     (async () => {
       try {
         const { data, error } = await supabase.functions.invoke("xero-sync", {
@@ -50,7 +48,6 @@ const XeroTestPage = () => {
             business_id: profile.business_id,
             code,
             redirect_uri: redirectUri,
-            code_verifier: storedVerifier,
           },
         });
         if (error) throw error;
@@ -58,7 +55,6 @@ const XeroTestPage = () => {
 
         setStatus("success");
         setMessage(`Connected! Tenant ID: ${data.tenantId}`);
-        sessionStorage.removeItem("xero_code_verifier");
         setSearchParams({});
 
         // Refresh connection info
@@ -84,10 +80,6 @@ const XeroTestPage = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-
-      if (data.code_verifier) {
-        sessionStorage.setItem("xero_code_verifier", data.code_verifier);
-      }
 
       setMessage("Redirecting to Xero...");
       window.location.href = data.auth_url;
