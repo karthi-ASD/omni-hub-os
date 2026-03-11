@@ -475,9 +475,22 @@ Deno.serve(async (req) => {
           if (!conn) continue;
 
           const accessToken = await getAccessToken(supabase, conn);
+
+          // Re-fetch tenant ID if missing
+          let tenantId = conn.xero_tenant_id;
+          if (!tenantId) {
+            const connRes = await fetch("https://api.xero.com/connections", {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            const conns = await connRes.json();
+            tenantId = conns?.[0]?.tenantId;
+            if (!tenantId) throw new Error("Could not retrieve Xero tenant ID");
+            await supabase.from("xero_connections").update({ xero_tenant_id: tenantId }).eq("id", conn.id);
+          }
+
           const xeroHeaders = {
             Authorization: `Bearer ${accessToken}`,
-            "Xero-Tenant-Id": conn.xero_tenant_id,
+            "Xero-Tenant-Id": tenantId,
             Accept: "application/json",
           };
 
