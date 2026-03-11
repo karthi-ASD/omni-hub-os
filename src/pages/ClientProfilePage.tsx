@@ -149,11 +149,12 @@ const ClientProfilePage = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="details" className="space-y-4">
-        <TabsList className="grid grid-cols-4 lg:grid-cols-9">
+        <TabsList className="grid grid-cols-4 lg:grid-cols-10">
           <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsTrigger value="onboarding"><ClipboardCheck className="h-3.5 w-3.5 mr-1" />Onboarding</TabsTrigger>
           <TabsTrigger value="finance"><DollarSign className="h-3.5 w-3.5 mr-1" />Finance</TabsTrigger>
           <TabsTrigger value="services">Services</TabsTrigger>
-          <TabsTrigger value="websites">Websites</TabsTrigger>
+          <TabsTrigger value="websites" className="hidden lg:inline-flex">Websites</TabsTrigger>
           <TabsTrigger value="seo" className="hidden lg:inline-flex">SEO</TabsTrigger>
           <TabsTrigger value="apps" className="hidden lg:inline-flex">Apps</TabsTrigger>
           <TabsTrigger value="billing" className="hidden lg:inline-flex">Billing</TabsTrigger>
