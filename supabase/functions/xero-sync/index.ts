@@ -434,14 +434,32 @@ Deno.serve(async (req) => {
       const tokens = await tokenRes.json();
       if (!tokenRes.ok) throw new Error(tokens.error || "Token exchange failed");
 
-      // Capture tenant ID
+      // Capture tenant ID from /connections
+      console.log("[OAUTH] Fetching tenant ID from /connections...");
       const connectionsRes = await fetch("https://api.xero.com/connections", {
-        headers: { Authorization: `Bearer ${tokens.access_token}` },
+        headers: {
+          Authorization: `Bearer ${tokens.access_token}`,
+          "Content-Type": "application/json",
+        },
       });
-      const connections = await connectionsRes.json();
-      const tenantId = connections[0]?.tenantId;
 
-      console.log("[OAUTH] Tenant ID captured:", tenantId);
+      if (!connectionsRes.ok) {
+        const errBody = await connectionsRes.text();
+        console.error("[OAUTH] /connections failed:", connectionsRes.status, errBody);
+        throw new Error(`Failed to retrieve Xero connections: ${connectionsRes.status}`);
+      }
+
+      const connections = await connectionsRes.json();
+      console.log("[OAUTH] /connections response:", JSON.stringify(connections));
+
+      if (!connections || connections.length === 0) {
+        console.error("[OAUTH] No connections returned. Token scopes may be missing accounting permissions.");
+        console.error("[OAUTH] Token scope check - ensure app has accounting.contacts & accounting.transactions scopes enabled in Xero Developer Portal.");
+        throw new Error("No Xero organisations found. Please ensure the app has accounting scopes enabled in the Xero Developer Portal, then disconnect and reconnect.");
+      }
+
+      const tenantId = connections[0].tenantId;
+      console.log("[OAUTH] Tenant ID captured:", tenantId, "Tenant Name:", connections[0].tenantName);
 
       await supabase.from("xero_connections").upsert({
         business_id,
