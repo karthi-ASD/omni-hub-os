@@ -4612,6 +4612,82 @@ export type Database = {
           },
         ]
       }
+      client_hosting_accounts: {
+        Row: {
+          backup_status: string | null
+          business_id: string
+          client_id: string | null
+          control_panel_type: string | null
+          created_at: string
+          hosting_plan: string | null
+          hosting_provider: string
+          id: string
+          linked_website_id: string | null
+          notes: string | null
+          renewal_date: string | null
+          server_location: string | null
+          ssl_expiry_date: string | null
+          ssl_status: string | null
+          updated_at: string
+        }
+        Insert: {
+          backup_status?: string | null
+          business_id: string
+          client_id?: string | null
+          control_panel_type?: string | null
+          created_at?: string
+          hosting_plan?: string | null
+          hosting_provider: string
+          id?: string
+          linked_website_id?: string | null
+          notes?: string | null
+          renewal_date?: string | null
+          server_location?: string | null
+          ssl_expiry_date?: string | null
+          ssl_status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          backup_status?: string | null
+          business_id?: string
+          client_id?: string | null
+          control_panel_type?: string | null
+          created_at?: string
+          hosting_plan?: string | null
+          hosting_provider?: string
+          id?: string
+          linked_website_id?: string | null
+          notes?: string | null
+          renewal_date?: string | null
+          server_location?: string | null
+          ssl_expiry_date?: string | null
+          ssl_status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_hosting_accounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_hosting_accounts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_hosting_accounts_linked_website_id_fkey"
+            columns: ["linked_website_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_mobile_apps: {
         Row: {
           app_category: string | null
