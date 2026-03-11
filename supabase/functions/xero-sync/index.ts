@@ -307,10 +307,6 @@ Deno.serve(async (req) => {
         client_id: clientId,
         client_secret: clientSecret,
       };
-      // Include PKCE code_verifier if provided
-      if (code_verifier) {
-        tokenBody.code_verifier = code_verifier;
-      }
 
       const tokenRes = await fetch(XERO_TOKEN_URL, {
         method: "POST",
