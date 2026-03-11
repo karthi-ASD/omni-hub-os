@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { encode as base64UrlEncode } from "https://deno.land/std@0.224.0/encoding/base64url.ts";
+import { encodeBase64Url } from "https://deno.land/std@0.224.0/encoding/base64url.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,14 +13,14 @@ const XERO_API_BASE = "https://api.xero.com/api.xro/2.0";
 function generateCodeVerifier(): string {
   const array = new Uint8Array(32);
   crypto.getRandomValues(array);
-  return base64UrlEncode(array);
+  return encodeBase64Url(array);
 }
 
 async function generateCodeChallenge(verifier: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(verifier);
   const digest = await crypto.subtle.digest("SHA-256", data);
-  return base64UrlEncode(new Uint8Array(digest));
+  return encodeBase64Url(new Uint8Array(digest));
 }
 
 async function getAccessToken(supabase: any, conn: any) {
