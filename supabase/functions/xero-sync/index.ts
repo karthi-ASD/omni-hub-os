@@ -291,7 +291,7 @@ Deno.serve(async (req) => {
       const tokenBody: Record<string, string> = {
         grant_type: "authorization_code",
         code,
-        redirect_uri,
+        redirect_uri: "https://bigappcompany.com.au/xero-test",
         client_id: clientId,
         client_secret: clientSecret,
       };
