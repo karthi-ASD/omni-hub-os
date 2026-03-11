@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { encode as base64UrlEncode } from "https://deno.land/std@0.224.0/encoding/base64url.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,6 +8,20 @@ const corsHeaders = {
 
 const XERO_TOKEN_URL = "https://identity.xero.com/connect/token";
 const XERO_API_BASE = "https://api.xero.com/api.xro/2.0";
+
+// PKCE helper functions
+function generateCodeVerifier(): string {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return base64UrlEncode(array);
+}
+
+async function generateCodeChallenge(verifier: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(verifier);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return base64UrlEncode(new Uint8Array(digest));
+}
 
 async function getAccessToken(supabase: any, conn: any) {
   let accessToken = conn.access_token_encrypted;
@@ -244,24 +259,30 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, serviceKey);
 
   try {
-    const { action, business_id, code, redirect_uri } = await req.json();
+    const { action, business_id, code, redirect_uri, code_verifier } = await req.json();
 
-    // --- GET AUTH URL (server-side, keeps client_id secret) ---
+    // --- GET AUTH URL (server-side, keeps client_id secret + PKCE) ---
     if (action === "get_auth_url") {
       const clientId = Deno.env.get("XERO_CLIENT_ID");
       if (!clientId) throw new Error("Xero credentials not configured");
       const scopes = "openid profile email accounting.transactions accounting.contacts offline_access";
-      const authUrl = `https://login.xero.com/identity/connect/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=${encodeURIComponent(scopes)}`;
+      
+      // Generate PKCE code verifier and challenge
+      const pkceVerifier = generateCodeVerifier();
+      const pkceChallenge = await generateCodeChallenge(pkceVerifier);
+      
+      const authUrl = `https://login.xero.com/identity/connect/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=${encodeURIComponent(scopes)}&code_challenge=${pkceChallenge}&code_challenge_method=S256`;
       
       // Debug logging for OAuth URL verification
       console.log("=== XERO OAUTH DEBUG ===");
       console.log("Client ID:", clientId);
       console.log("Redirect URI:", redirect_uri);
       console.log("Scopes:", scopes);
+      console.log("PKCE Challenge:", pkceChallenge);
       console.log("Full Auth URL:", authUrl);
       console.log("========================");
       
-      return new Response(JSON.stringify({ success: true, auth_url: authUrl }), {
+      return new Response(JSON.stringify({ success: true, auth_url: authUrl, code_verifier: pkceVerifier }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -272,16 +293,22 @@ Deno.serve(async (req) => {
       const clientSecret = Deno.env.get("XERO_CLIENT_SECRET");
       if (!clientId || !clientSecret) throw new Error("Xero credentials not configured");
 
+      const tokenBody: Record<string, string> = {
+        grant_type: "authorization_code",
+        code,
+        redirect_uri,
+        client_id: clientId,
+        client_secret: clientSecret,
+      };
+      // Include PKCE code_verifier if provided
+      if (code_verifier) {
+        tokenBody.code_verifier = code_verifier;
+      }
+
       const tokenRes = await fetch(XERO_TOKEN_URL, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          grant_type: "authorization_code",
-          code,
-          redirect_uri,
-          client_id: clientId,
-          client_secret: clientSecret,
-        }),
+        body: new URLSearchParams(tokenBody),
       });
       const tokens = await tokenRes.json();
       if (!tokenRes.ok) throw new Error(tokens.error || "Token exchange failed");

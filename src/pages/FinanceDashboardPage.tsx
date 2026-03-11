@@ -53,14 +53,16 @@ const FinanceDashboardPage = () => {
     const code = searchParams.get("code");
     if (code && profile?.business_id) {
       const redirectUri = "https://bigappcompany.com.au/finance";
+      const storedVerifier = sessionStorage.getItem("xero_code_verifier");
       (async () => {
         setSyncing(true);
         try {
           const { data, error } = await supabase.functions.invoke("xero-sync", {
-            body: { action: "oauth_callback", business_id: profile.business_id, code, redirect_uri: redirectUri },
+            body: { action: "oauth_callback", business_id: profile.business_id, code, redirect_uri: redirectUri, code_verifier: storedVerifier },
           });
           if (error) throw error;
           toast.success("Xero connected successfully!");
+          sessionStorage.removeItem("xero_code_verifier");
           setSearchParams({});
           refresh();
         } catch (e: any) {
@@ -109,7 +111,11 @@ const FinanceDashboardPage = () => {
         body: { action: "get_auth_url", redirect_uri: redirectUri },
       });
       if (error || !data?.auth_url) throw new Error(data?.error || "Failed to get auth URL");
-      window.open(data.auth_url, "_blank", "width=600,height=700");
+      // Store PKCE code_verifier for the callback
+      if (data.code_verifier) {
+        sessionStorage.setItem("xero_code_verifier", data.code_verifier);
+      }
+      window.location.href = data.auth_url;
     } catch (err: any) {
       toast.error(err.message || "Could not initiate Xero connection");
     }
