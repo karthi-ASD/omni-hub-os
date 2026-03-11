@@ -358,7 +358,7 @@ const WorkflowAutomationPage = () => {
 
       {/* Info cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Card className="border-primary/20">
+        <Card className="border-primary/20 rounded-2xl">
           <CardContent className="p-4">
             <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">Trigger → Action</p>
             <p className="text-xs text-muted-foreground">
@@ -366,7 +366,7 @@ const WorkflowAutomationPage = () => {
             </p>
           </CardContent>
         </Card>
-        <Card className="border-primary/20">
+        <Card className="border-primary/20 rounded-2xl">
           <CardContent className="p-4">
             <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">SLA Integration</p>
             <p className="text-xs text-muted-foreground">
@@ -374,7 +374,7 @@ const WorkflowAutomationPage = () => {
             </p>
           </CardContent>
         </Card>
-        <Card className="border-primary/20">
+        <Card className="border-primary/20 rounded-2xl">
           <CardContent className="p-4">
             <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">RBAC Aware</p>
             <p className="text-xs text-muted-foreground">
