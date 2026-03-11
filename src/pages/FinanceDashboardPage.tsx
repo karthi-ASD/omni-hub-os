@@ -52,7 +52,7 @@ const FinanceDashboardPage = () => {
   useEffect(() => {
     const code = searchParams.get("code");
     if (code && profile?.business_id) {
-      const redirectUri = `${window.location.origin}/finance`;
+      const redirectUri = "https://bigappcompany.com.au/finance";
       (async () => {
         setSyncing(true);
         try {
