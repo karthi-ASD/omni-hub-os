@@ -52,7 +52,7 @@ const FinanceDashboardPage = () => {
   useEffect(() => {
     const code = searchParams.get("code");
     if (code && profile?.business_id) {
-      const redirectUri = `${window.location.origin}/finance`;
+      const redirectUri = "https://bigappcompany.com.au/finance";
       (async () => {
         setSyncing(true);
         try {
@@ -104,7 +104,7 @@ const FinanceDashboardPage = () => {
 
   const handleConnectXero = useCallback(async () => {
     try {
-      const redirectUri = `${window.location.origin}/finance`;
+      const redirectUri = "https://bigappcompany.com.au/finance";
       const { data, error } = await supabase.functions.invoke("xero-sync", {
         body: { action: "get_auth_url", redirect_uri: redirectUri },
       });
