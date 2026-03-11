@@ -193,10 +193,22 @@ async function syncPayments(supabase: any, businessId: string, xeroHeaders: any)
   let page = 1;
   let hasMore = true;
 
+  console.log("[SYNC] Starting payments sync...");
+
   while (hasMore) {
-    const res = await fetch(`${XERO_API_BASE}/Payments?page=${page}&pageSize=100`, { headers: xeroHeaders });
+    const url = `${XERO_API_BASE}/Payments?page=${page}&pageSize=100`;
+    console.log(`[SYNC] Fetching payments page ${page}`);
+    const res = await fetch(url, { headers: xeroHeaders });
+    
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`[SYNC] Payments API error ${res.status}: ${errText}`);
+      throw new Error(`Payments API returned ${res.status}: ${errText}`);
+    }
+    
     const data = await res.json();
     const payments = data.Payments || [];
+    console.log(`[SYNC] Page ${page}: received ${payments.length} payments`);
 
     if (payments.length === 0) { hasMore = false; break; }
 
@@ -204,7 +216,6 @@ async function syncPayments(supabase: any, businessId: string, xeroHeaders: any)
       let clientId = null;
       let invoiceId = null;
 
-      // Link to xero_invoices record
       if (p.Invoice?.InvoiceID) {
         const { data: invRecord } = await supabase
           .from("xero_invoices").select("id, client_id")
@@ -217,7 +228,6 @@ async function syncPayments(supabase: any, businessId: string, xeroHeaders: any)
         }
       }
 
-      // Fallback: find client from contact
       if (!clientId && p.Invoice?.Contact?.ContactID) {
         const { data: client } = await supabase
           .from("clients").select("id")
@@ -227,7 +237,7 @@ async function syncPayments(supabase: any, businessId: string, xeroHeaders: any)
         clientId = client?.id || null;
       }
 
-      await supabase.from("xero_payments").upsert({
+      const { error: upsertErr } = await supabase.from("xero_payments").upsert({
         business_id: businessId,
         xero_payment_id: p.PaymentID,
         xero_invoice_id: p.Invoice?.InvoiceID || null,
@@ -239,6 +249,10 @@ async function syncPayments(supabase: any, businessId: string, xeroHeaders: any)
         transaction_reference: p.Reference || null,
         synced_at: new Date().toISOString(),
       }, { onConflict: "business_id,xero_payment_id", ignoreDuplicates: false });
+      
+      if (upsertErr) {
+        console.error(`[SYNC] Payment upsert error:`, upsertErr.message);
+      }
       paymentsSynced++;
     }
 
@@ -246,6 +260,7 @@ async function syncPayments(supabase: any, businessId: string, xeroHeaders: any)
     else page++;
   }
 
+  console.log(`[SYNC] Payments sync complete: ${paymentsSynced} synced`);
   return paymentsSynced;
 }
 
