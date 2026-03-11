@@ -27,6 +27,7 @@ const portalFeatures = [
   { key: "push_notifications", name: "Push Notifications", description: "Send push notifications for ticket updates", icon: Bell },
   { key: "invoice_history", name: "Invoice & Payment History", description: "View invoices and payment history", icon: FileText },
   { key: "knowledge_base", name: "Knowledge Base Access", description: "Browse help articles and FAQs", icon: BookOpen },
+  { key: "hosting_details", name: "Hosting & Domain Info", description: "View hosting, SSL, and domain details", icon: Globe },
   { key: "custom_branding", name: "Custom Branding", description: "White-label the portal with your brand", icon: Palette },
 ];
 
