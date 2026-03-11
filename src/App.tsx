@@ -363,6 +363,7 @@ const App = () => (
               } />
               <Route path="/job-crm" element={<JobCRMPage />} />
               <Route path="/review-monitor" element={<ReviewMonitorPage />} />
+              <Route path="/ai-reports" element={<AIReportsPage />} />
               <Route path="/conversations" element={<ConversationsPage />} />
               <Route path="/agent-factory" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AgentFactoryPage /></ProtectedRoute>
