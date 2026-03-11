@@ -265,24 +265,31 @@ Deno.serve(async (req) => {
     if (action === "get_auth_url") {
       const clientId = Deno.env.get("XERO_CLIENT_ID");
       if (!clientId) throw new Error("Xero credentials not configured");
-      const scopes = "openid profile email accounting.transactions accounting.contacts offline_access";
+      const scopes = "openid profile email offline_access accounting.transactions accounting.contacts";
       
-      // Generate PKCE code verifier and challenge
-      const pkceVerifier = generateCodeVerifier();
-      const pkceChallenge = await generateCodeChallenge(pkceVerifier);
+      // Generate a random state for CSRF protection
+      const stateArray = new Uint8Array(16);
+      crypto.getRandomValues(stateArray);
+      const state = encodeBase64Url(stateArray);
+
+      const params = new URLSearchParams({
+        response_type: "code",
+        client_id: clientId,
+        redirect_uri: redirect_uri,
+        scope: scopes,
+        state: state,
+      });
+
+      const authUrl = `https://login.xero.com/identity/connect/authorize?${params.toString()}`;
       
-      const authUrl = `https://login.xero.com/identity/connect/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=${encodeURIComponent(scopes)}&code_challenge=${pkceChallenge}&code_challenge_method=S256`;
-      
-      // Debug logging for OAuth URL verification
       console.log("=== XERO OAUTH DEBUG ===");
       console.log("Client ID:", clientId);
       console.log("Redirect URI:", redirect_uri);
       console.log("Scopes:", scopes);
-      console.log("PKCE Challenge:", pkceChallenge);
       console.log("Full Auth URL:", authUrl);
       console.log("========================");
       
-      return new Response(JSON.stringify({ success: true, auth_url: authUrl, code_verifier: pkceVerifier }), {
+      return new Response(JSON.stringify({ success: true, auth_url: authUrl, state }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
