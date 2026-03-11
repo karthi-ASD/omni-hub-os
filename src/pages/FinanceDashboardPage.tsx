@@ -32,7 +32,7 @@ const fmt = (n: number) => `$${n.toLocaleString("en-AU", { minimumFractionDigits
 const FinanceDashboardPage = () => {
   const { profile } = useAuth();
   const {
-    loading, xeroInvoices, xeroPayments, expenses, billingSchedules,
+    loading, xeroInvoices, xeroPayments, expenses, xeroExpenses, billingSchedules,
     xeroConnection, syncLogs,
     totalRevenue, totalExpenses, grossProfit, profitMargin,
     paidInvoices, overdueInvoices, outstandingInvoices, totalOutstanding, avgInvoiceValue,
