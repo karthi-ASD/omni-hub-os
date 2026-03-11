@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useCSTickets } from "@/hooks/useCSTickets";
 import { useKBArticles } from "@/hooks/useKBArticles";
@@ -12,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Ticket, MessageSquare, BookOpen, Bot, Search, Send,
-  Clock, CheckCircle, AlertCircle, HelpCircle,
+  Clock, CheckCircle, AlertCircle, HelpCircle, BarChart3,
 } from "lucide-react";
 import { ClientNotificationBell } from "@/components/notifications/ClientNotificationBell";
 import { format } from "date-fns";
@@ -24,6 +25,7 @@ const statusIcons: Record<string, React.ElementType> = {
 };
 
 const CustomerMobileAppPage = () => {
+  const navigate = useNavigate();
   usePageTitle("Customer Portal");
   const { tickets, loading } = useCSTickets();
   const { articles } = useKBArticles();
@@ -84,6 +86,10 @@ const CustomerMobileAppPage = () => {
           )}
         </CardContent>
       </Card>
+
+      <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => navigate("/client-reports")}>
+        <BarChart3 className="h-3.5 w-3.5" /> View My Reports
+      </Button>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full grid grid-cols-3 h-9">

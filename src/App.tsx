@@ -144,6 +144,7 @@ import SatisfactionSurveysPage from "./pages/SatisfactionSurveysPage";
 import TicketDetailPage from "./pages/TicketDetailPage";
 import CustomerMobileAppPage from "./pages/CustomerMobileAppPage";
 import ClientNotificationsPage from "./pages/ClientNotificationsPage";
+import ClientReportsPage from "./pages/ClientReportsPage";
 import StaffMobileAppPage from "./pages/StaffMobileAppPage";
 import HRDepartmentsPage from "./pages/HRDepartmentsPage";
 import HREmployeeListPage from "./pages/HREmployeeListPage";
@@ -420,6 +421,7 @@ const App = () => (
               <Route path="/ticket/:id" element={<TicketDetailPage />} />
               <Route path="/customer-app" element={<CustomerMobileAppPage />} />
               <Route path="/client-notifications" element={<ClientNotificationsPage />} />
+              <Route path="/client-reports" element={<ClientReportsPage />} />
               <Route path="/staff-app" element={<StaffMobileAppPage />} />
               <Route path="/hr/departments" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><HRDepartmentsPage /></ProtectedRoute>
