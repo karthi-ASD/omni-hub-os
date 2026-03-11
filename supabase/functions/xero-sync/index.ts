@@ -122,13 +122,22 @@ async function syncInvoices(supabase: any, businessId: string, xeroHeaders: any)
   let page = 1;
   let hasMore = true;
 
+  console.log("[SYNC] Starting invoices sync...");
+
   while (hasMore) {
-    const res = await fetch(
-      `${XERO_API_BASE}/Invoices?page=${page}&pageSize=100&Statuses=AUTHORISED,PAID,SUBMITTED,DRAFT,OVERDUE,VOIDED`,
-      { headers: xeroHeaders }
-    );
+    const url = `${XERO_API_BASE}/Invoices?page=${page}&pageSize=100&Statuses=AUTHORISED,PAID,SUBMITTED,DRAFT,OVERDUE,VOIDED`;
+    console.log(`[SYNC] Fetching invoices page ${page}`);
+    const res = await fetch(url, { headers: xeroHeaders });
+    
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`[SYNC] Invoices API error ${res.status}: ${errText}`);
+      throw new Error(`Invoices API returned ${res.status}: ${errText}`);
+    }
+    
     const data = await res.json();
     const invoices = data.Invoices || [];
+    console.log(`[SYNC] Page ${page}: received ${invoices.length} invoices`);
 
     if (invoices.length === 0) { hasMore = false; break; }
 
@@ -143,10 +152,9 @@ async function syncInvoices(supabase: any, businessId: string, xeroHeaders: any)
         clientId = client?.id || null;
       }
 
-      // Determine department from tracking categories on line items
       const deptCategory = inv.LineItems?.[0]?.Tracking?.[0]?.Option || null;
 
-      await supabase.from("xero_invoices").upsert({
+      const { error: upsertErr } = await supabase.from("xero_invoices").upsert({
         business_id: businessId,
         xero_invoice_id: inv.InvoiceID,
         xero_contact_id: inv.Contact?.ContactID || null,
@@ -165,6 +173,10 @@ async function syncInvoices(supabase: any, businessId: string, xeroHeaders: any)
         line_items_json: inv.LineItems || [],
         synced_at: new Date().toISOString(),
       }, { onConflict: "business_id,xero_invoice_id", ignoreDuplicates: false });
+      
+      if (upsertErr) {
+        console.error(`[SYNC] Invoice upsert error for ${inv.InvoiceNumber}:`, upsertErr.message);
+      }
       invoicesSynced++;
     }
 
@@ -172,6 +184,7 @@ async function syncInvoices(supabase: any, businessId: string, xeroHeaders: any)
     else page++;
   }
 
+  console.log(`[SYNC] Invoices sync complete: ${invoicesSynced} synced`);
   return invoicesSynced;
 }
 
