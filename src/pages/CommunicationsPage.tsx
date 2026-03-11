@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useCommunications } from "@/hooks/useCommunications";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,21 +9,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Mail, MessageSquare, Phone, Send } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
+import { Plus, Mail, MessageSquare, Phone, Send, Radio, FileText, BarChart3 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const CommunicationsPage = () => {
   const { providers, templates, sends, loading, addProvider, addTemplate, sendMessage } = useCommunications();
-
-  // Provider form
   const [provOpen, setProvOpen] = useState(false);
   const [provForm, setProvForm] = useState({ channel: "email", provider_type: "sendgrid" });
-
-  // Template form
   const [tmplOpen, setTmplOpen] = useState(false);
   const [tmplForm, setTmplForm] = useState({ channel: "email", template_key: "", subject: "", body: "" });
-
-  // Send form
   const [sendOpen, setSendOpen] = useState(false);
   const [sendForm, setSendForm] = useState({ channel: "email", to_address: "" });
 
@@ -35,12 +31,8 @@ const CommunicationsPage = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Communications</h1>
-          <p className="text-muted-foreground">Email, SMS & WhatsApp automation</p>
-        </div>
-        <div className="flex gap-2">
+      <PageHeader icon={Radio} title="Communications" subtitle="Email, SMS & WhatsApp automation"
+        actions={
           <Dialog open={sendOpen} onOpenChange={setSendOpen}>
             <DialogTrigger asChild><Button><Send className="mr-2 h-4 w-4" /> Send Message</Button></DialogTrigger>
             <DialogContent>
@@ -61,7 +53,13 @@ const CommunicationsPage = () => {
               </div>
             </DialogContent>
           </Dialog>
-        </div>
+        }
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard title="Providers" value={providers.length} icon={Radio} gradient="from-primary to-accent" />
+        <StatCard title="Templates" value={templates.length} icon={FileText} gradient="from-[hsl(var(--neon-green))] to-[hsl(var(--success))]" />
+        <StatCard title="Messages Sent" value={sends.length} icon={BarChart3} gradient="from-[hsl(var(--neon-orange))] to-[hsl(var(--warning))]" />
       </div>
 
       <Tabs defaultValue="providers">
@@ -71,7 +69,6 @@ const CommunicationsPage = () => {
           <TabsTrigger value="logs">Send Log</TabsTrigger>
         </TabsList>
 
-        {/* Providers */}
         <TabsContent value="providers" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-semibold">Configured Providers</h2>
@@ -102,7 +99,7 @@ const CommunicationsPage = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Card className="border-dashed">
+                  <Card className="border-dashed rounded-xl">
                     <CardContent className="py-3 text-sm text-muted-foreground">
                       API credentials are stored securely via backend secrets. Configure after adding.
                     </CardContent>
@@ -112,17 +109,17 @@ const CommunicationsPage = () => {
               </DialogContent>
             </Dialog>
           </div>
-          {loading ? <Skeleton className="h-24 w-full" /> : providers.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">No providers configured</CardContent></Card>
+          {loading ? <Skeleton className="h-24 w-full rounded-2xl" /> : providers.length === 0 ? (
+            <Card className="rounded-2xl"><CardContent className="py-8 text-center text-muted-foreground">No providers configured</CardContent></Card>
           ) : (
-            <Card><Table><TableHeader><TableRow>
+            <Card className="rounded-2xl"><Table><TableHeader><TableRow>
               <TableHead>Channel</TableHead><TableHead>Provider</TableHead><TableHead>Status</TableHead><TableHead>Added</TableHead>
             </TableRow></TableHeader><TableBody>
               {providers.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="capitalize flex items-center gap-2">{channelIcon(p.channel)} {p.channel}</TableCell>
                   <TableCell className="capitalize">{p.provider_type.replace(/_/g, " ")}</TableCell>
-                  <TableCell><Badge variant="secondary" className={p.is_active ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : ""}>{p.is_active ? "Active" : "Inactive"}</Badge></TableCell>
+                  <TableCell><Badge variant="secondary" className={p.is_active ? "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]" : ""}>{p.is_active ? "Active" : "Inactive"}</Badge></TableCell>
                   <TableCell>{new Date(p.created_at).toLocaleDateString()}</TableCell>
                 </TableRow>
               ))}
@@ -130,7 +127,6 @@ const CommunicationsPage = () => {
           )}
         </TabsContent>
 
-        {/* Templates */}
         <TabsContent value="templates" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-semibold">Message Templates</h2>
@@ -166,10 +162,10 @@ const CommunicationsPage = () => {
               </DialogContent>
             </Dialog>
           </div>
-          {loading ? <Skeleton className="h-24 w-full" /> : templates.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">No templates yet</CardContent></Card>
+          {loading ? <Skeleton className="h-24 w-full rounded-2xl" /> : templates.length === 0 ? (
+            <Card className="rounded-2xl"><CardContent className="py-8 text-center text-muted-foreground">No templates yet</CardContent></Card>
           ) : (
-            <Card><Table><TableHeader><TableRow>
+            <Card className="rounded-2xl"><Table><TableHeader><TableRow>
               <TableHead>Key</TableHead><TableHead>Channel</TableHead><TableHead>Subject</TableHead><TableHead>Added</TableHead>
             </TableRow></TableHeader><TableBody>
               {templates.map((t) => (
@@ -184,20 +180,19 @@ const CommunicationsPage = () => {
           )}
         </TabsContent>
 
-        {/* Send Log */}
         <TabsContent value="logs" className="space-y-4">
           <h2 className="text-lg font-semibold">Recent Messages ({sends.length})</h2>
-          {loading ? <Skeleton className="h-24 w-full" /> : sends.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">No messages sent yet</CardContent></Card>
+          {loading ? <Skeleton className="h-24 w-full rounded-2xl" /> : sends.length === 0 ? (
+            <Card className="rounded-2xl"><CardContent className="py-8 text-center text-muted-foreground">No messages sent yet</CardContent></Card>
           ) : (
-            <Card><Table><TableHeader><TableRow>
+            <Card className="rounded-2xl"><Table><TableHeader><TableRow>
               <TableHead>Channel</TableHead><TableHead>To</TableHead><TableHead>Status</TableHead><TableHead>Sent</TableHead>
             </TableRow></TableHeader><TableBody>
               {sends.map((s) => (
                 <TableRow key={s.id}>
                   <TableCell className="capitalize flex items-center gap-2">{channelIcon(s.channel)} {s.channel}</TableCell>
                   <TableCell>{s.to_address}</TableCell>
-                  <TableCell><Badge variant="secondary" className={s.status === "sent" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : s.status === "failed" ? "bg-destructive/10 text-destructive" : ""}>{s.status}</Badge></TableCell>
+                  <TableCell><Badge variant="secondary" className={s.status === "sent" ? "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]" : s.status === "failed" ? "bg-destructive/10 text-destructive" : ""}>{s.status}</Badge></TableCell>
                   <TableCell>{new Date(s.created_at).toLocaleDateString()}</TableCell>
                 </TableRow>
               ))}

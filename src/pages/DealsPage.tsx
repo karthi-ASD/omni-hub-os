@@ -12,6 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
 import {
   FolderKanban, List, Plus, Phone, StickyNote, ArrowRight,
   Trophy, XCircle, DollarSign, User, Mail,
@@ -20,13 +22,13 @@ import { format } from "date-fns";
 import { DealDetailSheet } from "@/components/deals/DealDetailSheet";
 
 const stageColors: Record<DealStage, string> = {
-  new: "bg-blue-500/10 text-blue-600",
-  contacted: "bg-cyan-500/10 text-cyan-600",
-  meeting_booked: "bg-violet-500/10 text-violet-600",
-  needs_analysis: "bg-amber-500/10 text-amber-600",
-  proposal_requested: "bg-orange-500/10 text-orange-600",
-  negotiation: "bg-pink-500/10 text-pink-600",
-  won: "bg-green-500/10 text-green-600",
+  new: "bg-primary/10 text-primary",
+  contacted: "bg-[hsl(var(--info))]/10 text-[hsl(var(--info))]",
+  meeting_booked: "bg-[hsl(var(--neon-purple))]/10 text-[hsl(var(--neon-purple))]",
+  needs_analysis: "bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))]",
+  proposal_requested: "bg-[hsl(var(--neon-orange))]/10 text-[hsl(var(--neon-orange))]",
+  negotiation: "bg-[hsl(var(--neon-pink))]/10 text-[hsl(var(--neon-pink))]",
+  won: "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]",
   lost: "bg-destructive/10 text-destructive",
 };
 
@@ -44,7 +46,6 @@ const DealsPage = () => {
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
-  // Form states
   const [form, setForm] = useState({ deal_name: "", contact_name: "", email: "", phone: "", business_name: "", service_interest: "", estimated_value: "" });
   const [noteText, setNoteText] = useState("");
   const [callForm, setCallForm] = useState<{ outcome: CallOutcome; notes: string }>({ outcome: "spoke", notes: "" });
@@ -52,17 +53,10 @@ const DealsPage = () => {
 
   const openDeals = deals.filter(d => d.status === "open");
   const filteredDeals = filter === "all" ? openDeals : openDeals.filter(d => d.stage === filter);
+  const totalPipeline = openDeals.reduce((s, d) => s + Number(d.estimated_value || 0), 0);
 
   const handleCreate = async () => {
-    await createDeal({
-      deal_name: form.deal_name,
-      contact_name: form.contact_name,
-      email: form.email,
-      phone: form.phone || undefined,
-      business_name: form.business_name || undefined,
-      service_interest: form.service_interest || undefined,
-      estimated_value: form.estimated_value ? Number(form.estimated_value) : undefined,
-    });
+    await createDeal({ deal_name: form.deal_name, contact_name: form.contact_name, email: form.email, phone: form.phone || undefined, business_name: form.business_name || undefined, service_interest: form.service_interest || undefined, estimated_value: form.estimated_value ? Number(form.estimated_value) : undefined });
     setCreateOpen(false);
     setForm({ deal_name: "", contact_name: "", email: "", phone: "", business_name: "", service_interest: "", estimated_value: "" });
   };
@@ -70,11 +64,7 @@ const DealsPage = () => {
   const handleStageChange = async () => {
     if (!stageChangeOpen) return;
     const { deal, toStage } = stageChangeOpen;
-    if (toStage === "won" || toStage === "lost") {
-      setWonLostOpen({ dealId: deal.id, type: toStage });
-      setStageChangeOpen(null);
-      return;
-    }
+    if (toStage === "won" || toStage === "lost") { setWonLostOpen({ dealId: deal.id, type: toStage }); setStageChangeOpen(null); return; }
     await changeStage(deal.id, deal.stage, toStage);
     setStageChangeOpen(null);
   };
@@ -91,30 +81,26 @@ const DealsPage = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <FolderKanban className="h-6 w-6" /> Deals Pipeline
-          </h1>
-          <p className="text-muted-foreground">Manage your sales pipeline</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant={view === "kanban" ? "default" : "outline"} size="sm" onClick={() => setView("kanban")}>
-            <FolderKanban className="h-4 w-4 mr-1" /> Kanban
-          </Button>
-          <Button variant={view === "list" ? "default" : "outline"} size="sm" onClick={() => setView("list")}>
-            <List className="h-4 w-4 mr-1" /> List
-          </Button>
-          <Button onClick={() => setCreateOpen(true)} size="sm">
-            <Plus className="h-4 w-4 mr-1" /> New Deal
-          </Button>
-        </div>
+      <PageHeader icon={FolderKanban} title="Deals Pipeline" subtitle="Manage your sales pipeline"
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant={view === "kanban" ? "default" : "outline"} size="sm" onClick={() => setView("kanban")}><FolderKanban className="h-4 w-4 mr-1" /> Kanban</Button>
+            <Button variant={view === "list" ? "default" : "outline"} size="sm" onClick={() => setView("list")}><List className="h-4 w-4 mr-1" /> List</Button>
+            <Button onClick={() => setCreateOpen(true)} size="sm"><Plus className="h-4 w-4 mr-1" /> New Deal</Button>
+          </div>
+        }
+      />
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <StatCard title="Open Deals" value={openDeals.length} icon={FolderKanban} gradient="from-primary to-accent" />
+        <StatCard title="Pipeline Value" value={`$${totalPipeline.toLocaleString()}`} icon={DollarSign} gradient="from-[hsl(var(--neon-green))] to-[hsl(var(--success))]" />
+        <StatCard title="Won" value={deals.filter(d => d.status === "won").length} icon={Trophy} gradient="from-[hsl(var(--success))] to-[hsl(var(--neon-green))]" />
+        <StatCard title="Lost" value={deals.filter(d => d.status === "lost").length} icon={XCircle} gradient="from-destructive to-destructive/70" />
       </div>
 
       {loading ? (
-        <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}</div>
+        <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-2xl" />)}</div>
       ) : view === "kanban" ? (
-        /* KANBAN VIEW */
         <div className="flex gap-3 overflow-x-auto pb-4">
           {kanbanStages.map(stage => {
             const stageDeals = openDeals.filter(d => d.stage === stage);
@@ -126,50 +112,29 @@ const DealsPage = () => {
                 </div>
                 <div className="space-y-2">
                   {stageDeals.map(deal => (
-                    <Card key={deal.id} className="hover:shadow-md transition-shadow cursor-pointer">
+                    <Card key={deal.id} className="rounded-2xl hover:shadow-md transition-shadow cursor-pointer">
                       <CardContent className="p-3 space-y-2">
                         <p className="font-medium text-sm truncate cursor-pointer" onClick={() => { setSelectedDeal(deal); setDetailOpen(true); }}>{deal.deal_name}</p>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <User className="h-3 w-3" /> {deal.contact_name}
-                        </div>
-                        {deal.estimated_value && (
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <DollarSign className="h-3 w-3" /> {Number(deal.estimated_value).toLocaleString()} {deal.currency}
-                          </div>
-                        )}
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground"><User className="h-3 w-3" /> {deal.contact_name}</div>
+                        {deal.estimated_value && <div className="flex items-center gap-1 text-xs text-muted-foreground"><DollarSign className="h-3 w-3" /> {Number(deal.estimated_value).toLocaleString()} {deal.currency}</div>}
                         <div className="flex gap-1 pt-1 flex-wrap">
-                          {(
-                            <Select onValueChange={(v) => setStageChangeOpen({ deal, toStage: v as DealStage })}>
-                              <SelectTrigger className="h-6 text-[10px] w-auto px-2">
-                                <ArrowRight className="h-3 w-3" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {DEAL_STAGES.filter(s => s !== stage).map(s => (
-                                  <SelectItem key={s} value={s}>{STAGE_LABELS[s]}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setCallOpen(deal.id)}>
-                            <Phone className="h-3 w-3" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setNoteOpen(deal.id)}>
-                            <StickyNote className="h-3 w-3" />
-                          </Button>
+                          <Select onValueChange={(v) => setStageChangeOpen({ deal, toStage: v as DealStage })}>
+                            <SelectTrigger className="h-6 text-[10px] w-auto px-2"><ArrowRight className="h-3 w-3" /></SelectTrigger>
+                            <SelectContent>{DEAL_STAGES.filter(s => s !== stage).map(s => <SelectItem key={s} value={s}>{STAGE_LABELS[s]}</SelectItem>)}</SelectContent>
+                          </Select>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setCallOpen(deal.id)}><Phone className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setNoteOpen(deal.id)}><StickyNote className="h-3 w-3" /></Button>
                         </div>
                       </CardContent>
                     </Card>
                   ))}
-                  {stageDeals.length === 0 && (
-                    <div className="text-xs text-muted-foreground text-center py-6">No deals</div>
-                  )}
+                  {stageDeals.length === 0 && <div className="text-xs text-muted-foreground text-center py-6">No deals</div>}
                 </div>
               </div>
             );
           })}
         </div>
       ) : (
-        /* LIST VIEW */
         <div>
           <div className="flex gap-2 mb-4">
             <Select value={filter} onValueChange={(v) => setFilter(v as any)}>
@@ -181,28 +146,21 @@ const DealsPage = () => {
             </Select>
           </div>
           {filteredDeals.length === 0 ? (
-            <Card><CardContent className="py-12 text-center text-muted-foreground">No deals found</CardContent></Card>
+            <Card className="rounded-2xl"><CardContent className="py-12 text-center text-muted-foreground">No deals found</CardContent></Card>
           ) : (
             <div className="space-y-2">
               {filteredDeals.map(deal => (
-                <Card key={deal.id} className="hover:shadow-md transition-shadow cursor-pointer">
+                <Card key={deal.id} className="rounded-2xl hover:shadow-md transition-shadow cursor-pointer">
                   <CardContent className="flex items-center gap-4 py-3 px-4">
                     <div className="flex-1 min-w-0 cursor-pointer" onClick={() => { setSelectedDeal(deal); setDetailOpen(true); }}>
                       <p className="font-medium text-sm truncate">{deal.deal_name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {deal.contact_name} · {deal.email}
-                        {deal.estimated_value && ` · $${Number(deal.estimated_value).toLocaleString()}`}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{deal.contact_name} · {deal.email}{deal.estimated_value && ` · $${Number(deal.estimated_value).toLocaleString()}`}</p>
                     </div>
                     <Badge className={stageColors[deal.stage]}>{STAGE_LABELS[deal.stage]}</Badge>
                     <div className="flex gap-1 shrink-0">
                       <Select onValueChange={(v) => setStageChangeOpen({ deal, toStage: v as DealStage })}>
                         <SelectTrigger className="h-7 text-xs w-auto px-2"><ArrowRight className="h-3 w-3" /></SelectTrigger>
-                        <SelectContent>
-                          {DEAL_STAGES.filter(s => s !== deal.stage).map(s => (
-                            <SelectItem key={s} value={s}>{STAGE_LABELS[s]}</SelectItem>
-                          ))}
-                        </SelectContent>
+                        <SelectContent>{DEAL_STAGES.filter(s => s !== deal.stage).map(s => <SelectItem key={s} value={s}>{STAGE_LABELS[s]}</SelectItem>)}</SelectContent>
                       </Select>
                       <Button variant="ghost" size="sm" onClick={() => setCallOpen(deal.id)}><Phone className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="sm" onClick={() => setNoteOpen(deal.id)}><StickyNote className="h-4 w-4" /></Button>
@@ -216,18 +174,6 @@ const DealsPage = () => {
           )}
         </div>
       )}
-
-      {/* Won/Lost summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-primary">Won Deals</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold">{deals.filter(d => d.status === "won").length}</p></CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-destructive">Lost Deals</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold">{deals.filter(d => d.status === "lost").length}</p></CardContent>
-        </Card>
-      </div>
 
       {/* CREATE DEAL DIALOG */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -249,53 +195,35 @@ const DealsPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* STAGE CHANGE CONFIRM */}
       <Dialog open={!!stageChangeOpen} onOpenChange={() => setStageChangeOpen(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Move to {stageChangeOpen && STAGE_LABELS[stageChangeOpen.toStage]}?</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">This will update the deal stage and log the change.</p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setStageChangeOpen(null)}>Cancel</Button>
-            <Button onClick={handleStageChange}>Confirm</Button>
-          </DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => setStageChangeOpen(null)}>Cancel</Button><Button onClick={handleStageChange}>Confirm</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* WON/LOST CONFIRM */}
       <Dialog open={!!wonLostOpen} onOpenChange={() => { setWonLostOpen(null); setLostReason(""); }}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{wonLostOpen?.type === "won" ? "🎉 Mark as Won?" : "Mark as Lost?"}</DialogTitle>
-          </DialogHeader>
-          {wonLostOpen?.type === "lost" && (
-            <div><Label>Lost Reason</Label><Textarea value={lostReason} onChange={e => setLostReason(e.target.value)} placeholder="Why was this deal lost?" /></div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setWonLostOpen(null); setLostReason(""); }}>Cancel</Button>
-            <Button onClick={handleWonLost}>{wonLostOpen?.type === "won" ? "Mark Won" : "Mark Lost"}</Button>
-          </DialogFooter>
+          <DialogHeader><DialogTitle>{wonLostOpen?.type === "won" ? "🎉 Mark as Won?" : "Mark as Lost?"}</DialogTitle></DialogHeader>
+          {wonLostOpen?.type === "lost" && <div><Label>Lost Reason</Label><Textarea value={lostReason} onChange={e => setLostReason(e.target.value)} placeholder="Why was this deal lost?" /></div>}
+          <DialogFooter><Button variant="outline" onClick={() => { setWonLostOpen(null); setLostReason(""); }}>Cancel</Button><Button onClick={handleWonLost}>{wonLostOpen?.type === "won" ? "Mark Won" : "Mark Lost"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* ADD NOTE DIALOG */}
       <Dialog open={!!noteOpen} onOpenChange={() => { setNoteOpen(null); setNoteText(""); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Add Note</DialogTitle></DialogHeader>
           <Textarea value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="Enter note..." />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setNoteOpen(null); setNoteText(""); }}>Cancel</Button>
-            <Button onClick={async () => { if (noteOpen) { await addNote(noteOpen, noteText); setNoteOpen(null); setNoteText(""); } }} disabled={!noteText}>Save Note</Button>
-          </DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => { setNoteOpen(null); setNoteText(""); }}>Cancel</Button><Button onClick={async () => { if (noteOpen) { await addNote(noteOpen, noteText); setNoteOpen(null); setNoteText(""); } }} disabled={!noteText}>Save Note</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* LOG CALL DIALOG */}
       <Dialog open={!!callOpen} onOpenChange={() => { setCallOpen(null); setCallForm({ outcome: "spoke", notes: "" }); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Log Call</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div>
-              <Label>Outcome</Label>
+            <div><Label>Outcome</Label>
               <Select value={callForm.outcome} onValueChange={v => setCallForm(p => ({ ...p, outcome: v as CallOutcome }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -312,24 +240,11 @@ const DealsPage = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setCallOpen(null); setCallForm({ outcome: "spoke", notes: "" }); }}>Cancel</Button>
-            <Button onClick={async () => {
-              if (callOpen) {
-                await logCall({
-                  related_entity_type: "deal",
-                  related_entity_id: callOpen,
-                  call_type: "outbound",
-                  outcome: callForm.outcome,
-                  notes: callForm.notes || undefined,
-                });
-                setCallOpen(null);
-                setCallForm({ outcome: "spoke", notes: "" });
-              }
-            }}>Log Call</Button>
+            <Button onClick={async () => { if (callOpen) { await logCall({ related_entity_type: "deal", related_entity_id: callOpen, call_type: "outbound", outcome: callForm.outcome, notes: callForm.notes || undefined }); setCallOpen(null); setCallForm({ outcome: "spoke", notes: "" }); } }}>Log Call</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Deal Detail Sheet */}
       <DealDetailSheet deal={selectedDeal} open={detailOpen} onOpenChange={setDetailOpen} />
     </div>
   );
