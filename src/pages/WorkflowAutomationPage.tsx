@@ -6,6 +6,7 @@ import {
   ACTION_TYPES,
   WORKFLOW_TEMPLATES,
 } from "@/hooks/useWorkflowAutomation";
+import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -90,19 +91,12 @@ const WorkflowAutomationPage = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="relative overflow-hidden rounded-lg gradient-primary p-5">
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-1">
-            <Workflow className="h-4 w-4 text-primary-foreground/80" />
-            <span className="text-xs text-primary-foreground/80 font-medium">Operations</span>
-          </div>
-          <h1 className="text-xl font-bold text-primary-foreground">Workflow Automation Engine</h1>
-          <p className="text-sm text-primary-foreground/70 mt-1">
-            Automate client onboarding, task creation, department assignments, and notifications
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Workflow}
+        title="Workflow Automation Engine"
+        subtitle="Automate client onboarding, task creation, department assignments, and notifications"
+        badge="Operations"
+      />
 
       <Tabs defaultValue="workflows" className="space-y-4">
         <TabsList>
@@ -229,7 +223,7 @@ const WorkflowAutomationPage = () => {
                 const actions = config.actions || [];
                 const condition = config.condition;
                 return (
-                  <Card key={rule.id} className="hover:shadow-md transition-shadow">
+                  <Card key={rule.id} className="hover:shadow-elevated transition-shadow rounded-2xl">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 space-y-2">
@@ -283,7 +277,7 @@ const WorkflowAutomationPage = () => {
           <p className="text-sm text-muted-foreground">Pre-built workflow templates — click to create instantly.</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {WORKFLOW_TEMPLATES.map((tpl, idx) => (
-              <Card key={idx} className="hover:shadow-md transition-shadow cursor-pointer group" onClick={() => createFromTemplate(idx)}>
+              <Card key={idx} className="hover:shadow-elevated transition-shadow cursor-pointer group rounded-2xl" onClick={() => createFromTemplate(idx)}>
                 <CardContent className="p-4 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -364,7 +358,7 @@ const WorkflowAutomationPage = () => {
 
       {/* Info cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Card className="border-primary/20">
+        <Card className="border-primary/20 rounded-2xl">
           <CardContent className="p-4">
             <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">Trigger → Action</p>
             <p className="text-xs text-muted-foreground">
@@ -372,7 +366,7 @@ const WorkflowAutomationPage = () => {
             </p>
           </CardContent>
         </Card>
-        <Card className="border-primary/20">
+        <Card className="border-primary/20 rounded-2xl">
           <CardContent className="p-4">
             <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">SLA Integration</p>
             <p className="text-xs text-muted-foreground">
@@ -380,7 +374,7 @@ const WorkflowAutomationPage = () => {
             </p>
           </CardContent>
         </Card>
-        <Card className="border-primary/20">
+        <Card className="border-primary/20 rounded-2xl">
           <CardContent className="p-4">
             <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-1">RBAC Aware</p>
             <p className="text-xs text-muted-foreground">
