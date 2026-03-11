@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { CustomFieldRenderer } from "@/components/custom-fields/CustomFieldRenderer";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -121,8 +122,9 @@ export function DealDetailSheet({ deal, open, onOpenChange }: DealDetailSheetPro
               </div>
             )}
           </div>
-        )}
-      </SheetContent>
+          )}
+          <CustomFieldRenderer moduleName="deals" recordId={deal.id} readOnly={!editing} />
+        </SheetContent>
     </Sheet>
   );
 }

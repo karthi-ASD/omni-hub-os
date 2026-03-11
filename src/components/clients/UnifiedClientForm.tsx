@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { CustomFieldRenderer } from "@/components/custom-fields/CustomFieldRenderer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -375,6 +376,7 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
             <TabsContent value="notes" className="mt-0">
               <Label>Internal Notes</Label>
               <Textarea value={form.notes} onChange={(e) => update("notes", e.target.value)} placeholder="Additional notes about this client..." rows={6} />
+              <CustomFieldRenderer moduleName="clients" />
             </TabsContent>
           </ScrollArea>
         </Tabs>

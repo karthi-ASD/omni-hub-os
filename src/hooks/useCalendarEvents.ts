@@ -9,6 +9,9 @@ export interface CalendarEvent {
   start_datetime: string;
   end_datetime: string;
   visibility: string;
+  location: string | null;
+  attendees: string[] | null;
+  recurrence_rule: string | null;
   created_by_user_id: string;
   business_id: string;
   created_at: string;
@@ -36,7 +39,7 @@ export function useCalendarEvents(month?: Date) {
     }
 
     const { data } = await query;
-    setEvents(data ?? []);
+    setEvents((data as any as CalendarEvent[]) ?? []);
     setLoading(false);
   }, [profile, month]);
 
@@ -50,16 +53,25 @@ export function useCalendarEvents(month?: Date) {
     start_datetime: string;
     end_datetime: string;
     visibility?: string;
+    location?: string;
+    attendees?: string[];
+    recurrence_rule?: string;
   }) => {
     if (!profile?.business_id) return null;
     const { data, error } = await supabase
       .from("calendar_events")
       .insert({
-        ...event,
+        title: event.title,
+        description: event.description || null,
+        start_datetime: event.start_datetime,
+        end_datetime: event.end_datetime,
         business_id: profile.business_id,
         created_by_user_id: profile.user_id,
         visibility: (event.visibility || "tenant") as "private" | "tenant",
-      })
+        location: event.location || null,
+        attendees: event.attendees || [],
+        recurrence_rule: event.recurrence_rule || null,
+      } as any)
       .select()
       .single();
 

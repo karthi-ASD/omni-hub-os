@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useClients, Client, OnboardingStatus } from "@/hooks/useClients";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Plus, Mail, Phone, Building2, Search, Upload, RefreshCw } from "lucide-react";
+import { Users, Plus, Mail, Phone, Building2, Search, Upload, RefreshCw, ChevronDown } from "lucide-react";
 import CSVImportDialog from "@/components/clients/CSVImportDialog";
 import UnifiedClientForm from "@/components/clients/UnifiedClientForm";
 import { toast } from "sonner";
@@ -23,11 +23,23 @@ const onboardingColors: Record<string, string> = {
 const ClientsPage = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
-  const { clients, loading, createClient, updateOnboardingStatus, refetch } = useClients();
+  const {
+    clients, loading, totalCount, hasMore,
+    createClient, updateOnboardingStatus, loadMore, setSearchTerm, refetch,
+  } = useClients();
   const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [syncing, setSyncing] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setSearchTerm(value);
+    }, 300);
+  };
 
   const handleSyncClients = async () => {
     if (!profile?.business_id) { toast.error("No business linked"); return; }
@@ -48,11 +60,7 @@ const ClientsPage = () => {
     }
   };
 
-  const filtered = clients.filter(c =>
-    !search || [c.contact_name, c.email, c.company_name, c.phone]
-      .some(f => f?.toLowerCase().includes(search.toLowerCase()))
-  );
-
+  // Count by status from total (approximate from loaded data)
   const statusCounts = {
     pending: clients.filter(c => c.onboarding_status === "pending").length,
     in_progress: clients.filter(c => c.onboarding_status === "in_progress").length,
@@ -63,9 +71,12 @@ const ClientsPage = () => {
     <div className="space-y-4 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <Users className="h-5 w-5 text-primary" /> Clients
-        </h1>
+        <div>
+          <h1 className="text-xl font-bold flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" /> Clients
+          </h1>
+          <p className="text-xs text-muted-foreground">{totalCount} total records</p>
+        </div>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={handleSyncClients} disabled={syncing}>
             <RefreshCw className={`h-4 w-4 mr-1 ${syncing ? "animate-spin" : ""}`} /> {syncing ? "Syncing..." : "Sync Clients"}
@@ -98,61 +109,77 @@ const ClientsPage = () => {
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search clients..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-10 rounded-xl" />
+        <Input placeholder="Search clients..." value={searchInput} onChange={e => handleSearchChange(e.target.value)} className="pl-9 h-10 rounded-xl" />
       </div>
 
       {/* Client cards */}
-      {loading ? (
+      {loading && clients.length === 0 ? (
         <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}</div>
-      ) : filtered.length === 0 ? (
+      ) : clients.length === 0 ? (
         <div className="py-16 text-center text-muted-foreground">No clients found</div>
       ) : (
-        <div className="space-y-2">
-          {filtered.map(c => (
-            <Card key={c.id} className="rounded-xl overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/clients/${c.id}`)}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-semibold text-sm truncate">{c.contact_name}</p>
-                      <Badge className={`text-[10px] px-1.5 py-0 ${onboardingColors[c.onboarding_status]}`}>
-                        {c.onboarding_status.replace("_", " ")}
-                      </Badge>
+        <>
+          <div className="space-y-2">
+            {clients.map(c => (
+              <Card key={c.id} className="rounded-xl overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/clients/${c.id}`)}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-semibold text-sm truncate">{c.contact_name}</p>
+                        <Badge className={`text-[10px] px-1.5 py-0 ${onboardingColors[c.onboarding_status]}`}>
+                          {c.onboarding_status.replace("_", " ")}
+                        </Badge>
+                      </div>
+                      {c.company_name && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Building2 className="h-3 w-3" /> {c.company_name}
+                        </p>
+                      )}
                     </div>
-                    {c.company_name && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Building2 className="h-3 w-3" /> {c.company_name}
-                      </p>
-                    )}
+                    <Select value={c.onboarding_status} onValueChange={v => { v && updateOnboardingStatus(c.id, v as OnboardingStatus); }}>
+                      <SelectTrigger className="w-28 h-7 text-[10px]" onClick={e => e.stopPropagation()}><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Select value={c.onboarding_status} onValueChange={v => updateOnboardingStatus(c.id, v as OnboardingStatus)}>
-                    <SelectTrigger className="w-28 h-7 text-[10px]"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
 
-                {/* Quick actions */}
-                <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border">
-                  {c.phone && (
-                    <a href={`tel:${c.phone}`} className="flex items-center gap-1 text-xs text-primary font-medium">
-                      <Phone className="h-3.5 w-3.5" /> Call
+                  <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border">
+                    {c.phone && (
+                      <a href={`tel:${c.phone}`} className="flex items-center gap-1 text-xs text-primary font-medium" onClick={e => e.stopPropagation()}>
+                        <Phone className="h-3.5 w-3.5" /> Call
+                      </a>
+                    )}
+                    <a href={`mailto:${c.email}`} className="flex items-center gap-1 text-xs text-primary font-medium" onClick={e => e.stopPropagation()}>
+                      <Mail className="h-3.5 w-3.5" /> Email
                     </a>
-                  )}
-                  <a href={`mailto:${c.email}`} className="flex items-center gap-1 text-xs text-primary font-medium">
-                    <Mail className="h-3.5 w-3.5" /> Email
-                  </a>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Load more */}
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <Button variant="outline" onClick={loadMore} disabled={loading}>
+                <ChevronDown className="h-4 w-4 mr-1" />
+                {loading ? "Loading..." : `Load more (${clients.length} of ${totalCount})`}
+              </Button>
+            </div>
+          )}
+
+          {!hasMore && clients.length > 0 && (
+            <p className="text-center text-xs text-muted-foreground py-2">
+              Showing all {clients.length} of {totalCount} clients
+            </p>
+          )}
+        </>
       )}
 
-      {/* Unified Client Creation Form */}
       <UnifiedClientForm
         open={createOpen}
         onOpenChange={setCreateOpen}
