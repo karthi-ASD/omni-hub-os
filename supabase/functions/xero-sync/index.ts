@@ -293,16 +293,22 @@ Deno.serve(async (req) => {
       const clientSecret = Deno.env.get("XERO_CLIENT_SECRET");
       if (!clientId || !clientSecret) throw new Error("Xero credentials not configured");
 
+      const tokenBody: Record<string, string> = {
+        grant_type: "authorization_code",
+        code,
+        redirect_uri,
+        client_id: clientId,
+        client_secret: clientSecret,
+      };
+      // Include PKCE code_verifier if provided
+      if (code_verifier) {
+        tokenBody.code_verifier = code_verifier;
+      }
+
       const tokenRes = await fetch(XERO_TOKEN_URL, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          grant_type: "authorization_code",
-          code,
-          redirect_uri,
-          client_id: clientId,
-          client_secret: clientSecret,
-        }),
+        body: new URLSearchParams(tokenBody),
       });
       const tokens = await tokenRes.json();
       if (!tokenRes.ok) throw new Error(tokens.error || "Token exchange failed");
