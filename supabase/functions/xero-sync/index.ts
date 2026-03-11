@@ -62,16 +62,28 @@ async function syncContacts(supabase: any, businessId: string, xeroHeaders: any)
   let page = 1;
   let hasMore = true;
 
+  console.log("[SYNC] Starting contacts sync...");
+
   while (hasMore) {
-    const res = await fetch(`${XERO_API_BASE}/Contacts?page=${page}&pageSize=100`, { headers: xeroHeaders });
+    const url = `${XERO_API_BASE}/Contacts?page=${page}&pageSize=100`;
+    console.log(`[SYNC] Fetching contacts page ${page}: ${url}`);
+    const res = await fetch(url, { headers: xeroHeaders });
+    
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`[SYNC] Contacts API error ${res.status}: ${errText}`);
+      throw new Error(`Contacts API returned ${res.status}: ${errText}`);
+    }
+    
     const data = await res.json();
     const contacts = data.Contacts || [];
+    console.log(`[SYNC] Page ${page}: received ${contacts.length} contacts`);
 
     if (contacts.length === 0) { hasMore = false; break; }
 
     for (const c of contacts) {
       const email = c.EmailAddress || `xero-${c.ContactID}@placeholder.local`;
-      await supabase.from("clients").upsert({
+      const { error: upsertErr } = await supabase.from("clients").upsert({
         business_id: businessId,
         xero_contact_id: c.ContactID,
         contact_name: c.Name || c.FirstName || "Unknown",
@@ -85,6 +97,10 @@ async function syncContacts(supabase: any, businessId: string, xeroHeaders: any)
           : c.Addresses?.[0] ? formatAddress(c.Addresses[0]) : null,
         tax_number: c.TaxNumber || null,
       }, { onConflict: "business_id,xero_contact_id", ignoreDuplicates: false });
+      
+      if (upsertErr) {
+        console.error(`[SYNC] Contact upsert error for ${c.Name}:`, upsertErr.message);
+      }
       contactsSynced++;
     }
 
@@ -92,6 +108,7 @@ async function syncContacts(supabase: any, businessId: string, xeroHeaders: any)
     else page++;
   }
 
+  console.log(`[SYNC] Contacts sync complete: ${contactsSynced} synced`);
   return contactsSynced;
 }
 
