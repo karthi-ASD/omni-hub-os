@@ -86,6 +86,10 @@ const CustomerMobileAppPage = () => {
         </CardContent>
       </Card>
 
+      <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => navigate("/client-reports")}>
+        <BarChart3 className="h-3.5 w-3.5" /> View My Reports
+      </Button>
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full grid grid-cols-3 h-9">
           <TabsTrigger value="tickets" className="text-xs"><Ticket className="h-3.5 w-3.5 mr-1" />Tickets</TabsTrigger>
