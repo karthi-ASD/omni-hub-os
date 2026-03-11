@@ -1,20 +1,24 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useFieldPayments } from "@/hooks/useFieldPayments";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import {
   Briefcase, CalendarDays, Clock, CheckCircle2, MapPin, Navigation,
   DollarSign, User, Phone, ArrowRight, AlertTriangle, Wrench,
-  Bell, ChevronRight, Loader2,
+  Bell, ChevronRight, Loader2, CreditCard, Receipt, Printer,
 } from "lucide-react";
 import { format, isToday, isTomorrow, startOfDay, addDays } from "date-fns";
 import { toast } from "sonner";
