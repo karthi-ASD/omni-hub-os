@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.check-hosting-alerts]
 verify_jwt = false
+
+[functions.ads-sync]
+verify_jwt = false
