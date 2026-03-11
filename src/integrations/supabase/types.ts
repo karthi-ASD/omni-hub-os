@@ -4277,36 +4277,45 @@ export type Database = {
       }
       calendar_events: {
         Row: {
+          attendees: string[] | null
           business_id: string
           created_at: string
           created_by_user_id: string
           description: string | null
           end_datetime: string
           id: string
+          location: string | null
+          recurrence_rule: string | null
           start_datetime: string
           title: string
           updated_at: string
           visibility: Database["public"]["Enums"]["calendar_visibility"]
         }
         Insert: {
+          attendees?: string[] | null
           business_id: string
           created_at?: string
           created_by_user_id: string
           description?: string | null
           end_datetime: string
           id?: string
+          location?: string | null
+          recurrence_rule?: string | null
           start_datetime: string
           title: string
           updated_at?: string
           visibility?: Database["public"]["Enums"]["calendar_visibility"]
         }
         Update: {
+          attendees?: string[] | null
           business_id?: string
           created_at?: string
           created_by_user_id?: string
           description?: string | null
           end_datetime?: string
           id?: string
+          location?: string | null
+          recurrence_rule?: string | null
           start_datetime?: string
           title?: string
           updated_at?: string

@@ -38,23 +38,64 @@ export interface Invoice {
   updated_at: string;
 }
 
+const PAGE_SIZE = 50;
+
 export function useInvoices() {
   const { profile } = useAuth();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [statusFilter, setStatusFilter] = useState("all");
 
-  const fetchInvoices = useCallback(async () => {
-    setLoading(true);
-    const { data } = await supabase
+  const fetchInvoices = useCallback(async (pageNum = 0, status = "all", append = false) => {
+    if (!append) setLoading(true);
+    const from = pageNum * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
+    let countQuery = supabase
+      .from("invoices")
+      .select("id", { count: "exact", head: true });
+    if (status !== "all") countQuery = countQuery.eq("status", status);
+
+    const { count } = await countQuery;
+    setTotalCount(count || 0);
+
+    let dataQuery = supabase
       .from("invoices")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(500);
-    setInvoices((data as any as Invoice[]) || []);
+      .range(from, to);
+    if (status !== "all") dataQuery = dataQuery.eq("status", status);
+
+    const { data } = await dataQuery;
+    const batch = (data as any as Invoice[]) || [];
+
+    if (append) {
+      setInvoices(prev => [...prev, ...batch]);
+    } else {
+      setInvoices(batch);
+    }
+
+    setHasMore(batch.length === PAGE_SIZE);
+    setPage(pageNum);
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchInvoices(); }, [fetchInvoices]);
+  useEffect(() => {
+    fetchInvoices(0, statusFilter);
+  }, [fetchInvoices, statusFilter]);
+
+  const loadMore = () => {
+    if (hasMore && !loading) {
+      fetchInvoices(page + 1, statusFilter, true);
+    }
+  };
+
+  const setFilter = (status: string) => {
+    setStatusFilter(status);
+  };
 
   const createInvoice = async (input: {
     client_id?: string;
@@ -98,7 +139,6 @@ export function useInvoices() {
 
     const invoiceId = (data as any).id;
 
-    // Insert line items
     if (input.items.length > 0) {
       await supabase.from("invoice_items").insert(
         input.items.map((item) => ({
@@ -126,21 +166,18 @@ export function useInvoices() {
     ]);
 
     toast.success("Invoice created");
-    fetchInvoices();
+    fetchInvoices(0, statusFilter);
     return data as any as Invoice;
   };
 
   const createFromDeal = async (dealId: string) => {
     if (!profile?.business_id) return null;
 
-    // Fetch deal and related proposal
     const { data: deal } = await supabase.from("deals").select("*").eq("id", dealId).single();
     if (!deal) { toast.error("Deal not found"); return null; }
 
-    // Find client
     const { data: client } = await supabase.from("clients").select("id").eq("deal_id", dealId).single();
 
-    // Find accepted proposal
     const { data: proposal } = await supabase
       .from("proposals")
       .select("*")
@@ -200,7 +237,7 @@ export function useInvoices() {
       payload_json: { entity_type: "invoice", entity_id: invoiceId, actor_user_id: profile.user_id, short_message: "Invoice sent" },
     });
     toast.success("Invoice sent");
-    fetchInvoices();
+    fetchInvoices(page, statusFilter);
   };
 
   const markPaid = async (invoiceId: string, transactionId?: string) => {
@@ -214,7 +251,6 @@ export function useInvoices() {
       amount_due: 0,
     } as any).eq("id", invoiceId);
 
-    // Create payment record
     await supabase.from("payments").insert({
       business_id: profile.business_id,
       client_id: invoice.client_id,
@@ -239,7 +275,6 @@ export function useInvoices() {
       }),
     ]);
 
-    // Check for active suspension on client and reinstate
     if (invoice.client_id) {
       const { data: suspension } = await supabase
         .from("account_suspensions")
@@ -263,7 +298,7 @@ export function useInvoices() {
     }
 
     toast.success("Invoice marked as paid");
-    fetchInvoices();
+    fetchInvoices(page, statusFilter);
   };
 
   const voidInvoice = async (invoiceId: string) => {
@@ -274,8 +309,13 @@ export function useInvoices() {
       action_type: "VOID_INVOICE", entity_type: "invoice", entity_id: invoiceId,
     });
     toast.success("Invoice voided");
-    fetchInvoices();
+    fetchInvoices(page, statusFilter);
   };
 
-  return { invoices, loading, createInvoice, createFromDeal, sendInvoice, markPaid, voidInvoice, refetch: fetchInvoices };
+  return {
+    invoices, loading, totalCount, page, hasMore,
+    createInvoice, createFromDeal, sendInvoice, markPaid, voidInvoice,
+    loadMore, setFilter, statusFilter,
+    refetch: () => fetchInvoices(0, statusFilter),
+  };
 }

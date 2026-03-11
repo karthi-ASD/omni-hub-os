@@ -51,40 +51,77 @@ export interface CreateClientInput {
   notes?: string;
 }
 
+const PAGE_SIZE = 50;
+
 export function useClients() {
   const { profile } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(0);
+  const [search, setSearch] = useState("");
+  const [hasMore, setHasMore] = useState(true);
 
-  const fetchClients = useCallback(async () => {
-    setLoading(true);
-    const PAGE_SIZE = 1000;
-    let allClients: Client[] = [];
-    let from = 0;
-    let hasMore = true;
+  const fetchClients = useCallback(async (pageNum = 0, searchTerm = "", append = false) => {
+    if (!append) setLoading(true);
+    const from = pageNum * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
 
-    while (hasMore) {
-      const { data } = await supabase
-        .from("clients")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .range(from, from + PAGE_SIZE - 1);
+    // Get count first
+    let countQuery = supabase
+      .from("clients")
+      .select("id", { count: "exact", head: true });
 
-      const batch = (data as any as Client[]) || [];
-      allClients = allClients.concat(batch);
-
-      if (batch.length < PAGE_SIZE) {
-        hasMore = false;
-      } else {
-        from += PAGE_SIZE;
-      }
+    if (searchTerm) {
+      countQuery = countQuery.or(
+        `contact_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,company_name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`
+      );
     }
 
-    setClients(allClients);
+    const { count } = await countQuery;
+    setTotalCount(count || 0);
+
+    // Get page of data
+    let dataQuery = supabase
+      .from("clients")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .range(from, to);
+
+    if (searchTerm) {
+      dataQuery = dataQuery.or(
+        `contact_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,company_name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`
+      );
+    }
+
+    const { data } = await dataQuery;
+    const batch = (data as any as Client[]) || [];
+
+    if (append) {
+      setClients(prev => [...prev, ...batch]);
+    } else {
+      setClients(batch);
+    }
+
+    setHasMore(batch.length === PAGE_SIZE);
+    setPage(pageNum);
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchClients(); }, [fetchClients]);
+  useEffect(() => {
+    fetchClients(0, search);
+  }, [fetchClients, search]);
+
+  const loadMore = () => {
+    if (hasMore && !loading) {
+      fetchClients(page + 1, search, true);
+    }
+  };
+
+  const setSearchTerm = (term: string) => {
+    setSearch(term);
+    // Reset to page 0 on search change — fetchClients will trigger via useEffect
+  };
 
   const createClient = async (input: CreateClientInput) => {
     if (!profile?.business_id) return null;
@@ -111,7 +148,6 @@ export function useClients() {
 
     const clientId = (data as any).id;
 
-    // Insert service subscriptions
     if (input.services && input.services.length > 0) {
       const serviceRows = input.services.map(s => ({
         client_id: clientId,
@@ -145,7 +181,7 @@ export function useClients() {
     ]);
 
     toast.success("Client created");
-    fetchClients();
+    fetchClients(0, search);
     return data as any as Client;
   };
 
@@ -167,8 +203,13 @@ export function useClients() {
       payload_json: { entity_type: "client", entity_id: clientId, actor_user_id: profile.user_id, short_message: `Onboarding: ${status}` },
     });
     toast.success("Onboarding status updated");
-    fetchClients();
+    fetchClients(page, search);
   };
 
-  return { clients, loading, createClient, updateOnboardingStatus, getClientServices, refetch: fetchClients };
+  return {
+    clients, loading, totalCount, page, hasMore,
+    createClient, updateOnboardingStatus, getClientServices,
+    loadMore, setSearchTerm,
+    refetch: () => fetchClients(0, search),
+  };
 }
