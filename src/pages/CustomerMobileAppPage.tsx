@@ -25,6 +25,7 @@ const statusIcons: Record<string, React.ElementType> = {
 };
 
 const CustomerMobileAppPage = () => {
+  const navigate = useNavigate();
   usePageTitle("Customer Portal");
   const { tickets, loading } = useCSTickets();
   const { articles } = useKBArticles();
