@@ -392,7 +392,7 @@ Deno.serve(async (req) => {
       const clientId = Deno.env.get("XERO_CLIENT_ID");
       if (!clientId) throw new Error("Xero credentials not configured");
 
-      const scope = "openid offline_access accounting.contacts accounting.transactions";
+      const scope = "openid profile email offline_access accounting.contacts accounting.transactions accounting.settings";
       const state = crypto.randomUUID();
       const redirectUriFixed = redirect_uri || "https://bigappcompany.com.au/finance";
 
