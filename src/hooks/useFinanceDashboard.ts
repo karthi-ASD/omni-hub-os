@@ -66,6 +66,7 @@ export function useFinanceDashboard() {
   const [xeroInvoices, setXeroInvoices] = useState<XeroInvoice[]>([]);
   const [xeroPayments, setXeroPayments] = useState<XeroPayment[]>([]);
   const [expenses, setExpenses] = useState<AgencyExpense[]>([]);
+  const [xeroExpenses, setXeroExpenses] = useState<any[]>([]);
   const [billingSchedules, setBillingSchedules] = useState<BillingSchedule[]>([]);
   const [xeroConnection, setXeroConnection] = useState<XeroConnection | null>(null);
   const [syncLogs, setSyncLogs] = useState<any[]>([]);
@@ -75,10 +76,11 @@ export function useFinanceDashboard() {
     if (!bizId) return;
     setLoading(true);
 
-    const [invR, payR, expR, schedR, connR, logR] = await Promise.all([
+    const [invR, payR, expR, xExpR, schedR, connR, logR] = await Promise.all([
       supabase.from("xero_invoices").select("*").eq("business_id", bizId).order("invoice_date", { ascending: false }).limit(500),
       supabase.from("xero_payments").select("*").eq("business_id", bizId).order("payment_date", { ascending: false }).limit(500),
       supabase.from("agency_expenses").select("*").eq("business_id", bizId).order("expense_date", { ascending: false }).limit(300),
+      supabase.from("xero_expenses" as any).select("*").eq("business_id", bizId).order("expense_date", { ascending: false }).limit(500),
       supabase.from("client_billing_schedules").select("*").eq("business_id", bizId).order("next_billing_date", { ascending: true }),
       supabase.from("xero_connections").select("*").eq("business_id", bizId).maybeSingle(),
       supabase.from("xero_sync_logs").select("*").eq("business_id", bizId).order("created_at", { ascending: false }).limit(20),
@@ -87,6 +89,7 @@ export function useFinanceDashboard() {
     setXeroInvoices((invR.data as any[]) ?? []);
     setXeroPayments((payR.data as any[]) ?? []);
     setExpenses((expR.data as any[]) ?? []);
+    setXeroExpenses((xExpR.data as any[]) ?? []);
     setBillingSchedules((schedR.data as any[]) ?? []);
     setXeroConnection((connR.data as any) ?? null);
     setSyncLogs((logR.data as any[]) ?? []);
