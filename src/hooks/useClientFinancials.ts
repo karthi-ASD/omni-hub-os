@@ -50,6 +50,7 @@ export function useClientFinancials(clientId: string | undefined) {
       : 1;
 
     const lastPaymentDate = payments.length > 0 ? payments[0].payment_date : null;
+    const clientSince = dates.length > 0 ? new Date(Math.min(...dates.map(d => d.getTime()))).toISOString().split("T")[0] : null;
 
     setData({
       totalRevenue,
@@ -61,6 +62,7 @@ export function useClientFinancials(clientId: string | undefined) {
       avgInvoiceValue: paid.length > 0 ? totalRevenue / paid.length : 0,
       monthsActive,
       lastPaymentDate,
+      clientSince,
       invoices,
       payments,
     });
