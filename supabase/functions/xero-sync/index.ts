@@ -252,6 +252,15 @@ Deno.serve(async (req) => {
       if (!clientId) throw new Error("Xero credentials not configured");
       const scopes = "openid profile email accounting.transactions accounting.contacts offline_access";
       const authUrl = `https://login.xero.com/identity/connect/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=${encodeURIComponent(scopes)}`;
+      
+      // Debug logging for OAuth URL verification
+      console.log("=== XERO OAUTH DEBUG ===");
+      console.log("Client ID:", clientId);
+      console.log("Redirect URI:", redirect_uri);
+      console.log("Scopes:", scopes);
+      console.log("Full Auth URL:", authUrl);
+      console.log("========================");
+      
       return new Response(JSON.stringify({ success: true, auth_url: authUrl }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
