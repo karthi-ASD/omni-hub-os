@@ -130,6 +130,7 @@ import AILearningPage from "./pages/AILearningPage";
 import AISalesBrainPage from "./pages/AISalesBrainPage";
 import AutonomousAgentsPage from "./pages/AutonomousAgentsPage";
 import WebsitesPage from "./pages/WebsitesPage";
+import DomainManagementPage from "./pages/DomainManagementPage";
 import LeadRoutingPage from "./pages/LeadRoutingPage";
 import CustomerServiceDashboard from "./pages/CustomerServiceDashboard";
 import CompanyAccountsPage from "./pages/CompanyAccountsPage";
@@ -390,6 +391,9 @@ const App = () => (
               } />
               <Route path="/websites" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><WebsitesPage /></ProtectedRoute>
+              } />
+              <Route path="/domains" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><DomainManagementPage /></ProtectedRoute>
               } />
               <Route path="/lead-routing" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><LeadRoutingPage /></ProtectedRoute>

@@ -4495,6 +4495,82 @@ export type Database = {
           },
         ]
       }
+      client_domains: {
+        Row: {
+          auto_renew_status: boolean | null
+          business_id: string
+          client_id: string | null
+          created_at: string
+          dns_provider: string | null
+          domain_name: string
+          expiry_date: string | null
+          id: string
+          linked_website_id: string | null
+          nameservers: string[] | null
+          notes: string | null
+          registrar_account_reference: string | null
+          registrar_name: string | null
+          registration_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          auto_renew_status?: boolean | null
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          dns_provider?: string | null
+          domain_name: string
+          expiry_date?: string | null
+          id?: string
+          linked_website_id?: string | null
+          nameservers?: string[] | null
+          notes?: string | null
+          registrar_account_reference?: string | null
+          registrar_name?: string | null
+          registration_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auto_renew_status?: boolean | null
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          dns_provider?: string | null
+          domain_name?: string
+          expiry_date?: string | null
+          id?: string
+          linked_website_id?: string | null
+          nameservers?: string[] | null
+          notes?: string | null
+          registrar_account_reference?: string | null
+          registrar_name?: string | null
+          registration_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_domains_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_domains_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_domains_linked_website_id_fkey"
+            columns: ["linked_website_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_health_scores: {
         Row: {
           business_id: string

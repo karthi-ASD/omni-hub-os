@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useWebsites } from "@/hooks/useWebsites";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +21,7 @@ const statusColors: Record<string, string> = {
 };
 
 const WebsitesPage = () => {
+  const navigate = useNavigate();
   const { websites, services, loading, requestWebsite, approveWebsite, disableWebsite, fetchServices, addService, removeService } = useWebsites();
   const { isSuperAdmin } = useAuth();
   const [createOpen, setCreateOpen] = useState(false);
@@ -67,9 +69,14 @@ const WebsitesPage = () => {
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Globe className="h-6 w-6 text-[#d4a853]" /> Websites
         </h1>
-        <Button size="sm" onClick={() => setCreateOpen(true)} className="bg-[#d4a853] hover:bg-[#b8902e] text-[#0a0e1a]">
-          <Plus className="h-4 w-4 mr-1" /> Add Website
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => navigate("/domains")} className="border-[#1e2a4a] text-[#d4a853]">
+            <Globe className="h-4 w-4 mr-1" /> Domains
+          </Button>
+          <Button size="sm" onClick={() => setCreateOpen(true)} className="bg-[#d4a853] hover:bg-[#b8902e] text-[#0a0e1a]">
+            <Plus className="h-4 w-4 mr-1" /> Add Website
+          </Button>
+        </div>
       </div>
 
       {loading ? (
