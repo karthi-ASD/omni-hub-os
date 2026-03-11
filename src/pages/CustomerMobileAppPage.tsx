@@ -14,6 +14,7 @@ import {
   Ticket, MessageSquare, BookOpen, Bot, Search, Send,
   Clock, CheckCircle, AlertCircle, HelpCircle,
 } from "lucide-react";
+import { ClientNotificationBell } from "@/components/notifications/ClientNotificationBell";
 import { format } from "date-fns";
 
 const statusIcons: Record<string, React.ElementType> = {
@@ -42,14 +43,17 @@ const CustomerMobileAppPage = () => {
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-          <HelpCircle className="h-5 w-5 text-primary" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <HelpCircle className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-foreground">Help Center</h1>
+            <p className="text-xs text-muted-foreground">Self-service support portal</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-xl font-bold text-foreground">Help Center</h1>
-          <p className="text-xs text-muted-foreground">Self-service support portal</p>
-        </div>
+        <ClientNotificationBell />
       </div>
 
       {/* AI Search */}

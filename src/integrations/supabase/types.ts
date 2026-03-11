@@ -11655,6 +11655,7 @@ export type Database = {
       notifications: {
         Row: {
           business_id: string | null
+          client_id: string | null
           created_at: string
           id: string
           is_read: boolean
@@ -11665,6 +11666,7 @@ export type Database = {
         }
         Insert: {
           business_id?: string | null
+          client_id?: string | null
           created_at?: string
           id?: string
           is_read?: boolean
@@ -11675,6 +11677,7 @@ export type Database = {
         }
         Update: {
           business_id?: string | null
+          client_id?: string | null
           created_at?: string
           id?: string
           is_read?: boolean
@@ -11689,6 +11692,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
