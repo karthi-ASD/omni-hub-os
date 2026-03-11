@@ -21,6 +21,7 @@ const statusColors: Record<string, string> = {
 };
 
 const WebsitesPage = () => {
+  const navigate = useNavigate();
   const { websites, services, loading, requestWebsite, approveWebsite, disableWebsite, fetchServices, addService, removeService } = useWebsites();
   const { isSuperAdmin } = useAuth();
   const [createOpen, setCreateOpen] = useState(false);
