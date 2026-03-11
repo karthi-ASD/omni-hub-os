@@ -81,10 +81,6 @@ const XeroTestPage = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      if (data.code_verifier) {
-        sessionStorage.setItem("xero_code_verifier", data.code_verifier);
-      }
-
       setMessage("Redirecting to Xero...");
       window.location.href = data.auth_url;
     } catch (e: any) {
