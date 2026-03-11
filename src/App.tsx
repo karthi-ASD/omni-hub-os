@@ -147,6 +147,7 @@ import ClientNotificationsPage from "./pages/ClientNotificationsPage";
 import ClientReportsPage from "./pages/ClientReportsPage";
 import ClientDepartmentsPage from "./pages/ClientDepartmentsPage";
 import ClientEmployeesPage from "./pages/ClientEmployeesPage";
+import CustomerAppointmentPage from "./pages/CustomerAppointmentPage";
 import StaffMobileAppPage from "./pages/StaffMobileAppPage";
 import HRDepartmentsPage from "./pages/HRDepartmentsPage";
 import HREmployeeListPage from "./pages/HREmployeeListPage";
@@ -426,6 +427,7 @@ const App = () => (
               <Route path="/client-reports" element={<ClientReportsPage />} />
               <Route path="/client-departments" element={<ClientDepartmentsPage />} />
               <Route path="/client-employees" element={<ClientEmployeesPage />} />
+              <Route path="/my-appointments" element={<CustomerAppointmentPage />} />
               <Route path="/staff-app" element={<StaffMobileAppPage />} />
               <Route path="/hr/departments" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><HRDepartmentsPage /></ProtectedRoute>
