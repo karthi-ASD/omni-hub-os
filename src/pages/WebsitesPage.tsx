@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Globe, Plus, Shield, Copy, Check, Clock, Wrench, Key } from "lucide-react";
+import { Globe, Plus, Shield, Copy, Check, Clock, Wrench, Key, Server } from "lucide-react";
 import { toast } from "sonner";
 
 const statusColors: Record<string, string> = {
@@ -72,6 +72,9 @@ const WebsitesPage = () => {
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={() => navigate("/domains")} className="border-[#1e2a4a] text-[#d4a853]">
             <Globe className="h-4 w-4 mr-1" /> Domains
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => navigate("/hosting")} className="border-[#1e2a4a] text-[#d4a853]">
+            <Server className="h-4 w-4 mr-1" /> Hosting
           </Button>
           <Button size="sm" onClick={() => setCreateOpen(true)} className="bg-[#d4a853] hover:bg-[#b8902e] text-[#0a0e1a]">
             <Plus className="h-4 w-4 mr-1" /> Add Website

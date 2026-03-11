@@ -131,6 +131,7 @@ import AISalesBrainPage from "./pages/AISalesBrainPage";
 import AutonomousAgentsPage from "./pages/AutonomousAgentsPage";
 import WebsitesPage from "./pages/WebsitesPage";
 import DomainManagementPage from "./pages/DomainManagementPage";
+import HostingManagementPage from "./pages/HostingManagementPage";
 import LeadRoutingPage from "./pages/LeadRoutingPage";
 import CustomerServiceDashboard from "./pages/CustomerServiceDashboard";
 import CompanyAccountsPage from "./pages/CompanyAccountsPage";
@@ -394,6 +395,9 @@ const App = () => (
               } />
               <Route path="/domains" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><DomainManagementPage /></ProtectedRoute>
+              } />
+              <Route path="/hosting" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><HostingManagementPage /></ProtectedRoute>
               } />
               <Route path="/lead-routing" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><LeadRoutingPage /></ProtectedRoute>
