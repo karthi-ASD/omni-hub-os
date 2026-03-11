@@ -1432,6 +1432,60 @@ export type Database = {
           },
         ]
       }
+      ai_chat_logs: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          created_at: string
+          id: string
+          message: string
+          metadata_json: Json | null
+          role: string
+          sender_email: string | null
+          sender_name: string | null
+          session_id: string
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          metadata_json?: Json | null
+          role?: string
+          sender_email?: string | null
+          sender_name?: string | null
+          session_id: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          metadata_json?: Json | null
+          role?: string
+          sender_email?: string | null
+          sender_name?: string | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_chat_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_chat_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_competitor_analysis: {
         Row: {
           analysis_json: Json | null

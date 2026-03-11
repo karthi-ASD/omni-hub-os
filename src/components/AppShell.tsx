@@ -2,8 +2,13 @@ import { Outlet } from "react-router-dom";
 import { BottomNav } from "@/components/mobile/BottomNav";
 import { FloatingActionButton } from "@/components/mobile/FloatingActionButton";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
+import { ChatWidget } from "@/components/chat/ChatWidget";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AppShell = () => {
+  const { profile } = useAuth();
+  const businessId = profile?.business_id;
+
   return (
     <div className="flex flex-col min-h-screen w-full bg-background gradient-mesh">
       <MobileHeader />
@@ -12,6 +17,13 @@ const AppShell = () => {
       </main>
       <FloatingActionButton />
       <BottomNav />
+      {businessId && (
+        <ChatWidget
+          businessId={businessId}
+          title="AI Support"
+          subtitle="Powered by AI • Ask anything"
+        />
+      )}
     </div>
   );
 };
