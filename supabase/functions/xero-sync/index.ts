@@ -15,14 +15,16 @@ async function getAccessToken(supabase: any, conn: any) {
     const clientId = Deno.env.get("XERO_CLIENT_ID")!;
     const clientSecret = Deno.env.get("XERO_CLIENT_SECRET")!;
 
+    const basicAuth = btoa(`${clientId}:${clientSecret}`);
     const refreshRes = await fetch(XERO_TOKEN_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": `Basic ${basicAuth}`,
+      },
       body: new URLSearchParams({
         grant_type: "refresh_token",
         refresh_token: conn.refresh_token_encrypted,
-        client_id: clientId,
-        client_secret: clientSecret,
       }),
     });
     const newTokens = await refreshRes.json();
