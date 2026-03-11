@@ -131,6 +131,7 @@ import AISalesBrainPage from "./pages/AISalesBrainPage";
 import AutonomousAgentsPage from "./pages/AutonomousAgentsPage";
 import WebsitesPage from "./pages/WebsitesPage";
 import DomainManagementPage from "./pages/DomainManagementPage";
+import HostingManagementPage from "./pages/HostingManagementPage";
 import LeadRoutingPage from "./pages/LeadRoutingPage";
 import CustomerServiceDashboard from "./pages/CustomerServiceDashboard";
 import CompanyAccountsPage from "./pages/CompanyAccountsPage";
