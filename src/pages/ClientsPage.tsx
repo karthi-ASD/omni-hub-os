@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useClients, Client, OnboardingStatus } from "@/hooks/useClients";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Plus, Mail, Phone, Building2, Search, Upload } from "lucide-react";
+import { Users, Plus, Mail, Phone, Building2, Search, Upload, RefreshCw } from "lucide-react";
 import CSVImportDialog from "@/components/clients/CSVImportDialog";
 import UnifiedClientForm from "@/components/clients/UnifiedClientForm";
+import { toast } from "sonner";
 
 const onboardingColors: Record<string, string> = {
   pending: "bg-amber-500/10 text-amber-600",
