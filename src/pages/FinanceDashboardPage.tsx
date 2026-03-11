@@ -102,12 +102,17 @@ const FinanceDashboardPage = () => {
     }
   }, [profile?.business_id, refresh]);
 
-  const handleConnectXero = useCallback(() => {
-    const redirectUri = `${window.location.origin}/finance`;
-    const clientId = "1A76351349884DE19A30ED4EB47D8556";
-    const scopes = "openid profile email accounting.transactions accounting.contacts offline_access";
-    const authUrl = `https://login.xero.com/identity/connect/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
-    window.open(authUrl, "_blank", "width=600,height=700");
+  const handleConnectXero = useCallback(async () => {
+    try {
+      const redirectUri = `${window.location.origin}/finance`;
+      const { data, error } = await supabase.functions.invoke("xero-sync", {
+        body: { action: "get_auth_url", redirect_uri: redirectUri },
+      });
+      if (error || !data?.auth_url) throw new Error(data?.error || "Failed to get auth URL");
+      window.open(data.auth_url, "_blank", "width=600,height=700");
+    } catch (err: any) {
+      toast.error(err.message || "Could not initiate Xero connection");
+    }
   }, []);
 
   const handleRunForecast = useCallback(async () => {

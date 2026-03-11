@@ -246,6 +246,17 @@ Deno.serve(async (req) => {
   try {
     const { action, business_id, code, redirect_uri } = await req.json();
 
+    // --- GET AUTH URL (server-side, keeps client_id secret) ---
+    if (action === "get_auth_url") {
+      const clientId = Deno.env.get("XERO_CLIENT_ID");
+      if (!clientId) throw new Error("Xero credentials not configured");
+      const scopes = "openid profile email accounting.transactions accounting.contacts offline_access";
+      const authUrl = `https://login.xero.com/identity/connect/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=${encodeURIComponent(scopes)}`;
+      return new Response(JSON.stringify({ success: true, auth_url: authUrl }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // --- OAUTH CALLBACK ---
     if (action === "oauth_callback") {
       const clientId = Deno.env.get("XERO_CLIENT_ID");
