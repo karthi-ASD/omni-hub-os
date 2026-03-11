@@ -223,7 +223,7 @@ const WorkflowAutomationPage = () => {
                 const actions = config.actions || [];
                 const condition = config.condition;
                 return (
-                  <Card key={rule.id} className="hover:shadow-md transition-shadow">
+                  <Card key={rule.id} className="hover:shadow-elevated transition-shadow rounded-2xl">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 space-y-2">
