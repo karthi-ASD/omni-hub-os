@@ -22,10 +22,30 @@ const onboardingColors: Record<string, string> = {
 
 const ClientsPage = () => {
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const { clients, loading, createClient, updateOnboardingStatus, refetch } = useClients();
   const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSyncClients = async () => {
+    if (!profile?.business_id) { toast.error("No business linked"); return; }
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("xero-sync", {
+        body: { action: "sync", business_id: profile.business_id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Synced ${data.contactsSynced || 0} contacts from Xero`);
+      refetch();
+    } catch (e: any) {
+      toast.error(e.message || "Sync failed");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const filtered = clients.filter(c =>
     !search || [c.contact_name, c.email, c.company_name, c.phone]
