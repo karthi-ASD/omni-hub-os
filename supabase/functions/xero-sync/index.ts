@@ -259,24 +259,30 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, serviceKey);
 
   try {
-    const { action, business_id, code, redirect_uri } = await req.json();
+    const { action, business_id, code, redirect_uri, code_verifier } = await req.json();
 
-    // --- GET AUTH URL (server-side, keeps client_id secret) ---
+    // --- GET AUTH URL (server-side, keeps client_id secret + PKCE) ---
     if (action === "get_auth_url") {
       const clientId = Deno.env.get("XERO_CLIENT_ID");
       if (!clientId) throw new Error("Xero credentials not configured");
       const scopes = "openid profile email accounting.transactions accounting.contacts offline_access";
-      const authUrl = `https://login.xero.com/identity/connect/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=${encodeURIComponent(scopes)}`;
+      
+      // Generate PKCE code verifier and challenge
+      const pkceVerifier = generateCodeVerifier();
+      const pkceChallenge = await generateCodeChallenge(pkceVerifier);
+      
+      const authUrl = `https://login.xero.com/identity/connect/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=${encodeURIComponent(scopes)}&code_challenge=${pkceChallenge}&code_challenge_method=S256`;
       
       // Debug logging for OAuth URL verification
       console.log("=== XERO OAUTH DEBUG ===");
       console.log("Client ID:", clientId);
       console.log("Redirect URI:", redirect_uri);
       console.log("Scopes:", scopes);
+      console.log("PKCE Challenge:", pkceChallenge);
       console.log("Full Auth URL:", authUrl);
       console.log("========================");
       
-      return new Response(JSON.stringify({ success: true, auth_url: authUrl }), {
+      return new Response(JSON.stringify({ success: true, auth_url: authUrl, code_verifier: pkceVerifier }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
