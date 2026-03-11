@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 const XERO_TOKEN_URL = "https://identity.xero.com/connect/token";
-const XERO_API_BASE = "https://api.xro/2.0";
+const XERO_API_BASE = "https://api.xero.com/api.xro/2.0";
 
 async function getAccessToken(supabase: any, conn: any) {
   let accessToken = conn.access_token_encrypted;
