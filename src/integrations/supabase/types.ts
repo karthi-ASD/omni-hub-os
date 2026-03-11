@@ -8722,40 +8722,61 @@ export type Database = {
         Row: {
           amount: number
           business_id: string
+          collected_by_user_id: string | null
           created_at: string
           currency: string
+          customer_email: string | null
+          customer_name: string | null
           eway_response_code: string | null
           eway_response_message: string | null
           eway_transaction_id: string | null
           id: string
           invoice_id: string | null
+          job_id: string | null
+          notes: string | null
+          payment_method: string
           raw_payload: Json | null
+          receipt_number: string | null
           status: Database["public"]["Enums"]["payment_gateway_status"]
         }
         Insert: {
           amount?: number
           business_id: string
+          collected_by_user_id?: string | null
           created_at?: string
           currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
           eway_response_code?: string | null
           eway_response_message?: string | null
           eway_transaction_id?: string | null
           id?: string
           invoice_id?: string | null
+          job_id?: string | null
+          notes?: string | null
+          payment_method?: string
           raw_payload?: Json | null
+          receipt_number?: string | null
           status?: Database["public"]["Enums"]["payment_gateway_status"]
         }
         Update: {
           amount?: number
           business_id?: string
+          collected_by_user_id?: string | null
           created_at?: string
           currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
           eway_response_code?: string | null
           eway_response_message?: string | null
           eway_transaction_id?: string | null
           id?: string
           invoice_id?: string | null
+          job_id?: string | null
+          notes?: string | null
+          payment_method?: string
           raw_payload?: Json | null
+          receipt_number?: string | null
           status?: Database["public"]["Enums"]["payment_gateway_status"]
         }
         Relationships: [
@@ -8771,6 +8792,13 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gateway_transactions_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
         ]
