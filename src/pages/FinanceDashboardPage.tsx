@@ -32,7 +32,7 @@ const fmt = (n: number) => `$${n.toLocaleString("en-AU", { minimumFractionDigits
 const FinanceDashboardPage = () => {
   const { profile } = useAuth();
   const {
-    loading, xeroInvoices, xeroPayments, expenses, billingSchedules,
+    loading, xeroInvoices, xeroPayments, expenses, xeroExpenses, billingSchedules,
     xeroConnection, syncLogs,
     totalRevenue, totalExpenses, grossProfit, profitMargin,
     paidInvoices, overdueInvoices, outstandingInvoices, totalOutstanding, avgInvoiceValue,
@@ -95,7 +95,7 @@ const FinanceDashboardPage = () => {
         body: { action: "sync", business_id: profile.business_id },
       });
       if (error) throw error;
-      toast.success(`Synced: ${data.contactsSynced} contacts, ${data.invoicesSynced} invoices, ${data.paymentsSynced} payments`);
+      toast.success(`Synced: ${data.contactsSynced} contacts, ${data.invoicesSynced} invoices, ${data.paymentsSynced} payments, ${data.expensesSynced || 0} expenses`);
       refresh();
     } catch (e: any) {
       toast.error(e.message || "Sync failed");
@@ -425,7 +425,40 @@ const FinanceDashboardPage = () => {
                   </TableBody>
                 </Table>
               ) : (
-                <p className="text-muted-foreground py-8 text-center">No expenses recorded yet.</p>
+                <p className="text-muted-foreground py-4 text-center">No manual expenses recorded yet.</p>
+              )}
+
+              {/* Xero Expenses */}
+              {xeroExpenses && xeroExpenses.length > 0 && (
+                <>
+                  <h3 className="text-sm font-semibold mt-6 mb-2">Xero Expenses ({xeroExpenses.length})</h3>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Supplier</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {xeroExpenses.slice(0, 50).map((e: any) => (
+                        <TableRow key={e.id}>
+                          <TableCell className="text-sm">{e.expense_date ? format(new Date(e.expense_date), "dd MMM yyyy") : "—"}</TableCell>
+                          <TableCell className="font-medium">{e.supplier_name || "—"}</TableCell>
+                          <TableCell><Badge variant="outline">{e.category || "—"}</Badge></TableCell>
+                          <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">{e.description || "—"}</TableCell>
+                          <TableCell className="text-right font-medium">{fmt(Number(e.amount))}</TableCell>
+                          <TableCell>
+                            <Badge variant={e.status === "PAID" ? "default" : "secondary"} className="text-xs">{e.status}</Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </>
               )}
             </CardContent>
           </Card>

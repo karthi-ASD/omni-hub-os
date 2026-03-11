@@ -207,6 +207,7 @@ const XeroTestPage = () => {
                   <div>Contacts: {syncResult.contactsSynced}</div>
                   <div>Invoices: {syncResult.invoicesSynced}</div>
                   <div>Payments: {syncResult.paymentsSynced}</div>
+                  <div>Expenses: {syncResult.expensesSynced || 0}</div>
                   {syncResult.errors?.length > 0 && (
                     <div className="text-destructive">Errors: {syncResult.errors.join(", ")}</div>
                   )}

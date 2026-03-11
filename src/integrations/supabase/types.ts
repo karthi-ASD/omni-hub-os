@@ -4919,6 +4919,7 @@ export type Database = {
           billing_address: string | null
           business_id: string
           city: string | null
+          client_since: string | null
           company_name: string | null
           contact_name: string
           country: string | null
@@ -4941,6 +4942,7 @@ export type Database = {
           billing_address?: string | null
           business_id: string
           city?: string | null
+          client_since?: string | null
           company_name?: string | null
           contact_name: string
           country?: string | null
@@ -4963,6 +4965,7 @@ export type Database = {
           billing_address?: string | null
           business_id?: string
           city?: string | null
+          client_since?: string | null
           company_name?: string | null
           contact_name?: string
           country?: string | null
@@ -18572,6 +18575,62 @@ export type Database = {
           },
         ]
       }
+      xero_expenses: {
+        Row: {
+          amount: number
+          business_id: string
+          category: string | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          expense_date: string | null
+          id: string
+          line_items_json: Json | null
+          status: string | null
+          supplier_name: string | null
+          synced_at: string | null
+          xero_expense_id: string
+        }
+        Insert: {
+          amount?: number
+          business_id: string
+          category?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          expense_date?: string | null
+          id?: string
+          line_items_json?: Json | null
+          status?: string | null
+          supplier_name?: string | null
+          synced_at?: string | null
+          xero_expense_id: string
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          category?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          expense_date?: string | null
+          id?: string
+          line_items_json?: Json | null
+          status?: string | null
+          supplier_name?: string | null
+          synced_at?: string | null
+          xero_expense_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xero_expenses_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       xero_invoices: {
         Row: {
           amount_due: number | null
@@ -18665,6 +18724,7 @@ export type Database = {
           payment_method: string | null
           synced_at: string | null
           transaction_reference: string | null
+          xero_contact_id: string | null
           xero_invoice_id: string | null
           xero_payment_id: string
         }
@@ -18679,6 +18739,7 @@ export type Database = {
           payment_method?: string | null
           synced_at?: string | null
           transaction_reference?: string | null
+          xero_contact_id?: string | null
           xero_invoice_id?: string | null
           xero_payment_id: string
         }
@@ -18693,6 +18754,7 @@ export type Database = {
           payment_method?: string | null
           synced_at?: string | null
           transaction_reference?: string | null
+          xero_contact_id?: string | null
           xero_invoice_id?: string | null
           xero_payment_id?: string
         }
