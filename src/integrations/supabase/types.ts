@@ -6155,6 +6155,75 @@ export type Database = {
           },
         ]
       }
+      content_tasks: {
+        Row: {
+          assigned_to: string | null
+          business_id: string
+          client_id: string | null
+          content_type: string
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string
+          published_url: string | null
+          status: string
+          target_keyword: string | null
+          title: string
+          updated_at: string
+          word_count: number | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          business_id: string
+          client_id?: string | null
+          content_type?: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          published_url?: string | null
+          status?: string
+          target_keyword?: string | null
+          title: string
+          updated_at?: string
+          word_count?: number | null
+        }
+        Update: {
+          assigned_to?: string | null
+          business_id?: string
+          client_id?: string | null
+          content_type?: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          published_url?: string | null
+          status?: string
+          target_keyword?: string | null
+          title?: string
+          updated_at?: string
+          word_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_tasks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           business_id: string
@@ -12293,6 +12362,73 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onboarding_checklist_items: {
+        Row: {
+          business_id: string
+          client_id: string
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          deal_id: string | null
+          id: string
+          is_completed: boolean
+          item_category: string
+          item_title: string
+          notes: string | null
+          sort_order: number
+        }
+        Insert: {
+          business_id: string
+          client_id: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          deal_id?: string | null
+          id?: string
+          is_completed?: boolean
+          item_category?: string
+          item_title: string
+          notes?: string | null
+          sort_order?: number
+        }
+        Update: {
+          business_id?: string
+          client_id?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          deal_id?: string | null
+          id?: string
+          is_completed?: boolean
+          item_category?: string
+          item_title?: string
+          notes?: string | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_checklist_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_checklist_items_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_checklist_items_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
             referencedColumns: ["id"]
           },
         ]
@@ -19276,6 +19412,79 @@ export type Database = {
             columns: ["endpoint_id"]
             isOneToOne: false
             referencedRelation: "webhook_endpoints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      website_project_stages: {
+        Row: {
+          actual_launch_date: string | null
+          assigned_team_lead: string | null
+          business_id: string
+          client_id: string
+          created_at: string
+          current_stage: string
+          id: string
+          notes: string | null
+          project_name: string
+          stage_history: Json
+          start_date: string | null
+          target_launch_date: string | null
+          updated_at: string
+          website_id: string | null
+        }
+        Insert: {
+          actual_launch_date?: string | null
+          assigned_team_lead?: string | null
+          business_id: string
+          client_id: string
+          created_at?: string
+          current_stage?: string
+          id?: string
+          notes?: string | null
+          project_name: string
+          stage_history?: Json
+          start_date?: string | null
+          target_launch_date?: string | null
+          updated_at?: string
+          website_id?: string | null
+        }
+        Update: {
+          actual_launch_date?: string | null
+          assigned_team_lead?: string | null
+          business_id?: string
+          client_id?: string
+          created_at?: string
+          current_stage?: string
+          id?: string
+          notes?: string | null
+          project_name?: string
+          stage_history?: Json
+          start_date?: string | null
+          target_launch_date?: string | null
+          updated_at?: string
+          website_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_project_stages_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_project_stages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_project_stages_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "client_websites"
             referencedColumns: ["id"]
           },
         ]
