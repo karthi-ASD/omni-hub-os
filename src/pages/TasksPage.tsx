@@ -1,8 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { ClipboardList, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
 
 const TasksPage = () => {
-  // Placeholder until tasks hook is connected
   const mockTasks = [
     { id: "1", title: "Follow up with John Smith", status: "pending", priority: "high", due: "Today" },
     { id: "2", title: "Prepare proposal for ABC Corp", status: "in_progress", priority: "medium", due: "Tomorrow" },
@@ -11,9 +12,9 @@ const TasksPage = () => {
   ];
 
   const statusIcon: Record<string, React.ReactNode> = {
-    pending: <Clock className="h-4 w-4 text-amber-500" />,
-    in_progress: <AlertCircle className="h-4 w-4 text-blue-500" />,
-    completed: <CheckCircle2 className="h-4 w-4 text-green-500" />,
+    pending: <Clock className="h-4 w-4 text-warning" />,
+    in_progress: <AlertCircle className="h-4 w-4 text-primary" />,
+    completed: <CheckCircle2 className="h-4 w-4 text-success" />,
   };
 
   const priorityColor: Record<string, string> = {
@@ -23,39 +24,18 @@ const TasksPage = () => {
   };
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <ClipboardList className="h-5 w-5 text-primary" /> Tasks
-        </h1>
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader title="Tasks" subtitle="Manage and track your tasks" icon={ClipboardList} />
+
+      <div className="grid grid-cols-3 gap-4">
+        <StatCard label="Pending" value={mockTasks.filter(t => t.status === "pending").length} icon={Clock} gradient="from-warning to-neon-orange" />
+        <StatCard label="In Progress" value={mockTasks.filter(t => t.status === "in_progress").length} icon={AlertCircle} gradient="from-primary to-accent" />
+        <StatCard label="Done" value={mockTasks.filter(t => t.status === "completed").length} icon={CheckCircle2} gradient="from-neon-green to-success" />
       </div>
 
-      {/* Status summary */}
-      <div className="grid grid-cols-3 gap-2">
-        <Card className="rounded-xl">
-          <CardContent className="p-3 text-center">
-            <p className="text-xl font-bold text-amber-500">{mockTasks.filter(t => t.status === "pending").length}</p>
-            <p className="text-[10px] text-muted-foreground font-medium">Pending</p>
-          </CardContent>
-        </Card>
-        <Card className="rounded-xl">
-          <CardContent className="p-3 text-center">
-            <p className="text-xl font-bold text-blue-500">{mockTasks.filter(t => t.status === "in_progress").length}</p>
-            <p className="text-[10px] text-muted-foreground font-medium">In Progress</p>
-          </CardContent>
-        </Card>
-        <Card className="rounded-xl">
-          <CardContent className="p-3 text-center">
-            <p className="text-xl font-bold text-green-500">{mockTasks.filter(t => t.status === "completed").length}</p>
-            <p className="text-[10px] text-muted-foreground font-medium">Done</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Task cards */}
       <div className="space-y-2">
         {mockTasks.map(task => (
-          <Card key={task.id} className={`rounded-xl border-l-4 ${priorityColor[task.priority]}`}>
+          <Card key={task.id} className={`rounded-2xl border-0 shadow-elevated border-l-4 ${priorityColor[task.priority]} hover-lift transition-all`}>
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 {statusIcon[task.status]}
