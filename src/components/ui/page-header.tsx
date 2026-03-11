@@ -20,6 +20,8 @@ interface PageHeaderProps {
   className?: string;
 }
 
+export type { PageHeaderAction };
+
 export function PageHeader({ title, subtitle, icon: Icon, badge, actions, children, className }: PageHeaderProps) {
   return (
     <div className={cn("flex items-start justify-between gap-4 flex-wrap", className)}>
