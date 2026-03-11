@@ -432,6 +432,9 @@ Deno.serve(async (req) => {
 
     // --- SYNC (single business) ---
     if (action === "sync") {
+      console.log("=== XERO SYNC START ===");
+      console.log("Business ID:", business_id);
+      
       const { data: conn } = await supabase
         .from("xero_connections").select("*")
         .eq("business_id", business_id)
@@ -439,8 +442,12 @@ Deno.serve(async (req) => {
         .single();
 
       if (!conn) throw new Error("Xero not connected for this business");
+      
+      console.log("[SYNC] Connection found. Tenant ID:", conn.xero_tenant_id);
+      console.log("[SYNC] Token expires at:", conn.token_expires_at);
 
       const accessToken = await getAccessToken(supabase, conn);
+      console.log("[SYNC] Access token obtained (length:", accessToken?.length, ")");
 
       const xeroHeaders = {
         Authorization: `Bearer ${accessToken}`,
