@@ -62,16 +62,28 @@ async function syncContacts(supabase: any, businessId: string, xeroHeaders: any)
   let page = 1;
   let hasMore = true;
 
+  console.log("[SYNC] Starting contacts sync...");
+
   while (hasMore) {
-    const res = await fetch(`${XERO_API_BASE}/Contacts?page=${page}&pageSize=100`, { headers: xeroHeaders });
+    const url = `${XERO_API_BASE}/Contacts?page=${page}&pageSize=100`;
+    console.log(`[SYNC] Fetching contacts page ${page}: ${url}`);
+    const res = await fetch(url, { headers: xeroHeaders });
+    
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`[SYNC] Contacts API error ${res.status}: ${errText}`);
+      throw new Error(`Contacts API returned ${res.status}: ${errText}`);
+    }
+    
     const data = await res.json();
     const contacts = data.Contacts || [];
+    console.log(`[SYNC] Page ${page}: received ${contacts.length} contacts`);
 
     if (contacts.length === 0) { hasMore = false; break; }
 
     for (const c of contacts) {
       const email = c.EmailAddress || `xero-${c.ContactID}@placeholder.local`;
-      await supabase.from("clients").upsert({
+      const { error: upsertErr } = await supabase.from("clients").upsert({
         business_id: businessId,
         xero_contact_id: c.ContactID,
         contact_name: c.Name || c.FirstName || "Unknown",
@@ -85,6 +97,10 @@ async function syncContacts(supabase: any, businessId: string, xeroHeaders: any)
           : c.Addresses?.[0] ? formatAddress(c.Addresses[0]) : null,
         tax_number: c.TaxNumber || null,
       }, { onConflict: "business_id,xero_contact_id", ignoreDuplicates: false });
+      
+      if (upsertErr) {
+        console.error(`[SYNC] Contact upsert error for ${c.Name}:`, upsertErr.message);
+      }
       contactsSynced++;
     }
 
@@ -92,6 +108,7 @@ async function syncContacts(supabase: any, businessId: string, xeroHeaders: any)
     else page++;
   }
 
+  console.log(`[SYNC] Contacts sync complete: ${contactsSynced} synced`);
   return contactsSynced;
 }
 
@@ -105,13 +122,22 @@ async function syncInvoices(supabase: any, businessId: string, xeroHeaders: any)
   let page = 1;
   let hasMore = true;
 
+  console.log("[SYNC] Starting invoices sync...");
+
   while (hasMore) {
-    const res = await fetch(
-      `${XERO_API_BASE}/Invoices?page=${page}&pageSize=100&Statuses=AUTHORISED,PAID,SUBMITTED,DRAFT,OVERDUE,VOIDED`,
-      { headers: xeroHeaders }
-    );
+    const url = `${XERO_API_BASE}/Invoices?page=${page}&pageSize=100&Statuses=AUTHORISED,PAID,SUBMITTED,DRAFT,OVERDUE,VOIDED`;
+    console.log(`[SYNC] Fetching invoices page ${page}`);
+    const res = await fetch(url, { headers: xeroHeaders });
+    
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`[SYNC] Invoices API error ${res.status}: ${errText}`);
+      throw new Error(`Invoices API returned ${res.status}: ${errText}`);
+    }
+    
     const data = await res.json();
     const invoices = data.Invoices || [];
+    console.log(`[SYNC] Page ${page}: received ${invoices.length} invoices`);
 
     if (invoices.length === 0) { hasMore = false; break; }
 
@@ -126,10 +152,9 @@ async function syncInvoices(supabase: any, businessId: string, xeroHeaders: any)
         clientId = client?.id || null;
       }
 
-      // Determine department from tracking categories on line items
       const deptCategory = inv.LineItems?.[0]?.Tracking?.[0]?.Option || null;
 
-      await supabase.from("xero_invoices").upsert({
+      const { error: upsertErr } = await supabase.from("xero_invoices").upsert({
         business_id: businessId,
         xero_invoice_id: inv.InvoiceID,
         xero_contact_id: inv.Contact?.ContactID || null,
@@ -148,6 +173,10 @@ async function syncInvoices(supabase: any, businessId: string, xeroHeaders: any)
         line_items_json: inv.LineItems || [],
         synced_at: new Date().toISOString(),
       }, { onConflict: "business_id,xero_invoice_id", ignoreDuplicates: false });
+      
+      if (upsertErr) {
+        console.error(`[SYNC] Invoice upsert error for ${inv.InvoiceNumber}:`, upsertErr.message);
+      }
       invoicesSynced++;
     }
 
@@ -155,6 +184,7 @@ async function syncInvoices(supabase: any, businessId: string, xeroHeaders: any)
     else page++;
   }
 
+  console.log(`[SYNC] Invoices sync complete: ${invoicesSynced} synced`);
   return invoicesSynced;
 }
 
@@ -163,10 +193,22 @@ async function syncPayments(supabase: any, businessId: string, xeroHeaders: any)
   let page = 1;
   let hasMore = true;
 
+  console.log("[SYNC] Starting payments sync...");
+
   while (hasMore) {
-    const res = await fetch(`${XERO_API_BASE}/Payments?page=${page}&pageSize=100`, { headers: xeroHeaders });
+    const url = `${XERO_API_BASE}/Payments?page=${page}&pageSize=100`;
+    console.log(`[SYNC] Fetching payments page ${page}`);
+    const res = await fetch(url, { headers: xeroHeaders });
+    
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`[SYNC] Payments API error ${res.status}: ${errText}`);
+      throw new Error(`Payments API returned ${res.status}: ${errText}`);
+    }
+    
     const data = await res.json();
     const payments = data.Payments || [];
+    console.log(`[SYNC] Page ${page}: received ${payments.length} payments`);
 
     if (payments.length === 0) { hasMore = false; break; }
 
@@ -174,7 +216,6 @@ async function syncPayments(supabase: any, businessId: string, xeroHeaders: any)
       let clientId = null;
       let invoiceId = null;
 
-      // Link to xero_invoices record
       if (p.Invoice?.InvoiceID) {
         const { data: invRecord } = await supabase
           .from("xero_invoices").select("id, client_id")
@@ -187,7 +228,6 @@ async function syncPayments(supabase: any, businessId: string, xeroHeaders: any)
         }
       }
 
-      // Fallback: find client from contact
       if (!clientId && p.Invoice?.Contact?.ContactID) {
         const { data: client } = await supabase
           .from("clients").select("id")
@@ -197,7 +237,7 @@ async function syncPayments(supabase: any, businessId: string, xeroHeaders: any)
         clientId = client?.id || null;
       }
 
-      await supabase.from("xero_payments").upsert({
+      const { error: upsertErr } = await supabase.from("xero_payments").upsert({
         business_id: businessId,
         xero_payment_id: p.PaymentID,
         xero_invoice_id: p.Invoice?.InvoiceID || null,
@@ -209,6 +249,10 @@ async function syncPayments(supabase: any, businessId: string, xeroHeaders: any)
         transaction_reference: p.Reference || null,
         synced_at: new Date().toISOString(),
       }, { onConflict: "business_id,xero_payment_id", ignoreDuplicates: false });
+      
+      if (upsertErr) {
+        console.error(`[SYNC] Payment upsert error:`, upsertErr.message);
+      }
       paymentsSynced++;
     }
 
@@ -216,6 +260,7 @@ async function syncPayments(supabase: any, businessId: string, xeroHeaders: any)
     else page++;
   }
 
+  console.log(`[SYNC] Payments sync complete: ${paymentsSynced} synced`);
   return paymentsSynced;
 }
 
@@ -266,15 +311,18 @@ Deno.serve(async (req) => {
       const clientId = Deno.env.get("XERO_CLIENT_ID");
       if (!clientId) throw new Error("Xero credentials not configured");
       
-      // Minimal scope to verify OAuth works first
-      const scope = "openid";
+      const scope = "openid offline_access accounting.contacts accounting.transactions";
       const state = crypto.randomUUID();
-      const redirectUriFixed = "https://bigappcompany.com.au/finance";
+      const redirectUriFixed = redirect_uri || "https://bigappcompany.com.au/finance";
 
-      const authUrl = `https://login.xero.com/identity/connect/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUriFixed)}&scope=${scope}&state=${state}`;
+      // Manually build URL to ensure %20 encoding for scopes
+      const encodedScope = scope.split(" ").join("%20");
+      const authUrl = `https://login.xero.com/identity/connect/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUriFixed)}&scope=${encodedScope}&state=${state}`;
       
       console.log("=== XERO OAUTH DEBUG ===");
       console.log("Auth URL:", authUrl);
+      console.log("Redirect URI:", redirectUriFixed);
+      console.log("Scopes:", scope);
       console.log("========================");
       
       return new Response(JSON.stringify({ success: true, auth_url: authUrl, state }), {
@@ -291,10 +339,14 @@ Deno.serve(async (req) => {
       const tokenBody: Record<string, string> = {
         grant_type: "authorization_code",
         code,
-        redirect_uri: "https://bigappcompany.com.au/finance",
+        redirect_uri: redirect_uri || "https://bigappcompany.com.au/finance",
         client_id: clientId,
         client_secret: clientSecret,
       };
+      
+      console.log("=== XERO TOKEN EXCHANGE ===");
+      console.log("Redirect URI:", tokenBody.redirect_uri);
+      console.log("===========================");
 
       const tokenRes = await fetch(XERO_TOKEN_URL, {
         method: "POST",
@@ -380,6 +432,9 @@ Deno.serve(async (req) => {
 
     // --- SYNC (single business) ---
     if (action === "sync") {
+      console.log("=== XERO SYNC START ===");
+      console.log("Business ID:", business_id);
+      
       const { data: conn } = await supabase
         .from("xero_connections").select("*")
         .eq("business_id", business_id)
@@ -387,8 +442,12 @@ Deno.serve(async (req) => {
         .single();
 
       if (!conn) throw new Error("Xero not connected for this business");
+      
+      console.log("[SYNC] Connection found. Tenant ID:", conn.xero_tenant_id);
+      console.log("[SYNC] Token expires at:", conn.token_expires_at);
 
       const accessToken = await getAccessToken(supabase, conn);
+      console.log("[SYNC] Access token obtained (length:", accessToken?.length, ")");
 
       const xeroHeaders = {
         Authorization: `Bearer ${accessToken}`,
