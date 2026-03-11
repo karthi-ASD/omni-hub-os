@@ -14,6 +14,7 @@ import {
   Ticket, MessageSquare, BookOpen, Bot, Search, Send,
   Clock, CheckCircle, AlertCircle, HelpCircle,
 } from "lucide-react";
+import { ClientNotificationBell } from "@/components/notifications/ClientNotificationBell";
 import { format } from "date-fns";
 
 const statusIcons: Record<string, React.ElementType> = {
