@@ -91,6 +91,7 @@ import VaultPage from "./pages/VaultPage";
 import JobCRMPage from "./pages/JobCRMPage";
 import ReviewMonitorPage from "./pages/ReviewMonitorPage";
 import AIReportsPage from "./pages/AIReportsPage";
+import CustomFieldBuilderPage from "./pages/CustomFieldBuilderPage";
 import UsageAnalyticsPage from "./pages/UsageAnalyticsPage";
 import DemoModePage from "./pages/DemoModePage";
 import RevenueIntelligencePage from "./pages/RevenueIntelligencePage";
