@@ -16767,11 +16767,13 @@ export type Database = {
           csat_score: number | null
           department: string | null
           description: string | null
+          email_thread_id: string | null
           escalated_at: string | null
           first_response_at: string | null
           id: string
           priority: string
           resolved_at: string | null
+          sender_email: string | null
           sentiment: string | null
           sla_due_at: string | null
           status: string
@@ -16794,11 +16796,13 @@ export type Database = {
           csat_score?: number | null
           department?: string | null
           description?: string | null
+          email_thread_id?: string | null
           escalated_at?: string | null
           first_response_at?: string | null
           id?: string
           priority?: string
           resolved_at?: string | null
+          sender_email?: string | null
           sentiment?: string | null
           sla_due_at?: string | null
           status?: string
@@ -16821,11 +16825,13 @@ export type Database = {
           csat_score?: number | null
           department?: string | null
           description?: string | null
+          email_thread_id?: string | null
           escalated_at?: string | null
           first_response_at?: string | null
           id?: string
           priority?: string
           resolved_at?: string | null
+          sender_email?: string | null
           sentiment?: string | null
           sla_due_at?: string | null
           status?: string
@@ -17478,24 +17484,33 @@ export type Database = {
           created_at: string
           id: string
           is_internal: boolean
+          sender_email: string | null
+          sender_name: string | null
+          source: string | null
           ticket_id: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           comment: string
           created_at?: string
           id?: string
           is_internal?: boolean
+          sender_email?: string | null
+          sender_name?: string | null
+          source?: string | null
           ticket_id: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           comment?: string
           created_at?: string
           id?: string
           is_internal?: boolean
+          sender_email?: string | null
+          sender_name?: string | null
+          source?: string | null
           ticket_id?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -17511,9 +17526,12 @@ export type Database = {
         Row: {
           body_snapshot: string | null
           business_id: string
+          direction: string | null
           email_type: string
           id: string
+          message_id: string | null
           recipient_email: string | null
+          sender_email: string | null
           sent_at: string | null
           status: string | null
           subject: string | null
@@ -17522,9 +17540,12 @@ export type Database = {
         Insert: {
           body_snapshot?: string | null
           business_id: string
+          direction?: string | null
           email_type: string
           id?: string
+          message_id?: string | null
           recipient_email?: string | null
+          sender_email?: string | null
           sent_at?: string | null
           status?: string | null
           subject?: string | null
@@ -17533,9 +17554,12 @@ export type Database = {
         Update: {
           body_snapshot?: string | null
           business_id?: string
+          direction?: string | null
           email_type?: string
           id?: string
+          message_id?: string | null
           recipient_email?: string | null
+          sender_email?: string | null
           sent_at?: string | null
           status?: string | null
           subject?: string | null
