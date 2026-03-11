@@ -1,6 +1,8 @@
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,11 +10,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import {
   Headphones, MessageSquare, Clock, CheckCircle, AlertTriangle,
-  Zap, ThumbsUp, Users, TrendingUp, ArrowRight,
+  Zap, ThumbsUp, Users, ArrowRight,
   Brain, BookOpen, BarChart3, Ticket,
 } from "lucide-react";
 import { useCSTickets } from "@/hooks/useCSTickets";
-import { format } from "date-fns";
 
 const priorityColors: Record<string, string> = {
   high: "bg-destructive/10 text-destructive border-destructive/20",
@@ -38,59 +39,33 @@ const CustomerServiceDashboard = () => {
 
   const isManager = isSuperAdmin || isBusinessAdmin;
 
-  // Channel breakdown for manager view
   const channelBreakdown = tickets.reduce((acc: Record<string, number>, t: any) => {
     const ch = t.channel || "email";
     acc[ch] = (acc[ch] || 0) + 1;
     return acc;
   }, {});
 
-  // Priority breakdown
   const priorityBreakdown = tickets.reduce((acc: Record<string, number>, t: any) => {
     acc[t.priority] = (acc[t.priority] || 0) + 1;
     return acc;
   }, {});
 
-  const statCards = [
-    { label: "Open Tickets", value: String(stats.open), icon: MessageSquare, color: "text-primary", bg: "bg-primary/10" },
-    { label: "Overdue", value: String(stats.overdue), icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10" },
-    { label: "Avg Response", value: stats.avgResponseMin ? `${stats.avgResponseMin}m` : "—", icon: Clock, color: "text-warning", bg: "bg-warning/10" },
-    { label: "Resolved Today", value: String(stats.resolvedToday), icon: CheckCircle, color: "text-success", bg: "bg-success/10" },
-    { label: "CSAT Score", value: stats.csatAvg ? `${stats.csatAvg}%` : "—", icon: ThumbsUp, color: "text-primary", bg: "bg-primary/10" },
-    { label: "AI Handled", value: stats.aiHandledPct ? `${stats.aiHandledPct}%` : "—", icon: Zap, color: "text-violet-500", bg: "bg-violet-500/10" },
-  ];
-
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-            <Headphones className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-foreground">Customer Service Hub</h1>
-            <p className="text-xs text-muted-foreground">
-              {isManager ? "Manager view — AI-powered support operations" : "Support agent dashboard"}
-            </p>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Customer Service Hub"
+        subtitle={isManager ? "Manager view — AI-powered support operations" : "Support agent dashboard"}
+        icon={Headphones}
+      />
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 gap-3">
-        {statCards.map((s) => (
-          <Card key={s.label} className="border-border/50">
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className={`h-9 w-9 rounded-lg ${s.bg} flex items-center justify-center shrink-0`}>
-                <s.icon className={`h-4 w-4 ${s.color}`} />
-              </div>
-              <div>
-                {loading ? <Skeleton className="h-5 w-10" /> : <p className="text-lg font-bold text-foreground leading-none">{s.value}</p>}
-                <p className="text-[10px] text-muted-foreground mt-0.5">{s.label}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <StatCard label="Open Tickets" value={stats.open} icon={MessageSquare} gradient="from-primary to-accent" loading={loading} />
+        <StatCard label="Overdue" value={stats.overdue} icon={AlertTriangle} gradient="from-destructive to-red-500" alert={stats.overdue > 0} loading={loading} />
+        <StatCard label="Avg Response" value={stats.avgResponseMin ? `${stats.avgResponseMin}m` : "—"} icon={Clock} gradient="from-warning to-orange-500" loading={loading} />
+        <StatCard label="Resolved Today" value={stats.resolvedToday} icon={CheckCircle} gradient="from-success to-emerald-500" loading={loading} />
+        <StatCard label="CSAT Score" value={stats.csatAvg ? `${stats.csatAvg}%` : "—"} icon={ThumbsUp} gradient="from-primary to-accent" loading={loading} />
+        <StatCard label="AI Handled" value={stats.aiHandledPct ? `${stats.aiHandledPct}%` : "—"} icon={Zap} gradient="from-violet-500 to-purple-500" loading={loading} />
       </div>
 
       {/* Quick Navigation */}
@@ -101,7 +76,7 @@ const CustomerServiceDashboard = () => {
           { label: "KB", icon: BookOpen, to: "/knowledge-base" },
           { label: "Reports", icon: BarChart3, to: "/cs-reports" },
         ].map(q => (
-          <Button key={q.to} variant="outline" size="sm" className="h-auto py-3 flex-col gap-1" onClick={() => navigate(q.to)}>
+          <Button key={q.to} variant="outline" size="sm" className="h-auto py-3 flex-col gap-1 rounded-xl" onClick={() => navigate(q.to)}>
             <q.icon className="h-4 w-4" />
             <span className="text-[10px]">{q.label}</span>
           </Button>
@@ -111,7 +86,7 @@ const CustomerServiceDashboard = () => {
       {/* Manager-only: Channel & Priority breakdown */}
       {isManager && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card>
+          <Card className="rounded-2xl border-0 shadow-elevated">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold">Channel Breakdown</CardTitle>
             </CardHeader>
@@ -122,7 +97,7 @@ const CustomerServiceDashboard = () => {
                 .sort(([, a], [, b]) => (b as number) - (a as number))
                 .map(([channel, count]) => (
                   <div key={channel} className="flex items-center gap-3">
-                    <span className="text-xs font-medium text-foreground w-20 capitalize">{channel}</span>
+                    <span className="text-xs font-medium w-20 capitalize">{channel}</span>
                     <Progress value={tickets.length > 0 ? ((count as number) / tickets.length) * 100 : 0} className="flex-1 h-2" />
                     <span className="text-[10px] text-muted-foreground w-10 text-right">{count as number}</span>
                   </div>
@@ -130,7 +105,7 @@ const CustomerServiceDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="rounded-2xl border-0 shadow-elevated">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold">Priority Distribution</CardTitle>
             </CardHeader>
@@ -148,7 +123,7 @@ const CustomerServiceDashboard = () => {
       )}
 
       {/* Recent Tickets */}
-      <Card>
+      <Card className="rounded-2xl border-0 shadow-elevated">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -186,11 +161,10 @@ const CustomerServiceDashboard = () => {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm font-medium text-foreground truncate">{t.subject}</p>
+                    <p className="text-sm font-medium truncate">{t.subject}</p>
                     {t.ai_summary && (
                       <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{t.ai_summary}</p>
                     )}
-                    {t.department && <span className="text-[10px] text-muted-foreground">{t.department}</span>}
                   </div>
                   <Badge className={`text-[10px] ${statusColors[t.status] || ""} border-0 shrink-0`}>
                     {t.status?.replace("_", " ")}

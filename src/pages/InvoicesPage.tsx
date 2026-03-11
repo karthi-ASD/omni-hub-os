@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useInvoices, type Invoice, type InvoiceItem } from "@/hooks/useInvoices";
 import { useClients } from "@/hooks/useClients";
 import { useDeals } from "@/hooks/useDeals";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,9 +16,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
-  open: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  paid: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  overdue: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  open: "bg-primary/10 text-primary",
+  paid: "bg-success/10 text-success",
+  overdue: "bg-destructive/10 text-destructive",
   void: "bg-muted text-muted-foreground line-through",
   canceled: "bg-muted text-muted-foreground",
 };
@@ -81,93 +82,85 @@ const InvoicesPage = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Invoices</h1>
-          <p className="text-muted-foreground">{totalCount} total records</p>
-        </div>
-        <div className="flex gap-2">
-          <Dialog open={fromDealOpen} onOpenChange={setFromDealOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline"><FileText className="mr-2 h-4 w-4" /> From Deal</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Create Invoice from Deal</DialogTitle></DialogHeader>
-              <div className="space-y-4">
+      <PageHeader
+        title="Invoices"
+        subtitle={`${totalCount} total records`}
+        icon={FileText}
+      >
+        <Dialog open={fromDealOpen} onOpenChange={setFromDealOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm"><FileText className="mr-2 h-4 w-4" /> From Deal</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Create Invoice from Deal</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Select Deal</Label>
+                <Select value={selectedDealId} onValueChange={setSelectedDealId}>
+                  <SelectTrigger><SelectValue placeholder="Choose a deal" /></SelectTrigger>
+                  <SelectContent>
+                    {deals.filter((d) => d.status === "won").map((d) => (
+                      <SelectItem key={d.id} value={d.id}>{d.deal_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={handleCreateFromDeal} disabled={!selectedDealId} className="w-full">Generate Invoice</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm"><Plus className="mr-2 h-4 w-4" /> New Invoice</Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader><DialogTitle>Create Invoice</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Select Deal</Label>
-                  <Select value={selectedDealId} onValueChange={setSelectedDealId}>
-                    <SelectTrigger><SelectValue placeholder="Choose a deal" /></SelectTrigger>
+                  <Label>Client</Label>
+                  <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
                     <SelectContent>
-                      {deals.filter((d) => d.status === "won").map((d) => (
-                        <SelectItem key={d.id} value={d.id}>{d.deal_name}</SelectItem>
+                      {clients.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.contact_name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <Button onClick={handleCreateFromDeal} disabled={!selectedDealId} className="w-full">Generate Invoice</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" /> New Invoice</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader><DialogTitle>Create Invoice</DialogTitle></DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Client</Label>
-                    <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
-                      <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
-                      <SelectContent>
-                        {clients.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>{c.contact_name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Due Date</Label>
-                    <Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
-                  </div>
-                </div>
-
                 <div>
-                  <Label>Line Items</Label>
-                  {form.items.map((item, idx) => (
-                    <div key={idx} className="grid grid-cols-4 gap-2 mt-2">
-                      <Input placeholder="Description" className="col-span-1" value={item.description} onChange={(e) => updateItem(idx, "description", e.target.value)} />
-                      <Input type="number" placeholder="Qty" value={item.quantity} onChange={(e) => updateItem(idx, "quantity", Number(e.target.value))} />
-                      <Input type="number" placeholder="Price" value={item.unit_amount} onChange={(e) => updateItem(idx, "unit_amount", Number(e.target.value))} />
-                      <Input type="number" placeholder="Total" value={item.amount} readOnly className="bg-muted" />
-                    </div>
-                  ))}
-                  <Button variant="ghost" size="sm" onClick={addItem} className="mt-2"><Plus className="h-3 w-3 mr-1" /> Add Item</Button>
+                  <Label>Due Date</Label>
+                  <Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Tax</Label>
-                    <Input type="number" value={form.tax} onChange={(e) => setForm({ ...form, tax: Number(e.target.value) })} />
-                  </div>
-                  <div>
-                    <Label>Discount</Label>
-                    <Input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })} />
-                  </div>
-                </div>
-
-                <div className="text-right text-lg font-bold">
-                  Total: ${(form.items.reduce((s, i) => s + i.amount, 0) + form.tax - form.discount).toFixed(2)}
-                </div>
-
-                <Button onClick={handleCreate} className="w-full">Create Invoice</Button>
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
+
+              <div>
+                <Label>Line Items</Label>
+                {form.items.map((item, idx) => (
+                  <div key={idx} className="grid grid-cols-4 gap-2 mt-2">
+                    <Input placeholder="Description" className="col-span-1" value={item.description} onChange={(e) => updateItem(idx, "description", e.target.value)} />
+                    <Input type="number" placeholder="Qty" value={item.quantity} onChange={(e) => updateItem(idx, "quantity", Number(e.target.value))} />
+                    <Input type="number" placeholder="Price" value={item.unit_amount} onChange={(e) => updateItem(idx, "unit_amount", Number(e.target.value))} />
+                    <Input type="number" placeholder="Total" value={item.amount} readOnly className="bg-muted" />
+                  </div>
+                ))}
+                <Button variant="ghost" size="sm" onClick={addItem} className="mt-2"><Plus className="h-3 w-3 mr-1" /> Add Item</Button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div><Label>Tax</Label><Input type="number" value={form.tax} onChange={(e) => setForm({ ...form, tax: Number(e.target.value) })} /></div>
+                <div><Label>Discount</Label><Input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })} /></div>
+              </div>
+
+              <div className="text-right text-lg font-bold">
+                Total: ${(form.items.reduce((s, i) => s + i.amount, 0) + form.tax - form.discount).toFixed(2)}
+              </div>
+
+              <Button onClick={handleCreate} className="w-full">Create Invoice</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </PageHeader>
 
       {/* Filters */}
       <div className="flex gap-2 flex-wrap">
@@ -183,10 +176,10 @@ const InvoicesPage = () => {
           {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
         </div>
       ) : invoices.length === 0 ? (
-        <Card><CardContent className="py-12 text-center text-muted-foreground">No invoices found</CardContent></Card>
+        <Card className="rounded-2xl"><CardContent className="py-12 text-center text-muted-foreground">No invoices found</CardContent></Card>
       ) : (
         <>
-          <Card>
+          <Card className="rounded-2xl border-0 shadow-elevated">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -242,12 +235,6 @@ const InvoicesPage = () => {
                 {loading ? "Loading..." : `Load more (${invoices.length} of ${totalCount})`}
               </Button>
             </div>
-          )}
-
-          {!hasMore && invoices.length > 0 && (
-            <p className="text-center text-xs text-muted-foreground py-2">
-              Showing all {invoices.length} of {totalCount} invoices
-            </p>
           )}
         </>
       )}

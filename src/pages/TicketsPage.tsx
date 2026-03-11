@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { HelpTooltip } from "@/components/HelpTooltip";
-import { Ticket, Plus, Clock, AlertTriangle, CheckCircle, MessageSquare } from "lucide-react";
+import { Ticket, Plus, Clock, AlertTriangle, CheckCircle, MessageSquare, Inbox } from "lucide-react";
 import { toast } from "sonner";
 
 interface SupportTicket {
@@ -30,17 +32,17 @@ interface SupportTicket {
 }
 
 const statusColors: Record<string, string> = {
-  open: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  in_progress: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-  waiting_for_customer: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-  resolved: "bg-green-500/20 text-green-400 border-green-500/30",
+  open: "bg-primary/20 text-primary border-primary/30",
+  in_progress: "bg-warning/20 text-warning border-warning/30",
+  waiting_for_customer: "bg-accent/20 text-accent-foreground border-accent/30",
+  resolved: "bg-success/20 text-success border-success/30",
   closed: "bg-muted text-muted-foreground border-border",
 };
 
 const priorityColors: Record<string, string> = {
   low: "bg-muted text-muted-foreground",
-  medium: "bg-blue-500/20 text-blue-400",
-  high: "bg-orange-500/20 text-orange-400",
+  medium: "bg-primary/20 text-primary",
+  high: "bg-warning/20 text-warning",
   critical: "bg-destructive/20 text-destructive",
 };
 
@@ -112,82 +114,20 @@ const TicketsPage = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <Ticket className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">Support Tickets</h1>
-            <HelpTooltip label="Support Tickets" description="Submit and track bugs, feature requests, billing issues, and more. Tickets follow a workflow from Open → In Progress → Resolved → Closed." />
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">Submit issues, track resolutions, and communicate with support.</p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" />New Ticket</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Create Support Ticket</DialogTitle></DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Subject</Label>
-                <Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="Brief description of the issue" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="flex items-center gap-1">Category <HelpTooltip label="Category" description="Choose the type of issue: Bug, Feature Request, Billing, Integration, or Access." /></Label>
-                  <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="bug">Bug</SelectItem>
-                      <SelectItem value="feature_request">Feature Request</SelectItem>
-                      <SelectItem value="billing">Billing</SelectItem>
-                      <SelectItem value="integration_issue">Integration Issue</SelectItem>
-                      <SelectItem value="access_problem">Access Problem</SelectItem>
-                      <SelectItem value="general">General</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="flex items-center gap-1">Priority <HelpTooltip label="Priority" description="Critical = system down. High = major feature broken. Medium = minor issue. Low = cosmetic." /></Label>
-                  <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="critical">Critical</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div>
-                <Label>Description</Label>
-                <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Detailed description, steps to reproduce..." rows={4} />
-              </div>
-              <Button onClick={handleCreate} className="w-full" disabled={!form.subject.trim()}>Submit Ticket</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+      <PageHeader
+        title="Support Tickets"
+        subtitle="Submit issues, track resolutions, and communicate with support."
+        icon={Ticket}
+        badge={`${stats.total}`}
+        actions={[{ label: "New Ticket", icon: Plus, onClick: () => setOpen(true) }]}
+      />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="border-border"><CardContent className="py-4 text-center">
-          <p className="text-2xl font-bold text-blue-400">{stats.open}</p>
-          <p className="text-xs text-muted-foreground">Open</p>
-        </CardContent></Card>
-        <Card className="border-border"><CardContent className="py-4 text-center">
-          <p className="text-2xl font-bold text-yellow-400">{stats.in_progress}</p>
-          <p className="text-xs text-muted-foreground">In Progress</p>
-        </CardContent></Card>
-        <Card className="border-border"><CardContent className="py-4 text-center">
-          <p className="text-2xl font-bold text-green-400">{stats.resolved}</p>
-          <p className="text-xs text-muted-foreground">Resolved</p>
-        </CardContent></Card>
-        <Card className="border-border"><CardContent className="py-4 text-center">
-          <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-          <p className="text-xs text-muted-foreground">Total</p>
-        </CardContent></Card>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard label="Open" value={stats.open} icon={Inbox} gradient="from-primary to-accent" />
+        <StatCard label="In Progress" value={stats.in_progress} icon={Clock} gradient="from-warning to-orange-500" />
+        <StatCard label="Resolved" value={stats.resolved} icon={CheckCircle} gradient="from-success to-emerald-500" />
+        <StatCard label="Total" value={stats.total} icon={Ticket} gradient="from-secondary to-muted" />
       </div>
 
       {/* Filter */}
@@ -205,13 +145,13 @@ const TicketsPage = () => {
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         </div>
       ) : filtered.length === 0 ? (
-        <Card><CardContent className="py-12 text-center text-muted-foreground">
+        <Card className="rounded-2xl"><CardContent className="py-12 text-center text-muted-foreground">
           {tickets.length === 0 ? "No tickets yet. Click 'New Ticket' to submit one." : "No tickets match this filter."}
         </CardContent></Card>
       ) : (
         <div className="space-y-3">
           {filtered.map((ticket) => (
-            <Card key={ticket.id} className="border-border hover:border-primary/30 transition-colors cursor-pointer"
+            <Card key={ticket.id} className="rounded-2xl border-0 shadow-elevated hover-lift transition-all cursor-pointer"
               onClick={() => navigate(`/ticket/${ticket.id}`)}>
               <CardContent className="py-4">
                 <div className="flex items-start justify-between gap-3">
@@ -229,7 +169,7 @@ const TicketsPage = () => {
                     </div>
                   </div>
                   {(isSuperAdmin || isBusinessAdmin) && ticket.status !== "closed" && (
-                    <div className="flex gap-1">
+                    <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                       {ticket.status === "open" && (
                         <Button size="sm" variant="outline" onClick={() => updateStatus(ticket.id, "in_progress")}>Start</Button>
                       )}
@@ -247,6 +187,52 @@ const TicketsPage = () => {
           ))}
         </div>
       )}
+
+      {/* Create dialog */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Create Support Ticket</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Subject</Label>
+              <Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="Brief description of the issue" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="flex items-center gap-1">Category</Label>
+                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bug">Bug</SelectItem>
+                    <SelectItem value="feature_request">Feature Request</SelectItem>
+                    <SelectItem value="billing">Billing</SelectItem>
+                    <SelectItem value="integration_issue">Integration Issue</SelectItem>
+                    <SelectItem value="access_problem">Access Problem</SelectItem>
+                    <SelectItem value="general">General</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="flex items-center gap-1">Priority</Label>
+                <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="critical">Critical</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label>Description</Label>
+              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Detailed description, steps to reproduce..." rows={4} />
+            </div>
+            <Button onClick={handleCreate} className="w-full" disabled={!form.subject.trim()}>Submit Ticket</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
