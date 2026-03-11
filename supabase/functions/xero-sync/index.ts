@@ -272,15 +272,7 @@ Deno.serve(async (req) => {
       crypto.getRandomValues(stateArray);
       const state = encodeBase64Url(stateArray);
 
-      const params = new URLSearchParams({
-        response_type: "code",
-        client_id: clientId,
-        redirect_uri: redirect_uri,
-        scope: scopes,
-        state: state,
-      });
-
-      const authUrl = `https://login.xero.com/identity/connect/authorize?${params.toString()}`;
+      const authUrl = `https://login.xero.com/identity/connect/authorize?response_type=code&client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=${encodeURIComponent(scopes)}&state=${encodeURIComponent(state)}`;
       
       console.log("=== XERO OAUTH DEBUG ===");
       console.log("Client ID:", clientId);
