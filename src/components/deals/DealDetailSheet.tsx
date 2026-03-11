@@ -122,8 +122,9 @@ export function DealDetailSheet({ deal, open, onOpenChange }: DealDetailSheetPro
               </div>
             )}
           </div>
-        )}
-      </SheetContent>
+          )}
+          <CustomFieldRenderer moduleName="deals" recordId={deal.id} readOnly={!editing} />
+        </SheetContent>
     </Sheet>
   );
 }

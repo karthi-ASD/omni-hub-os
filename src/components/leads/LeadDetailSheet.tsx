@@ -152,6 +152,7 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onUpdateStage, onArc
                 <p className="text-sm bg-muted/50 rounded-lg p-3">{lead.notes}</p>
               </div>
             )}
+            <CustomFieldRenderer moduleName="leads" recordId={lead.id} readOnly />
           </div>
         )}
 
