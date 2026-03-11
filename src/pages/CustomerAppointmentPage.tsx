@@ -332,7 +332,7 @@ function JobCard({
           )}
           {(job as any).rescheduled_time && (
             <div className="flex items-center gap-2 text-muted-foreground">
-              <CalendarClock className="h-4 w-4 shrink-0 text-orange-500" />
+              <CalendarClock className="h-4 w-4 shrink-0 text-destructive" />
               <span>Requested: {format(new Date((job as any).rescheduled_time), "dd MMM yyyy, h:mm a")}</span>
             </div>
           )}
