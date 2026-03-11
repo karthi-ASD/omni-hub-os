@@ -66,6 +66,9 @@ const ClientsPage = () => {
           <Users className="h-5 w-5 text-primary" /> Clients
         </h1>
         <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={handleSyncClients} disabled={syncing}>
+            <RefreshCw className={`h-4 w-4 mr-1 ${syncing ? "animate-spin" : ""}`} /> {syncing ? "Syncing..." : "Sync Clients"}
+          </Button>
           <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
             <Upload className="h-4 w-4 mr-1" /> Import
           </Button>
