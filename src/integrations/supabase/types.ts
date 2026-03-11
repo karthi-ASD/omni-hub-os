@@ -6511,6 +6511,107 @@ export type Database = {
           },
         ]
       }
+      custom_field_values: {
+        Row: {
+          business_id: string
+          created_at: string
+          custom_field_id: string
+          id: string
+          module_name: string
+          record_id: string
+          updated_at: string
+          value: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          custom_field_id: string
+          id?: string
+          module_name: string
+          record_id: string
+          updated_at?: string
+          value?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          custom_field_id?: string
+          id?: string
+          module_name?: string
+          record_id?: string
+          updated_at?: string
+          value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_field_values_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_field_values_custom_field_id_fkey"
+            columns: ["custom_field_id"]
+            isOneToOne: false
+            referencedRelation: "custom_fields"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_fields: {
+        Row: {
+          business_id: string
+          created_at: string
+          display_order: number
+          field_key: string
+          field_label: string
+          field_type: string
+          id: string
+          is_active: boolean
+          is_required: boolean
+          module_name: string
+          options: Json | null
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          display_order?: number
+          field_key: string
+          field_label: string
+          field_type?: string
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          module_name: string
+          options?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          display_order?: number
+          field_key?: string
+          field_label?: string
+          field_type?: string
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          module_name?: string
+          options?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_fields_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_feedback: {
         Row: {
           account_id: string | null
