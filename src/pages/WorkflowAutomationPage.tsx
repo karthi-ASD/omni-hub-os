@@ -277,7 +277,7 @@ const WorkflowAutomationPage = () => {
           <p className="text-sm text-muted-foreground">Pre-built workflow templates — click to create instantly.</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {WORKFLOW_TEMPLATES.map((tpl, idx) => (
-              <Card key={idx} className="hover:shadow-md transition-shadow cursor-pointer group" onClick={() => createFromTemplate(idx)}>
+              <Card key={idx} className="hover:shadow-elevated transition-shadow cursor-pointer group rounded-2xl" onClick={() => createFromTemplate(idx)}>
                 <CardContent className="p-4 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
