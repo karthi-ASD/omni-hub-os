@@ -10,6 +10,8 @@ const XERO_API_BASE = "https://api.xero.com/api.xro/2.0";
 
 // ── RATE-LIMITED FETCH WITH EXPONENTIAL BACKOFF ──
 async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 5): Promise<Response> {
+  const MAX_DELAY_MS = 30000; // Cap at 30 seconds max wait
+
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     const response = await fetch(url, options);
 
@@ -32,6 +34,12 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 5)
       // Exponential backoff with jitter if no Retry-After
       if (delayMs <= 0) {
         delayMs = Math.pow(2, attempt + 1) * 2500 + Math.random() * 1000;
+      }
+
+      // If Xero wants us to wait longer than our cap, fail fast with a clear message
+      if (delayMs > MAX_DELAY_MS) {
+        console.warn(`[RATE-LIMIT] 429 on ${url}. Xero wants ${Math.round(delayMs / 1000)}s wait — exceeds cap. Failing fast.`);
+        throw new Error(`Xero rate limit exceeded. Please wait ${Math.ceil(delayMs / 60000)} minutes before syncing again.`);
       }
 
       console.warn(`[RATE-LIMIT] 429 on ${url}. Waiting ${Math.round(delayMs / 1000)}s (attempt ${attempt + 1}/${maxRetries})`);

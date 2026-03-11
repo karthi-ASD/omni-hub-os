@@ -1,6 +1,8 @@
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useContentTasks, CONTENT_TYPES, ContentTask } from "@/hooks/useContentTasks";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -16,11 +18,11 @@ import { format } from "date-fns";
 
 const statusBadge = (s: string) => {
   const m: Record<string, string> = {
-    pending: "bg-amber-500/10 text-amber-600",
-    in_progress: "bg-blue-500/10 text-blue-600",
-    review: "bg-purple-500/10 text-purple-600",
-    completed: "bg-green-500/10 text-green-600",
-    published: "bg-teal-500/10 text-teal-600",
+    pending: "bg-warning/10 text-warning",
+    in_progress: "bg-primary/10 text-primary",
+    review: "bg-accent/20 text-accent-foreground",
+    completed: "bg-success/10 text-success",
+    published: "bg-primary/15 text-primary",
   };
   return m[s] || "bg-muted text-muted-foreground";
 };
@@ -28,9 +30,9 @@ const statusBadge = (s: string) => {
 const priorityBadge = (p: string) => {
   const m: Record<string, string> = {
     low: "bg-muted text-muted-foreground",
-    medium: "bg-blue-500/10 text-blue-600",
-    high: "bg-orange-500/10 text-orange-600",
-    urgent: "bg-red-500/10 text-red-600",
+    medium: "bg-primary/10 text-primary",
+    high: "bg-warning/10 text-warning",
+    urgent: "bg-destructive/10 text-destructive",
   };
   return m[p] || "bg-muted text-muted-foreground";
 };
@@ -64,48 +66,36 @@ const ContentManagementPage = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Content Management</h1>
-          <p className="text-sm text-muted-foreground">Blog writing, creative design & video production</p>
-        </div>
-        <Button onClick={() => setDialog(true)}><Plus className="h-4 w-4 mr-2" />New Content Task</Button>
-      </div>
+      <PageHeader
+        icon={PenTool}
+        title="Content Management"
+        subtitle="Blog writing, creative design & video production"
+        badge="Production"
+        actions={<Button onClick={() => setDialog(true)} className="rounded-xl"><Plus className="h-4 w-4 mr-2" />New Content Task</Button>}
+      />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-        {[
-          { label: "Total", value: stats.total, icon: BarChart3, gradient: "from-primary to-accent" },
-          { label: "Pending", value: stats.pending, icon: Clock, gradient: "from-amber-500 to-orange-500" },
-          { label: "In Progress", value: stats.inProgress, icon: PenTool, gradient: "from-blue-500 to-indigo-500" },
-          { label: "Completed", value: stats.completed, icon: CheckCircle2, gradient: "from-green-500 to-emerald-500" },
-          { label: "Blogs", value: stats.blogs, icon: FileText, gradient: "from-purple-500 to-pink-500" },
-          { label: "Designs", value: stats.designs, icon: Palette, gradient: "from-teal-500 to-cyan-500" },
-          { label: "Videos", value: stats.videos, icon: Video, gradient: "from-red-500 to-rose-500" },
-        ].map(s => (
-          <Card key={s.label} className="rounded-xl overflow-hidden">
-            <CardContent className="p-3 text-center">
-              <div className={`inline-flex p-2 rounded-lg bg-gradient-to-br ${s.gradient} text-white mb-1`}>
-                <s.icon className="h-4 w-4" />
-              </div>
-              <p className="text-2xl font-bold">{s.value}</p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{s.label}</p>
-            </CardContent>
-          </Card>
-        ))}
+        <StatCard label="Total" value={stats.total} icon={BarChart3} gradient="from-primary to-accent" />
+        <StatCard label="Pending" value={stats.pending} icon={Clock} gradient="from-warning to-orange-500" />
+        <StatCard label="In Progress" value={stats.inProgress} icon={PenTool} gradient="from-primary to-indigo-500" />
+        <StatCard label="Completed" value={stats.completed} icon={CheckCircle2} gradient="from-success to-emerald-500" />
+        <StatCard label="Blogs" value={stats.blogs} icon={FileText} gradient="from-purple-500 to-pink-500" />
+        <StatCard label="Designs" value={stats.designs} icon={Palette} gradient="from-teal-500 to-cyan-500" />
+        <StatCard label="Videos" value={stats.videos} icon={Video} gradient="from-destructive to-rose-500" />
       </div>
 
       {/* Filter */}
       <div className="flex gap-2 flex-wrap">
         {[{ value: "all", label: "All" }, ...CONTENT_TYPES].map(t => (
-          <Button key={t.value} size="sm" variant={filter === t.value ? "default" : "outline"} onClick={() => setFilter(t.value)}>
+          <Button key={t.value} size="sm" variant={filter === t.value ? "default" : "outline"} className="rounded-xl" onClick={() => setFilter(t.value)}>
             {t.label}
           </Button>
         ))}
       </div>
 
       {/* Table */}
-      <Card className="rounded-xl">
+      <Card className="rounded-2xl shadow-elevated">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -123,7 +113,7 @@ const ContentManagementPage = () => {
               {filtered.length === 0 ? (
                 <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No content tasks found</TableCell></TableRow>
               ) : filtered.map(task => (
-                <TableRow key={task.id}>
+                <TableRow key={task.id} className="hover-lift">
                   <TableCell><div className="flex items-center gap-2">{typeIcon(task.content_type)}<span className="text-xs">{CONTENT_TYPES.find(t => t.value === task.content_type)?.label || task.content_type}</span></div></TableCell>
                   <TableCell className="font-medium max-w-[200px] truncate">{task.title}</TableCell>
                   <TableCell><Badge className={priorityBadge(task.priority)}>{task.priority}</Badge></TableCell>
