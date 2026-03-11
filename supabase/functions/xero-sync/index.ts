@@ -8,6 +8,62 @@ const corsHeaders = {
 const XERO_TOKEN_URL = "https://identity.xero.com/connect/token";
 const XERO_API_BASE = "https://api.xero.com/api.xro/2.0";
 
+// ── RATE-LIMITED FETCH WITH EXPONENTIAL BACKOFF ──
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 5): Promise<Response> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const response = await fetch(url, options);
+
+    if (response.status === 429) {
+      const retryAfterHeader = response.headers.get("Retry-After");
+      let delayMs = 0;
+
+      if (retryAfterHeader) {
+        const parsedSeconds = parseInt(retryAfterHeader, 10);
+        if (!isNaN(parsedSeconds)) {
+          delayMs = parsedSeconds * 1000;
+        } else {
+          const retryDate = new Date(retryAfterHeader).getTime();
+          if (!isNaN(retryDate)) {
+            delayMs = Math.max(0, retryDate - Date.now());
+          }
+        }
+      }
+
+      // Exponential backoff with jitter if no Retry-After
+      if (delayMs <= 0) {
+        delayMs = Math.pow(2, attempt + 1) * 2500 + Math.random() * 1000;
+      }
+
+      console.warn(`[RATE-LIMIT] 429 on ${url}. Waiting ${Math.round(delayMs / 1000)}s (attempt ${attempt + 1}/${maxRetries})`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+      continue;
+    }
+
+    if (response.ok) return response;
+
+    // Permanent errors - don't retry
+    if ([400, 401, 403, 404].includes(response.status)) {
+      const errText = await response.text();
+      throw new Error(`Xero API ${response.status}: ${errText}`);
+    }
+
+    // Transient errors (5xx) - retry with backoff
+    const waitMs = Math.pow(2, attempt + 1) * 2000 + Math.random() * 1000;
+    console.warn(`[RETRY] ${response.status} on ${url}. Waiting ${Math.round(waitMs / 1000)}s (attempt ${attempt + 1}/${maxRetries})`);
+    await new Promise(resolve => setTimeout(resolve, waitMs));
+  }
+
+  throw new Error(`Max retries (${maxRetries}) exceeded for ${url}`);
+}
+
+// Small delay between pages to respect rate limits
+const PAGE_DELAY_MS = 1500;
+const STAGE_DELAY_MS = 5000;
+
+async function delay(ms: number) {
+  await new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function getAccessToken(supabase: any, conn: any) {
   let accessToken = conn.access_token_encrypted;
 
@@ -49,7 +105,6 @@ function formatAddress(addr: any): string {
     .filter(Boolean).join(", ");
 }
 
-// Helper to get connection + headers
 async function getConnectionAndHeaders(supabase: any, businessId: string) {
   const { data: conn } = await supabase
     .from("xero_connections").select("*")
@@ -82,7 +137,6 @@ async function getConnectionAndHeaders(supabase: any, businessId: string) {
   };
 }
 
-// Helper to write a sync log entry
 async function writeSyncLog(supabase: any, businessId: string, syncType: string, status: string, recordsSynced: number, errorMessage: string | null) {
   await supabase.from("xero_sync_logs").insert({
     business_id: businessId,
@@ -96,24 +150,22 @@ async function writeSyncLog(supabase: any, businessId: string, syncType: string,
   }).eq("business_id", businessId);
 }
 
-// ── SYNC CONTACTS ──
+// ── SYNC CONTACTS (with rate limiting) ──
 async function syncContacts(supabase: any, businessId: string, xeroHeaders: any) {
   let contactsSynced = 0;
+  let inserted = 0;
+  let updated = 0;
+  let retries = 0;
   let page = 1;
   let hasMore = true;
 
-  console.log("[SYNC] Starting contacts sync...");
+  console.log("[SYNC] Starting contacts sync with rate limiting...");
 
   while (hasMore) {
     const url = `${XERO_API_BASE}/Contacts?page=${page}&pageSize=100`;
     console.log(`[SYNC] Fetching contacts page ${page}`);
-    const res = await fetch(url, { headers: xeroHeaders });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error(`[SYNC] Contacts API error ${res.status}: ${errText}`);
-      throw new Error(`Contacts API returned ${res.status}: ${errText}`);
-    }
+    const res = await fetchWithRetry(url, { headers: xeroHeaders });
 
     const data = await res.json();
     const contacts = data.Contacts || [];
@@ -147,31 +199,29 @@ async function syncContacts(supabase: any, businessId: string, xeroHeaders: any)
     contactsSynced += contacts.length;
 
     if (contacts.length < 100) hasMore = false;
-    else page++;
+    else {
+      page++;
+      await delay(PAGE_DELAY_MS); // Rate limit delay between pages
+    }
   }
 
-  console.log(`[SYNC] Contacts sync complete: ${contactsSynced} synced`);
+  console.log(`[SYNC] Contacts complete: ${contactsSynced} fetched/upserted`);
   return contactsSynced;
 }
 
-// ── SYNC INVOICES ──
+// ── SYNC INVOICES (with rate limiting) ──
 async function syncInvoices(supabase: any, businessId: string, xeroHeaders: any) {
   let invoicesSynced = 0;
   let page = 1;
   let hasMore = true;
 
-  console.log("[SYNC] Starting invoices sync...");
+  console.log("[SYNC] Starting invoices sync with rate limiting...");
 
   while (hasMore) {
     const url = `${XERO_API_BASE}/Invoices?page=${page}&pageSize=100&Statuses=AUTHORISED,PAID,SUBMITTED,DRAFT,OVERDUE,VOIDED`;
     console.log(`[SYNC] Fetching invoices page ${page}`);
-    const res = await fetch(url, { headers: xeroHeaders });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error(`[SYNC] Invoices API error ${res.status}: ${errText}`);
-      throw new Error(`Invoices API returned ${res.status}: ${errText}`);
-    }
+    const res = await fetchWithRetry(url, { headers: xeroHeaders });
 
     const data = await res.json();
     const invoices = data.Invoices || [];
@@ -179,7 +229,7 @@ async function syncInvoices(supabase: any, businessId: string, xeroHeaders: any)
 
     if (invoices.length === 0) { hasMore = false; break; }
 
-    // Pre-fetch client ID map for this batch
+    // Pre-fetch client ID map
     const contactIds = invoices.map((inv: any) => inv.Contact?.ContactID).filter(Boolean);
     const uniqueContactIds = [...new Set(contactIds)];
     const clientMap: Record<string, string> = {};
@@ -225,31 +275,29 @@ async function syncInvoices(supabase: any, businessId: string, xeroHeaders: any)
     invoicesSynced += invoices.length;
 
     if (invoices.length < 100) hasMore = false;
-    else page++;
+    else {
+      page++;
+      await delay(PAGE_DELAY_MS);
+    }
   }
 
-  console.log(`[SYNC] Invoices sync complete: ${invoicesSynced} synced`);
+  console.log(`[SYNC] Invoices complete: ${invoicesSynced} fetched/upserted`);
   return invoicesSynced;
 }
 
-// ── SYNC PAYMENTS ──
+// ── SYNC PAYMENTS (with rate limiting) ──
 async function syncPayments(supabase: any, businessId: string, xeroHeaders: any) {
   let paymentsSynced = 0;
   let page = 1;
   let hasMore = true;
 
-  console.log("[SYNC] Starting payments sync...");
+  console.log("[SYNC] Starting payments sync with rate limiting...");
 
   while (hasMore) {
     const url = `${XERO_API_BASE}/Payments?page=${page}&pageSize=100`;
     console.log(`[SYNC] Fetching payments page ${page}`);
-    const res = await fetch(url, { headers: xeroHeaders });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error(`[SYNC] Payments API error ${res.status}: ${errText}`);
-      throw new Error(`Payments API returned ${res.status}: ${errText}`);
-    }
+    const res = await fetchWithRetry(url, { headers: xeroHeaders });
 
     const data = await res.json();
     const payments = data.Payments || [];
@@ -257,7 +305,6 @@ async function syncPayments(supabase: any, businessId: string, xeroHeaders: any)
 
     if (payments.length === 0) { hasMore = false; break; }
 
-    // Pre-fetch invoice and client maps for batch
     const invoiceIds = payments.map((p: any) => p.Invoice?.InvoiceID).filter(Boolean);
     const uniqueInvIds = [...new Set(invoiceIds)];
     const invMap: Record<string, { id: string; client_id: string | null }> = {};
@@ -316,31 +363,29 @@ async function syncPayments(supabase: any, businessId: string, xeroHeaders: any)
     paymentsSynced += payments.length;
 
     if (payments.length < 100) hasMore = false;
-    else page++;
+    else {
+      page++;
+      await delay(PAGE_DELAY_MS);
+    }
   }
 
-  console.log(`[SYNC] Payments sync complete: ${paymentsSynced} synced`);
+  console.log(`[SYNC] Payments complete: ${paymentsSynced} fetched/upserted`);
   return paymentsSynced;
 }
 
-// ── SYNC EXPENSES (Bills / Expense Claims from Xero) ──
+// ── SYNC EXPENSES (with rate limiting) ──
 async function syncExpenses(supabase: any, businessId: string, xeroHeaders: any) {
   let expensesSynced = 0;
   let page = 1;
   let hasMore = true;
 
-  console.log("[SYNC] Starting expenses sync (Invoices type=ACCPAY)...");
+  console.log("[SYNC] Starting expenses sync (Invoices type=ACCPAY) with rate limiting...");
 
   while (hasMore) {
     const url = `${XERO_API_BASE}/Invoices?page=${page}&pageSize=100&where=Type%3D%3D%22ACCPAY%22`;
     console.log(`[SYNC] Fetching expenses page ${page}`);
-    const res = await fetch(url, { headers: xeroHeaders });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error(`[SYNC] Expenses API error ${res.status}: ${errText}`);
-      throw new Error(`Expenses API returned ${res.status}: ${errText}`);
-    }
+    const res = await fetchWithRetry(url, { headers: xeroHeaders });
 
     const data = await res.json();
     const bills = data.Invoices || [];
@@ -373,14 +418,17 @@ async function syncExpenses(supabase: any, businessId: string, xeroHeaders: any)
     expensesSynced += bills.length;
 
     if (bills.length < 100) hasMore = false;
-    else page++;
+    else {
+      page++;
+      await delay(PAGE_DELAY_MS);
+    }
   }
 
-  console.log(`[SYNC] Expenses sync complete: ${expensesSynced} synced`);
+  console.log(`[SYNC] Expenses complete: ${expensesSynced} fetched/upserted`);
   return expensesSynced;
 }
 
-// ── UPDATE CLIENT_SINCE from first invoice date ──
+// ── UPDATE CLIENT_SINCE ──
 async function updateClientSinceDates(supabase: any, businessId: string) {
   console.log("[SYNC] Updating client_since dates from first invoices...");
 
@@ -391,22 +439,26 @@ async function updateClientSinceDates(supabase: any, businessId: string) {
 
   if (!clients || clients.length === 0) return;
 
-  for (const client of clients) {
-    const { data: firstInv } = await supabase
-      .from("xero_invoices")
-      .select("invoice_date")
-      .eq("business_id", businessId)
-      .eq("client_id", client.id)
-      .not("invoice_date", "is", null)
-      .order("invoice_date", { ascending: true })
-      .limit(1)
-      .maybeSingle();
+  // Process in batches of 10 to avoid overwhelming the DB
+  for (let i = 0; i < clients.length; i += 10) {
+    const batch = clients.slice(i, i + 10);
+    await Promise.all(batch.map(async (client: any) => {
+      const { data: firstInv } = await supabase
+        .from("xero_invoices")
+        .select("invoice_date")
+        .eq("business_id", businessId)
+        .eq("client_id", client.id)
+        .not("invoice_date", "is", null)
+        .order("invoice_date", { ascending: true })
+        .limit(1)
+        .maybeSingle();
 
-    if (firstInv?.invoice_date) {
-      await supabase.from("clients").update({
-        client_since: firstInv.invoice_date,
-      }).eq("id", client.id);
-    }
+      if (firstInv?.invoice_date) {
+        await supabase.from("clients").update({
+          client_since: firstInv.invoice_date,
+        }).eq("id", client.id);
+      }
+    }));
   }
 
   console.log("[SYNC] Client since dates updated");
@@ -535,13 +587,11 @@ Deno.serve(async (req) => {
     }
 
     // --- SYNC (single business, staged) ---
-    // Now supports `stage` parameter: "contacts", "invoices", "payments", "expenses", "finalize"
-    // If no stage provided, defaults to full sync but each stage writes its own log
     if (action === "sync") {
       console.log(`=== XERO SYNC START === Stage: ${stage || "full"}, Business: ${business_id}`);
       const { xeroHeaders } = await getConnectionAndHeaders(supabase, business_id);
 
-      // STAGED SYNC: each stage runs independently and writes its own log
+      // STAGED SYNC
       if (stage) {
         let synced = 0;
         let errorMsg: string | null = null;
@@ -566,7 +616,7 @@ Deno.serve(async (req) => {
           console.error(`[SYNC] Stage ${stage} error:`, e.message);
         }
 
-        await writeSyncLog(supabase, business_id, `stage:${stage}`, errorMsg ? "error" : "success", synced, errorMsg);
+        await writeSyncLog(supabase, business_id, `Stage:${stage.charAt(0).toUpperCase() + stage.slice(1)}`, errorMsg ? "error" : "success", synced, errorMsg);
         console.log(`=== XERO SYNC STAGE COMPLETE === Stage: ${stage}, Records: ${synced}`);
 
         return new Response(JSON.stringify({
@@ -577,32 +627,46 @@ Deno.serve(async (req) => {
         }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      // FULL SYNC (legacy): run all stages sequentially, write log per stage
+      // FULL SYNC: sequential with delays between stages
       const syncErrors: string[] = [];
       let contactsSynced = 0, invoicesSynced = 0, paymentsSynced = 0, expensesSynced = 0;
 
+      // Stage 1: Contacts
       try { contactsSynced = await syncContacts(supabase, business_id, xeroHeaders); }
       catch (e) { syncErrors.push(`Contacts: ${e.message}`); }
-      await writeSyncLog(supabase, business_id, "contacts", syncErrors.length === 0 ? "success" : "error", contactsSynced, syncErrors.length > 0 ? syncErrors[syncErrors.length - 1] : null);
+      await writeSyncLog(supabase, business_id, "Stage:Contacts", syncErrors.length === 0 ? "success" : "error", contactsSynced, syncErrors.length > 0 ? syncErrors[syncErrors.length - 1] : null);
 
+      console.log(`[SYNC] Waiting ${STAGE_DELAY_MS / 1000}s before invoices...`);
+      await delay(STAGE_DELAY_MS);
+
+      // Stage 2: Invoices
       try { invoicesSynced = await syncInvoices(supabase, business_id, xeroHeaders); }
       catch (e) { syncErrors.push(`Invoices: ${e.message}`); }
-      await writeSyncLog(supabase, business_id, "invoices", !syncErrors.some(e => e.startsWith("Invoices")) ? "success" : "error", invoicesSynced, syncErrors.some(e => e.startsWith("Invoices")) ? syncErrors[syncErrors.length - 1] : null);
+      await writeSyncLog(supabase, business_id, "Stage:Invoices", !syncErrors.some(e => e.startsWith("Invoices")) ? "success" : "error", invoicesSynced, syncErrors.some(e => e.startsWith("Invoices")) ? syncErrors[syncErrors.length - 1] : null);
 
+      console.log(`[SYNC] Waiting ${STAGE_DELAY_MS / 1000}s before payments...`);
+      await delay(STAGE_DELAY_MS);
+
+      // Stage 3: Payments
       try { paymentsSynced = await syncPayments(supabase, business_id, xeroHeaders); }
       catch (e) { syncErrors.push(`Payments: ${e.message}`); }
-      await writeSyncLog(supabase, business_id, "payments", !syncErrors.some(e => e.startsWith("Payments")) ? "success" : "error", paymentsSynced, syncErrors.some(e => e.startsWith("Payments")) ? syncErrors[syncErrors.length - 1] : null);
+      await writeSyncLog(supabase, business_id, "Stage:Payments", !syncErrors.some(e => e.startsWith("Payments")) ? "success" : "error", paymentsSynced, syncErrors.some(e => e.startsWith("Payments")) ? syncErrors[syncErrors.length - 1] : null);
 
+      console.log(`[SYNC] Waiting ${STAGE_DELAY_MS / 1000}s before expenses...`);
+      await delay(STAGE_DELAY_MS);
+
+      // Stage 4: Expenses
       try { expensesSynced = await syncExpenses(supabase, business_id, xeroHeaders); }
       catch (e) { syncErrors.push(`Expenses: ${e.message}`); }
-      await writeSyncLog(supabase, business_id, "expenses", !syncErrors.some(e => e.startsWith("Expenses")) ? "success" : "error", expensesSynced, syncErrors.some(e => e.startsWith("Expenses")) ? syncErrors[syncErrors.length - 1] : null);
+      await writeSyncLog(supabase, business_id, "Stage:Expenses", !syncErrors.some(e => e.startsWith("Expenses")) ? "success" : "error", expensesSynced, syncErrors.some(e => e.startsWith("Expenses")) ? syncErrors[syncErrors.length - 1] : null);
 
+      // Finalize
       try { await updateClientSinceDates(supabase, business_id); }
       catch (e) { syncErrors.push(`ClientSince: ${e.message}`); }
       try { await handleOverdueInvoices(supabase, business_id); }
       catch (e) { syncErrors.push(`Overdue: ${e.message}`); }
 
-      console.log(`=== XERO SYNC COMPLETE === Contacts: ${contactsSynced}, Invoices: ${invoicesSynced}, Payments: ${paymentsSynced}, Expenses: ${expensesSynced}`);
+      console.log(`=== XERO SYNC COMPLETE === Contacts: ${contactsSynced}, Invoices: ${invoicesSynced}, Payments: ${paymentsSynced}, Expenses: ${expensesSynced}, Errors: ${syncErrors.length}`);
 
       return new Response(JSON.stringify({
         success: true,
@@ -630,18 +694,25 @@ Deno.serve(async (req) => {
 
           try { contactsSynced = await syncContacts(supabase, c.business_id, xeroHeaders); }
           catch (e) { syncErrors.push(`Contacts: ${e.message}`); }
+          await delay(STAGE_DELAY_MS);
+
           try { invoicesSynced = await syncInvoices(supabase, c.business_id, xeroHeaders); }
           catch (e) { syncErrors.push(`Invoices: ${e.message}`); }
+          await delay(STAGE_DELAY_MS);
+
           try { paymentsSynced = await syncPayments(supabase, c.business_id, xeroHeaders); }
           catch (e) { syncErrors.push(`Payments: ${e.message}`); }
+          await delay(STAGE_DELAY_MS);
+
           try { expensesSynced = await syncExpenses(supabase, c.business_id, xeroHeaders); }
           catch (e) { syncErrors.push(`Expenses: ${e.message}`); }
+
           try { await updateClientSinceDates(supabase, c.business_id); }
           catch (e) { syncErrors.push(`ClientSince: ${e.message}`); }
           try { await handleOverdueInvoices(supabase, c.business_id); }
           catch (e) { syncErrors.push(`Overdue: ${e.message}`); }
 
-          await writeSyncLog(supabase, c.business_id, "scheduled",
+          await writeSyncLog(supabase, c.business_id, "Scheduled",
             syncErrors.length === 0 ? "success" : "partial",
             contactsSynced + invoicesSynced + paymentsSynced + expensesSynced,
             syncErrors.length > 0 ? syncErrors.join("; ") : null);
