@@ -2415,6 +2415,50 @@ export type Database = {
           },
         ]
       }
+      ai_reports: {
+        Row: {
+          business_id: string
+          created_at: string
+          data_snapshot_json: Json | null
+          generated_by_user_id: string | null
+          id: string
+          model_used: string | null
+          report_period: string
+          report_type: string
+          summary_text: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          data_snapshot_json?: Json | null
+          generated_by_user_id?: string | null
+          id?: string
+          model_used?: string | null
+          report_period: string
+          report_type?: string
+          summary_text?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          data_snapshot_json?: Json | null
+          generated_by_user_id?: string | null
+          id?: string
+          model_used?: string | null
+          report_period?: string
+          report_type?: string
+          summary_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_reports_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_sales_brain_scores: {
         Row: {
           business_id: string

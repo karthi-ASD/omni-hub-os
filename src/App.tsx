@@ -90,6 +90,7 @@ import Client360Page from "./pages/Client360Page";
 import VaultPage from "./pages/VaultPage";
 import JobCRMPage from "./pages/JobCRMPage";
 import ReviewMonitorPage from "./pages/ReviewMonitorPage";
+import AIReportsPage from "./pages/AIReportsPage";
 import UsageAnalyticsPage from "./pages/UsageAnalyticsPage";
 import DemoModePage from "./pages/DemoModePage";
 import RevenueIntelligencePage from "./pages/RevenueIntelligencePage";
@@ -362,6 +363,7 @@ const App = () => (
               } />
               <Route path="/job-crm" element={<JobCRMPage />} />
               <Route path="/review-monitor" element={<ReviewMonitorPage />} />
+              <Route path="/ai-reports" element={<AIReportsPage />} />
               <Route path="/conversations" element={<ConversationsPage />} />
               <Route path="/agent-factory" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AgentFactoryPage /></ProtectedRoute>
