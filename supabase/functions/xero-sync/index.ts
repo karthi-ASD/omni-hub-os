@@ -121,28 +121,30 @@ async function syncContacts(supabase: any, businessId: string, xeroHeaders: any)
 
     if (contacts.length === 0) { hasMore = false; break; }
 
-    for (const c of contacts) {
-      const email = c.EmailAddress || `xero-${c.ContactID}@placeholder.local`;
-      const { error: upsertErr } = await supabase.from("clients").upsert({
-        business_id: businessId,
-        xero_contact_id: c.ContactID,
-        contact_name: c.Name || c.FirstName || "Unknown",
-        company_name: c.Name || "",
-        email,
-        phone: c.Phones?.find((p: any) => p.PhoneType === "DEFAULT")?.PhoneNumber || c.Phones?.[0]?.PhoneNumber || null,
-        mobile: c.Phones?.find((p: any) => p.PhoneType === "MOBILE")?.PhoneNumber || null,
-        website: c.Website || null,
-        billing_address: c.Addresses?.find((a: any) => a.AddressType === "POBOX")
-          ? formatAddress(c.Addresses.find((a: any) => a.AddressType === "POBOX"))
-          : c.Addresses?.[0] ? formatAddress(c.Addresses[0]) : null,
-        tax_number: c.TaxNumber || null,
-      }, { onConflict: "business_id,xero_contact_id", ignoreDuplicates: false });
+    const rows = contacts.map((c: any) => ({
+      business_id: businessId,
+      xero_contact_id: c.ContactID,
+      contact_name: c.Name || c.FirstName || "Unknown",
+      company_name: c.Name || "",
+      email: c.EmailAddress || `xero-${c.ContactID}@placeholder.local`,
+      phone: c.Phones?.find((p: any) => p.PhoneType === "DEFAULT")?.PhoneNumber || c.Phones?.[0]?.PhoneNumber || null,
+      mobile: c.Phones?.find((p: any) => p.PhoneType === "MOBILE")?.PhoneNumber || null,
+      website: c.Website || null,
+      billing_address: c.Addresses?.find((a: any) => a.AddressType === "POBOX")
+        ? formatAddress(c.Addresses.find((a: any) => a.AddressType === "POBOX"))
+        : c.Addresses?.[0] ? formatAddress(c.Addresses[0]) : null,
+      tax_number: c.TaxNumber || null,
+    }));
 
-      if (upsertErr) {
-        console.error(`[SYNC] Contact upsert error for ${c.Name}:`, upsertErr.message);
-      }
-      contactsSynced++;
+    const { error: upsertErr } = await supabase.from("clients").upsert(rows, {
+      onConflict: "business_id,xero_contact_id",
+      ignoreDuplicates: false,
+    });
+
+    if (upsertErr) {
+      console.error(`[SYNC] Batch contact upsert error:`, upsertErr.message);
     }
+    contactsSynced += contacts.length;
 
     if (contacts.length < 100) hasMore = false;
     else page++;

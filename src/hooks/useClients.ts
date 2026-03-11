@@ -58,8 +58,29 @@ export function useClients() {
 
   const fetchClients = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.from("clients").select("*").order("created_at", { ascending: false }).limit(500);
-    setClients((data as any as Client[]) || []);
+    const PAGE_SIZE = 1000;
+    let allClients: Client[] = [];
+    let from = 0;
+    let hasMore = true;
+
+    while (hasMore) {
+      const { data } = await supabase
+        .from("clients")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
+
+      const batch = (data as any as Client[]) || [];
+      allClients = allClients.concat(batch);
+
+      if (batch.length < PAGE_SIZE) {
+        hasMore = false;
+      } else {
+        from += PAGE_SIZE;
+      }
+    }
+
+    setClients(allClients);
     setLoading(false);
   }, []);
 
