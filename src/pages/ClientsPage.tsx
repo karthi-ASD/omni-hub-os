@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useClients, Client, OnboardingStatus } from "@/hooks/useClients";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Plus, Mail, Phone, Building2, Search, Upload } from "lucide-react";
+import { Users, Plus, Mail, Phone, Building2, Search, Upload, RefreshCw } from "lucide-react";
 import CSVImportDialog from "@/components/clients/CSVImportDialog";
 import UnifiedClientForm from "@/components/clients/UnifiedClientForm";
+import { toast } from "sonner";
 
 const onboardingColors: Record<string, string> = {
   pending: "bg-amber-500/10 text-amber-600",
@@ -19,10 +22,30 @@ const onboardingColors: Record<string, string> = {
 
 const ClientsPage = () => {
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const { clients, loading, createClient, updateOnboardingStatus, refetch } = useClients();
   const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSyncClients = async () => {
+    if (!profile?.business_id) { toast.error("No business linked"); return; }
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("xero-sync", {
+        body: { action: "sync", business_id: profile.business_id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Synced ${data.contactsSynced || 0} contacts from Xero`);
+      refetch();
+    } catch (e: any) {
+      toast.error(e.message || "Sync failed");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const filtered = clients.filter(c =>
     !search || [c.contact_name, c.email, c.company_name, c.phone]
@@ -43,6 +66,9 @@ const ClientsPage = () => {
           <Users className="h-5 w-5 text-primary" /> Clients
         </h1>
         <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={handleSyncClients} disabled={syncing}>
+            <RefreshCw className={`h-4 w-4 mr-1 ${syncing ? "animate-spin" : ""}`} /> {syncing ? "Syncing..." : "Sync Clients"}
+          </Button>
           <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
             <Upload className="h-4 w-4 mr-1" /> Import
           </Button>
