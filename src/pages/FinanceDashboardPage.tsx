@@ -173,12 +173,12 @@ const FinanceDashboardPage = () => {
               <Badge variant="outline" className="text-[hsl(var(--success))] border-[hsl(var(--success))]">
                 <CheckCircle className="h-3 w-3 mr-1" /> Xero Connected
               </Badge>
-              <Button variant="outline" size="sm" onClick={handleXeroSync} disabled={syncing}>
+              <Button variant="outline" size="sm" className="rounded-xl" onClick={handleXeroSync} disabled={syncing}>
                 <RefreshCw className={`h-4 w-4 mr-1 ${syncing ? "animate-spin" : ""}`} /> {syncing ? "Syncing…" : "Sync Now"}
               </Button>
             </>
           ) : (
-            <Button variant="outline" size="sm" onClick={handleConnectXero}>
+            <Button variant="outline" size="sm" className="rounded-xl" onClick={handleConnectXero}>
               <Link className="h-4 w-4 mr-1" /> Connect Xero
             </Button>
           )}
@@ -187,7 +187,7 @@ const FinanceDashboardPage = () => {
               Last sync: {format(new Date(xeroConnection.last_sync_at), "dd MMM HH:mm")}
             </span>
           )}
-          <Button variant="outline" size="sm" onClick={refresh}>
+          <Button variant="outline" size="sm" className="rounded-xl" onClick={refresh}>
             <RefreshCw className="h-4 w-4 mr-1" /> Refresh
           </Button>
         </div>
@@ -196,17 +196,17 @@ const FinanceDashboardPage = () => {
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map(card => (
-          <Card key={card.title} className={`hover:shadow-md transition-shadow ${card.alert ? "border-[hsl(var(--destructive))]/30" : ""}`}>
+          <Card key={card.title} className={`rounded-2xl shadow-elevated hover-lift transition-all ${card.alert ? "border-destructive/30" : ""}`}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
-              <card.icon className={`h-4 w-4 ${card.alert ? "text-[hsl(var(--destructive))]" : "text-muted-foreground"}`} />
+              <card.icon className={`h-4 w-4 ${card.alert ? "text-destructive" : "text-muted-foreground"}`} />
             </CardHeader>
             <CardContent>
               {loading ? <Skeleton className="h-8 w-24" /> : (
                 <div className="flex items-end gap-2">
                   <p className="text-2xl font-bold">{card.value}</p>
                   {card.trend !== undefined && (
-                    <span className={`text-xs font-medium ${card.trend >= 0 ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]"}`}>
+                    <span className={`text-xs font-medium ${card.trend >= 0 ? "text-[hsl(var(--success))]" : "text-destructive"}`}>
                       {card.trend >= 0 ? "↑" : "↓"} {Math.abs(card.trend).toFixed(1)}%
                     </span>
                   )}
