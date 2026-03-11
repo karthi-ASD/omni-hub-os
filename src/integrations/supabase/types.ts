@@ -4549,6 +4549,54 @@ export type Database = {
           },
         ]
       }
+      client_departments: {
+        Row: {
+          business_id: string
+          client_id: string
+          created_at: string
+          department_name: string
+          id: string
+          manager_name: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          client_id: string
+          created_at?: string
+          department_name: string
+          id?: string
+          manager_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string
+          created_at?: string
+          department_name?: string
+          id?: string
+          manager_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_departments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_departments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_domains: {
         Row: {
           auto_renew_status: boolean | null
@@ -4621,6 +4669,76 @@ export type Database = {
             columns: ["linked_website_id"]
             isOneToOne: false
             referencedRelation: "tenant_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_employees: {
+        Row: {
+          app_access: boolean
+          business_id: string
+          client_id: string
+          created_at: string
+          department_id: string | null
+          designation: string | null
+          email: string | null
+          employee_name: string
+          id: string
+          joining_date: string | null
+          phone: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          app_access?: boolean
+          business_id: string
+          client_id: string
+          created_at?: string
+          department_id?: string | null
+          designation?: string | null
+          email?: string | null
+          employee_name: string
+          id?: string
+          joining_date?: string | null
+          phone?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          app_access?: boolean
+          business_id?: string
+          client_id?: string
+          created_at?: string
+          department_id?: string | null
+          designation?: string | null
+          email?: string | null
+          employee_name?: string
+          id?: string
+          joining_date?: string | null
+          phone?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_employees_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_employees_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_employees_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "client_departments"
             referencedColumns: ["id"]
           },
         ]
