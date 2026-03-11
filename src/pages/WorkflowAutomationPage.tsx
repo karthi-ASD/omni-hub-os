@@ -91,19 +91,12 @@ const WorkflowAutomationPage = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="relative overflow-hidden rounded-lg gradient-primary p-5">
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-1">
-            <Workflow className="h-4 w-4 text-primary-foreground/80" />
-            <span className="text-xs text-primary-foreground/80 font-medium">Operations</span>
-          </div>
-          <h1 className="text-xl font-bold text-primary-foreground">Workflow Automation Engine</h1>
-          <p className="text-sm text-primary-foreground/70 mt-1">
-            Automate client onboarding, task creation, department assignments, and notifications
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Workflow}
+        title="Workflow Automation Engine"
+        subtitle="Automate client onboarding, task creation, department assignments, and notifications"
+        badge="Operations"
+      />
 
       <Tabs defaultValue="workflows" className="space-y-4">
         <TabsList>
