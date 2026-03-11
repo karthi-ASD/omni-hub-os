@@ -51,6 +51,7 @@ const ClientProfilePage = () => {
     loading, addWebsite, addApp,
   } = useClientProfile(id);
   const financials = useClientFinancials(id);
+  const onboarding = useOnboardingChecklist(id);
 
   const [websiteDialog, setWebsiteDialog] = useState(false);
   const [appDialog, setAppDialog] = useState(false);
