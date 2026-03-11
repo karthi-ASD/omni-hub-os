@@ -73,6 +73,9 @@ const WebsitesPage = () => {
           <Button size="sm" variant="outline" onClick={() => navigate("/domains")} className="border-[#1e2a4a] text-[#d4a853]">
             <Globe className="h-4 w-4 mr-1" /> Domains
           </Button>
+          <Button size="sm" variant="outline" onClick={() => navigate("/hosting")} className="border-[#1e2a4a] text-[#d4a853]">
+            <Server className="h-4 w-4 mr-1" /> Hosting
+          </Button>
           <Button size="sm" onClick={() => setCreateOpen(true)} className="bg-[#d4a853] hover:bg-[#b8902e] text-[#0a0e1a]">
             <Plus className="h-4 w-4 mr-1" /> Add Website
           </Button>
