@@ -47,6 +47,12 @@ const StaffMobileAppPage = () => {
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [completionNotes, setCompletionNotes] = useState("");
   const [completing, setCompleting] = useState(false);
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [paymentNotes, setPaymentNotes] = useState("");
+  const [processing, setProcessing] = useState(false);
+  const [receipt, setReceipt] = useState<any>(null);
 
   const businessId = profile?.business_id;
 
