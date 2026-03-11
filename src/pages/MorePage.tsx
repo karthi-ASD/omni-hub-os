@@ -107,11 +107,13 @@ const superAdminSections: MenuSection[] = [
   },
   {
     title: "6 · Delivery Operations",
-    description: "Projects, tasks, and service tracking",
+    description: "Projects, tasks, content, website builds, and service tracking",
     items: [
       { label: "Projects", icon: Briefcase, to: "/projects" },
       { label: "Tasks", icon: ListChecks, to: "/tasks" },
       { label: "Job CRM", icon: Wrench, to: "/job-crm" },
+      { label: "Website Dev", icon: Globe, to: "/website-dev-stages" },
+      { label: "Content Mgmt", icon: FileText, to: "/content-management" },
       { label: "Reminders", icon: Clock, to: "/reminders" },
     ],
   },
