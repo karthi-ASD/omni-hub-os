@@ -57,7 +57,7 @@ export function useInvoices() {
     let countQuery = supabase
       .from("invoices")
       .select("id", { count: "exact", head: true });
-    if (status !== "all") countQuery = countQuery.eq("status", status);
+    if (status !== "all") countQuery = countQuery.eq("status", status as any);
 
     const { count } = await countQuery;
     setTotalCount(count || 0);
@@ -67,7 +67,7 @@ export function useInvoices() {
       .select("*")
       .order("created_at", { ascending: false })
       .range(from, to);
-    if (status !== "all") dataQuery = dataQuery.eq("status", status);
+    if (status !== "all") dataQuery = dataQuery.eq("status", status as any);
 
     const { data } = await dataQuery;
     const batch = (data as any as Invoice[]) || [];
