@@ -98,6 +98,8 @@ import RevenueIntelligencePage from "./pages/RevenueIntelligencePage";
 import FinanceDashboardPage from "./pages/FinanceDashboardPage";
 import XeroTestPage from "./pages/XeroTestPage";
 import ClientBillingPortalPage from "./pages/ClientBillingPortalPage";
+import ContentManagementPage from "./pages/ContentManagementPage";
+import WebsiteDevStagesPage from "./pages/WebsiteDevStagesPage";
 import ActivityTimelinePage from "./pages/ActivityTimelinePage";
 import GovernanceDashboardPage from "./pages/GovernanceDashboardPage";
 import TasksPage from "./pages/TasksPage";
