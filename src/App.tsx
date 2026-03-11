@@ -143,6 +143,7 @@ import CustomerPortalPage from "./pages/CustomerPortalPage";
 import SatisfactionSurveysPage from "./pages/SatisfactionSurveysPage";
 import TicketDetailPage from "./pages/TicketDetailPage";
 import CustomerMobileAppPage from "./pages/CustomerMobileAppPage";
+import ClientNotificationsPage from "./pages/ClientNotificationsPage";
 import StaffMobileAppPage from "./pages/StaffMobileAppPage";
 import HRDepartmentsPage from "./pages/HRDepartmentsPage";
 import HREmployeeListPage from "./pages/HREmployeeListPage";
