@@ -147,6 +147,7 @@ import ClientNotificationsPage from "./pages/ClientNotificationsPage";
 import ClientReportsPage from "./pages/ClientReportsPage";
 import ClientDepartmentsPage from "./pages/ClientDepartmentsPage";
 import ClientEmployeesPage from "./pages/ClientEmployeesPage";
+import CustomerAppointmentPage from "./pages/CustomerAppointmentPage";
 import StaffMobileAppPage from "./pages/StaffMobileAppPage";
 import HRDepartmentsPage from "./pages/HRDepartmentsPage";
 import HREmployeeListPage from "./pages/HREmployeeListPage";

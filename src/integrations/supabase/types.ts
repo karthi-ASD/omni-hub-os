@@ -10923,9 +10923,12 @@ export type Database = {
           business_id: string
           created_at: string
           created_by_user_id: string | null
+          customer_confirmation_status: string
+          customer_reschedule_request: string | null
           description: string | null
           id: string
           job_title: string
+          rescheduled_time: string | null
           scheduled_end_at: string | null
           scheduled_start_at: string | null
           status: string
@@ -10935,9 +10938,12 @@ export type Database = {
           business_id: string
           created_at?: string
           created_by_user_id?: string | null
+          customer_confirmation_status?: string
+          customer_reschedule_request?: string | null
           description?: string | null
           id?: string
           job_title: string
+          rescheduled_time?: string | null
           scheduled_end_at?: string | null
           scheduled_start_at?: string | null
           status?: string
@@ -10947,9 +10953,12 @@ export type Database = {
           business_id?: string
           created_at?: string
           created_by_user_id?: string | null
+          customer_confirmation_status?: string
+          customer_reschedule_request?: string | null
           description?: string | null
           id?: string
           job_title?: string
+          rescheduled_time?: string | null
           scheduled_end_at?: string | null
           scheduled_start_at?: string | null
           status?: string
