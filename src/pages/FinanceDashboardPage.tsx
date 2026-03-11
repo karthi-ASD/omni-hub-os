@@ -95,7 +95,7 @@ const FinanceDashboardPage = () => {
         body: { action: "sync", business_id: profile.business_id },
       });
       if (error) throw error;
-      toast.success(`Synced: ${data.contactsSynced} contacts, ${data.invoicesSynced} invoices, ${data.paymentsSynced} payments`);
+      toast.success(`Synced: ${data.contactsSynced} contacts, ${data.invoicesSynced} invoices, ${data.paymentsSynced} payments, ${data.expensesSynced || 0} expenses`);
       refresh();
     } catch (e: any) {
       toast.error(e.message || "Sync failed");
