@@ -21,7 +21,7 @@ export function useClientFinancials(clientId: string | undefined) {
     totalRevenue: 0, totalInvoices: 0, paidInvoices: 0,
     outstandingInvoices: 0, overdueInvoices: 0, totalOutstanding: 0,
     avgInvoiceValue: 0, monthsActive: 1, lastPaymentDate: null,
-    invoices: [], payments: [],
+    clientSince: null, invoices: [], payments: [],
   });
   const [loading, setLoading] = useState(true);
 
