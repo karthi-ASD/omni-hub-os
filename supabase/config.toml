@@ -44,3 +44,9 @@ verify_jwt = false
 
 [functions.ai-report-generator]
 verify_jwt = false
+
+[functions.check-domain-expiry]
+verify_jwt = false
+
+[functions.check-hosting-alerts]
+verify_jwt = false
