@@ -9095,6 +9095,59 @@ export type Database = {
           },
         ]
       }
+      google_reviews: {
+        Row: {
+          business_id: string
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number
+          replied_at: string | null
+          reply_text: string | null
+          review_id: string | null
+          review_time: string | null
+          reviewer_name: string | null
+          reviewer_photo_url: string | null
+          source: string
+        }
+        Insert: {
+          business_id: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: number
+          replied_at?: string | null
+          reply_text?: string | null
+          review_id?: string | null
+          review_time?: string | null
+          reviewer_name?: string | null
+          reviewer_photo_url?: string | null
+          source?: string
+        }
+        Update: {
+          business_id?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number
+          replied_at?: string | null
+          reply_text?: string | null
+          review_id?: string | null
+          review_time?: string | null
+          reviewer_name?: string | null
+          reviewer_photo_url?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_reviews_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       growth_campaigns: {
         Row: {
           adjustment_history_json: Json | null
@@ -14036,30 +14089,86 @@ export type Database = {
           },
         ]
       }
-      review_requests: {
+      review_auto_settings: {
         Row: {
           business_id: string
+          channel: string
+          created_at: string
+          delay_hours: number
+          id: string
+          is_enabled: boolean
+          message_template: string | null
+          min_job_value: number | null
+          review_link: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          channel?: string
+          created_at?: string
+          delay_hours?: number
+          id?: string
+          is_enabled?: boolean
+          message_template?: string | null
+          min_job_value?: number | null
+          review_link?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          channel?: string
+          created_at?: string
+          delay_hours?: number
+          id?: string
+          is_enabled?: boolean
+          message_template?: string | null
+          min_job_value?: number | null
+          review_link?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_auto_settings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_requests: {
+        Row: {
+          auto_sent: boolean | null
+          business_id: string
+          channel: string | null
           created_at: string
           id: string
           job_id: string | null
+          review_url: string | null
           sent_at: string
           status: string
           tenant_customer_id: string | null
         }
         Insert: {
+          auto_sent?: boolean | null
           business_id: string
+          channel?: string | null
           created_at?: string
           id?: string
           job_id?: string | null
+          review_url?: string | null
           sent_at?: string
           status?: string
           tenant_customer_id?: string | null
         }
         Update: {
+          auto_sent?: boolean | null
           business_id?: string
+          channel?: string | null
           created_at?: string
           id?: string
           job_id?: string | null
+          review_url?: string | null
           sent_at?: string
           status?: string
           tenant_customer_id?: string | null
