@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/contexts/ThemeEngine";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import SaasPlansPage from "./pages/SaasPlansPage";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
