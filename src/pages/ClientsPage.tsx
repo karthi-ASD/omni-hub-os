@@ -33,12 +33,13 @@ const ClientsPage = () => {
     if (!profile?.business_id) { toast.error("No business linked"); return; }
     setSyncing(true);
     try {
+      toast.info("Syncing contacts from Xero...");
       const { data, error } = await supabase.functions.invoke("xero-sync", {
-        body: { action: "sync", business_id: profile.business_id },
+        body: { action: "sync", business_id: profile.business_id, stage: "contacts" },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success(`Synced ${data.contactsSynced || 0} contacts from Xero`);
+      toast.success(`Synced ${data.recordsSynced || 0} contacts from Xero`);
       refetch();
     } catch (e: any) {
       toast.error(e.message || "Sync failed");

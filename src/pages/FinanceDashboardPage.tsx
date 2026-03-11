@@ -90,12 +90,22 @@ const FinanceDashboardPage = () => {
   const handleXeroSync = useCallback(async () => {
     if (!profile?.business_id) return;
     setSyncing(true);
+    const stages = ["contacts", "invoices", "payments", "expenses", "finalize"];
+    const results: Record<string, number> = {};
+    const errors: string[] = [];
+
     try {
-      const { data, error } = await supabase.functions.invoke("xero-sync", {
-        body: { action: "sync", business_id: profile.business_id },
-      });
-      if (error) throw error;
-      toast.success(`Synced: ${data.contactsSynced} contacts, ${data.invoicesSynced} invoices, ${data.paymentsSynced} payments, ${data.expensesSynced || 0} expenses`);
+      for (const stage of stages) {
+        toast.info(`Syncing ${stage}...`);
+        const { data, error } = await supabase.functions.invoke("xero-sync", {
+          body: { action: "sync", business_id: profile.business_id, stage },
+        });
+        if (error) throw error;
+        if (data?.error) errors.push(`${stage}: ${data.error}`);
+        results[stage] = data?.recordsSynced || 0;
+      }
+      toast.success(`Synced: ${results.contacts || 0} contacts, ${results.invoices || 0} invoices, ${results.payments || 0} payments, ${results.expenses || 0} expenses`);
+      if (errors.length > 0) toast.warning(`Warnings: ${errors.join("; ")}`);
       refresh();
     } catch (e: any) {
       toast.error(e.message || "Sync failed");

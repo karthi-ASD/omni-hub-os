@@ -49,6 +49,53 @@ function formatAddress(addr: any): string {
     .filter(Boolean).join(", ");
 }
 
+// Helper to get connection + headers
+async function getConnectionAndHeaders(supabase: any, businessId: string) {
+  const { data: conn } = await supabase
+    .from("xero_connections").select("*")
+    .eq("business_id", businessId)
+    .eq("is_connected", true)
+    .single();
+
+  if (!conn) throw new Error("Xero not connected for this business");
+
+  const accessToken = await getAccessToken(supabase, conn);
+
+  let tenantId = conn.xero_tenant_id;
+  if (!tenantId) {
+    const connRes = await fetch("https://api.xero.com/connections", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const conns = await connRes.json();
+    tenantId = conns?.[0]?.tenantId;
+    if (!tenantId) throw new Error("Could not retrieve Xero tenant ID");
+    await supabase.from("xero_connections").update({ xero_tenant_id: tenantId }).eq("id", conn.id);
+  }
+
+  return {
+    conn,
+    xeroHeaders: {
+      Authorization: `Bearer ${accessToken}`,
+      "Xero-Tenant-Id": tenantId,
+      Accept: "application/json",
+    },
+  };
+}
+
+// Helper to write a sync log entry
+async function writeSyncLog(supabase: any, businessId: string, syncType: string, status: string, recordsSynced: number, errorMessage: string | null) {
+  await supabase.from("xero_sync_logs").insert({
+    business_id: businessId,
+    sync_type: syncType,
+    status,
+    records_synced: recordsSynced,
+    error_message: errorMessage,
+  });
+  await supabase.from("xero_connections").update({
+    last_sync_at: new Date().toISOString(),
+  }).eq("business_id", businessId);
+}
+
 // ── SYNC CONTACTS ──
 async function syncContacts(supabase: any, businessId: string, xeroHeaders: any) {
   let contactsSynced = 0;
@@ -264,7 +311,6 @@ async function syncExpenses(supabase: any, businessId: string, xeroHeaders: any)
   console.log("[SYNC] Starting expenses sync (Invoices type=ACCPAY)...");
 
   while (hasMore) {
-    // Xero "expenses" are purchase invoices (ACCPAY type)
     const url = `${XERO_API_BASE}/Invoices?page=${page}&pageSize=100&where=Type%3D%3D%22ACCPAY%22`;
     console.log(`[SYNC] Fetching expenses page ${page}`);
     const res = await fetch(url, { headers: xeroHeaders });
@@ -385,7 +431,7 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, serviceKey);
 
   try {
-    const { action, business_id, code, redirect_uri, code_verifier } = await req.json();
+    const { action, business_id, code, redirect_uri, code_verifier, stage } = await req.json();
 
     // --- GET AUTH URL ---
     if (action === "get_auth_url") {
@@ -398,10 +444,6 @@ Deno.serve(async (req) => {
 
       const encodedScope = scope.split(" ").join("%20");
       const authUrl = `https://login.xero.com/identity/connect/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUriFixed)}&scope=${encodedScope}&state=${state}`;
-
-      console.log("=== XERO OAUTH DEBUG ===");
-      console.log("Auth URL:", authUrl);
-      console.log("========================");
 
       return new Response(JSON.stringify({ success: true, auth_url: authUrl, state }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -434,7 +476,6 @@ Deno.serve(async (req) => {
       const tokens = await tokenRes.json();
       if (!tokenRes.ok) throw new Error(tokens.error || "Token exchange failed");
 
-      // Capture tenant ID from /connections
       console.log("[OAUTH] Fetching tenant ID from /connections...");
       const connectionsRes = await fetch("https://api.xero.com/connections", {
         headers: {
@@ -445,21 +486,16 @@ Deno.serve(async (req) => {
 
       if (!connectionsRes.ok) {
         const errBody = await connectionsRes.text();
-        console.error("[OAUTH] /connections failed:", connectionsRes.status, errBody);
         throw new Error(`Failed to retrieve Xero connections: ${connectionsRes.status}`);
       }
 
       const connections = await connectionsRes.json();
-      console.log("[OAUTH] /connections response:", JSON.stringify(connections));
-
       if (!connections || connections.length === 0) {
-        console.error("[OAUTH] No connections returned. Token scopes may be missing accounting permissions.");
-        console.error("[OAUTH] Token scope check - ensure app has accounting.contacts & accounting.transactions scopes enabled in Xero Developer Portal.");
-        throw new Error("No Xero organisations found. Please ensure the app has accounting scopes enabled in the Xero Developer Portal, then disconnect and reconnect.");
+        throw new Error("No Xero organisations found. Please ensure the app has accounting scopes enabled.");
       }
 
       const tenantId = connections[0].tenantId;
-      console.log("[OAUTH] Tenant ID captured:", tenantId, "Tenant Name:", connections[0].tenantName);
+      console.log("[OAUTH] Tenant ID captured:", tenantId);
 
       await supabase.from("xero_connections").upsert({
         business_id,
@@ -476,6 +512,86 @@ Deno.serve(async (req) => {
       });
     }
 
+    // --- SYNC (single business, staged) ---
+    // Now supports `stage` parameter: "contacts", "invoices", "payments", "expenses", "finalize"
+    // If no stage provided, defaults to full sync but each stage writes its own log
+    if (action === "sync") {
+      console.log(`=== XERO SYNC START === Stage: ${stage || "full"}, Business: ${business_id}`);
+      const { xeroHeaders } = await getConnectionAndHeaders(supabase, business_id);
+
+      // STAGED SYNC: each stage runs independently and writes its own log
+      if (stage) {
+        let synced = 0;
+        let errorMsg: string | null = null;
+
+        try {
+          if (stage === "contacts") {
+            synced = await syncContacts(supabase, business_id, xeroHeaders);
+          } else if (stage === "invoices") {
+            synced = await syncInvoices(supabase, business_id, xeroHeaders);
+          } else if (stage === "payments") {
+            synced = await syncPayments(supabase, business_id, xeroHeaders);
+          } else if (stage === "expenses") {
+            synced = await syncExpenses(supabase, business_id, xeroHeaders);
+          } else if (stage === "finalize") {
+            await updateClientSinceDates(supabase, business_id);
+            await handleOverdueInvoices(supabase, business_id);
+          } else {
+            throw new Error(`Unknown sync stage: ${stage}`);
+          }
+        } catch (e) {
+          errorMsg = e.message;
+          console.error(`[SYNC] Stage ${stage} error:`, e.message);
+        }
+
+        await writeSyncLog(supabase, business_id, `stage:${stage}`, errorMsg ? "error" : "success", synced, errorMsg);
+        console.log(`=== XERO SYNC STAGE COMPLETE === Stage: ${stage}, Records: ${synced}`);
+
+        return new Response(JSON.stringify({
+          success: !errorMsg,
+          stage,
+          recordsSynced: synced,
+          error: errorMsg,
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // FULL SYNC (legacy): run all stages sequentially, write log per stage
+      const syncErrors: string[] = [];
+      let contactsSynced = 0, invoicesSynced = 0, paymentsSynced = 0, expensesSynced = 0;
+
+      try { contactsSynced = await syncContacts(supabase, business_id, xeroHeaders); }
+      catch (e) { syncErrors.push(`Contacts: ${e.message}`); }
+      await writeSyncLog(supabase, business_id, "contacts", syncErrors.length === 0 ? "success" : "error", contactsSynced, syncErrors.length > 0 ? syncErrors[syncErrors.length - 1] : null);
+
+      try { invoicesSynced = await syncInvoices(supabase, business_id, xeroHeaders); }
+      catch (e) { syncErrors.push(`Invoices: ${e.message}`); }
+      await writeSyncLog(supabase, business_id, "invoices", !syncErrors.some(e => e.startsWith("Invoices")) ? "success" : "error", invoicesSynced, syncErrors.some(e => e.startsWith("Invoices")) ? syncErrors[syncErrors.length - 1] : null);
+
+      try { paymentsSynced = await syncPayments(supabase, business_id, xeroHeaders); }
+      catch (e) { syncErrors.push(`Payments: ${e.message}`); }
+      await writeSyncLog(supabase, business_id, "payments", !syncErrors.some(e => e.startsWith("Payments")) ? "success" : "error", paymentsSynced, syncErrors.some(e => e.startsWith("Payments")) ? syncErrors[syncErrors.length - 1] : null);
+
+      try { expensesSynced = await syncExpenses(supabase, business_id, xeroHeaders); }
+      catch (e) { syncErrors.push(`Expenses: ${e.message}`); }
+      await writeSyncLog(supabase, business_id, "expenses", !syncErrors.some(e => e.startsWith("Expenses")) ? "success" : "error", expensesSynced, syncErrors.some(e => e.startsWith("Expenses")) ? syncErrors[syncErrors.length - 1] : null);
+
+      try { await updateClientSinceDates(supabase, business_id); }
+      catch (e) { syncErrors.push(`ClientSince: ${e.message}`); }
+      try { await handleOverdueInvoices(supabase, business_id); }
+      catch (e) { syncErrors.push(`Overdue: ${e.message}`); }
+
+      console.log(`=== XERO SYNC COMPLETE === Contacts: ${contactsSynced}, Invoices: ${invoicesSynced}, Payments: ${paymentsSynced}, Expenses: ${expensesSynced}`);
+
+      return new Response(JSON.stringify({
+        success: true,
+        contactsSynced,
+        invoicesSynced,
+        paymentsSynced,
+        expensesSynced,
+        errors: syncErrors,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // --- SYNC ALL BUSINESSES (cron) ---
     if (action === "sync_all_businesses") {
       const { data: connections } = await supabase
@@ -485,32 +601,7 @@ Deno.serve(async (req) => {
       const results = [];
       for (const c of (connections || [])) {
         try {
-          const { data: conn } = await supabase
-            .from("xero_connections").select("*")
-            .eq("business_id", c.business_id)
-            .eq("is_connected", true)
-            .single();
-          if (!conn) continue;
-
-          const accessToken = await getAccessToken(supabase, conn);
-
-          // Re-fetch tenant ID if missing
-          let tenantId = conn.xero_tenant_id;
-          if (!tenantId) {
-            const connRes = await fetch("https://api.xero.com/connections", {
-              headers: { Authorization: `Bearer ${accessToken}` },
-            });
-            const conns = await connRes.json();
-            tenantId = conns?.[0]?.tenantId;
-            if (!tenantId) throw new Error("Could not retrieve Xero tenant ID");
-            await supabase.from("xero_connections").update({ xero_tenant_id: tenantId }).eq("id", conn.id);
-          }
-
-          const xeroHeaders = {
-            Authorization: `Bearer ${accessToken}`,
-            "Xero-Tenant-Id": tenantId,
-            Accept: "application/json",
-          };
+          const { xeroHeaders } = await getConnectionAndHeaders(supabase, c.business_id);
 
           const syncErrors: string[] = [];
           let contactsSynced = 0, invoicesSynced = 0, paymentsSynced = 0, expensesSynced = 0;
@@ -528,13 +619,10 @@ Deno.serve(async (req) => {
           try { await handleOverdueInvoices(supabase, c.business_id); }
           catch (e) { syncErrors.push(`Overdue: ${e.message}`); }
 
-          await supabase.from("xero_sync_logs").insert({
-            business_id: c.business_id, sync_type: "scheduled",
-            status: syncErrors.length === 0 ? "success" : "partial",
-            records_synced: contactsSynced + invoicesSynced + paymentsSynced + expensesSynced,
-            error_message: syncErrors.length > 0 ? syncErrors.join("; ") : null,
-          });
-          await supabase.from("xero_connections").update({ last_sync_at: new Date().toISOString() }).eq("business_id", c.business_id);
+          await writeSyncLog(supabase, c.business_id, "scheduled",
+            syncErrors.length === 0 ? "success" : "partial",
+            contactsSynced + invoicesSynced + paymentsSynced + expensesSynced,
+            syncErrors.length > 0 ? syncErrors.join("; ") : null);
           results.push({ business_id: c.business_id, success: true });
         } catch (e) {
           results.push({ business_id: c.business_id, error: e.message });
@@ -544,92 +632,6 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true, results }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-    }
-
-    // --- SYNC (single business) ---
-    if (action === "sync") {
-      console.log("=== XERO SYNC START ===");
-      console.log("Business ID:", business_id);
-
-      const { data: conn } = await supabase
-        .from("xero_connections").select("*")
-        .eq("business_id", business_id)
-        .eq("is_connected", true)
-        .single();
-
-      if (!conn) throw new Error("Xero not connected for this business");
-
-      console.log("[SYNC] Connection found. Tenant ID:", conn.xero_tenant_id);
-      console.log("[SYNC] Token expires at:", conn.token_expires_at);
-
-      const accessToken = await getAccessToken(supabase, conn);
-      console.log("[SYNC] Access token obtained (length:", accessToken?.length, ")");
-
-      // Re-fetch tenant ID if missing
-      let tenantId = conn.xero_tenant_id;
-      if (!tenantId) {
-        console.log("[SYNC] Tenant ID missing – fetching from /connections...");
-        const connRes = await fetch("https://api.xero.com/connections", {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        const conns = await connRes.json();
-        console.log("[SYNC] /connections response:", JSON.stringify(conns));
-        tenantId = conns?.[0]?.tenantId;
-        if (!tenantId) throw new Error("Could not retrieve Xero tenant ID");
-        await supabase.from("xero_connections").update({ xero_tenant_id: tenantId }).eq("id", conn.id);
-        console.log("[SYNC] Tenant ID saved:", tenantId);
-      }
-
-      const xeroHeaders = {
-        Authorization: `Bearer ${accessToken}`,
-        "Xero-Tenant-Id": tenantId,
-        Accept: "application/json",
-      };
-
-      const syncErrors: string[] = [];
-      let contactsSynced = 0, invoicesSynced = 0, paymentsSynced = 0, expensesSynced = 0;
-
-      try { contactsSynced = await syncContacts(supabase, business_id, xeroHeaders); }
-      catch (e) { syncErrors.push(`Contacts: ${e.message}`); }
-
-      try { invoicesSynced = await syncInvoices(supabase, business_id, xeroHeaders); }
-      catch (e) { syncErrors.push(`Invoices: ${e.message}`); }
-
-      try { paymentsSynced = await syncPayments(supabase, business_id, xeroHeaders); }
-      catch (e) { syncErrors.push(`Payments: ${e.message}`); }
-
-      try { expensesSynced = await syncExpenses(supabase, business_id, xeroHeaders); }
-      catch (e) { syncErrors.push(`Expenses: ${e.message}`); }
-
-      try { await updateClientSinceDates(supabase, business_id); }
-      catch (e) { syncErrors.push(`ClientSince: ${e.message}`); }
-
-      try { await handleOverdueInvoices(supabase, business_id); }
-      catch (e) { syncErrors.push(`Overdue check: ${e.message}`); }
-
-      const syncStatus = syncErrors.length === 0 ? "success" : "partial";
-      await supabase.from("xero_sync_logs").insert({
-        business_id,
-        sync_type: "full",
-        status: syncStatus,
-        records_synced: contactsSynced + invoicesSynced + paymentsSynced + expensesSynced,
-        error_message: syncErrors.length > 0 ? syncErrors.join("; ") : null,
-      });
-
-      await supabase.from("xero_connections").update({
-        last_sync_at: new Date().toISOString(),
-      }).eq("business_id", business_id);
-
-      console.log(`=== XERO SYNC COMPLETE === Contacts: ${contactsSynced}, Invoices: ${invoicesSynced}, Payments: ${paymentsSynced}, Expenses: ${expensesSynced}`);
-
-      return new Response(JSON.stringify({
-        success: true,
-        contactsSynced,
-        invoicesSynced,
-        paymentsSynced,
-        expensesSynced,
-        errors: syncErrors,
-      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // --- DISCONNECT ---
