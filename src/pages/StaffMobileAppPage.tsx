@@ -1,20 +1,24 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useFieldPayments } from "@/hooks/useFieldPayments";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import {
   Briefcase, CalendarDays, Clock, CheckCircle2, MapPin, Navigation,
   DollarSign, User, Phone, ArrowRight, AlertTriangle, Wrench,
-  Bell, ChevronRight, Loader2,
+  Bell, ChevronRight, Loader2, CreditCard, Receipt, Printer,
 } from "lucide-react";
 import { format, isToday, isTomorrow, startOfDay, addDays } from "date-fns";
 import { toast } from "sonner";
@@ -43,6 +47,12 @@ const StaffMobileAppPage = () => {
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [completionNotes, setCompletionNotes] = useState("");
   const [completing, setCompleting] = useState(false);
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [paymentNotes, setPaymentNotes] = useState("");
+  const [processing, setProcessing] = useState(false);
+  const [receipt, setReceipt] = useState<any>(null);
 
   const businessId = profile?.business_id;
 
@@ -307,10 +317,10 @@ const StaffMobileAppPage = () => {
               )}
 
               {/* Actions */}
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <Button
                   variant="outline"
-                  className="flex-1"
+                  size="sm"
                   onClick={() => {
                     setSelectedJob(null);
                     openNavigation(selectedJob);
@@ -318,10 +328,30 @@ const StaffMobileAppPage = () => {
                 >
                   <Navigation className="h-4 w-4 mr-1" /> Navigate
                 </Button>
+                {(selectedJob as any).payment_status !== "paid" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setPaymentAmount((selectedJob as any).payment_amount > 0 ? String((selectedJob as any).payment_amount) : "");
+                      setPaymentMethod("cash");
+                      setPaymentNotes("");
+                      setReceipt(null);
+                      setPaymentOpen(true);
+                    }}
+                  >
+                    <CreditCard className="h-4 w-4 mr-1" /> Collect Payment
+                  </Button>
+                )}
+                {(selectedJob as any).payment_status === "paid" && (
+                  <Button variant="outline" size="sm" disabled>
+                    <CheckCircle2 className="h-4 w-4 mr-1" /> Paid
+                  </Button>
+                )}
                 {selectedJob.status !== "completed" && (
-                  <Button className="flex-1" onClick={completeJob} disabled={completing}>
+                  <Button size="sm" className="col-span-2" onClick={completeJob} disabled={completing}>
                     {completing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
-                    Complete
+                    Mark Complete
                   </Button>
                 )}
               </div>
@@ -329,10 +359,150 @@ const StaffMobileAppPage = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Payment Collection Dialog */}
+      <Dialog open={paymentOpen} onOpenChange={(o) => { if (!o) { setPaymentOpen(false); setReceipt(null); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{receipt ? "Payment Receipt" : "Collect Payment"}</DialogTitle>
+          </DialogHeader>
+
+          {receipt ? (
+            <div className="space-y-4">
+              <div className="border border-border rounded-lg p-4 space-y-3 bg-muted/30">
+                <div className="text-center">
+                  <CheckCircle2 className="h-8 w-8 text-primary mx-auto mb-2" />
+                  <p className="font-semibold text-foreground">Payment Collected</p>
+                </div>
+                <Separator />
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Receipt #</span>
+                    <span className="font-mono font-medium text-foreground">{receipt.receipt_number}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Amount</span>
+                    <span className="font-semibold text-foreground">${receipt.amount}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Method</span>
+                    <span className="capitalize text-foreground">{receipt.payment_method}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Date</span>
+                    <span className="text-foreground">{format(new Date(receipt.created_at), "dd/MM/yyyy h:mm a")}</span>
+                  </div>
+                  {receipt.customer_name && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Customer</span>
+                      <span className="text-foreground">{receipt.customer_name}</span>
+                    </div>
+                  )}
+                  {receipt.notes && (
+                    <div className="pt-1">
+                      <span className="text-muted-foreground text-xs">Notes: </span>
+                      <span className="text-xs text-foreground">{receipt.notes}</span>
+                    </div>
+                  )}
+                </div>
+                <Separator />
+                <p className="text-[10px] text-center text-muted-foreground">
+                  Job: {selectedJob?.job_title}
+                </p>
+              </div>
+              <Button className="w-full" onClick={() => { setPaymentOpen(false); setReceipt(null); setSelectedJob(null); fetchJobs(); }}>
+                Done
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <Label>Amount ($) *</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Payment Method</Label>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="card">Card (on-site)</SelectItem>
+                    <SelectItem value="eftpos">EFTPOS</SelectItem>
+                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Notes (optional)</Label>
+                <Textarea
+                  value={paymentNotes}
+                  onChange={(e) => setPaymentNotes(e.target.value)}
+                  placeholder="e.g., paid in full, partial payment…"
+                  rows={2}
+                />
+              </div>
+              <Button
+                className="w-full"
+                disabled={processing || !paymentAmount || parseFloat(paymentAmount) <= 0}
+                onClick={async () => {
+                  if (!selectedJob || !businessId || !user) return;
+                  setProcessing(true);
+                  try {
+                    const receiptNumber = `RCP-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+                    const { data, error } = await supabase
+                      .from("gateway_transactions")
+                      .insert([{
+                        business_id: businessId,
+                        job_id: selectedJob.id,
+                        amount: parseFloat(paymentAmount),
+                        payment_method: paymentMethod,
+                        status: "completed",
+                        receipt_number: receiptNumber,
+                        customer_name: selectedJob.tenant_customers?.name || null,
+                        customer_email: selectedJob.tenant_customers?.email || null,
+                        notes: paymentNotes || null,
+                        collected_by_user_id: user.id,
+                      } as any])
+                      .select()
+                      .single();
+
+                    if (error) throw error;
+
+                    // Update job
+                    await supabase.from("jobs").update({
+                      payment_status: "paid",
+                      payment_amount: parseFloat(paymentAmount),
+                    } as any).eq("id", selectedJob.id);
+
+                    setReceipt({ ...(data as any), receipt_number: receiptNumber, payment_method: paymentMethod, amount: parseFloat(paymentAmount) });
+                    toast.success("Payment collected!");
+                  } catch (e) {
+                    console.error(e);
+                    toast.error("Failed to process payment");
+                  } finally {
+                    setProcessing(false);
+                  }
+                }}
+              >
+                {processing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CreditCard className="h-4 w-4 mr-1" />}
+                Collect ${paymentAmount || "0.00"}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
-
 function JobCard({
   job,
   onSelect,
