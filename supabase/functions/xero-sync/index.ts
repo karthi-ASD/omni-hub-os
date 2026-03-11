@@ -266,15 +266,18 @@ Deno.serve(async (req) => {
       const clientId = Deno.env.get("XERO_CLIENT_ID");
       if (!clientId) throw new Error("Xero credentials not configured");
       
-      // Minimal scope to verify OAuth works first
-      const scope = "openid";
+      const scope = "openid offline_access accounting.contacts accounting.transactions";
       const state = crypto.randomUUID();
-      const redirectUriFixed = "https://bigappcompany.com.au/finance";
+      const redirectUriFixed = redirect_uri || "https://bigappcompany.com.au/finance";
 
-      const authUrl = `https://login.xero.com/identity/connect/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUriFixed)}&scope=${scope}&state=${state}`;
+      // Manually build URL to ensure %20 encoding for scopes
+      const encodedScope = scope.split(" ").join("%20");
+      const authUrl = `https://login.xero.com/identity/connect/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUriFixed)}&scope=${encodedScope}&state=${state}`;
       
       console.log("=== XERO OAUTH DEBUG ===");
       console.log("Auth URL:", authUrl);
+      console.log("Redirect URI:", redirectUriFixed);
+      console.log("Scopes:", scope);
       console.log("========================");
       
       return new Response(JSON.stringify({ success: true, auth_url: authUrl, state }), {
