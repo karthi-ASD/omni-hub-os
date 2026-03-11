@@ -351,7 +351,7 @@ function JobCard({
 
         {(job as any).customer_reschedule_request && confirmStatus === "reschedule_requested" && (
           <div className="bg-muted/50 rounded-lg p-3 text-sm flex items-start gap-2">
-            <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 shrink-0" />
+            <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
             <div>
               <p className="font-medium text-foreground">Your reschedule request</p>
               <p className="text-muted-foreground">{(job as any).customer_reschedule_request}</p>
