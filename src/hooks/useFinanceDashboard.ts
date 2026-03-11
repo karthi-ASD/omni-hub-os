@@ -191,7 +191,7 @@ export function useFinanceDashboard() {
   };
 
   return {
-    xeroInvoices, xeroPayments, expenses, billingSchedules, xeroConnection, syncLogs, loading,
+    xeroInvoices, xeroPayments, expenses, xeroExpenses, billingSchedules, xeroConnection, syncLogs, loading,
     totalRevenue, totalExpenses, grossProfit, profitMargin,
     paidInvoices, overdueInvoices, outstandingInvoices, totalOutstanding, avgInvoiceValue,
     monthlyRevenue, revenueByDepartment, revenueByClient,
