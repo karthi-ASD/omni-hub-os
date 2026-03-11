@@ -483,8 +483,11 @@ const App = () => (
               <Route path="/revenue-intelligence" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><RevenueIntelligencePage /></ProtectedRoute>
               } />
-              <Route path="/finance" element={
+               <Route path="/finance" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><FinanceDashboardPage /></ProtectedRoute>
+              } />
+              <Route path="/xero-test" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><XeroTestPage /></ProtectedRoute>
               } />
               <Route path="/my-billing" element={<ClientBillingPortalPage />} />
               <Route path="/activity-timeline" element={
