@@ -348,28 +348,29 @@ async function syncExpenses(supabase: any, businessId: string, xeroHeaders: any)
 
     if (bills.length === 0) { hasMore = false; break; }
 
-    for (const bill of bills) {
-      const category = bill.LineItems?.[0]?.AccountCode || bill.LineItems?.[0]?.Tracking?.[0]?.Option || "General";
+    const rows = bills.map((bill: any) => ({
+      business_id: businessId,
+      xero_expense_id: bill.InvoiceID,
+      expense_date: bill.DateString || null,
+      supplier_name: bill.Contact?.Name || "Unknown Supplier",
+      category: bill.LineItems?.[0]?.AccountCode || bill.LineItems?.[0]?.Tracking?.[0]?.Option || "General",
+      description: bill.Reference || bill.LineItems?.map((li: any) => li.Description).filter(Boolean).join("; ") || null,
+      amount: bill.Total || 0,
+      currency: bill.CurrencyCode || "AUD",
+      status: bill.Status || "AUTHORISED",
+      line_items_json: bill.LineItems || [],
+      synced_at: new Date().toISOString(),
+    }));
 
-      const { error: upsertErr } = await supabase.from("xero_expenses").upsert({
-        business_id: businessId,
-        xero_expense_id: bill.InvoiceID,
-        expense_date: bill.DateString || null,
-        supplier_name: bill.Contact?.Name || "Unknown Supplier",
-        category,
-        description: bill.Reference || bill.LineItems?.map((li: any) => li.Description).filter(Boolean).join("; ") || null,
-        amount: bill.Total || 0,
-        currency: bill.CurrencyCode || "AUD",
-        status: bill.Status || "AUTHORISED",
-        line_items_json: bill.LineItems || [],
-        synced_at: new Date().toISOString(),
-      }, { onConflict: "business_id,xero_expense_id", ignoreDuplicates: false });
+    const { error: upsertErr } = await supabase.from("xero_expenses").upsert(rows, {
+      onConflict: "business_id,xero_expense_id",
+      ignoreDuplicates: false,
+    });
 
-      if (upsertErr) {
-        console.error(`[SYNC] Expense upsert error:`, upsertErr.message);
-      }
-      expensesSynced++;
+    if (upsertErr) {
+      console.error(`[SYNC] Batch expense upsert error:`, upsertErr.message);
     }
+    expensesSynced += bills.length;
 
     if (bills.length < 100) hasMore = false;
     else page++;
