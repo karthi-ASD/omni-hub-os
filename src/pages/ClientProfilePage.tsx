@@ -162,6 +162,52 @@ const ClientProfilePage = () => {
           <TabsTrigger value="timeline" className="hidden lg:inline-flex">Timeline</TabsTrigger>
         </TabsList>
 
+        {/* ── Onboarding Checklist ── */}
+        <TabsContent value="onboarding">
+          <Card className="rounded-xl">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <ClipboardCheck className="h-4 w-4" /> Onboarding Checklist
+                </CardTitle>
+                <span className="text-sm text-muted-foreground">{onboarding.completedCount}/{onboarding.items.length} completed</span>
+              </div>
+              <Progress value={onboarding.progress} className="h-2 mt-2" />
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {onboarding.items.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">No onboarding checklist items. Items are auto-created when a deal is marked as Won, or you can add manually.</p>
+              ) : (
+                onboarding.items.map(item => (
+                  <div key={item.id} className="flex items-center gap-3 py-2 border-b border-border last:border-0">
+                    <Checkbox
+                      checked={item.is_completed}
+                      onCheckedChange={(checked) => onboarding.toggleItem(item.id, !!checked)}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm ${item.is_completed ? "line-through text-muted-foreground" : "font-medium"}`}>{item.item_title}</p>
+                      <p className="text-xs text-muted-foreground">{item.item_category}</p>
+                    </div>
+                    {item.is_completed && <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />}
+                  </div>
+                ))
+              )}
+              <div className="pt-2 flex gap-2">
+                <Input
+                  placeholder="Add custom checklist item..."
+                  className="flex-1"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.target as HTMLInputElement).value) {
+                      onboarding.addItem((e.target as HTMLInputElement).value);
+                      (e.target as HTMLInputElement).value = "";
+                    }
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* ── Details ── */}
         <TabsContent value="details">
           <Card className="rounded-xl">

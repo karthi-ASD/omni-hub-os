@@ -517,6 +517,8 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><XeroTestPage /></ProtectedRoute>
               } />
               <Route path="/my-billing" element={<ClientBillingPortalPage />} />
+              <Route path="/content-management" element={<ContentManagementPage />} />
+              <Route path="/website-dev-stages" element={<WebsiteDevStagesPage />} />
               <Route path="/activity-timeline" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><ActivityTimelinePage /></ProtectedRoute>
               } />
