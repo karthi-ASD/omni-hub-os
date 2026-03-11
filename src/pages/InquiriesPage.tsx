@@ -11,7 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Search, ArrowRight, MessageSquare, Filter } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
+import { Plus, Search, ArrowRight, MessageSquare, Filter, Inbox, CheckCircle, AlertCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import type { Database } from "@/integrations/supabase/types";
@@ -20,11 +22,11 @@ import { InquiryDetailSheet } from "@/components/inquiries/InquiryDetailSheet";
 type InquiryStatus = Database["public"]["Enums"]["inquiry_status"];
 
 const statusColors: Record<string, string> = {
-  new: "bg-blue-500/10 text-blue-500",
-  assigned: "bg-yellow-500/10 text-yellow-500",
-  contacted: "bg-purple-500/10 text-purple-500",
-  qualified: "bg-green-500/10 text-green-500",
-  converted_to_lead: "bg-emerald-500/10 text-emerald-500",
+  new: "bg-primary/10 text-primary",
+  assigned: "bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))]",
+  contacted: "bg-[hsl(var(--neon-purple))]/10 text-[hsl(var(--neon-purple))]",
+  qualified: "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]",
+  converted_to_lead: "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]",
   closed: "bg-muted text-muted-foreground",
   spam: "bg-destructive/10 text-destructive",
 };
@@ -60,31 +62,33 @@ const InquiriesPage = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><MessageSquare className="h-6 w-6" /> Inquiries</h1>
-          <p className="text-muted-foreground">Manage inbound inquiries</p>
-        </div>
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="mr-2 h-4 w-4" /> New Inquiry</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Create Inquiry</DialogTitle></DialogHeader>
-            <div className="space-y-3">
-              <div><Label>Name *</Label><Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} /></div>
-              <div><Label>Email *</Label><Input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} /></div>
-              <div><Label>Phone</Label><Input value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} /></div>
-              <div><Label>Suburb</Label><Input value={form.suburb} onChange={e => setForm(p => ({ ...p, suburb: e.target.value }))} /></div>
-              <div><Label>Service Interest</Label><Input value={form.service_interest} onChange={e => setForm(p => ({ ...p, service_interest: e.target.value }))} /></div>
-              <div><Label>Message</Label><Textarea value={form.message} onChange={e => setForm(p => ({ ...p, message: e.target.value }))} /></div>
-              <Button onClick={handleCreate} className="w-full">Create</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+      <PageHeader icon={Inbox} title="Inquiries" subtitle="Manage inbound inquiries"
+        actions={
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+            <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" /> New Inquiry</Button></DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Create Inquiry</DialogTitle></DialogHeader>
+              <div className="space-y-3">
+                <div><Label>Name *</Label><Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} /></div>
+                <div><Label>Email *</Label><Input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} /></div>
+                <div><Label>Phone</Label><Input value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} /></div>
+                <div><Label>Suburb</Label><Input value={form.suburb} onChange={e => setForm(p => ({ ...p, suburb: e.target.value }))} /></div>
+                <div><Label>Service Interest</Label><Input value={form.service_interest} onChange={e => setForm(p => ({ ...p, service_interest: e.target.value }))} /></div>
+                <div><Label>Message</Label><Textarea value={form.message} onChange={e => setForm(p => ({ ...p, message: e.target.value }))} /></div>
+                <Button onClick={handleCreate} className="w-full">Create</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        }
+      />
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <StatCard title="Total" value={inquiries.length} icon={Inbox} gradient="from-primary to-accent" />
+        <StatCard title="New" value={inquiries.filter(i => i.status === "new").length} icon={AlertCircle} gradient="from-[hsl(var(--info))] to-[hsl(var(--neon-blue))]" />
+        <StatCard title="Qualified" value={inquiries.filter(i => i.status === "qualified").length} icon={CheckCircle} gradient="from-[hsl(var(--success))] to-[hsl(var(--neon-green))]" />
+        <StatCard title="Converted" value={inquiries.filter(i => i.status === "converted_to_lead").length} icon={ArrowRight} gradient="from-[hsl(var(--neon-purple))] to-primary" />
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -105,8 +109,7 @@ const InquiriesPage = () => {
         </Select>
       </div>
 
-      {/* Table */}
-      <Card>
+      <Card className="rounded-2xl">
         <CardContent className="p-0">
           {loading ? (
             <div className="p-6 space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
@@ -131,30 +134,18 @@ const InquiriesPage = () => {
                     <TableCell className="font-medium">{inq.name}</TableCell>
                     <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{inq.email}</TableCell>
                     <TableCell className="hidden lg:table-cell text-sm">{inq.phone || "—"}</TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      <Badge variant="outline" className="text-[10px]">{inq.source}</Badge>
-                    </TableCell>
+                    <TableCell className="hidden lg:table-cell"><Badge variant="outline" className="text-[10px]">{inq.source}</Badge></TableCell>
                     <TableCell>
                       <Select value={inq.status} onValueChange={(v) => updateStatus(inq.id, v as InquiryStatus)}>
-                        <SelectTrigger className="h-7 w-auto border-0 p-0">
-                          <Badge className={statusColors[inq.status] || ""}>{inq.status.replace(/_/g, " ")}</Badge>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {["new", "assigned", "contacted", "qualified", "closed", "spam"].map(s => (
-                            <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>
-                          ))}
-                        </SelectContent>
+                        <SelectTrigger className="h-7 w-auto border-0 p-0"><Badge className={statusColors[inq.status] || ""}>{inq.status.replace(/_/g, " ")}</Badge></SelectTrigger>
+                        <SelectContent>{["new", "assigned", "contacted", "qualified", "closed", "spam"].map(s => <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>)}</SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(inq.created_at), { addSuffix: true })}
-                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{formatDistanceToNow(new Date(inq.created_at), { addSuffix: true })}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         {inq.status !== "converted_to_lead" && (
-                          <Button variant="ghost" size="sm" onClick={() => handleConvert(inq)} title="Convert to Lead">
-                            <ArrowRight className="h-4 w-4" />
-                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleConvert(inq)} title="Convert to Lead"><ArrowRight className="h-4 w-4" /></Button>
                         )}
                       </div>
                     </TableCell>
@@ -166,7 +157,6 @@ const InquiriesPage = () => {
         </CardContent>
       </Card>
 
-      {/* Inquiry Detail Sheet */}
       <InquiryDetailSheet inquiry={selectedInquiry} open={detailOpen} onOpenChange={setDetailOpen} />
     </div>
   );

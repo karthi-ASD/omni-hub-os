@@ -9,14 +9,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileSignature, Send, CheckCircle } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
+import { FileSignature, Send, CheckCircle, FileText, Clock, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
 const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
-  sent: "bg-blue-500/10 text-blue-600",
-  signed: "bg-green-500/10 text-green-600",
+  sent: "bg-primary/10 text-primary",
+  signed: "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]",
   rejected: "bg-destructive/10 text-destructive",
 };
 
@@ -27,19 +29,12 @@ const ContractsPage = () => {
   const { deals, markWon } = useDeals();
   const { profile } = useAuth();
   const [detailOpen, setDetailOpen] = useState<Contract | null>(null);
-  const [signingId, setSigningId] = useState<string | null>(null);
 
   const handleSign = async (contract: Contract) => {
-    // Mark contract signed
     await markSigned(contract.id, contract.deal_id);
-
-    // Mark deal as won
     await markWon(contract.deal_id);
-
-    // Get deal info for client creation
     const deal = deals.find(d => d.id === contract.deal_id);
     if (deal) {
-      // Create client
       const client = await createClient({
         deal_id: deal.id,
         company_name: deal.business_name || undefined,
@@ -47,8 +42,6 @@ const ContractsPage = () => {
         email: deal.email,
         phone: deal.phone || undefined,
       });
-
-      // Create project
       if (client) {
         await createProject({
           client_id: client.id,
@@ -59,26 +52,39 @@ const ContractsPage = () => {
         });
       }
     }
-
     setDetailOpen(null);
+  };
+
+  const stats = {
+    draft: contracts.filter(c => c.status === "draft").length,
+    sent: contracts.filter(c => c.status === "sent").length,
+    signed: contracts.filter(c => c.status === "signed").length,
+    rejected: contracts.filter(c => c.status === "rejected").length,
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><FileSignature className="h-6 w-6" /> Contracts</h1>
-        <p className="text-muted-foreground">Manage contracts and signatures</p>
+      <PageHeader icon={FileSignature} title="Contracts" subtitle="Manage contracts and signatures" />
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <StatCard title="Draft" value={stats.draft} icon={FileText} gradient="from-muted to-muted" />
+        <StatCard title="Sent" value={stats.sent} icon={Send} gradient="from-primary/80 to-accent/80" />
+        <StatCard title="Signed" value={stats.signed} icon={CheckCircle} gradient="from-[hsl(var(--success))] to-[hsl(var(--neon-green))]" />
+        <StatCard title="Rejected" value={stats.rejected} icon={XCircle} gradient="from-destructive to-destructive/70" />
       </div>
 
       {loading ? (
-        <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}</div>
+        <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-2xl" />)}</div>
       ) : contracts.length === 0 ? (
-        <Card><CardContent className="py-12 text-center text-muted-foreground">No contracts yet. Generate one from an accepted proposal.</CardContent></Card>
+        <Card className="rounded-2xl"><CardContent className="py-12 text-center text-muted-foreground">No contracts yet. Generate one from an accepted proposal.</CardContent></Card>
       ) : (
         <div className="space-y-2">
           {contracts.map(c => (
-            <Card key={c.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setDetailOpen(c)}>
+            <Card key={c.id} className="rounded-2xl hover:shadow-md transition-shadow cursor-pointer" onClick={() => setDetailOpen(c)}>
               <CardContent className="flex items-center gap-4 py-3 px-4">
+                <div className="p-2 rounded-xl bg-primary/10">
+                  <FileSignature className="h-4 w-4 text-primary" />
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm">Contract #{c.contract_number}</p>
                   <p className="text-xs text-muted-foreground">{format(new Date(c.created_at), "MMM d, yyyy")}</p>
@@ -94,17 +100,6 @@ const ContractsPage = () => {
         </div>
       )}
 
-      {/* Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {(["draft", "sent", "signed", "rejected"] as const).map(s => (
-          <Card key={s}>
-            <CardHeader className="pb-2"><CardTitle className="text-sm capitalize text-muted-foreground">{s}</CardTitle></CardHeader>
-            <CardContent><p className="text-2xl font-bold">{contracts.filter(c => c.status === s).length}</p></CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* DETAIL */}
       <Dialog open={!!detailOpen} onOpenChange={() => setDetailOpen(null)}>
         <DialogContent className="max-w-xl max-h-[80vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Contract #{detailOpen?.contract_number}</DialogTitle></DialogHeader>
@@ -113,7 +108,7 @@ const ContractsPage = () => {
               <div className="flex justify-between"><span className="text-muted-foreground">Status</span><Badge className={statusColors[detailOpen.status]}>{detailOpen.status}</Badge></div>
               {detailOpen.signed_at && <div className="flex justify-between"><span className="text-muted-foreground">Signed</span><span>{format(new Date(detailOpen.signed_at), "MMM d, yyyy HH:mm")}</span></div>}
               {detailOpen.contract_content && (
-                <div className="border rounded-md p-4 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: detailOpen.contract_content }} />
+                <div className="border rounded-xl p-4 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: detailOpen.contract_content }} />
               )}
             </div>
           )}

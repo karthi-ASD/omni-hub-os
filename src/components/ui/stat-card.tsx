@@ -3,8 +3,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-interface StatCardProps {
-  label: string;
+export interface StatCardProps {
+  label?: string;
+  title?: string;
   value: string | number;
   icon: LucideIcon;
   gradient?: string;
@@ -18,9 +19,10 @@ interface StatCardProps {
 }
 
 export function StatCard({
-  label, value, icon: Icon, gradient = "from-primary to-accent",
+  label, title, value, icon: Icon, gradient = "from-primary to-accent",
   trend, trendLabel, subtitle, loading, className, alert, onClick,
 }: StatCardProps) {
+  const displayLabel = label || title || "";
   return (
     <Card
       className={cn(
@@ -38,7 +40,7 @@ export function StatCard({
           <>
             <div className="flex items-center justify-between mb-3">
               <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                {label}
+                {displayLabel}
               </span>
               <div className={cn(
                 "h-9 w-9 rounded-xl flex items-center justify-center shadow-glow-sm group-hover:scale-110 transition-transform",

@@ -2,7 +2,7 @@ import { type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-interface PageHeaderAction {
+export interface PageHeaderAction {
   label: string;
   icon?: LucideIcon;
   onClick: () => void;
@@ -15,12 +15,13 @@ interface PageHeaderProps {
   subtitle?: string;
   icon?: LucideIcon;
   badge?: string;
-  actions?: PageHeaderAction[];
+  actions?: PageHeaderAction[] | React.ReactNode;
   children?: React.ReactNode;
   className?: string;
 }
 
 export function PageHeader({ title, subtitle, icon: Icon, badge, actions, children, className }: PageHeaderProps) {
+  const isActionArray = Array.isArray(actions);
   return (
     <div className={cn("flex items-start justify-between gap-4 flex-wrap", className)}>
       <div className="flex items-start gap-3">
@@ -43,7 +44,7 @@ export function PageHeader({ title, subtitle, icon: Icon, badge, actions, childr
       </div>
       {(actions || children) && (
         <div className="flex items-center gap-2 shrink-0">
-          {actions?.map((action) => (
+          {isActionArray ? actions.map((action) => (
             <Button
               key={action.label}
               size="sm"
@@ -54,7 +55,7 @@ export function PageHeader({ title, subtitle, icon: Icon, badge, actions, childr
               {action.icon && <action.icon className="h-4 w-4 mr-1.5" />}
               {action.label}
             </Button>
-          ))}
+          )) : actions}
           {children}
         </div>
       )}

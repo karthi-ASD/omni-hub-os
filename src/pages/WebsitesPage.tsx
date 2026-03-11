@@ -10,14 +10,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Globe, Plus, Shield, Copy, Check, Clock, Wrench, Key, Server } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCard } from "@/components/ui/stat-card";
+import { Globe, Plus, Shield, Copy, Check, Clock, Key, Server, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 
 const statusColors: Record<string, string> = {
-  pending: "bg-yellow-500/10 text-yellow-500",
-  approved: "bg-emerald-500/10 text-emerald-500",
+  pending: "bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))]",
+  approved: "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]",
   rejected: "bg-destructive/10 text-destructive",
-  disabled: "bg-gray-500/10 text-gray-400",
+  disabled: "bg-muted text-muted-foreground",
 };
 
 const WebsitesPage = () => {
@@ -63,47 +65,52 @@ const WebsitesPage = () => {
 
   const selectedW = websites.find(w => w.id === selectedWebsite);
 
+  const stats = {
+    total: websites.length,
+    approved: websites.filter(w => w.status === "approved").length,
+    pending: websites.filter(w => w.status === "pending").length,
+  };
+
   return (
-    <div className="space-y-4 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <Globe className="h-6 w-6 text-[#d4a853]" /> Websites
-        </h1>
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => navigate("/domains")} className="border-[#1e2a4a] text-[#d4a853]">
-            <Globe className="h-4 w-4 mr-1" /> Domains
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => navigate("/hosting")} className="border-[#1e2a4a] text-[#d4a853]">
-            <Server className="h-4 w-4 mr-1" /> Hosting
-          </Button>
-          <Button size="sm" onClick={() => setCreateOpen(true)} className="bg-[#d4a853] hover:bg-[#b8902e] text-[#0a0e1a]">
-            <Plus className="h-4 w-4 mr-1" /> Add Website
-          </Button>
-        </div>
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader icon={Globe} title="Websites" subtitle="Manage client websites and lead capture"
+        actions={
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => navigate("/domains")}><Globe className="h-4 w-4 mr-1" /> Domains</Button>
+            <Button size="sm" variant="outline" onClick={() => navigate("/hosting")}><Server className="h-4 w-4 mr-1" /> Hosting</Button>
+            <Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Website</Button>
+          </div>
+        }
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard title="Total Sites" value={stats.total} icon={Globe} gradient="from-primary to-accent" />
+        <StatCard title="Approved" value={stats.approved} icon={CheckCircle} gradient="from-[hsl(var(--success))] to-[hsl(var(--neon-green))]" />
+        <StatCard title="Pending" value={stats.pending} icon={Clock} gradient="from-[hsl(var(--warning))] to-[hsl(var(--neon-orange))]" />
       </div>
 
       {loading ? (
-        <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}</div>
+        <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-20 rounded-2xl" />)}</div>
       ) : (
         <div className="space-y-3">
           {websites.map(w => (
             <Card
               key={w.id}
-              className={`bg-[#111832] border-[#1e2a4a] cursor-pointer transition-all ${selectedWebsite === w.id ? "border-[#d4a853]/50" : ""}`}
+              className={`rounded-2xl cursor-pointer transition-all hover:shadow-md ${selectedWebsite === w.id ? "border-primary/50 shadow-md" : ""}`}
               onClick={() => handleSelectWebsite(w.id)}
             >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-white truncate">{w.website_name}</p>
-                    <p className="text-xs text-gray-400 truncate">{w.domain}</p>
+                    <p className="text-sm font-semibold truncate">{w.website_name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{w.domain}</p>
                     <div className="flex items-center gap-2 mt-1.5">
                       <Badge variant="secondary" className={statusColors[w.status] || ""}>{w.status}</Badge>
                     </div>
                     {(w as any).api_key_plain && (
                       <div className="flex items-center gap-1 mt-2">
-                        <Key className="h-3 w-3 text-[#d4a853] shrink-0" />
-                        <code className="text-[10px] bg-[#0a0e1a] px-2 py-0.5 rounded border border-[#1e2a4a] text-emerald-400 select-all break-all">{(w as any).api_key_plain}</code>
+                        <Key className="h-3 w-3 text-primary shrink-0" />
+                        <code className="text-[10px] bg-muted px-2 py-0.5 rounded border text-[hsl(var(--success))] select-all break-all">{(w as any).api_key_plain}</code>
                         <Button size="icon" variant="ghost" className="h-5 w-5 shrink-0" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText((w as any).api_key_plain); toast.success("API key copied!"); }}>
                           <Copy className="h-3 w-3" />
                         </Button>
@@ -112,14 +119,12 @@ const WebsitesPage = () => {
                   </div>
                   <div className="flex gap-1.5 shrink-0">
                     {isSuperAdmin && w.status === "pending" && (
-                      <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleApprove(w.id); }}
-                        className="text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10">
+                      <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleApprove(w.id); }} className="text-[hsl(var(--success))]">
                         <Shield className="h-3.5 w-3.5 mr-1" /> Approve
                       </Button>
                     )}
                     {isSuperAdmin && w.status === "approved" && (
-                      <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); disableWebsite(w.id); }}
-                        className="text-red-400 border-red-500/30 hover:bg-red-500/10">
+                      <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); disableWebsite(w.id); }} className="text-destructive">
                         Disable
                       </Button>
                     )}
@@ -129,17 +134,16 @@ const WebsitesPage = () => {
             </Card>
           ))}
           {websites.length === 0 && (
-            <p className="text-center text-gray-500 py-8 text-sm">No websites yet. Add one to get started.</p>
+            <Card className="rounded-2xl"><CardContent className="py-8 text-center text-muted-foreground">No websites yet. Add one to get started.</CardContent></Card>
           )}
         </div>
       )}
 
-      {/* Website detail panel */}
       {selectedW && (
-        <Card className="bg-[#111832] border-[#1e2a4a]">
+        <Card className="rounded-2xl">
           <CardContent className="p-4">
             <Tabs defaultValue="details">
-              <TabsList className="bg-[#0a0e1a] border border-[#1e2a4a]">
+              <TabsList>
                 <TabsTrigger value="details">Details</TabsTrigger>
                 <TabsTrigger value="services">Services</TabsTrigger>
                 <TabsTrigger value="embed">Embed Code</TabsTrigger>
@@ -147,33 +151,29 @@ const WebsitesPage = () => {
 
               <TabsContent value="details" className="space-y-3 mt-3">
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div><p className="text-gray-500 text-xs">Domain</p><p className="text-white">{selectedW.domain}</p></div>
-                  <div><p className="text-gray-500 text-xs">Status</p><Badge className={statusColors[selectedW.status]}>{selectedW.status}</Badge></div>
-                  <div><p className="text-gray-500 text-xs">Call Window</p><p className="text-white flex items-center gap-1"><Clock className="h-3 w-3" />{selectedW.call_allowed_start_time || "09:00"} – {selectedW.call_allowed_end_time || "17:00"}</p></div>
-                  <div><p className="text-gray-500 text-xs">Timezone</p><p className="text-white">{selectedW.timezone || "Australia/Sydney"}</p></div>
+                  <div><p className="text-muted-foreground text-xs">Domain</p><p>{selectedW.domain}</p></div>
+                  <div><p className="text-muted-foreground text-xs">Status</p><Badge className={statusColors[selectedW.status]}>{selectedW.status}</Badge></div>
+                  <div><p className="text-muted-foreground text-xs">Call Window</p><p className="flex items-center gap-1"><Clock className="h-3 w-3" />{selectedW.call_allowed_start_time || "09:00"} – {selectedW.call_allowed_end_time || "17:00"}</p></div>
+                  <div><p className="text-muted-foreground text-xs">Timezone</p><p>{selectedW.timezone || "Australia/Sydney"}</p></div>
                 </div>
               </TabsContent>
 
               <TabsContent value="services" className="space-y-3 mt-3">
                 <div className="flex gap-2">
-                  <Input placeholder="Service name" value={serviceForm.name} onChange={e => setServiceForm(p => ({...p, name: e.target.value}))}
-                    className="bg-[#0a0e1a] border-[#1e2a4a] text-white text-sm" />
-                  <Input placeholder="Category" value={serviceForm.category} onChange={e => setServiceForm(p => ({...p, category: e.target.value}))}
-                    className="bg-[#0a0e1a] border-[#1e2a4a] text-white text-sm" />
-                  <Button size="sm" onClick={handleAddService} className="bg-[#d4a853] hover:bg-[#b8902e] text-[#0a0e1a] shrink-0">
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                  <Input placeholder="Service name" value={serviceForm.name} onChange={e => setServiceForm(p => ({...p, name: e.target.value}))} />
+                  <Input placeholder="Category" value={serviceForm.category} onChange={e => setServiceForm(p => ({...p, category: e.target.value}))} />
+                  <Button size="sm" onClick={handleAddService} className="shrink-0"><Plus className="h-4 w-4" /></Button>
                 </div>
                 {services.map(s => (
-                  <div key={s.id} className="flex items-center justify-between py-2 px-3 bg-[#0a0e1a] rounded-lg border border-[#1e2a4a]">
+                  <div key={s.id} className="flex items-center justify-between py-2 px-3 bg-muted rounded-xl">
                     <div>
-                      <p className="text-sm text-white">{s.service_name}</p>
-                      {s.service_category && <p className="text-xs text-gray-500">{s.service_category}</p>}
+                      <p className="text-sm">{s.service_name}</p>
+                      {s.service_category && <p className="text-xs text-muted-foreground">{s.service_category}</p>}
                     </div>
-                    <Button size="sm" variant="ghost" className="text-red-400 h-7" onClick={() => removeService(s.id, selectedW.id)}>Remove</Button>
+                    <Button size="sm" variant="ghost" className="text-destructive h-7" onClick={() => removeService(s.id, selectedW.id)}>Remove</Button>
                   </div>
                 ))}
-                {services.length === 0 && <p className="text-gray-500 text-sm text-center py-4">No services added yet.</p>}
+                {services.length === 0 && <p className="text-muted-foreground text-sm text-center py-4">No services added yet.</p>}
               </TabsContent>
 
               <TabsContent value="embed" className="mt-3">
@@ -184,27 +184,25 @@ const WebsitesPage = () => {
         </Card>
       )}
 
-      {/* Create dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="bg-[#111832] border-[#1e2a4a] text-white">
+        <DialogContent>
           <DialogHeader><DialogTitle>Add Website</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div><Label className="text-gray-400">Website Name</Label><Input value={form.name} onChange={e => setForm(p => ({...p, name: e.target.value}))} className="bg-[#0a0e1a] border-[#1e2a4a] text-white" /></div>
-            <div><Label className="text-gray-400">Domain</Label><Input value={form.domain} onChange={e => setForm(p => ({...p, domain: e.target.value}))} placeholder="example.com" className="bg-[#0a0e1a] border-[#1e2a4a] text-white" /></div>
-            <Button onClick={handleCreate} className="w-full bg-[#d4a853] hover:bg-[#b8902e] text-[#0a0e1a]">Submit for Approval</Button>
+            <div><Label>Website Name</Label><Input value={form.name} onChange={e => setForm(p => ({...p, name: e.target.value}))} /></div>
+            <div><Label>Domain</Label><Input value={form.domain} onChange={e => setForm(p => ({...p, domain: e.target.value}))} placeholder="example.com" /></div>
+            <Button onClick={handleCreate} className="w-full">Submit for Approval</Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* API Key modal */}
       <Dialog open={apiKeyModal.open} onOpenChange={(o) => { if (!o) setApiKeyModal({ open: false, key: "" }); }}>
-        <DialogContent className="bg-[#111832] border-[#1e2a4a] text-white">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Key className="h-5 w-5 text-[#d4a853]" /> API Key Generated</DialogTitle></DialogHeader>
-          <p className="text-sm text-emerald-400">✅ This key is saved and always visible on each website card.</p>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Key className="h-5 w-5 text-primary" /> API Key Generated</DialogTitle></DialogHeader>
+          <p className="text-sm text-[hsl(var(--success))]">✅ This key is saved and always visible on each website card.</p>
           <div className="flex items-center gap-2 mt-2">
-            <code className="flex-1 p-3 bg-[#0a0e1a] rounded-lg border border-[#1e2a4a] text-xs text-emerald-400 break-all select-all">{apiKeyModal.key}</code>
-            <Button size="icon" variant="outline" onClick={handleCopy} className="border-[#1e2a4a] shrink-0">
-              {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+            <code className="flex-1 p-3 bg-muted rounded-xl border text-xs text-[hsl(var(--success))] break-all select-all">{apiKeyModal.key}</code>
+            <Button size="icon" variant="outline" onClick={handleCopy} className="shrink-0">
+              {copied ? <Check className="h-4 w-4 text-[hsl(var(--success))]" /> : <Copy className="h-4 w-4" />}
             </Button>
           </div>
         </DialogContent>
@@ -283,16 +281,16 @@ const NEXTWEB_CONFIG = {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-400">Copy and paste this into your website HTML</p>
-        <Button size="sm" variant="outline" onClick={handleCopyEmbed} className="border-[#1e2a4a] text-[#d4a853]">
+        <p className="text-sm text-muted-foreground">Copy and paste this into your website HTML</p>
+        <Button size="sm" variant="outline" onClick={handleCopyEmbed}>
           {copiedEmbed ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />} Copy
         </Button>
       </div>
-      <pre className="p-3 bg-[#0a0e1a] rounded-lg border border-[#1e2a4a] text-xs text-gray-300 overflow-x-auto max-h-64 whitespace-pre-wrap">
+      <pre className="p-3 bg-muted rounded-xl border text-xs text-muted-foreground overflow-x-auto max-h-64 whitespace-pre-wrap">
         {embedCode}
       </pre>
-      {!apiKeyPlain && <p className="text-xs text-yellow-400">⚠️ Replace <code>API_KEY_HERE</code> with the actual API key provided by your administrator.</p>}
-      {apiKeyPlain && <p className="text-xs text-emerald-400">✅ API key is pre-filled. You can copy and paste this directly.</p>}
+      {!apiKeyPlain && <p className="text-xs text-[hsl(var(--warning))]">⚠️ Replace <code>API_KEY_HERE</code> with the actual API key provided by your administrator.</p>}
+      {apiKeyPlain && <p className="text-xs text-[hsl(var(--success))]">✅ API key is pre-filled. You can copy and paste this directly.</p>}
     </div>
   );
 };
