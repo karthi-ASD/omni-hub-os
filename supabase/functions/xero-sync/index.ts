@@ -121,28 +121,30 @@ async function syncContacts(supabase: any, businessId: string, xeroHeaders: any)
 
     if (contacts.length === 0) { hasMore = false; break; }
 
-    for (const c of contacts) {
-      const email = c.EmailAddress || `xero-${c.ContactID}@placeholder.local`;
-      const { error: upsertErr } = await supabase.from("clients").upsert({
-        business_id: businessId,
-        xero_contact_id: c.ContactID,
-        contact_name: c.Name || c.FirstName || "Unknown",
-        company_name: c.Name || "",
-        email,
-        phone: c.Phones?.find((p: any) => p.PhoneType === "DEFAULT")?.PhoneNumber || c.Phones?.[0]?.PhoneNumber || null,
-        mobile: c.Phones?.find((p: any) => p.PhoneType === "MOBILE")?.PhoneNumber || null,
-        website: c.Website || null,
-        billing_address: c.Addresses?.find((a: any) => a.AddressType === "POBOX")
-          ? formatAddress(c.Addresses.find((a: any) => a.AddressType === "POBOX"))
-          : c.Addresses?.[0] ? formatAddress(c.Addresses[0]) : null,
-        tax_number: c.TaxNumber || null,
-      }, { onConflict: "business_id,xero_contact_id", ignoreDuplicates: false });
+    const rows = contacts.map((c: any) => ({
+      business_id: businessId,
+      xero_contact_id: c.ContactID,
+      contact_name: c.Name || c.FirstName || "Unknown",
+      company_name: c.Name || "",
+      email: c.EmailAddress || `xero-${c.ContactID}@placeholder.local`,
+      phone: c.Phones?.find((p: any) => p.PhoneType === "DEFAULT")?.PhoneNumber || c.Phones?.[0]?.PhoneNumber || null,
+      mobile: c.Phones?.find((p: any) => p.PhoneType === "MOBILE")?.PhoneNumber || null,
+      website: c.Website || null,
+      billing_address: c.Addresses?.find((a: any) => a.AddressType === "POBOX")
+        ? formatAddress(c.Addresses.find((a: any) => a.AddressType === "POBOX"))
+        : c.Addresses?.[0] ? formatAddress(c.Addresses[0]) : null,
+      tax_number: c.TaxNumber || null,
+    }));
 
-      if (upsertErr) {
-        console.error(`[SYNC] Contact upsert error for ${c.Name}:`, upsertErr.message);
-      }
-      contactsSynced++;
+    const { error: upsertErr } = await supabase.from("clients").upsert(rows, {
+      onConflict: "business_id,xero_contact_id",
+      ignoreDuplicates: false,
+    });
+
+    if (upsertErr) {
+      console.error(`[SYNC] Batch contact upsert error:`, upsertErr.message);
     }
+    contactsSynced += contacts.length;
 
     if (contacts.length < 100) hasMore = false;
     else page++;
@@ -177,44 +179,50 @@ async function syncInvoices(supabase: any, businessId: string, xeroHeaders: any)
 
     if (invoices.length === 0) { hasMore = false; break; }
 
-    for (const inv of invoices) {
-      let clientId = null;
-      if (inv.Contact?.ContactID) {
-        const { data: client } = await supabase
-          .from("clients").select("id")
-          .eq("business_id", businessId)
-          .eq("xero_contact_id", inv.Contact.ContactID)
-          .single();
-        clientId = client?.id || null;
+    // Pre-fetch client ID map for this batch
+    const contactIds = invoices.map((inv: any) => inv.Contact?.ContactID).filter(Boolean);
+    const uniqueContactIds = [...new Set(contactIds)];
+    const clientMap: Record<string, string> = {};
+
+    if (uniqueContactIds.length > 0) {
+      const { data: clients } = await supabase
+        .from("clients").select("id, xero_contact_id")
+        .eq("business_id", businessId)
+        .in("xero_contact_id", uniqueContactIds);
+      for (const c of clients || []) {
+        clientMap[c.xero_contact_id] = c.id;
       }
-
-      const deptCategory = inv.LineItems?.[0]?.Tracking?.[0]?.Option || null;
-
-      const { error: upsertErr } = await supabase.from("xero_invoices").upsert({
-        business_id: businessId,
-        xero_invoice_id: inv.InvoiceID,
-        xero_contact_id: inv.Contact?.ContactID || null,
-        invoice_number: inv.InvoiceNumber,
-        client_id: clientId,
-        contact_name: inv.Contact?.Name || null,
-        invoice_date: inv.DateString || null,
-        due_date: inv.DueDateString || null,
-        currency: inv.CurrencyCode || "AUD",
-        total_amount: inv.Total || 0,
-        amount_paid: inv.AmountPaid || 0,
-        amount_due: inv.AmountDue || 0,
-        status: inv.Status || "DRAFT",
-        reference: inv.Reference || null,
-        department_category: deptCategory,
-        line_items_json: inv.LineItems || [],
-        synced_at: new Date().toISOString(),
-      }, { onConflict: "business_id,xero_invoice_id", ignoreDuplicates: false });
-
-      if (upsertErr) {
-        console.error(`[SYNC] Invoice upsert error for ${inv.InvoiceNumber}:`, upsertErr.message);
-      }
-      invoicesSynced++;
     }
+
+    const rows = invoices.map((inv: any) => ({
+      business_id: businessId,
+      xero_invoice_id: inv.InvoiceID,
+      xero_contact_id: inv.Contact?.ContactID || null,
+      invoice_number: inv.InvoiceNumber,
+      client_id: clientMap[inv.Contact?.ContactID] || null,
+      contact_name: inv.Contact?.Name || null,
+      invoice_date: inv.DateString || null,
+      due_date: inv.DueDateString || null,
+      currency: inv.CurrencyCode || "AUD",
+      total_amount: inv.Total || 0,
+      amount_paid: inv.AmountPaid || 0,
+      amount_due: inv.AmountDue || 0,
+      status: inv.Status || "DRAFT",
+      reference: inv.Reference || null,
+      department_category: inv.LineItems?.[0]?.Tracking?.[0]?.Option || null,
+      line_items_json: inv.LineItems || [],
+      synced_at: new Date().toISOString(),
+    }));
+
+    const { error: upsertErr } = await supabase.from("xero_invoices").upsert(rows, {
+      onConflict: "business_id,xero_invoice_id",
+      ignoreDuplicates: false,
+    });
+
+    if (upsertErr) {
+      console.error(`[SYNC] Batch invoice upsert error:`, upsertErr.message);
+    }
+    invoicesSynced += invoices.length;
 
     if (invoices.length < 100) hasMore = false;
     else page++;
@@ -249,50 +257,63 @@ async function syncPayments(supabase: any, businessId: string, xeroHeaders: any)
 
     if (payments.length === 0) { hasMore = false; break; }
 
-    for (const p of payments) {
-      let clientId = null;
-      let invoiceId = null;
+    // Pre-fetch invoice and client maps for batch
+    const invoiceIds = payments.map((p: any) => p.Invoice?.InvoiceID).filter(Boolean);
+    const uniqueInvIds = [...new Set(invoiceIds)];
+    const invMap: Record<string, { id: string; client_id: string | null }> = {};
 
-      if (p.Invoice?.InvoiceID) {
-        const { data: invRecord } = await supabase
-          .from("xero_invoices").select("id, client_id")
-          .eq("business_id", businessId)
-          .eq("xero_invoice_id", p.Invoice.InvoiceID)
-          .single();
-        if (invRecord) {
-          invoiceId = invRecord.id;
-          clientId = invRecord.client_id;
-        }
+    if (uniqueInvIds.length > 0) {
+      const { data: invRecords } = await supabase
+        .from("xero_invoices").select("id, client_id, xero_invoice_id")
+        .eq("business_id", businessId)
+        .in("xero_invoice_id", uniqueInvIds);
+      for (const inv of invRecords || []) {
+        invMap[inv.xero_invoice_id] = { id: inv.id, client_id: inv.client_id };
       }
+    }
 
-      if (!clientId && p.Invoice?.Contact?.ContactID) {
-        const { data: client } = await supabase
-          .from("clients").select("id")
-          .eq("business_id", businessId)
-          .eq("xero_contact_id", p.Invoice.Contact.ContactID)
-          .single();
-        clientId = client?.id || null;
+    const contactIds = payments
+      .filter((p: any) => p.Invoice?.Contact?.ContactID && !invMap[p.Invoice?.InvoiceID]?.client_id)
+      .map((p: any) => p.Invoice.Contact.ContactID);
+    const uniqueContactIds = [...new Set(contactIds)];
+    const clientMap: Record<string, string> = {};
+
+    if (uniqueContactIds.length > 0) {
+      const { data: clients } = await supabase
+        .from("clients").select("id, xero_contact_id")
+        .eq("business_id", businessId)
+        .in("xero_contact_id", uniqueContactIds);
+      for (const c of clients || []) {
+        clientMap[c.xero_contact_id] = c.id;
       }
+    }
 
-      const { error: upsertErr } = await supabase.from("xero_payments").upsert({
+    const rows = payments.map((p: any) => {
+      const invRecord = invMap[p.Invoice?.InvoiceID];
+      return {
         business_id: businessId,
         xero_payment_id: p.PaymentID,
         xero_invoice_id: p.Invoice?.InvoiceID || null,
         xero_contact_id: p.Invoice?.Contact?.ContactID || null,
-        invoice_id: invoiceId,
-        client_id: clientId,
+        invoice_id: invRecord?.id || null,
+        client_id: invRecord?.client_id || clientMap[p.Invoice?.Contact?.ContactID] || null,
         payment_amount: p.Amount || 0,
         payment_date: p.DateString || null,
         payment_method: p.PaymentType || null,
         transaction_reference: p.Reference || null,
         synced_at: new Date().toISOString(),
-      }, { onConflict: "business_id,xero_payment_id", ignoreDuplicates: false });
+      };
+    });
 
-      if (upsertErr) {
-        console.error(`[SYNC] Payment upsert error:`, upsertErr.message);
-      }
-      paymentsSynced++;
+    const { error: upsertErr } = await supabase.from("xero_payments").upsert(rows, {
+      onConflict: "business_id,xero_payment_id",
+      ignoreDuplicates: false,
+    });
+
+    if (upsertErr) {
+      console.error(`[SYNC] Batch payment upsert error:`, upsertErr.message);
     }
+    paymentsSynced += payments.length;
 
     if (payments.length < 100) hasMore = false;
     else page++;
@@ -327,28 +348,29 @@ async function syncExpenses(supabase: any, businessId: string, xeroHeaders: any)
 
     if (bills.length === 0) { hasMore = false; break; }
 
-    for (const bill of bills) {
-      const category = bill.LineItems?.[0]?.AccountCode || bill.LineItems?.[0]?.Tracking?.[0]?.Option || "General";
+    const rows = bills.map((bill: any) => ({
+      business_id: businessId,
+      xero_expense_id: bill.InvoiceID,
+      expense_date: bill.DateString || null,
+      supplier_name: bill.Contact?.Name || "Unknown Supplier",
+      category: bill.LineItems?.[0]?.AccountCode || bill.LineItems?.[0]?.Tracking?.[0]?.Option || "General",
+      description: bill.Reference || bill.LineItems?.map((li: any) => li.Description).filter(Boolean).join("; ") || null,
+      amount: bill.Total || 0,
+      currency: bill.CurrencyCode || "AUD",
+      status: bill.Status || "AUTHORISED",
+      line_items_json: bill.LineItems || [],
+      synced_at: new Date().toISOString(),
+    }));
 
-      const { error: upsertErr } = await supabase.from("xero_expenses").upsert({
-        business_id: businessId,
-        xero_expense_id: bill.InvoiceID,
-        expense_date: bill.DateString || null,
-        supplier_name: bill.Contact?.Name || "Unknown Supplier",
-        category,
-        description: bill.Reference || bill.LineItems?.map((li: any) => li.Description).filter(Boolean).join("; ") || null,
-        amount: bill.Total || 0,
-        currency: bill.CurrencyCode || "AUD",
-        status: bill.Status || "AUTHORISED",
-        line_items_json: bill.LineItems || [],
-        synced_at: new Date().toISOString(),
-      }, { onConflict: "business_id,xero_expense_id", ignoreDuplicates: false });
+    const { error: upsertErr } = await supabase.from("xero_expenses").upsert(rows, {
+      onConflict: "business_id,xero_expense_id",
+      ignoreDuplicates: false,
+    });
 
-      if (upsertErr) {
-        console.error(`[SYNC] Expense upsert error:`, upsertErr.message);
-      }
-      expensesSynced++;
+    if (upsertErr) {
+      console.error(`[SYNC] Batch expense upsert error:`, upsertErr.message);
     }
+    expensesSynced += bills.length;
 
     if (bills.length < 100) hasMore = false;
     else page++;
