@@ -376,6 +376,7 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
             <TabsContent value="notes" className="mt-0">
               <Label>Internal Notes</Label>
               <Textarea value={form.notes} onChange={(e) => update("notes", e.target.value)} placeholder="Additional notes about this client..." rows={6} />
+              <CustomFieldRenderer moduleName="clients" />
             </TabsContent>
           </ScrollArea>
         </Tabs>
