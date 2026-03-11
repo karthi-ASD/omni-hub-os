@@ -53,14 +53,16 @@ const FinanceDashboardPage = () => {
     const code = searchParams.get("code");
     if (code && profile?.business_id) {
       const redirectUri = "https://bigappcompany.com.au/finance";
+      const storedVerifier = sessionStorage.getItem("xero_code_verifier");
       (async () => {
         setSyncing(true);
         try {
           const { data, error } = await supabase.functions.invoke("xero-sync", {
-            body: { action: "oauth_callback", business_id: profile.business_id, code, redirect_uri: redirectUri },
+            body: { action: "oauth_callback", business_id: profile.business_id, code, redirect_uri: redirectUri, code_verifier: storedVerifier },
           });
           if (error) throw error;
           toast.success("Xero connected successfully!");
+          sessionStorage.removeItem("xero_code_verifier");
           setSearchParams({});
           refresh();
         } catch (e: any) {
