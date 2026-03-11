@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Send, CheckCircle, XCircle, FileText, DollarSign } from "lucide-react";
+import { Plus, Send, CheckCircle, XCircle, FileText, ChevronDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const statusColors: Record<string, string> = {
@@ -23,15 +23,17 @@ const statusColors: Record<string, string> = {
 };
 
 const InvoicesPage = () => {
-  const { invoices, loading, createInvoice, createFromDeal, sendInvoice, markPaid, voidInvoice } = useInvoices();
+  const {
+    invoices, loading, totalCount, hasMore,
+    createInvoice, createFromDeal, sendInvoice, markPaid, voidInvoice,
+    loadMore, setFilter, statusFilter,
+  } = useInvoices();
   const { clients } = useClients();
   const { deals } = useDeals();
   const [open, setOpen] = useState(false);
   const [fromDealOpen, setFromDealOpen] = useState(false);
   const [selectedDealId, setSelectedDealId] = useState("");
-  const [filter, setFilter] = useState("all");
 
-  // New invoice form
   const [form, setForm] = useState({
     client_id: "",
     due_date: "",
@@ -71,8 +73,6 @@ const InvoicesPage = () => {
     setSelectedDealId("");
   };
 
-  const filtered = filter === "all" ? invoices : invoices.filter((i) => i.status === filter);
-
   const getClientName = (clientId: string | null) => {
     if (!clientId) return "—";
     const c = clients.find((cl) => cl.id === clientId);
@@ -84,7 +84,7 @@ const InvoicesPage = () => {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold">Invoices</h1>
-          <p className="text-muted-foreground">Manage billing and payments</p>
+          <p className="text-muted-foreground">{totalCount} total records</p>
         </div>
         <div className="flex gap-2">
           <Dialog open={fromDealOpen} onOpenChange={setFromDealOpen}>
@@ -172,67 +172,84 @@ const InvoicesPage = () => {
       {/* Filters */}
       <div className="flex gap-2 flex-wrap">
         {["all", "draft", "open", "paid", "overdue", "void"].map((s) => (
-          <Button key={s} variant={filter === s ? "default" : "outline"} size="sm" onClick={() => setFilter(s)} className="capitalize">
+          <Button key={s} variant={statusFilter === s ? "default" : "outline"} size="sm" onClick={() => setFilter(s)} className="capitalize">
             {s}
           </Button>
         ))}
       </div>
 
-      {loading ? (
+      {loading && invoices.length === 0 ? (
         <div className="space-y-2">
           {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
         </div>
-      ) : filtered.length === 0 ? (
+      ) : invoices.length === 0 ? (
         <Card><CardContent className="py-12 text-center text-muted-foreground">No invoices found</CardContent></Card>
       ) : (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>#</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Due</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((inv) => (
-                <TableRow key={inv.id}>
-                  <TableCell className="font-mono text-sm">INV-{inv.invoice_number}</TableCell>
-                  <TableCell>{getClientName(inv.client_id)}</TableCell>
-                  <TableCell className="capitalize">{inv.invoice_type.replace("_", " ")}</TableCell>
-                  <TableCell className="font-medium">${Number(inv.total).toFixed(2)}</TableCell>
-                  <TableCell>{inv.due_date ? new Date(inv.due_date).toLocaleDateString() : "—"}</TableCell>
-                  <TableCell>
-                    <Badge className={statusColors[inv.status] || ""} variant="secondary">{inv.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      {inv.status === "draft" && (
-                        <Button size="sm" variant="outline" onClick={() => sendInvoice(inv.id)}>
-                          <Send className="h-3 w-3 mr-1" /> Send
-                        </Button>
-                      )}
-                      {(inv.status === "open" || inv.status === "overdue") && (
-                        <Button size="sm" variant="outline" onClick={() => markPaid(inv.id)}>
-                          <CheckCircle className="h-3 w-3 mr-1" /> Paid
-                        </Button>
-                      )}
-                      {inv.status === "draft" && (
-                        <Button size="sm" variant="ghost" onClick={() => voidInvoice(inv.id)}>
-                          <XCircle className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
+        <>
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>#</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Due</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+              </TableHeader>
+              <TableBody>
+                {invoices.map((inv) => (
+                  <TableRow key={inv.id}>
+                    <TableCell className="font-mono text-sm">INV-{inv.invoice_number}</TableCell>
+                    <TableCell>{getClientName(inv.client_id)}</TableCell>
+                    <TableCell className="capitalize">{inv.invoice_type.replace("_", " ")}</TableCell>
+                    <TableCell className="font-medium">${Number(inv.total).toFixed(2)}</TableCell>
+                    <TableCell>{inv.due_date ? new Date(inv.due_date).toLocaleDateString() : "—"}</TableCell>
+                    <TableCell>
+                      <Badge className={statusColors[inv.status] || ""} variant="secondary">{inv.status}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        {inv.status === "draft" && (
+                          <Button size="sm" variant="outline" onClick={() => sendInvoice(inv.id)}>
+                            <Send className="h-3 w-3 mr-1" /> Send
+                          </Button>
+                        )}
+                        {(inv.status === "open" || inv.status === "overdue") && (
+                          <Button size="sm" variant="outline" onClick={() => markPaid(inv.id)}>
+                            <CheckCircle className="h-3 w-3 mr-1" /> Paid
+                          </Button>
+                        )}
+                        {inv.status === "draft" && (
+                          <Button size="sm" variant="ghost" onClick={() => voidInvoice(inv.id)}>
+                            <XCircle className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <Button variant="outline" onClick={loadMore} disabled={loading}>
+                <ChevronDown className="h-4 w-4 mr-1" />
+                {loading ? "Loading..." : `Load more (${invoices.length} of ${totalCount})`}
+              </Button>
+            </div>
+          )}
+
+          {!hasMore && invoices.length > 0 && (
+            <p className="text-center text-xs text-muted-foreground py-2">
+              Showing all {invoices.length} of {totalCount} invoices
+            </p>
+          )}
+        </>
       )}
     </div>
   );

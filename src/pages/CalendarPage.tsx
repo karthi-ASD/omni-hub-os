@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, CalendarDays } from "lucide-react";
+import { Plus, Trash2, CalendarDays, MapPin, Users } from "lucide-react";
 import { format, isSameDay } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -19,12 +19,14 @@ const CalendarPage = () => {
   const { events, loading, createEvent, deleteEvent } = useCalendarEvents(currentMonth);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  // New event form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
   const [visibility, setVisibility] = useState("tenant");
+  const [location, setLocation] = useState("");
+  const [attendees, setAttendees] = useState("");
+  const [recurrence, setRecurrence] = useState("");
 
   const eventsOnDay = events.filter((e) =>
     isSameDay(new Date(e.start_datetime), selectedDate)
@@ -50,12 +52,20 @@ const CalendarPage = () => {
       return;
     }
 
+    const attendeeList = attendees
+      .split(",")
+      .map((a) => a.trim())
+      .filter(Boolean);
+
     const result = await createEvent({
       title,
       description: description || undefined,
       start_datetime: start.toISOString(),
       end_datetime: end.toISOString(),
       visibility,
+      location: location || undefined,
+      attendees: attendeeList.length > 0 ? attendeeList : undefined,
+      recurrence_rule: recurrence || undefined,
     });
 
     if (result?.error) {
@@ -64,6 +74,9 @@ const CalendarPage = () => {
       toast.success("Event created");
       setTitle("");
       setDescription("");
+      setLocation("");
+      setAttendees("");
+      setRecurrence("");
       setDialogOpen(false);
     }
   };
@@ -90,13 +103,13 @@ const CalendarPage = () => {
               <Plus className="h-4 w-4" /> New Event
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create Event — {format(selectedDate, "MMM d, yyyy")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 mt-2">
               <div>
-                <Label>Title</Label>
+                <Label>Title *</Label>
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Event title" />
               </div>
               <div>
@@ -112,6 +125,30 @@ const CalendarPage = () => {
                   <Label>End Time</Label>
                   <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
                 </div>
+              </div>
+              <div>
+                <Label>Location</Label>
+                <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Meeting Room A, Zoom link" />
+              </div>
+              <div>
+                <Label>Attendees (comma-separated emails)</Label>
+                <Input value={attendees} onChange={(e) => setAttendees(e.target.value)} placeholder="john@example.com, jane@example.com" />
+              </div>
+              <div>
+                <Label>Recurrence</Label>
+                <Select value={recurrence} onValueChange={setRecurrence}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="No recurrence" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="FREQ=DAILY">Daily</SelectItem>
+                    <SelectItem value="FREQ=WEEKLY">Weekly</SelectItem>
+                    <SelectItem value="FREQ=BIWEEKLY;INTERVAL=2">Bi-weekly</SelectItem>
+                    <SelectItem value="FREQ=MONTHLY">Monthly</SelectItem>
+                    <SelectItem value="FREQ=YEARLY">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label>Visibility</Label>
@@ -132,7 +169,6 @@ const CalendarPage = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Calendar */}
         <Card className="lg:col-span-2">
           <CardContent className="p-4">
             <Calendar
@@ -147,7 +183,6 @@ const CalendarPage = () => {
           </CardContent>
         </Card>
 
-        {/* Day Events */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -175,6 +210,19 @@ const CalendarPage = () => {
                         {format(new Date(event.start_datetime), "h:mm a")} –{" "}
                         {format(new Date(event.end_datetime), "h:mm a")}
                       </p>
+                      {event.location && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                          <MapPin className="h-3 w-3" /> {event.location}
+                        </p>
+                      )}
+                      {event.attendees && event.attendees.length > 0 && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                          <Users className="h-3 w-3" /> {event.attendees.length} attendee{event.attendees.length > 1 ? "s" : ""}
+                        </p>
+                      )}
+                      {event.recurrence_rule && (
+                        <p className="text-[10px] text-primary mt-0.5">↻ Recurring</p>
+                      )}
                       {event.description && (
                         <p className="text-xs text-muted-foreground mt-1">{event.description}</p>
                       )}
