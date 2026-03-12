@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSeoProjects } from "@/hooks/useSeoProjects";
-import { useSeoIntelligenceEngine } from "@/hooks/useSeoIntelligenceEngine";
+import { useSeoIntelligenceEngine, SeoModuleStatus } from "@/hooks/useSeoIntelligenceEngine";
 import { useSeoRankChecks } from "@/hooks/useSeoRankChecks";
-import { useSeoBacklinks, LINK_TYPES, BACKLINK_STATUSES } from "@/hooks/useSeoBacklinks";
-import { useSeoContentGeneration, CONTENT_TYPES, TONES, CONTENT_STATUSES } from "@/hooks/useSeoContentGeneration";
+import { useSeoBacklinks } from "@/hooks/useSeoBacklinks";
 import { useSeoPageScores } from "@/hooks/useSeoPageScores";
-import { useSeoCompetitorGap, GAP_TYPES } from "@/hooks/useSeoCompetitorGap";
+import { useSeoCompetitorGap } from "@/hooks/useSeoCompetitorGap";
 import { useSeoCompetitors } from "@/hooks/useSeoCompetitors";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,28 +16,62 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  ArrowLeft, TrendingUp, TrendingDown, Search, Loader2, Globe,
+  ArrowLeft, TrendingUp, Search, Loader2, Globe,
   Target, Sparkles, BarChart3, Link2, FileText, Shield, Map,
-  Zap, CheckCircle2, AlertTriangle, XCircle, ArrowUpRight,
+  Zap, CheckCircle2, AlertTriangle, XCircle, ArrowUpRight, FileSearch, Play,
 } from "lucide-react";
 
 const scoreColor = (score: number) => {
-  if (score >= 80) return "text-success";
-  if (score >= 50) return "text-warning";
+  if (score >= 80) return "text-green-600 dark:text-green-400";
+  if (score >= 50) return "text-yellow-600 dark:text-yellow-400";
   return "text-destructive";
 };
 
 const scoreBadge = (score: number) => {
-  if (score >= 80) return "default";
-  if (score >= 50) return "secondary";
-  return "destructive";
+  if (score >= 80) return "default" as const;
+  if (score >= 50) return "secondary" as const;
+  return "destructive" as const;
 };
 
 const priorityColor = (p: string) => {
-  if (p === "high") return "destructive";
-  if (p === "medium") return "secondary";
-  return "outline";
+  if (p === "high") return "destructive" as const;
+  if (p === "medium") return "secondary" as const;
+  return "outline" as const;
 };
+
+const ModuleStatusBadge = ({ status }: { status?: SeoModuleStatus }) => {
+  if (!status || status === "not_started") return <Badge variant="outline" className="text-[10px]">Not Started</Badge>;
+  if (status === "running") return <Badge variant="secondary" className="text-[10px] animate-pulse">Running...</Badge>;
+  if (status === "completed") return <Badge variant="default" className="text-[10px]">Completed</Badge>;
+  return <Badge variant="destructive" className="text-[10px]">Failed</Badge>;
+};
+
+const RunModuleButton = ({ module, status, onClick, disabled }: { module: string; status?: SeoModuleStatus; onClick: () => void; disabled?: boolean }) => (
+  <Button
+    size="sm"
+    variant={status === "completed" ? "outline" : "default"}
+    onClick={onClick}
+    disabled={status === "running" || disabled}
+  >
+    {status === "running" ? (
+      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+    ) : (
+      <Play className="h-3 w-3 mr-1" />
+    )}
+    {status === "running" ? "Analyzing..." : status === "completed" ? "Re-run" : "Run Analysis"}
+  </Button>
+);
+
+const EmptyModuleState = ({ label, onRun, status, disabled }: { label: string; onRun: () => void; status?: SeoModuleStatus; disabled?: boolean }) => (
+  <Card>
+    <CardContent className="py-12 text-center text-muted-foreground">
+      <Sparkles className="h-10 w-10 mx-auto mb-3 text-primary opacity-40" />
+      <p className="text-sm font-medium mb-1">Analysis not yet run</p>
+      <p className="text-xs mb-4">Click below to run {label} analysis independently</p>
+      <RunModuleButton module={label} status={status} onClick={onRun} disabled={disabled} />
+    </CardContent>
+  </Card>
+);
 
 const SeoIntelligencePage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -49,21 +82,24 @@ const SeoIntelligencePage = () => {
   const {
     analyses, keywords, roadmap, contentWorkflow, trafficEstimate,
     loading: engineLoading, analyzing, analysisProgress, runDomainAnalysis,
+    runModuleAnalysis, moduleStatuses, sitemapData,
     updateRoadmapItem, updateContentWorkflow,
   } = useSeoIntelligenceEngine(projectId);
 
   const { checks, loading: ranksLoading } = useSeoRankChecks(projectId);
   const { backlinks, loading: blLoading } = useSeoBacklinks(projectId);
-  const { scores, loading: scLoading } = useSeoPageScores(projectId);
-  const { gaps, loading: gapLoading, analyzing: gapAnalyzing, analyzeGaps } = useSeoCompetitorGap(projectId);
+  const { scores } = useSeoPageScores(projectId);
+  const { gaps, analyzing: gapAnalyzing, analyzeGaps } = useSeoCompetitorGap(projectId);
   const { competitors } = useSeoCompetitors(projectId);
 
   const [domainInput, setDomainInput] = useState(project?.website_domain || "");
   const latestAnalysis = analyses[0];
+  const domain = domainInput.trim() || project?.website_domain || "";
+  const hasDomain = domain.length > 0;
 
-  const handleAnalyze = () => {
-    if (!domainInput.trim()) return;
-    runDomainAnalysis(domainInput.trim());
+  const runModule = (mod: string) => {
+    if (!domain) return;
+    runModuleAnalysis(mod, domain);
   };
 
   if (!projectId) return <div className="p-6 text-muted-foreground">Select an SEO project first.</div>;
@@ -83,7 +119,7 @@ const SeoIntelligencePage = () => {
         </div>
       </div>
 
-      {/* Domain Analysis Input */}
+      {/* Domain Input */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-3">
@@ -92,73 +128,45 @@ const SeoIntelligencePage = () => {
                 placeholder="Enter domain to analyze (e.g. example.com.au)"
                 value={domainInput}
                 onChange={e => setDomainInput(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && handleAnalyze()}
+                onKeyDown={e => e.key === "Enter" && hasDomain && runDomainAnalysis(domain)}
               />
             </div>
-            <Button onClick={handleAnalyze} disabled={analyzing || !domainInput.trim()}>
+            <Button onClick={() => runDomainAnalysis(domain)} disabled={analyzing || !hasDomain} variant="outline">
               {analyzing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
-              {analyzing ? "Analyzing..." : "Run Full Analysis"}
+              {analyzing ? "Running..." : "Run All Modules"}
             </Button>
           </div>
           {analyzing && (
             <div className="mt-4 space-y-2">
-              <p className="text-sm text-muted-foreground">Running proprietary SEO intelligence engine...</p>
+              <p className="text-sm text-muted-foreground">Running all SEO modules in sequence...</p>
               <Progress value={analysisProgress} className="h-2" />
-              <p className="text-xs text-muted-foreground">
-                {analysisProgress < 20 ? "Initializing crawl..." :
-                 analysisProgress < 40 ? "Crawling domain & parsing content..." :
-                 analysisProgress < 60 ? "Generating 200+ keywords & 30+ competitors..." :
-                 analysisProgress < 80 ? "Running on-page & technical audit..." :
-                 "Finalizing analysis & storing results..."}
-              </p>
             </div>
           )}
+          <p className="text-xs text-muted-foreground mt-2">
+            Tip: Use individual "Run Analysis" buttons in each tab to run modules independently.
+          </p>
         </CardContent>
       </Card>
 
       {/* KPI Cards */}
       {latestAnalysis && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Card>
-            <CardContent className="pt-4 pb-4 text-center">
-              <div className={`text-3xl font-bold ${scoreColor(latestAnalysis.seo_score)}`}>
-                {latestAnalysis.seo_score}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">SEO Score</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4 pb-4 text-center">
-              <div className="text-3xl font-bold text-foreground">
-                {latestAnalysis.total_keywords}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Keywords</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4 pb-4 text-center">
-              <div className="text-3xl font-bold text-foreground">
-                {latestAnalysis.estimated_traffic.toLocaleString()}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Est. Traffic/mo</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4 pb-4 text-center">
-              <div className="text-3xl font-bold text-foreground">
-                {competitors.length}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Competitors</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4 pb-4 text-center">
-              <div className="text-3xl font-bold text-foreground">
-                {backlinks.length}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Backlinks</p>
-            </CardContent>
-          </Card>
+          {[
+            { label: "SEO Score", value: latestAnalysis.seo_score, color: true },
+            { label: "Keywords", value: latestAnalysis.total_keywords },
+            { label: "Est. Traffic/mo", value: latestAnalysis.estimated_traffic.toLocaleString() },
+            { label: "Competitors", value: competitors.length },
+            { label: "Backlinks", value: backlinks.length },
+          ].map(kpi => (
+            <Card key={kpi.label}>
+              <CardContent className="pt-4 pb-4 text-center">
+                <div className={`text-3xl font-bold ${kpi.color ? scoreColor(Number(kpi.value)) : "text-foreground"}`}>
+                  {kpi.value}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">{kpi.label}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
 
@@ -173,6 +181,7 @@ const SeoIntelligencePage = () => {
           <TabsTrigger value="gaps"><Zap className="h-3 w-3 mr-1" />Gap Analysis</TabsTrigger>
           <TabsTrigger value="roadmap"><Map className="h-3 w-3 mr-1" />Roadmap</TabsTrigger>
           <TabsTrigger value="content"><FileText className="h-3 w-3 mr-1" />Content</TabsTrigger>
+          <TabsTrigger value="sitemap"><FileSearch className="h-3 w-3 mr-1" />Sitemap</TabsTrigger>
         </TabsList>
 
         {/* OVERVIEW TAB */}
@@ -183,7 +192,7 @@ const SeoIntelligencePage = () => {
             <Card><CardContent className="py-12 text-center text-muted-foreground">
               <Sparkles className="h-12 w-12 mx-auto mb-4 text-primary opacity-50" />
               <p className="text-lg font-medium">No analysis yet</p>
-              <p className="text-sm">Enter a domain above to run the NextWeb SEO Intelligence Engine</p>
+              <p className="text-sm">Enter a domain above and run individual modules or all at once</p>
             </CardContent></Card>
           ) : (
             <>
@@ -199,7 +208,36 @@ const SeoIntelligencePage = () => {
                 </CardContent>
               </Card>
 
-              {/* Scores breakdown */}
+              {/* Module status summary */}
+              <Card>
+                <CardHeader><CardTitle className="text-sm">Module Status</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                      { key: "keywords", label: "Keywords", has: keywords.length > 0 },
+                      { key: "competitors", label: "Competitors", has: competitors.length > 0 },
+                      { key: "audit", label: "Page Audit", has: !!latestAnalysis.analysis_json?.page_audit },
+                      { key: "backlinks", label: "Backlinks", has: backlinks.length > 0 },
+                      { key: "content", label: "Content", has: contentWorkflow.length > 0 },
+                      { key: "roadmap", label: "Roadmap", has: roadmap.length > 0 },
+                      { key: "sitemap", label: "Sitemap", has: !!sitemapData },
+                      { key: "gaps", label: "Gap Analysis", has: gaps.length > 0 },
+                    ].map(m => (
+                      <div key={m.key} className="flex items-center justify-between p-2 rounded-md bg-muted/50 text-sm">
+                        <span>{m.label}</span>
+                        {m.has || moduleStatuses[m.key] === "completed" ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        ) : moduleStatuses[m.key] === "running" ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Not run</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
               {latestAnalysis.analysis_json?.page_audit && (
                 <Card>
                   <CardHeader><CardTitle className="text-sm">SEO Score Breakdown</CardTitle></CardHeader>
@@ -219,7 +257,6 @@ const SeoIntelligencePage = () => {
                 </Card>
               )}
 
-              {/* Issues Summary */}
               {latestAnalysis.analysis_json?.on_page_issues?.length > 0 && (
                 <Card>
                   <CardHeader><CardTitle className="text-sm">Issues Found ({latestAnalysis.analysis_json.on_page_issues.length})</CardTitle></CardHeader>
@@ -228,8 +265,8 @@ const SeoIntelligencePage = () => {
                       {latestAnalysis.analysis_json.on_page_issues.map((issue: any, i: number) => (
                         <div key={i} className="flex items-start gap-2 text-sm p-2 rounded-md bg-muted/50">
                           {issue.severity === "high" ? <XCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" /> :
-                           issue.severity === "medium" ? <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" /> :
-                           <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-0.5" />}
+                           issue.severity === "medium" ? <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" /> :
+                           <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />}
                           <div>
                             <p className="font-medium">{issue.issue}</p>
                             {issue.recommendation && <p className="text-xs text-muted-foreground mt-0.5">{issue.recommendation}</p>}
@@ -247,16 +284,16 @@ const SeoIntelligencePage = () => {
         {/* KEYWORDS TAB */}
         <TabsContent value="keywords" className="space-y-4">
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="outline">{keywords.length} keywords</Badge>
+            <RunModuleButton module="keywords" status={moduleStatuses.keywords} onClick={() => runModule("keywords")} disabled={!hasDomain} />
+            <ModuleStatusBadge status={moduleStatuses.keywords} />
+            {keywords.length > 0 && <Badge variant="outline">{keywords.length} keywords</Badge>}
             {["primary","secondary","long_tail","lsi","local","question"].map(type => {
               const count = keywords.filter(k => k.keyword_type === type).length;
               return count > 0 ? <Badge key={type} variant="secondary">{type.replace("_"," ")}: {count}</Badge> : null;
             })}
           </div>
           {keywords.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">
-              Run domain analysis to discover keywords
-            </CardContent></Card>
+            <EmptyModuleState label="Keywords" status={moduleStatuses.keywords} onRun={() => runModule("keywords")} disabled={!hasDomain} />
           ) : (
             <Card>
               <CardContent className="p-0">
@@ -279,12 +316,8 @@ const SeoIntelligencePage = () => {
                           <TableCell><Badge variant="outline" className="text-[10px]">{kw.keyword_type}</Badge></TableCell>
                           <TableCell><Badge variant="secondary" className="text-[10px]">{kw.intent}</Badge></TableCell>
                           <TableCell>{kw.estimated_volume}</TableCell>
-                          <TableCell>
-                            <span className={scoreColor(100 - kw.difficulty_score)}>{kw.difficulty_score}</span>
-                          </TableCell>
-                          <TableCell>
-                            <span className={scoreColor(kw.opportunity_score)}>{kw.opportunity_score}</span>
-                          </TableCell>
+                          <TableCell><span className={scoreColor(100 - kw.difficulty_score)}>{kw.difficulty_score}</span></TableCell>
+                          <TableCell><span className={scoreColor(kw.opportunity_score)}>{kw.opportunity_score}</span></TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -298,12 +331,12 @@ const SeoIntelligencePage = () => {
         {/* COMPETITORS TAB */}
         <TabsContent value="competitors" className="space-y-4">
           <div className="flex items-center gap-2">
-            <Badge variant="outline">{competitors.length} competitors</Badge>
+            <RunModuleButton module="competitors" status={moduleStatuses.competitors} onClick={() => runModule("competitors")} disabled={!hasDomain} />
+            <ModuleStatusBadge status={moduleStatuses.competitors} />
+            {competitors.length > 0 && <Badge variant="outline">{competitors.length} competitors</Badge>}
           </div>
           {competitors.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">
-              Run domain analysis to auto-discover competitors
-            </CardContent></Card>
+            <EmptyModuleState label="Competitors" status={moduleStatuses.competitors} onRun={() => runModule("competitors")} disabled={!hasDomain} />
           ) : (
             <Card>
               <CardContent className="p-0">
@@ -340,10 +373,12 @@ const SeoIntelligencePage = () => {
 
         {/* PAGE AUDIT TAB */}
         <TabsContent value="audit" className="space-y-4">
+          <div className="flex items-center gap-2">
+            <RunModuleButton module="audit" status={moduleStatuses.audit} onClick={() => runModule("audit")} disabled={!hasDomain} />
+            <ModuleStatusBadge status={moduleStatuses.audit} />
+          </div>
           {scores.length === 0 && !latestAnalysis?.analysis_json?.page_audit ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">
-              Run domain analysis to generate page audits
-            </CardContent></Card>
+            <EmptyModuleState label="Page Audit" status={moduleStatuses.audit} onRun={() => runModule("audit")} disabled={!hasDomain} />
           ) : (
             <>
               {latestAnalysis?.analysis_json?.technical_issues?.length > 0 && (
@@ -354,7 +389,7 @@ const SeoIntelligencePage = () => {
                       {latestAnalysis.analysis_json.technical_issues.map((issue: any, i: number) => (
                         <div key={i} className="flex items-center gap-2 text-sm p-2 rounded bg-muted/50">
                           {issue.severity === "high" ? <XCircle className="h-4 w-4 text-destructive" /> :
-                           <AlertTriangle className="h-4 w-4 text-warning" />}
+                           <AlertTriangle className="h-4 w-4 text-yellow-500" />}
                           <span>{issue.issue}</span>
                           <Badge variant={priorityColor(issue.severity)} className="ml-auto">{issue.severity}</Badge>
                         </div>
@@ -392,13 +427,13 @@ const SeoIntelligencePage = () => {
 
         {/* BACKLINKS TAB */}
         <TabsContent value="backlinks" className="space-y-4">
-          <div className="flex gap-2">
-            <Badge variant="outline">{backlinks.length} backlinks tracked</Badge>
+          <div className="flex items-center gap-2">
+            <RunModuleButton module="backlinks" status={moduleStatuses.backlinks} onClick={() => runModule("backlinks")} disabled={!hasDomain} />
+            <ModuleStatusBadge status={moduleStatuses.backlinks} />
+            {backlinks.length > 0 && <Badge variant="outline">{backlinks.length} backlinks tracked</Badge>}
           </div>
           {backlinks.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">
-              No backlinks tracked yet
-            </CardContent></Card>
+            <EmptyModuleState label="Backlinks" status={moduleStatuses.backlinks} onRun={() => runModule("backlinks")} disabled={!hasDomain} />
           ) : (
             <Card>
               <CardContent className="p-0">
@@ -434,12 +469,12 @@ const SeoIntelligencePage = () => {
         {/* GAP ANALYSIS TAB */}
         <TabsContent value="gaps" className="space-y-4">
           <div className="flex gap-2">
-            <Button onClick={() => analyzeGaps({ competitors: competitors.map(c => c.competitor_domain) })} disabled={gapAnalyzing} size="sm">
+            <Button onClick={() => analyzeGaps({ competitors: competitors.map(c => c.competitor_domain) })} disabled={gapAnalyzing || competitors.length === 0} size="sm">
               {gapAnalyzing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Zap className="h-4 w-4 mr-1" />}
               Run Gap Analysis
             </Button>
+            {competitors.length === 0 && <span className="text-xs text-muted-foreground self-center">Run Competitors first</span>}
           </div>
-          {/* Content Gaps from AI */}
           {latestAnalysis?.analysis_json?.content_gaps?.length > 0 && (
             <Card>
               <CardHeader><CardTitle className="text-sm">Content Gaps Discovered</CardTitle></CardHeader>
@@ -474,7 +509,7 @@ const SeoIntelligencePage = () => {
                       <TableRow key={g.id}>
                         <TableCell className="font-medium">{g.keyword}</TableCell>
                         <TableCell><Badge variant="outline">{g.gap_type}</Badge></TableCell>
-                        <TableCell><span className={scoreColor(g.opportunity_score)}>{g.opportunity_score}</span></TableCell>
+                        <TableCell><span className={scoreColor(g.opportunity_score || 0)}>{g.opportunity_score}</span></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -482,14 +517,21 @@ const SeoIntelligencePage = () => {
               </CardContent>
             </Card>
           )}
+          {gaps.length === 0 && !latestAnalysis?.analysis_json?.content_gaps?.length && (
+            <Card><CardContent className="py-8 text-center text-muted-foreground">
+              <p className="text-sm">Run competitors analysis first, then run gap analysis</p>
+            </CardContent></Card>
+          )}
         </TabsContent>
 
         {/* ROADMAP TAB */}
         <TabsContent value="roadmap" className="space-y-4">
+          <div className="flex items-center gap-2">
+            <RunModuleButton module="roadmap" status={moduleStatuses.roadmap} onClick={() => runModule("roadmap")} disabled={!hasDomain} />
+            <ModuleStatusBadge status={moduleStatuses.roadmap} />
+          </div>
           {roadmap.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">
-              Run domain analysis to auto-generate SEO roadmap
-            </CardContent></Card>
+            <EmptyModuleState label="Roadmap" status={moduleStatuses.roadmap} onRun={() => runModule("roadmap")} disabled={!hasDomain} />
           ) : (
             <>
               {["high", "medium", "low"].map(priority => {
@@ -511,7 +553,7 @@ const SeoIntelligencePage = () => {
                               onClick={() => updateRoadmapItem(item.id, { status: item.status === "completed" ? "pending" : "completed", completed_at: item.status === "completed" ? null : new Date().toISOString() })}
                               className="shrink-0"
                             >
-                              {item.status === "completed" ? <CheckCircle2 className="h-4 w-4 text-success" /> : <div className="h-4 w-4 rounded-full border-2 border-muted-foreground" />}
+                              {item.status === "completed" ? <CheckCircle2 className="h-4 w-4 text-green-600" /> : <div className="h-4 w-4 rounded-full border-2 border-muted-foreground" />}
                             </button>
                             <span className={item.status === "completed" ? "line-through text-muted-foreground" : ""}>{item.title}</span>
                             <Badge variant="outline" className="ml-auto text-[10px]">{item.category}</Badge>
@@ -529,10 +571,12 @@ const SeoIntelligencePage = () => {
 
         {/* CONTENT WORKFLOW TAB */}
         <TabsContent value="content" className="space-y-4">
+          <div className="flex items-center gap-2">
+            <RunModuleButton module="content" status={moduleStatuses.content} onClick={() => runModule("content")} disabled={!hasDomain} />
+            <ModuleStatusBadge status={moduleStatuses.content} />
+          </div>
           {contentWorkflow.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">
-              Content gaps will be auto-populated after domain analysis
-            </CardContent></Card>
+            <EmptyModuleState label="Content" status={moduleStatuses.content} onRun={() => runModule("content")} disabled={!hasDomain} />
           ) : (
             <Card>
               <CardContent className="p-0">
@@ -567,6 +611,38 @@ const SeoIntelligencePage = () => {
                     </TableBody>
                   </Table>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* SITEMAP TAB */}
+        <TabsContent value="sitemap" className="space-y-4">
+          <div className="flex items-center gap-2">
+            <RunModuleButton module="sitemap" status={moduleStatuses.sitemap} onClick={() => runModule("sitemap")} disabled={!hasDomain} />
+            <ModuleStatusBadge status={moduleStatuses.sitemap} />
+            {sitemapData && <Badge variant="outline">{sitemapData.total_pages} pages</Badge>}
+          </div>
+          {!sitemapData ? (
+            <EmptyModuleState label="Sitemap" status={moduleStatuses.sitemap} onRun={() => runModule("sitemap")} disabled={!hasDomain} />
+          ) : (
+            <Card>
+              <CardHeader><CardTitle className="text-sm">Sitemap — {sitemapData.total_pages} pages discovered</CardTitle></CardHeader>
+              <CardContent>
+                {!sitemapData.sitemap_found ? (
+                  <p className="text-sm text-muted-foreground">No sitemap.xml found for this domain.</p>
+                ) : (
+                  <div className="max-h-[400px] overflow-auto space-y-1">
+                    {sitemapData.urls.slice(0, 200).map((url, i) => (
+                      <div key={i} className="text-xs font-mono p-1.5 rounded bg-muted/50 truncate">
+                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{url}</a>
+                      </div>
+                    ))}
+                    {sitemapData.urls.length > 200 && (
+                      <p className="text-xs text-muted-foreground mt-2">...and {sitemapData.urls.length - 200} more pages</p>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
