@@ -8,7 +8,8 @@ import {
   Search, Receipt, Briefcase, Globe, Lightbulb, Palette, Wrench,
   Server, Cpu, Blocks, Layers, GraduationCap, Building2, Plane,
   Landmark, MonitorSmartphone, Film, DollarSign, Home, Factory,
-  Zap, ShoppingBag, Leaf, PiggyBank, Store,
+  Zap, ShoppingBag, Leaf, PiggyBank, Store, Tablet, GitMerge,
+  Cloud, MailCheck, Lock, Figma,
 } from "lucide-react";
 
 interface MegaSection {
@@ -38,16 +39,24 @@ const platformItems: MegaSection[] = [
 const serviceItems: MegaSection[] = [
   { label: "Digital Strategy", to: "/services/digital-transformation", icon: Lightbulb, desc: "Consulting & workshops" },
   { label: "Website Design", to: "/services/website-design", icon: Palette, desc: "Premium web design" },
+  { label: "UI/UX Design", to: "/services/ui-ux-design", icon: Figma, desc: "Research & prototyping" },
+  { label: "Logo & Branding", to: "/services/logo-visual-identity", icon: Blocks, desc: "Brand identity systems" },
+  { label: "eCommerce", to: "/services/ecommerce-design", icon: ShoppingBag, desc: "Online store design" },
   { label: "App Development", to: "/services/app-development", icon: Smartphone, desc: "Android, iOS & hybrid" },
+  { label: "iPad Apps", to: "/services/ipad-app-development", icon: Tablet, desc: "Enterprise tablet apps" },
+  { label: "Hybrid Apps", to: "/services/hybrid-app-development", icon: GitMerge, desc: "Cross-platform apps" },
   { label: "Website Development", to: "/services/website-development", icon: Code2, desc: "Portals & eCommerce" },
   { label: "SEO Services", to: "/services/search-engine-optimization", icon: Search, desc: "Technical & local SEO" },
   { label: "AI Solutions", to: "/services/artificial-intelligence", icon: Brain, desc: "AI-driven automation" },
   { label: "DevOps", to: "/services/devops", icon: Server, desc: "CI/CD & cloud infra" },
+  { label: "Cloud Hosting", to: "/services/cloud-hosting", icon: Cloud, desc: "Managed infrastructure" },
   { label: "CRM Implementation", to: "/services/crm", icon: Users, desc: "Setup & migration" },
   { label: "SEM & PPC", to: "/services/sem", icon: Zap, desc: "Paid search & ads" },
+  { label: "Email Marketing", to: "/services/email-marketing", icon: MailCheck, desc: "Campaigns & automation" },
   { label: "Social Media", to: "/services/social-media-marketing", icon: Globe, desc: "Strategy & management" },
   { label: "Content Marketing", to: "/services/content-marketing", icon: Layers, desc: "Strategy & creation" },
   { label: "Business Intelligence", to: "/services/business-intelligence", icon: PieChart, desc: "Data & analytics" },
+  { label: "Cybersecurity", to: "/services/cybersecurity", icon: Lock, desc: "Pen testing & compliance" },
 ];
 
 const industryItems: MegaSection[] = [
