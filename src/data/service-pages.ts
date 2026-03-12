@@ -327,6 +327,34 @@ export const servicePages: Record<string, ServicePageData> = {
       { value: "97%", label: "Client Retention" },
       { value: "3x", label: "Lead Generation" },
     ],
+    testimonials: [
+      { quote: "NextWeb took us from page 5 to page 1 for our top 15 keywords. Our organic leads have tripled in 8 months.", name: "Karen Mitchell", role: "Marketing Manager", company: "Coastal Dental Group" },
+      { quote: "Their SEO reporting is the best I've seen — transparent, actionable, and always tied to business outcomes.", name: "Steve Collins", role: "Director", company: "QLD Plumbing Solutions" },
+      { quote: "Local SEO was a game-changer for us. We now dominate the Brisbane and Gold Coast search results in our niche.", name: "Rachel Kim", role: "Owner", company: "Brisbane Migration Agents" },
+    ],
+    techStack: ["Google Search Console", "Screaming Frog", "Ahrefs", "SEMrush", "NextWeb SEO OS", "Schema.org", "Core Web Vitals", "Google Analytics 4", "Google Business Profile"],
+    localSEO: {
+      heading: "SEO Services in Brisbane & Gold Coast",
+      paragraphs: [
+        "As Brisbane's leading SEO agency, NextWeb delivers data-driven search engine optimisation that consistently moves the needle for Australian businesses. Our SEO team combines technical expertise with creative content strategy to achieve sustainable organic growth.",
+        "We specialise in local SEO for Brisbane, Gold Coast, Sunshine Coast, and South East Queensland businesses. From Google Business Profile optimisation and local citation building to location-specific content strategy — we ensure you dominate local search results for your industry.",
+        "Our proprietary SEO OS platform provides real-time ranking tracking on Google.com.au, automated technical audits, competitor gap analysis, and content optimisation recommendations. Every client gets a dedicated SEO strategist who understands your industry and local market.",
+        "Whether you're a Southport medical practice, a Brisbane CBD law firm, a Robina retail store, or a Toowong trades business — our local SEO expertise ensures your target customers find you first. We've achieved page 1 rankings for over 500 Australian businesses.",
+      ],
+    },
+    caseStudies: [
+      { title: "Multi-Location Dental Group", industry: "Healthcare", result: "+420% Organic Traffic", desc: "Comprehensive SEO strategy for 8 dental clinic locations across Brisbane and Gold Coast — local SEO, content, and technical optimisation." },
+      { title: "eCommerce Fashion Brand", industry: "Retail", result: "+280% Revenue from SEO", desc: "Technical SEO overhaul, product schema implementation, and content strategy for an Australian fashion eCommerce brand." },
+      { title: "B2B SaaS Platform", industry: "Technology", result: "Page 1 for 40+ Keywords", desc: "Enterprise SEO strategy with topic clusters, pillar content, and technical authority building for a Brisbane SaaS company." },
+    ],
+    whyChooseUs: [
+      { title: "Brisbane SEO Specialists", desc: "Local team with deep knowledge of Brisbane, Gold Coast, and Queensland search landscapes." },
+      { title: "Proprietary SEO Platform", desc: "Our NextWeb SEO OS gives you real-time visibility into rankings, audits, and competitor movements." },
+      { title: "White-Hat Only", desc: "100% ethical SEO practices — no shortcuts, no penalties, no risk. Sustainable growth that lasts." },
+      { title: "Transparent Reporting", desc: "Monthly reports with clear metrics, completed work, next steps, and direct ROI attribution." },
+      { title: "Full-Service SEO", desc: "Technical, on-page, local, content, and link building — all managed by one integrated team." },
+      { title: "Industry Expertise", desc: "Proven results across healthcare, legal, real estate, SaaS, eCommerce, and professional services." },
+    ],
   },
   "artificial-intelligence": {
     slug: "artificial-intelligence",
