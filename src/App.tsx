@@ -18,6 +18,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import LoginV2 from "./pages/LoginV2";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
