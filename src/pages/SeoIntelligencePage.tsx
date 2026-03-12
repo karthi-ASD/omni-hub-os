@@ -48,7 +48,7 @@ const SeoIntelligencePage = () => {
 
   const {
     analyses, keywords, roadmap, contentWorkflow, trafficEstimate,
-    loading: engineLoading, analyzing, runDomainAnalysis,
+    loading: engineLoading, analyzing, analysisProgress, runDomainAnalysis,
     updateRoadmapItem, updateContentWorkflow,
   } = useSeoIntelligenceEngine(projectId);
 
