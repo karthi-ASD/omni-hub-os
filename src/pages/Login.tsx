@@ -30,7 +30,7 @@ const Login: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       console.log("[Login] getUser result:", user?.id);
       if (user) {
-        await supabase.from("system_events").insert({ event_type: "LOGIN", payload_json: { email: form.email.trim() } }).catch(() => {});
+        try { await supabase.from("system_events").insert({ event_type: "LOGIN", payload_json: { email: form.email.trim() } }); } catch {}
       }
       toast.success("Welcome back!");
       navigate("/dashboard");
