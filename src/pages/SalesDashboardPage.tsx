@@ -72,7 +72,7 @@ const SalesDashboardPage = () => {
           .eq("business_id", profile.business_id)
           .gte("created_at", mStart).lte("created_at", mEnd),
         supabase.from("deals").select("id", { count: "exact", head: true })
-          .eq("business_id", profile.business_id).eq("stage", "closed_lost")
+          .eq("business_id", profile.business_id).eq("stage", "lost")
           .gte("created_at", mStart).lte("created_at", mEnd),
       ]);
       monthly.push({ month: format(m, "MMM"), clients: newRes.count || 0, lost: lostRes.count || 0 });

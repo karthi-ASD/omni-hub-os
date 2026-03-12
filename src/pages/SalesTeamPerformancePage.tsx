@@ -49,7 +49,7 @@ const SalesTeamPerformancePage = () => {
         supabase.from("leads").select("id", { count: "exact", head: true })
           .eq("business_id", profile.business_id).eq("assigned_to_user_id", p.user_id),
         supabase.from("deals").select("id", { count: "exact", head: true })
-          .eq("business_id", profile.business_id).eq("owner_user_id", p.user_id).eq("stage", "closed_won"),
+          .eq("business_id", profile.business_id).eq("owner_user_id", p.user_id).eq("stage", "won"),
       ]);
       const hasActivity = (todayRes.count || 0) + (monthRes.count || 0) + (leadsRes.count || 0) + (dealsRes.count || 0) > 0;
       if (hasActivity) {
