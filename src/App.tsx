@@ -196,6 +196,8 @@ import SalesFollowUpsPage from "./pages/SalesFollowUpsPage";
 import SalesTeamPerformancePage from "./pages/SalesTeamPerformancePage";
 import AISalesAssistantPage from "./pages/AISalesAssistantPage";
 import SalesKnowledgeBasePage from "./pages/SalesKnowledgeBasePage";
+import ProspectFinderPage from "./pages/ProspectFinderPage";
+import SalesOpportunitiesPage from "./pages/SalesOpportunitiesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
