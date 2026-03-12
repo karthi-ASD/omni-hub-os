@@ -41,6 +41,7 @@ const ClientsPage = () => {
   const [syncing, setSyncing] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const { members: salesTeam } = useSalesTeam();
+  const { canCreate } = useCanCreateClient();
 
   const handleSearchChange = (value: string) => {
     setSearchInput(value);
