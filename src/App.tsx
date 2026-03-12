@@ -554,7 +554,7 @@ const App = () => (
               } />
               <Route path="/user/:userId" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><UserProfilePage /></ProtectedRoute>
-              }
+              } />
               <Route
                 path="/users"
                 element={
