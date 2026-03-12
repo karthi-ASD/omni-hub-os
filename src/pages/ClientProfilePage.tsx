@@ -56,6 +56,17 @@ const ClientProfilePage = () => {
   } = useClientProfile(id);
   const financials = useClientFinancials(id);
   const onboarding = useOnboardingChecklist(id);
+  const { members: salesTeam } = useSalesTeam();
+
+  const handleSalesOwnerChange = async (userId: string) => {
+    if (!client) return;
+    const member = salesTeam.find(m => m.user_id === userId);
+    await supabase.from("clients").update({
+      sales_owner_id: userId || null,
+      salesperson_owner: member?.full_name || null,
+    } as any).eq("id", client.id);
+    toast.success("Sales owner updated");
+  };
 
   const [websiteDialog, setWebsiteDialog] = useState(false);
   const [appDialog, setAppDialog] = useState(false);
