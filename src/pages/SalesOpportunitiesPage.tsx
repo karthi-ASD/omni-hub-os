@@ -53,7 +53,7 @@ export default function SalesOpportunitiesPage() {
   // Active deals value
   const activeDealValue = useMemo(() =>
     deals.filter((d) => !["won", "lost"].includes(d.stage || ""))
-      .reduce((sum, d) => sum + (Number(d.value) || 0), 0),
+      .reduce((sum, d) => sum + (Number(d.estimated_value) || 0), 0),
     [deals]
   );
 
