@@ -43,7 +43,8 @@ const SeoProjectDetailPage = () => {
   const { blogs, loading: blogsLoading, create: createBlog, updateBlog } = useSeoBlogs(projectId);
   const { tasks: gmbTasks, loading: gmbLoading, create: createGmb, updateTask: updateGmb } = useGmbTasks(projectId);
   const { tasks: socialTasks, loading: socialLoading, create: createSocial, updateTask: updateSocial } = useSocialMediaTasks(projectId);
-  const { competitors, loading: compLoading, addCompetitor } = useSeoCompetitors(projectId);
+  const { competitors, loading: compLoading, addCompetitor, refetch: refetchCompetitors } = useSeoCompetitors(projectId);
+  const [fetchingCompetitors, setFetchingCompetitors] = useState(false);
   const { updates, loading: updLoading, create: createUpdate } = useSeoUpdates(projectId);
   const { messages, loading: msgLoading, send: sendMessage } = useSeoClientMessages(projectId);
   const { reports, loading: repLoading, generate: generateReport } = useSeoMonthlyReports(projectId);
