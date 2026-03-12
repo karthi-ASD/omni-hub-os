@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff, ArrowRight, Users } from "lucide-react";
 import { NWLogo } from "@/components/NWLogo";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { isAuthTimeoutError, signInWithPasswordResilient } from "@/lib/auth-signin";
+import { supabase } from "@/integrations/supabase/client";
 
 const ClientLoginPage: React.FC = () => {
   const navigate = useNavigate();

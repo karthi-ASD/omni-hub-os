@@ -8,11 +8,6 @@ import { toast } from "sonner";
 import { Eye, EyeOff, ArrowRight, Building2 } from "lucide-react";
 import { NWLogo } from "@/components/NWLogo";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import {
-  isAuthConfigError,
-  isAuthTimeoutError,
-  signInWithPasswordResilient,
-} from "@/lib/auth-signin";
 
 const CompanyLogin: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();

@@ -9,11 +9,6 @@ import { toast } from "sonner";
 import { Eye, EyeOff, Shield, Zap, Globe, ArrowRight, Sparkles } from "lucide-react";
 import { NWLogo } from "@/components/NWLogo";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import {
-  isAuthConfigError,
-  isAuthTimeoutError,
-  signInWithPasswordResilient,
-} from "@/lib/auth-signin";
 
 const GOOGLE_AUTH_TIMEOUT_MS = 30000;
 
