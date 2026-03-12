@@ -384,11 +384,14 @@ const Businesses = () => {
   // Business list view
   return (
     <div className="space-y-4 animate-fade-in">
-      <div>
-        <h1 className="text-xl font-bold text-white flex items-center gap-2">
-          <Building2 className="h-6 w-6 text-[#d4a853]" /> Businesses
-        </h1>
-        <p className="text-sm text-gray-400">Manage all tenants</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <Building2 className="h-6 w-6 text-primary" /> Businesses
+          </h1>
+          <p className="text-sm text-muted-foreground">Manage all tenants</p>
+        </div>
+        <CreateBusinessDialog onCreated={fetchBusinesses} />
       </div>
 
       {loading ? (
