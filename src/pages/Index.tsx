@@ -16,11 +16,6 @@ import dashboardPreview from "@/assets/dashboard-preview.jpg";
 import teamCollab from "@/assets/team-collab.jpg";
 import aiAutomation from "@/assets/ai-automation.jpg";
 import multiDevice from "@/assets/multi-device.jpg";
-import heroBg from "@/assets/hero-bg.jpg";
-import dashboardPreview from "@/assets/dashboard-preview.jpg";
-import teamCollab from "@/assets/team-collab.jpg";
-import aiAutomation from "@/assets/ai-automation.jpg";
-import multiDevice from "@/assets/multi-device.jpg";
 
 const Index = () => {
   usePageTitle("", "NextWeb OS — the all-in-one business operating system. CRM, AI, invoicing, SEO, payroll, and 100+ modules for modern enterprises.");
