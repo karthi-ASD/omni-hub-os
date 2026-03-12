@@ -4,6 +4,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { industryPages } from "@/data/industry-pages";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronRight, AlertTriangle, CheckCircle2, HelpCircle } from "lucide-react";
+import { JsonLdScript, buildServiceJsonLd, buildBreadcrumbJsonLd, buildFaqJsonLd } from "@/components/public/JsonLd";
 
 const IndustryDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
