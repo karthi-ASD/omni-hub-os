@@ -451,6 +451,21 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "Real-Time", label: "Data Sync" },
       { value: "99.9%", label: "API Uptime" },
     ],
+    testimonials: [
+      { quote: "The Xero integration alone saved our accounts team 15 hours per week. Invoices and payments sync perfectly.", name: "Andrew Walsh", role: "Finance Manager", company: "BuildRight QLD" },
+      { quote: "We connected NextWeb to Slack, Google Workspace, and our warehouse system in a single afternoon. Incredible.", name: "Lisa Chang", role: "CTO", company: "FreshSupply Co" },
+    ],
+    useCases: [
+      { title: "Accounting Automation", industry: "Professional Services", result: "15hrs/week Saved", desc: "Bi-directional Xero sync automating invoice creation, payment reconciliation, and contact management." },
+      { title: "Warehouse Integration", industry: "Logistics", result: "Real-Time Stock Sync", desc: "Custom API integration connecting warehouse management system with NextWeb orders and inventory." },
+    ],
+    integrations: ["Xero", "Stripe", "Google Workspace", "Slack", "Zapier", "Twilio", "Mailgun", "AWS", "Custom APIs"],
+    localSEO: {
+      heading: "Integration Platform for Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb Integration connects your Brisbane or Gold Coast business tools into one unified system. Whether you need Xero accounting sync, Stripe payments, or custom API integrations — our platform and local team make it seamless.",
+      ],
+    },
   },
   "low-code": {
     slug: "low-code",
