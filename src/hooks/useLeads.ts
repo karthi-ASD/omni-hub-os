@@ -30,9 +30,15 @@ export function useLeads() {
 
   const createLead = async (lead: Omit<LeadInsert, "business_id">) => {
     if (!profile?.business_id) { toast.error("Select a tenant first"); return null; }
+    // Auto-assign lead to the logged-in user as owner
+    const leadData = {
+      ...lead,
+      business_id: profile.business_id,
+      assigned_to_user_id: lead.assigned_to_user_id || profile.user_id,
+    };
     const { data, error } = await supabase
       .from("leads")
-      .insert({ ...lead, business_id: profile.business_id })
+      .insert(leadData)
       .select()
       .single();
     if (error) { toast.error("Failed to create lead"); return null; }
