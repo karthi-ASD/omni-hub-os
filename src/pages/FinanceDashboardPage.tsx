@@ -1,4 +1,5 @@
 import { useFinanceDashboard } from "@/hooks/useFinanceDashboard";
+import { useClients } from "@/hooks/useClients";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
