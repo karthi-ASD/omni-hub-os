@@ -130,6 +130,24 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "85%", label: "Forecast Accuracy" },
       { value: "60%", label: "Less Manual Entry" },
     ],
+    testimonials: [
+      { quote: "Our pipeline visibility went from guesswork to real-time accuracy. Win rates are up 40% since switching to NextWeb.", name: "Tom Bradley", role: "Sales Director", company: "PropConnect QLD" },
+      { quote: "The AI forecasting is scary accurate. Our quarterly projections are now within 5% every time.", name: "Michelle Park", role: "Head of Sales", company: "DataFlow Solutions" },
+      { quote: "Automated follow-ups alone recovered $200K in deals we would have lost. The ROI was immediate.", name: "Chris Anderson", role: "BDM", company: "Gold Coast Insurance Group" },
+    ],
+    useCases: [
+      { title: "Real Estate Sales Pipeline", industry: "Real Estate", result: "+55% Conversion Rate", desc: "Automated lead capture from property portals with AI scoring, nurture sequences, and agent assignment for a Brisbane real estate group." },
+      { title: "SaaS Sales Acceleration", industry: "Software", result: "2x Pipeline Velocity", desc: "Visual pipeline with automated demo scheduling, proposal generation, and renewal tracking for a QLD SaaS company." },
+      { title: "Financial Services Growth", industry: "Finance", result: "+$1.2M New Revenue", desc: "Lead routing, compliance tracking, and automated follow-ups for a Gold Coast financial advisory firm." },
+    ],
+    integrations: ["Customer 360", "Invoicing", "Marketing Automation", "Email", "Calendar", "WhatsApp", "Xero", "Proposals"],
+    localSEO: {
+      heading: "Sales CRM for Brisbane & Gold Coast Teams",
+      paragraphs: [
+        "NextWeb Sales CRM is trusted by hundreds of Brisbane and Gold Coast sales teams to manage leads, pipelines, and revenue forecasting. Our platform replaces disconnected spreadsheets and legacy CRMs with one intelligent system that grows with your business.",
+        "With local implementation support, hands-on training, and data migration services from our Brisbane team, you can be up and running in weeks — not months. Whether you're a two-person startup or a 200-person enterprise, our CRM scales to fit.",
+      ],
+    },
   },
   "service-crm": {
     slug: "service-crm",
