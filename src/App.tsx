@@ -186,6 +186,8 @@ import CompanySignupPage from "./pages/CompanySignupPage";
 import DepartmentSignupPage from "./pages/DepartmentSignupPage";
 import ClientLoginPage from "./pages/ClientLoginPage";
 import FirstLoginSecurityPage from "./pages/FirstLoginSecurityPage";
+import SuperAdminToolsPage from "./pages/SuperAdminToolsPage";
+import UserProfilePage from "./pages/UserProfilePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -547,6 +549,12 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route path="/super-admin-tools" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><SuperAdminToolsPage /></ProtectedRoute>
+              } />
+              <Route path="/user/:userId" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><UserProfilePage /></ProtectedRoute>
+              } />
               <Route
                 path="/users"
                 element={

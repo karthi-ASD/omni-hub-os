@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageHeader } from "@/components/ui/page-header";
@@ -24,6 +25,7 @@ const AVAILABLE_ROLES: AppRole[] = ["super_admin", "business_admin", "manager", 
 
 const UsersPage = () => {
   const { isSuperAdmin, isBusinessAdmin, profile } = useAuth();
+  const navigate = useNavigate();
   const [users, setUsers] = useState<ProfileWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [editUser, setEditUser] = useState<ProfileWithRole | null>(null);
@@ -103,8 +105,8 @@ const UsersPage = () => {
                   <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
                     <User className="h-4 w-4 text-primary" />
                   </div>
-                  <div>
-                    <p className="font-medium text-sm">{u.full_name}</p>
+                   <div className="cursor-pointer" onClick={() => navigate(`/user/${u.user_id}`)}>
+                    <p className="font-medium text-sm hover:text-primary transition-colors">{u.full_name}</p>
                     <p className="text-xs text-muted-foreground">{u.email}</p>
                   </div>
                 </div>

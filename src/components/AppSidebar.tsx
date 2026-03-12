@@ -120,6 +120,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "Users", icon: UserCog, to: "/users" },
       { label: "Roles", icon: Shield, to: "/role-management" },
       { label: "Audit Logs", icon: Activity, to: "/audit-logs" },
+      { label: "SA Tools", icon: Wrench, to: "/super-admin-tools", roles: ["super_admin"] },
     ],
   },
 ];
@@ -128,7 +129,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { profile, isSuperAdmin, signOut } = useAuth();
+  const { profile, isSuperAdmin, roles, signOut } = useAuth();
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
@@ -163,7 +164,9 @@ export function AppSidebar() {
             )}
             <SidebarGroupContent>
               <SidebarMenu>
-                {section.items.map(item => {
+                {section.items
+                  .filter(item => !item.roles || item.roles.some(r => roles.includes(r as any)))
+                  .map(item => {
                   const active = location.pathname === item.to || location.pathname.startsWith(item.to + "/");
                   return (
                     <SidebarMenuItem key={item.to}>

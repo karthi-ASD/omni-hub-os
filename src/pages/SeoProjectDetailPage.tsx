@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { useSeoProjects } from "@/hooks/useSeoProjects";
 import { useSeoTasks, TASK_CATEGORIES, TASK_STATUSES, TASK_PRIORITIES } from "@/hooks/useSeoTasks";
 import { useSeoBlogs } from "@/hooks/useSeoBlogs";
@@ -11,6 +13,7 @@ import { useSeoClientMessages } from "@/hooks/useSeoClientMessages";
 import { useSeoMonthlyReports } from "@/hooks/useSeoMonthlyReports";
 import { useSeoAiRecommendations } from "@/hooks/useSeoAiRecommendations";
 import { useSeoKeywords } from "@/hooks/useSeo";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +35,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const SeoProjectDetailPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const { projects } = useSeoProjects();
   const project = projects.find(p => p.id === projectId);
 
@@ -40,7 +44,8 @@ const SeoProjectDetailPage = () => {
   const { blogs, loading: blogsLoading, create: createBlog, updateBlog } = useSeoBlogs(projectId);
   const { tasks: gmbTasks, loading: gmbLoading, create: createGmb, updateTask: updateGmb } = useGmbTasks(projectId);
   const { tasks: socialTasks, loading: socialLoading, create: createSocial, updateTask: updateSocial } = useSocialMediaTasks(projectId);
-  const { competitors, loading: compLoading, addCompetitor } = useSeoCompetitors(projectId);
+  const { competitors, loading: compLoading, addCompetitor, refetch: refetchCompetitors } = useSeoCompetitors(projectId);
+  const [fetchingCompetitors, setFetchingCompetitors] = useState(false);
   const { updates, loading: updLoading, create: createUpdate } = useSeoUpdates(projectId);
   const { messages, loading: msgLoading, send: sendMessage } = useSeoClientMessages(projectId);
   const { reports, loading: repLoading, generate: generateReport } = useSeoMonthlyReports(projectId);
@@ -341,33 +346,60 @@ const SeoProjectDetailPage = () => {
         <TabsContent value="competitors" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-semibold">Competitors ({competitors.length})</h2>
-            <Dialog open={compOpen} onOpenChange={setCompOpen}>
-              <DialogTrigger asChild><Button size="sm"><Plus className="h-3 w-3 mr-1" /> Add Competitor</Button></DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Add Competitor</DialogTitle></DialogHeader>
-                <div className="space-y-3">
-                  <div><Label>Domain *</Label><Input value={compForm.competitor_domain} onChange={e => setCompForm({ ...compForm, competitor_domain: e.target.value })} placeholder="competitor.com" /></div>
-                  <div><Label>Name</Label><Input value={compForm.competitor_name} onChange={e => setCompForm({ ...compForm, competitor_name: e.target.value })} /></div>
-                  <Button className="w-full" onClick={async () => {
-                    if (!compForm.competitor_domain) return;
-                    await addCompetitor(compForm);
-                    setCompOpen(false);
-                    setCompForm({ competitor_domain: "", competitor_name: "" });
-                  }}>Add Competitor</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <div className="flex gap-2">
+              <Button size="sm" variant={competitors.length > 0 ? "outline" : "default"} disabled={fetchingCompetitors} onClick={async () => {
+                if (!profile?.business_id || !projectId || !project?.website_domain) {
+                  toast.error("Project domain required"); return;
+                }
+                setFetchingCompetitors(true);
+                try {
+                  const { data, error } = await supabase.functions.invoke("seo-competitor-fetch", {
+                    body: { domain: project.website_domain, project_id: projectId, business_id: profile.business_id },
+                  });
+                  if (error) throw error;
+                  toast.success(`Found ${data.total_found} competitors, ${data.new_inserted} new added`);
+                  refetchCompetitors();
+                } catch (e: any) {
+                  toast.error(e.message || "Failed to fetch competitors");
+                }
+                setFetchingCompetitors(false);
+              }}>
+                <Globe className="h-3 w-3 mr-1" /> {fetchingCompetitors ? "Fetching..." : competitors.length > 0 ? "Refresh Competitors" : "Fetch Competitors"}
+              </Button>
+              <Dialog open={compOpen} onOpenChange={setCompOpen}>
+                <DialogTrigger asChild><Button size="sm" variant="outline"><Plus className="h-3 w-3 mr-1" /> Add Manual</Button></DialogTrigger>
+                <DialogContent>
+                  <DialogHeader><DialogTitle>Add Competitor</DialogTitle></DialogHeader>
+                  <div className="space-y-3">
+                    <div><Label>Domain *</Label><Input value={compForm.competitor_domain} onChange={e => setCompForm({ ...compForm, competitor_domain: e.target.value })} placeholder="competitor.com" /></div>
+                    <div><Label>Name</Label><Input value={compForm.competitor_name} onChange={e => setCompForm({ ...compForm, competitor_name: e.target.value })} /></div>
+                    <Button className="w-full" onClick={async () => {
+                      if (!compForm.competitor_domain) return;
+                      await addCompetitor(compForm);
+                      setCompOpen(false);
+                      setCompForm({ competitor_domain: "", competitor_name: "" });
+                    }}>Add Competitor</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
+          {competitors.length > 0 && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 p-3 text-sm text-amber-800 dark:text-amber-200">
+              Competitors already discovered. Click "Refresh Competitors" to update.
+            </div>
+          )}
           {compLoading ? <Skeleton className="h-24 w-full" /> : competitors.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">No competitors tracked yet</CardContent></Card>
+            <Card><CardContent className="py-8 text-center text-muted-foreground">No competitors tracked yet. Click "Fetch Competitors" to auto-discover top 30 from Google AU.</CardContent></Card>
           ) : (
             <Card><Table><TableHeader><TableRow>
-              <TableHead>Name</TableHead><TableHead>Domain</TableHead><TableHead>Added</TableHead>
+              <TableHead>Domain</TableHead><TableHead>Name</TableHead><TableHead>Rank</TableHead><TableHead>Discovered</TableHead>
             </TableRow></TableHeader><TableBody>
               {competitors.map(c => (
                 <TableRow key={c.id}>
-                  <TableCell className="font-medium">{c.competitor_name || "—"}</TableCell>
-                  <TableCell>{c.competitor_domain}</TableCell>
+                  <TableCell className="font-medium">{(c as any).competitor_domain}</TableCell>
+                  <TableCell>{(c as any).competitor_name || (c as any).competitor_title || "—"}</TableCell>
+                  <TableCell>{(c as any).ranking_position || "—"}</TableCell>
                   <TableCell className="text-sm">{new Date(c.created_at).toLocaleDateString()}</TableCell>
                 </TableRow>
               ))}
