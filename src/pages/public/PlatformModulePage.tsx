@@ -14,32 +14,19 @@ const PlatformModulePage: React.FC = () => {
 
   usePageTitle(page.metaTitle, page.metaDescription);
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: `NextWeb ${page.title}`,
-    applicationCategory: "BusinessApplication",
-    operatingSystem: "Web, iOS, Android",
-    description: page.metaDescription,
-    provider: {
-      "@type": "Organization",
-      name: "NextWeb",
-      url: "https://nextweb.com.au",
-      areaServed: ["Brisbane", "Gold Coast", "Australia"],
-    },
-    ...(page.faqs.length > 0 && {
-      mainEntity: page.faqs.map((f) => ({
-        "@type": "Question",
-        name: f.q,
-        acceptedAnswer: { "@type": "Answer", text: f.a },
-      })),
-    }),
-  };
+  const schemas = [
+    buildSoftwareAppJsonLd(page.title, page.metaDescription),
+    buildBreadcrumbJsonLd([
+      { name: "Home", url: "/" },
+      { name: "Platform", url: "/platform" },
+      { name: page.title, url: `/platform/${slug}` },
+    ]),
+    buildFaqJsonLd(page.faqs),
+  ].filter(Boolean) as object[];
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-
+      <JsonLdScript data={schemas} />
       {/* Hero */}
       <section className="relative py-20 md:py-32 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[hsl(222,47%,6%)] via-[hsl(222,47%,10%)] to-[hsl(200,40%,10%)]" />

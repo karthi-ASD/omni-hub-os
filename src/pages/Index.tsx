@@ -94,6 +94,7 @@ const Index = () => {
 
   return (
     <>
+      <JsonLdScript data={homepageJsonLd} />
       {/* ─── HERO ─── */}
       <section className="relative min-h-[90vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[hsl(222,47%,6%)] via-[hsl(222,47%,10%)] to-[hsl(200,40%,10%)]" />

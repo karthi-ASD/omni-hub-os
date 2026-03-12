@@ -14,40 +14,19 @@ const ServiceDetailPage: React.FC = () => {
 
   usePageTitle(page.metaTitle, page.metaDescription);
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Service",
-    name: page.title,
-    description: page.metaDescription,
-    provider: {
-      "@type": "Organization",
-      name: "NextWeb",
-      url: "https://nextweb.com.au",
-      areaServed: ["Brisbane", "Gold Coast", "Australia"],
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: "Brisbane",
-        addressRegion: "QLD",
-        addressCountry: "AU",
-      },
-    },
-    ...(page.faqs.length > 0 && {
-      mainEntity: page.faqs.map((f) => ({
-        "@type": "Question",
-        name: f.q,
-        acceptedAnswer: { "@type": "Answer", text: f.a },
-      })),
-    }),
-  };
+  const schemas = [
+    buildServiceJsonLd(page.title, page.metaDescription),
+    buildBreadcrumbJsonLd([
+      { name: "Home", url: "/" },
+      { name: "Services", url: "/services" },
+      { name: page.title, url: `/services/${slug}` },
+    ]),
+    buildFaqJsonLd(page.faqs),
+  ].filter(Boolean) as object[];
 
   return (
     <>
-      {/* JSON-LD */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-
+      <JsonLdScript data={schemas} />
       {/* Hero */}
       <section className="relative py-20 md:py-32 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[hsl(222,47%,6%)] via-[hsl(222,47%,10%)] to-[hsl(200,40%,10%)]" />
