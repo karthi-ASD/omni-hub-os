@@ -198,6 +198,7 @@ import AISalesAssistantPage from "./pages/AISalesAssistantPage";
 import SalesKnowledgeBasePage from "./pages/SalesKnowledgeBasePage";
 import ProspectFinderPage from "./pages/ProspectFinderPage";
 import SalesOpportunitiesPage from "./pages/SalesOpportunitiesPage";
+import ClientIntelligenceDashboardPage from "./pages/ClientIntelligenceDashboardPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
