@@ -109,7 +109,7 @@ const UserProfilePage = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}><ArrowLeft className="h-4 w-4" /></Button>
-        <PageHeader title={profile.full_name} description={profile.email} />
+        <PageHeader title={profile.full_name} subtitle={profile.email} />
       </div>
 
       <Tabs defaultValue="basic">
