@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useClients, Client, ClientStatus } from "@/hooks/useClients";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSalesTeam } from "@/hooks/useSalesTeam";
+import { useCanCreateClient } from "@/hooks/useCanCreateClient";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ const ClientsPage = () => {
   const [syncing, setSyncing] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const { members: salesTeam } = useSalesTeam();
+  const { canCreate } = useCanCreateClient();
 
   const handleSearchChange = (value: string) => {
     setSearchInput(value);
@@ -92,12 +94,16 @@ const ClientsPage = () => {
         <Button size="sm" variant="outline" onClick={handleSyncClients} disabled={syncing}>
           <RefreshCw className={`h-4 w-4 mr-1 ${syncing ? "animate-spin" : ""}`} /> {syncing ? "Syncing..." : "Sync"}
         </Button>
-        <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
-          <Upload className="h-4 w-4 mr-1" /> Import
-        </Button>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" /> New
-        </Button>
+        {canCreate && (
+          <>
+            <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload className="h-4 w-4 mr-1" /> Import
+            </Button>
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" /> New
+            </Button>
+          </>
+        )}
       </PageHeader>
 
       {/* KPI strip */}
