@@ -1,9 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 
-const AUTH_TIMEOUT_MS = 12000;
+const DIRECT_AUTH_TIMEOUT_MS = 8000;
+const PROXY_AUTH_TIMEOUT_MS = 12000;
 const LOCAL_SIGNOUT_TIMEOUT_MS = 1500;
 const AUTH_TIMEOUT_CODE = "AUTH_TIMEOUT";
 const SIGNOUT_TIMEOUT_CODE = "AUTH_SIGNOUT_TIMEOUT";
+
+const AUTH_CONFIG_ERROR_CODE = "AUTH_CONFIG_ERROR";
 
 type PasswordAuthResult = {
   data: {
@@ -20,6 +23,13 @@ type ProxyAuthPayload = {
   error?: string;
   error_description?: string;
   msg?: string;
+};
+
+type AuthDiagnostics = {
+  hasSupabaseUrl: boolean;
+  hasPublishableKey: boolean;
+  hasAnonKeyAlias: boolean;
+  supabaseUrl: string;
 };
 
 const isTimeoutError = (error: unknown, code: string) =>
@@ -52,13 +62,36 @@ const withTimeout = async <T>(
   }
 };
 
+export const getAuthClientDiagnostics = (): AuthDiagnostics => {
+  const supabaseUrl = String(import.meta.env.VITE_SUPABASE_URL || "").trim();
+  const publishableKey = String(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "").trim();
+  const anonKeyAlias = String(import.meta.env.VITE_SUPABASE_ANON_KEY || "").trim();
+
+  return {
+    hasSupabaseUrl: Boolean(supabaseUrl),
+    hasPublishableKey: Boolean(publishableKey),
+    hasAnonKeyAlias: Boolean(anonKeyAlias),
+    supabaseUrl,
+  };
+};
+
+const validateAuthConfig = () => {
+  const diagnostics = getAuthClientDiagnostics();
+
+  if (!diagnostics.hasSupabaseUrl || !diagnostics.hasPublishableKey) {
+    throw new Error(AUTH_CONFIG_ERROR_CODE);
+  }
+
+  return diagnostics;
+};
+
 const proxyPasswordSignIn = async (email: string, password: string): Promise<PasswordAuthResult> => {
   const { data, error: invokeError } = await withTimeout(
     () =>
       supabase.functions.invoke("auth-password-proxy", {
         body: { email: email.trim(), password },
       }),
-    AUTH_TIMEOUT_MS,
+    PROXY_AUTH_TIMEOUT_MS,
     AUTH_TIMEOUT_CODE
   );
 
@@ -90,7 +123,8 @@ const proxyPasswordSignIn = async (email: string, password: string): Promise<Pas
     refresh_token: payload.refresh_token,
   });
 
-  const normalizedSessionData = (sessionData as { user?: unknown; session?: unknown; [key: string]: unknown } | null) ?? {};
+  const normalizedSessionData =
+    (sessionData as { user?: unknown; session?: unknown; [key: string]: unknown } | null) ?? {};
 
   return {
     data: {
@@ -107,11 +141,21 @@ export const signInWithPasswordResilient = async (
   password: string
 ): Promise<PasswordAuthResult> => {
   const credentials = { email: email.trim(), password };
+  const diagnostics = validateAuthConfig();
+
+  if (import.meta.env.DEV) {
+    console.info("[auth] client diagnostics", {
+      hasSupabaseUrl: diagnostics.hasSupabaseUrl,
+      hasPublishableKey: diagnostics.hasPublishableKey,
+      hasAnonKeyAlias: diagnostics.hasAnonKeyAlias,
+      supabaseUrl: diagnostics.supabaseUrl,
+    });
+  }
 
   try {
     return (await withTimeout(
       () => supabase.auth.signInWithPassword(credentials),
-      AUTH_TIMEOUT_MS,
+      DIRECT_AUTH_TIMEOUT_MS,
       AUTH_TIMEOUT_CODE
     )) as unknown as PasswordAuthResult;
   } catch (error) {
@@ -123,18 +167,11 @@ export const signInWithPasswordResilient = async (
       SIGNOUT_TIMEOUT_CODE
     ).catch(() => undefined);
 
-    try {
-      return (await withTimeout(
-        () => supabase.auth.signInWithPassword(credentials),
-        AUTH_TIMEOUT_MS,
-        AUTH_TIMEOUT_CODE
-      )) as unknown as PasswordAuthResult;
-    } catch (secondError) {
-      if (!shouldFallbackToProxy(secondError)) throw secondError;
-      return proxyPasswordSignIn(email, password);
-    }
+    return proxyPasswordSignIn(email, password);
   }
 };
 
-export const isAuthTimeoutError = (error: unknown) =>
-  isTimeoutError(error, AUTH_TIMEOUT_CODE);
+export const isAuthTimeoutError = (error: unknown) => isTimeoutError(error, AUTH_TIMEOUT_CODE);
+export const isAuthConfigError = (error: unknown) =>
+  error instanceof Error && error.message === AUTH_CONFIG_ERROR_CODE;
+
