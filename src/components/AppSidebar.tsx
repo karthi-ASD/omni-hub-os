@@ -164,7 +164,9 @@ export function AppSidebar() {
             )}
             <SidebarGroupContent>
               <SidebarMenu>
-                {section.items.map(item => {
+                {section.items
+                  .filter(item => !item.roles || item.roles.some(r => roles.includes(r as any)))
+                  .map(item => {
                   const active = location.pathname === item.to || location.pathname.startsWith(item.to + "/");
                   return (
                     <SidebarMenuItem key={item.to}>
