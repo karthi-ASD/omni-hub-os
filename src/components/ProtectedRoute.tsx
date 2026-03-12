@@ -13,12 +13,16 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles }) => {
   const { session, loading, roles, user } = useAuth();
-  const [securityCheck, setSecurityCheck] = useState<"loading" | "pass" | "required">("loading");
+  const [securityCheck, setSecurityCheck] = useState<"loading" | "pass" | "required">("pass");
 
   useEffect(() => {
-    if (!user || loading) return;
+    if (loading) return;
+    if (!user) {
+      setSecurityCheck("pass");
+      return;
+    }
     checkFirstLoginSecurity();
-  }, [user, loading]);
+  }, [user?.id, loading]);
 
   const checkFirstLoginSecurity = async () => {
     if (!user) { setSecurityCheck("pass"); return; }
