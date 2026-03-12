@@ -26,6 +26,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
 
   const checkFirstLoginSecurity = async () => {
     if (!user) { setSecurityCheck("pass"); return; }
+
+    setSecurityCheck("loading");
+    const safetyTimeout = window.setTimeout(() => {
+      setSecurityCheck("pass");
+    }, 5000);
+
     try {
       const { data } = await supabase
         .from("first_login_security" as any)
@@ -39,10 +45,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
       }
     } catch {
       setSecurityCheck("pass");
+    } finally {
+      window.clearTimeout(safetyTimeout);
     }
   };
 
-  if (loading || securityCheck === "loading") {
+  if (loading || (user && securityCheck === "loading")) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
