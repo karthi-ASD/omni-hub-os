@@ -767,6 +767,24 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "White-Label", label: "Reports" },
       { value: "Local SEO", label: "Brisbane & GC" },
     ],
+    testimonials: [
+      { quote: "SEO OS replaced Ahrefs, SEMrush, and our project management tool. Everything in one platform with client reporting built in.", name: "Amanda Price", role: "SEO Director", company: "Digital Edge Agency" },
+      { quote: "Ranking tracking on Google.com.au with daily updates gives us the local accuracy no other tool provides.", name: "Jake Morrison", role: "SEO Manager", company: "LocalRank Brisbane" },
+      { quote: "White-label reports saved our team 20 hours per month. Clients love the professional presentation.", name: "Sarah Lin", role: "Agency Owner", company: "Coast Digital Gold Coast" },
+    ],
+    useCases: [
+      { title: "SEO Agency Management", industry: "Agency", result: "20hrs/month Saved", desc: "Multi-client SEO campaign management with white-label reporting, content workflows, and automated audits." },
+      { title: "Local Business SEO", industry: "Small Business", result: "Page 1 Rankings", desc: "Local SEO management for 25+ small business clients with GBP optimisation and citation tracking." },
+      { title: "Enterprise SEO Operations", industry: "Enterprise", result: "200+ Pages Audited", desc: "Large-scale technical SEO audits, content gap analysis, and competitor monitoring for enterprise websites." },
+    ],
+    integrations: ["Google Search Console", "Google Analytics", "Google Business Profile", "Content CMS", "Sales CRM"],
+    localSEO: {
+      heading: "SEO Platform for Brisbane & Gold Coast Agencies",
+      paragraphs: [
+        "NextWeb SEO OS is the complete SEO operating system for Brisbane and Gold Coast agencies and enterprises. Track rankings on Google.com.au, run automated technical audits, manage content workflows, and deliver white-label client reports — all from one platform.",
+        "Built by SEO practitioners for SEO practitioners, our platform includes local SEO tools specifically designed for Australian businesses targeting Brisbane, Gold Coast, and South East Queensland markets.",
+      ],
+    },
   },
   "finance": {
     slug: "finance",
