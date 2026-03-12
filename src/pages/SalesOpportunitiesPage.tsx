@@ -66,7 +66,7 @@ export default function SalesOpportunitiesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader heading="Sales Opportunities" text="Identify top prospects and market insights for strategic outreach." />
+      <PageHeader title="Sales Opportunities" subtitle="Identify top prospects and market insights for strategic outreach." />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label="Active Leads" value={hotLeads.length} icon={Target} gradient="from-primary to-accent" loading={loading} />

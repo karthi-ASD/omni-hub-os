@@ -65,7 +65,7 @@ export default function ProspectFinderPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader heading="Prospect Finder" text="Discover businesses with SEO opportunities using AI intelligence." />
+      <PageHeader title="Prospect Finder" subtitle="Discover businesses with SEO opportunities using AI intelligence." />
 
       <Card>
         <CardHeader>
