@@ -8,7 +8,8 @@ import {
   Search, Receipt, Briefcase, Globe, Lightbulb, Palette, Wrench,
   Server, Cpu, Blocks, Layers, GraduationCap, Building2, Plane,
   Landmark, MonitorSmartphone, Film, DollarSign, Home, Factory,
-  Zap, ShoppingBag, Leaf, PiggyBank, Store,
+  Zap, ShoppingBag, Leaf, PiggyBank, Store, Tablet, GitMerge,
+  Cloud, MailCheck, Lock, Figma,
 } from "lucide-react";
 
 interface MegaSection {
