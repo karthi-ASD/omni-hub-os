@@ -40,8 +40,6 @@ const ClientsPage = () => {
   const [syncing, setSyncing] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const { members: salesTeam } = useSalesTeam();
-  const [syncing, setSyncing] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   const handleSearchChange = (value: string) => {
     setSearchInput(value);
