@@ -325,6 +325,21 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "99.9%", label: "Uptime" },
       { value: "$2M+", label: "GMV Processed" },
     ],
+    testimonials: [
+      { quote: "Our online store conversion rate increased 35% with the optimised checkout flow. The CRM integration is brilliant.", name: "Sophie Lee", role: "eCommerce Manager", company: "Coastal Living AU" },
+      { quote: "Managing inventory across website and social selling from one dashboard saved us from overselling disasters.", name: "Marcus Patel", role: "Founder", company: "GoldCoast Supplements" },
+    ],
+    useCases: [
+      { title: "Multi-Channel Fashion Retail", industry: "Retail", result: "+35% Conversion", desc: "Unified storefront with social selling, abandoned cart recovery, and CRM-connected customer journeys." },
+      { title: "B2B Wholesale Portal", industry: "Manufacturing", result: "2x Order Value", desc: "Custom wholesale portal with tiered pricing, bulk ordering, and automated reorder reminders." },
+    ],
+    integrations: ["Stripe", "PayPal", "eWAY", "Afterpay", "Australia Post", "SEO OS", "Analytics", "CRM"],
+    localSEO: {
+      heading: "eCommerce Platform for Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb Commerce helps Brisbane and Gold Coast retailers sell online with integrated storefronts, payment processing, and CRM — all designed for the Australian market with GST compliance and local payment gateways.",
+      ],
+    },
   },
   "analytics": {
     slug: "analytics",
