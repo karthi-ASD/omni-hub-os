@@ -1,4 +1,4 @@
-import nextwebLogo from "@/assets/nextweb-logo.png";
+import nextwebLogo from "@/assets/nextweb-logo-new.png";
 
 interface NWLogoProps {
   size?: "sm" | "md" | "lg";
