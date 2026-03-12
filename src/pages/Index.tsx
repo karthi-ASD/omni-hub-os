@@ -10,6 +10,12 @@ import {
 } from "lucide-react";
 import { NWLogo } from "@/components/NWLogo";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import AuthDiagnostics from "@/components/AuthDiagnostics";
+import heroBg from "@/assets/hero-bg.jpg";
+import dashboardPreview from "@/assets/dashboard-preview.jpg";
+import teamCollab from "@/assets/team-collab.jpg";
+import aiAutomation from "@/assets/ai-automation.jpg";
+import multiDevice from "@/assets/multi-device.jpg";
 import heroBg from "@/assets/hero-bg.jpg";
 import dashboardPreview from "@/assets/dashboard-preview.jpg";
 import teamCollab from "@/assets/team-collab.jpg";
