@@ -185,6 +185,7 @@ import CompanyLoginPage from "./pages/CompanyLoginPage";
 import CompanySignupPage from "./pages/CompanySignupPage";
 import DepartmentSignupPage from "./pages/DepartmentSignupPage";
 import ClientLoginPage from "./pages/ClientLoginPage";
+import FirstLoginSecurityPage from "./pages/FirstLoginSecurityPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
