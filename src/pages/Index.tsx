@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { NWLogo } from "@/components/NWLogo";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import AuthDiagnostics from "@/components/AuthDiagnostics";
 import heroBg from "@/assets/hero-bg.jpg";
 import dashboardPreview from "@/assets/dashboard-preview.jpg";
 import teamCollab from "@/assets/team-collab.jpg";
@@ -24,6 +25,7 @@ const Index = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-sidebar">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <AuthDiagnostics />
       </div>
     );
   }
