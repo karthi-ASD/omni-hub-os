@@ -21,8 +21,11 @@ import { useOnboardingChecklist } from "@/hooks/useOnboardingChecklist";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useClientFinancials } from "@/hooks/useClientFinancials";
+import { useSalesTeam } from "@/hooks/useSalesTeam";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const statusColor = (s: string) => {
   const m: Record<string, string> = {
