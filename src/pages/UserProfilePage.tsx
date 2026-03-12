@@ -67,22 +67,24 @@ const UserProfilePage = () => {
     // Fetch employee record if exists
     try {
       const { data: emp } = await supabase.rpc("get_user_business_id" as any, { _user_id: userId }).then(() => ({ data: null }));
-      // Attempt to get HR employee data
-      const empRes = await fetch(`/api/hr-employee?user_id=${userId}`).catch(() => null);
       setEmployee(null);
     } catch { /* hr_employees may not exist */ }
 
     // Task stats
-    const { count: assigned } = await supabase
-      .from("project_tasks")
-      .select("id", { count: "exact", head: true })
-      .eq("assigned_to_user_id", userId!);
-    const { count: completed } = await supabase
-      .from("project_tasks")
-      .select("id", { count: "exact", head: true })
-      .eq("assigned_to_user_id", userId!)
-      .eq("status", "done");
-    setTaskStats({ assigned: assigned || 0, completed: completed || 0 });
+    try {
+      const { count: assigned } = await (supabase
+        .from("project_tasks")
+        .select("id", { count: "exact", head: true })
+        .eq("assigned_to_user_id", userId!) as any);
+      const { count: completed } = await (supabase
+        .from("project_tasks")
+        .select("id", { count: "exact", head: true })
+        .eq("assigned_to_user_id", userId!)
+        .eq("status", "done") as any);
+      setTaskStats({ assigned: assigned || 0, completed: completed || 0 });
+    } catch {
+      setTaskStats({ assigned: 0, completed: 0 });
+    }
 
     setLoading(false);
   };
