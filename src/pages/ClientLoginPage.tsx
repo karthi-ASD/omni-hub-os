@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +7,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff, ArrowRight, Users } from "lucide-react";
 import { NWLogo } from "@/components/NWLogo";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { isAuthTimeoutError, signInWithPasswordResilient } from "@/lib/auth-signin";
 
 const ClientLoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -21,15 +21,16 @@ const ClientLoginPage: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: form.email.trim(),
-        password: form.password,
-      });
+      const { error } = await signInWithPasswordResilient(form.email, form.password);
       if (error) throw error;
       toast.success("Welcome back!");
       navigate("/dashboard");
     } catch (err: any) {
-      toast.error(err.message || "Login failed");
+      if (isAuthTimeoutError(err)) {
+        toast.error("Sign-in timed out. Please try again.");
+      } else {
+        toast.error(err.message || "Login failed");
+      }
     } finally {
       setLoading(false);
     }
