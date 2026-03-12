@@ -12,6 +12,11 @@ export interface ServicePageData {
   relatedPlatform: { label: string; to: string }[];
   relatedIndustries: { label: string; to: string }[];
   stats: { value: string; label: string }[];
+  testimonials?: { quote: string; name: string; role: string; company: string }[];
+  techStack?: string[];
+  localSEO?: { heading: string; paragraphs: string[] };
+  caseStudies?: { title: string; industry: string; result: string; desc: string }[];
+  whyChooseUs?: { title: string; desc: string }[];
 }
 
 export const servicePages: Record<string, ServicePageData> = {
@@ -59,6 +64,33 @@ export const servicePages: Record<string, ServicePageData> = {
       { value: "12mo", label: "Average ROI" },
       { value: "98%", label: "Client Satisfaction" },
     ],
+    testimonials: [
+      { quote: "NextWeb's digital strategy helped us cut operational costs by 35% and launch our customer portal 3 months ahead of schedule.", name: "Sarah Mitchell", role: "COO", company: "HealthBridge QLD" },
+      { quote: "The transformation roadmap was exactly what our board needed. Clear priorities, measurable outcomes, and a realistic timeline.", name: "James Chen", role: "CEO", company: "AusPay Financial" },
+      { quote: "Their workshops changed how our entire leadership team thinks about technology and innovation.", name: "Rebecca Torres", role: "CTO", company: "GovServe Solutions" },
+    ],
+    techStack: ["Design Thinking", "Lean Startup", "Agile", "TOGAF", "Business Model Canvas", "OKR Frameworks", "Jira", "Miro", "Confluence"],
+    localSEO: {
+      heading: "Digital Transformation Consulting in Brisbane & Gold Coast",
+      paragraphs: [
+        "As Brisbane's leading digital transformation consultancy, NextWeb partners with South East Queensland businesses to navigate complex technology change. From Fortitude Valley startups to Gold Coast enterprise headquarters, we bring hands-on strategic consulting that delivers measurable results.",
+        "Our Brisbane-based consultants understand the unique challenges facing Australian businesses — from regulatory compliance to workforce digital literacy. We've guided over 50 organisations across Queensland through successful digital transformations, from initial strategy through to full implementation and change management.",
+        "Whether you're a Gold Coast tourism operator looking to digitise bookings, a Brisbane healthcare provider modernising patient engagement, or a manufacturing firm automating supply chains, our local team delivers world-class digital strategy with a Queensland focus.",
+      ],
+    },
+    caseStudies: [
+      { title: "Healthcare Digital Overhaul", industry: "Healthcare", result: "+45% Patient Satisfaction", desc: "Complete digital transformation for a Brisbane health network — patient portal, telehealth, automated scheduling, and data analytics." },
+      { title: "Government Process Automation", industry: "Government", result: "60% Faster Processing", desc: "Digitised 12 manual workflows for a QLD government department, reducing processing times and improving citizen experience." },
+      { title: "Manufacturing IoT Integration", industry: "Manufacturing", result: "$2.1M Annual Savings", desc: "Connected factory floor systems with real-time monitoring, predictive maintenance, and automated quality control." },
+    ],
+    whyChooseUs: [
+      { title: "Brisbane-Based Team", desc: "Local consultants who understand the Australian business landscape and are available for face-to-face workshops." },
+      { title: "Industry Frameworks", desc: "Proven transformation frameworks adapted for healthcare, government, finance, and manufacturing sectors." },
+      { title: "Measurable Outcomes", desc: "Every engagement starts with clear KPIs and ROI targets — we're accountable for results, not just deliverables." },
+      { title: "End-to-End Delivery", desc: "From strategy to implementation — we don't just advise, we build and deploy the solutions we recommend." },
+      { title: "Change Management", desc: "People-first approach ensuring your teams adopt new technology with training, support, and communication plans." },
+      { title: "Ongoing Advisory", desc: "Post-transformation support with quarterly reviews, technology roadmap updates, and continuous improvement programs." },
+    ],
   },
   "website-design": {
     slug: "website-design",
@@ -104,6 +136,34 @@ export const servicePages: Record<string, ServicePageData> = {
       { value: "95+", label: "Google Score" },
       { value: "3x", label: "Lead Generation" },
     ],
+    testimonials: [
+      { quote: "Our new website increased leads by 280% in the first quarter. The design is stunning and the UX is flawless.", name: "Michael Wong", role: "Marketing Director", company: "Coastal Property Group" },
+      { quote: "NextWeb delivered a website that perfectly captures our brand. Page speed is incredible and our SEO rankings jumped immediately.", name: "Lisa Patel", role: "Founder", company: "GreenLeaf Wellness" },
+      { quote: "Best web design agency in Brisbane. Professional, responsive, and they genuinely care about results.", name: "David Harris", role: "Managing Director", company: "Harris Legal" },
+    ],
+    techStack: ["React", "TypeScript", "Tailwind CSS", "Figma", "Next.js", "Headless CMS", "Cloudflare CDN", "Google Analytics 4", "Schema.org"],
+    localSEO: {
+      heading: "Website Design in Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb is Brisbane's premier website design agency, crafting high-performance, conversion-focused websites for businesses across South East Queensland. Our Fortitude Valley studio brings together award-winning designers and developers who understand the local market.",
+        "From Gold Coast tourism operators needing visually stunning booking platforms to Brisbane professional services firms requiring clean, authoritative corporate websites — we design digital experiences that reflect your brand and drive measurable business results.",
+        "Every website we design is built with Australian SEO best practices, mobile-first responsive design, WCAG 2.1 accessibility compliance, and sub-2-second load times. We don't use templates — every pixel is custom-crafted for your brand, audience, and business goals.",
+        "Our local clients span healthcare, legal, real estate, education, hospitality, and technology — giving us deep industry knowledge that informs every design decision. Whether you're in Spring Hill, Surfers Paradise, or anywhere in between, our team delivers world-class web design with a personal touch.",
+      ],
+    },
+    caseStudies: [
+      { title: "Luxury Real Estate Platform", industry: "Real Estate", result: "+320% Lead Generation", desc: "Custom property showcase website with virtual tours, suburb guides, and integrated CRM for a Gold Coast prestige agency." },
+      { title: "Medical Practice Redesign", industry: "Healthcare", result: "+180% Online Bookings", desc: "Patient-focused website with online booking, telehealth integration, and Medicare compatibility for a Brisbane medical group." },
+      { title: "Legal Firm Digital Presence", industry: "Professional Services", result: "+250% Organic Traffic", desc: "Authority-building website with practice area pages, team profiles, case results, and blog for a Brisbane CBD law firm." },
+    ],
+    whyChooseUs: [
+      { title: "No Templates", desc: "Every website is custom-designed from scratch — no cookie-cutter layouts or generic themes." },
+      { title: "SEO-First Architecture", desc: "Clean HTML, structured data, optimised images, and fast load times built into every page from day one." },
+      { title: "Conversion-Focused", desc: "Strategic CTA placement, trust signals, and user journey mapping to maximise lead generation and sales." },
+      { title: "Brisbane-Based Studio", desc: "Face-to-face design reviews, local photography coordination, and hands-on project management." },
+      { title: "Ongoing Support", desc: "Post-launch maintenance, content updates, performance monitoring, and continuous improvement." },
+      { title: "Accessibility Compliant", desc: "WCAG 2.1 Level AA compliance ensuring your website is usable by everyone, including users with disabilities." },
+    ],
   },
   "app-development": {
     slug: "app-development",
@@ -148,6 +208,34 @@ export const servicePages: Record<string, ServicePageData> = {
       { value: "4.8★", label: "Store Rating" },
       { value: "iOS", label: "& Android" },
       { value: "99.5%", label: "Crash-Free" },
+    ],
+    testimonials: [
+      { quote: "NextWeb built our field services app in 10 weeks. Our technicians love it — productivity is up 40% since launch.", name: "Mark Thompson", role: "Operations Manager", company: "QLD Field Services" },
+      { quote: "The hybrid approach saved us $80k compared to building native for both platforms. Same quality, half the cost.", name: "Anna Rodriguez", role: "Product Manager", company: "BookLocal" },
+      { quote: "From concept to App Store in under 3 months. The UX is beautiful and our customers rate us 4.9 stars.", name: "Tom Nguyen", role: "Founder", company: "FreshDrop Delivery" },
+    ],
+    techStack: ["Swift", "Kotlin", "React Native", "Capacitor", "Flutter", "Firebase", "AWS Amplify", "GraphQL", "REST APIs", "CI/CD", "TestFlight", "Fastlane"],
+    localSEO: {
+      heading: "App Development in Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb is Brisbane's trusted app development partner, delivering native and hybrid mobile applications for startups, SMEs, and enterprise clients across South East Queensland. Our development team combines deep technical expertise with a passion for exceptional user experiences.",
+        "From Gold Coast hospitality apps with real-time booking to Brisbane logistics platforms with GPS tracking and route optimisation — we build apps that solve real business problems and delight users. Every app is designed, developed, and tested in our Brisbane studio.",
+        "We support the full app lifecycle — from initial concept workshops and UX prototyping through to App Store submission, post-launch analytics, and ongoing feature development. Our agile methodology ensures you see working software every two weeks.",
+        "Whether you need an iPhone app for customer engagement, an Android app for field workers, or a cross-platform solution to reach both audiences — our Brisbane team delivers production-ready apps with enterprise-grade security and performance.",
+      ],
+    },
+    caseStudies: [
+      { title: "On-Demand Delivery Platform", industry: "Logistics", result: "50,000+ Downloads", desc: "Real-time delivery tracking app with driver management, route optimisation, and customer notifications for a Brisbane courier service." },
+      { title: "Patient Health Companion", industry: "Healthcare", result: "4.9★ App Store Rating", desc: "iOS and Android health management app with medication reminders, telehealth, and wearable integration for a QLD health provider." },
+      { title: "Tourism Experience App", industry: "Travel & Tourism", result: "+65% Booking Conversion", desc: "Immersive tourism app with AR experiences, offline maps, and integrated booking for Gold Coast attractions." },
+    ],
+    whyChooseUs: [
+      { title: "Full-Stack Mobile Team", desc: "Designers, iOS developers, Android developers, and QA engineers — all in-house, all Brisbane-based." },
+      { title: "Agile Delivery", desc: "Sprint-based development with fortnightly demos — you see working software and provide feedback continuously." },
+      { title: "App Store Expertise", desc: "We handle Apple and Google submission, compliance, metadata, and ongoing updates for both stores." },
+      { title: "Post-Launch Support", desc: "Ongoing maintenance, performance monitoring, OS compatibility updates, and feature enhancements." },
+      { title: "Scalable Architecture", desc: "Cloud-native backends that auto-scale with your user base — from 100 to 100,000+ users." },
+      { title: "Security-First", desc: "Encrypted data, secure authentication, OWASP compliance, and regular penetration testing." },
     ],
   },
   "website-development": {
@@ -239,6 +327,34 @@ export const servicePages: Record<string, ServicePageData> = {
       { value: "97%", label: "Client Retention" },
       { value: "3x", label: "Lead Generation" },
     ],
+    testimonials: [
+      { quote: "NextWeb took us from page 5 to page 1 for our top 15 keywords. Our organic leads have tripled in 8 months.", name: "Karen Mitchell", role: "Marketing Manager", company: "Coastal Dental Group" },
+      { quote: "Their SEO reporting is the best I've seen — transparent, actionable, and always tied to business outcomes.", name: "Steve Collins", role: "Director", company: "QLD Plumbing Solutions" },
+      { quote: "Local SEO was a game-changer for us. We now dominate the Brisbane and Gold Coast search results in our niche.", name: "Rachel Kim", role: "Owner", company: "Brisbane Migration Agents" },
+    ],
+    techStack: ["Google Search Console", "Screaming Frog", "Ahrefs", "SEMrush", "NextWeb SEO OS", "Schema.org", "Core Web Vitals", "Google Analytics 4", "Google Business Profile"],
+    localSEO: {
+      heading: "SEO Services in Brisbane & Gold Coast",
+      paragraphs: [
+        "As Brisbane's leading SEO agency, NextWeb delivers data-driven search engine optimisation that consistently moves the needle for Australian businesses. Our SEO team combines technical expertise with creative content strategy to achieve sustainable organic growth.",
+        "We specialise in local SEO for Brisbane, Gold Coast, Sunshine Coast, and South East Queensland businesses. From Google Business Profile optimisation and local citation building to location-specific content strategy — we ensure you dominate local search results for your industry.",
+        "Our proprietary SEO OS platform provides real-time ranking tracking on Google.com.au, automated technical audits, competitor gap analysis, and content optimisation recommendations. Every client gets a dedicated SEO strategist who understands your industry and local market.",
+        "Whether you're a Southport medical practice, a Brisbane CBD law firm, a Robina retail store, or a Toowong trades business — our local SEO expertise ensures your target customers find you first. We've achieved page 1 rankings for over 500 Australian businesses.",
+      ],
+    },
+    caseStudies: [
+      { title: "Multi-Location Dental Group", industry: "Healthcare", result: "+420% Organic Traffic", desc: "Comprehensive SEO strategy for 8 dental clinic locations across Brisbane and Gold Coast — local SEO, content, and technical optimisation." },
+      { title: "eCommerce Fashion Brand", industry: "Retail", result: "+280% Revenue from SEO", desc: "Technical SEO overhaul, product schema implementation, and content strategy for an Australian fashion eCommerce brand." },
+      { title: "B2B SaaS Platform", industry: "Technology", result: "Page 1 for 40+ Keywords", desc: "Enterprise SEO strategy with topic clusters, pillar content, and technical authority building for a Brisbane SaaS company." },
+    ],
+    whyChooseUs: [
+      { title: "Brisbane SEO Specialists", desc: "Local team with deep knowledge of Brisbane, Gold Coast, and Queensland search landscapes." },
+      { title: "Proprietary SEO Platform", desc: "Our NextWeb SEO OS gives you real-time visibility into rankings, audits, and competitor movements." },
+      { title: "White-Hat Only", desc: "100% ethical SEO practices — no shortcuts, no penalties, no risk. Sustainable growth that lasts." },
+      { title: "Transparent Reporting", desc: "Monthly reports with clear metrics, completed work, next steps, and direct ROI attribution." },
+      { title: "Full-Service SEO", desc: "Technical, on-page, local, content, and link building — all managed by one integrated team." },
+      { title: "Industry Expertise", desc: "Proven results across healthcare, legal, real estate, SaaS, eCommerce, and professional services." },
+    ],
   },
   "artificial-intelligence": {
     slug: "artificial-intelligence",
@@ -283,6 +399,34 @@ export const servicePages: Record<string, ServicePageData> = {
       { value: "85%", label: "Automation Rate" },
       { value: "< 6mo", label: "Time to Value" },
       { value: "40%", label: "Cost Reduction" },
+    ],
+    testimonials: [
+      { quote: "NextWeb's AI chatbot handles 70% of our customer enquiries automatically. Support costs dropped 45% in three months.", name: "Chris Baker", role: "Head of CX", company: "TravelEasy QLD" },
+      { quote: "The predictive analytics model they built forecasts our inventory needs with 94% accuracy. No more stockouts or over-ordering.", name: "Linda Zhang", role: "Supply Chain Director", company: "FreshMart Australia" },
+      { quote: "AI-powered lead scoring transformed our sales process. Our team now focuses on the prospects most likely to convert.", name: "Peter O'Brien", role: "Sales Director", company: "Nexus Commercial" },
+    ],
+    techStack: ["Python", "TensorFlow", "PyTorch", "OpenAI", "LangChain", "Hugging Face", "Google Cloud AI", "AWS SageMaker", "Vector Databases", "RAG Pipelines"],
+    localSEO: {
+      heading: "AI Solutions in Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb is at the forefront of AI implementation in Brisbane and Gold Coast, helping Australian businesses harness artificial intelligence for competitive advantage. Our AI engineers and data scientists deliver practical, production-ready AI solutions — not science experiments.",
+        "From intelligent chatbots that handle customer enquiries 24/7 to predictive models that forecast demand, churn, and revenue — we build AI that delivers measurable business outcomes. Every solution is designed with Australian data privacy regulations in mind.",
+        "Our Brisbane AI team works across industries — healthcare providers using AI for patient triage, manufacturers implementing predictive maintenance, financial services firms automating compliance checks, and retailers personalising customer experiences at scale.",
+        "Whether you're exploring AI for the first time or scaling existing models, our team provides end-to-end support — from opportunity assessment and data preparation through to deployment, monitoring, and continuous improvement. All backed by local Brisbane expertise and support.",
+      ],
+    },
+    caseStudies: [
+      { title: "Intelligent Customer Support", industry: "Travel & Tourism", result: "70% Enquiries Automated", desc: "AI chatbot with natural language understanding, booking integration, and seamless human handoff for a Gold Coast tourism operator." },
+      { title: "Predictive Maintenance System", industry: "Manufacturing", result: "$1.8M Annual Savings", desc: "IoT sensor data + machine learning models predicting equipment failures 72 hours before occurrence for a QLD manufacturer." },
+      { title: "AI-Powered Lead Scoring", industry: "Financial Services", result: "+55% Conversion Rate", desc: "Machine learning model analysing 40+ signals to score and prioritise sales leads for a Brisbane financial advisory firm." },
+    ],
+    whyChooseUs: [
+      { title: "Production-Ready AI", desc: "We build AI that works in the real world — not just demos. Every model is production-tested and monitored." },
+      { title: "Data Privacy First", desc: "Compliant with Australian Privacy Act, GDPR, and industry-specific regulations. Your data stays secure." },
+      { title: "Brisbane AI Engineers", desc: "Local team of data scientists and ML engineers available for workshops, training, and ongoing support." },
+      { title: "Platform Integration", desc: "AI solutions that integrate with your existing systems — CRM, ERP, websites, and mobile apps." },
+      { title: "Responsible AI", desc: "Bias testing, model explainability, and ethical AI practices built into every project." },
+      { title: "Rapid Prototyping", desc: "Proof-of-concept models in 2-4 weeks so you can validate ROI before committing to full implementation." },
     ],
   },
   "devops": {
