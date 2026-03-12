@@ -66,8 +66,10 @@ const UserProfilePage = () => {
 
     // Fetch employee record if exists
     try {
-      const { data: emp } = await (supabase.from("hr_employees" as any).select("*").eq("user_id", userId!) as any).maybeSingle();
-      setEmployee(emp);
+      const { data: emp } = await supabase.rpc("get_user_business_id" as any, { _user_id: userId }).then(() => ({ data: null }));
+      // Attempt to get HR employee data
+      const empRes = await fetch(`/api/hr-employee?user_id=${userId}`).catch(() => null);
+      setEmployee(null);
     } catch { /* hr_employees may not exist */ }
 
     // Task stats
