@@ -36,6 +36,10 @@ const ClientsPage = () => {
   const [importOpen, setImportOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [salesFilter, setSalesFilter] = useState<string>("all");
+  const [syncing, setSyncing] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const { members: salesTeam } = useSalesTeam();
   const [syncing, setSyncing] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
