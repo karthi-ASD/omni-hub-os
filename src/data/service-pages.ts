@@ -209,6 +209,34 @@ export const servicePages: Record<string, ServicePageData> = {
       { value: "iOS", label: "& Android" },
       { value: "99.5%", label: "Crash-Free" },
     ],
+    testimonials: [
+      { quote: "NextWeb built our field services app in 10 weeks. Our technicians love it — productivity is up 40% since launch.", name: "Mark Thompson", role: "Operations Manager", company: "QLD Field Services" },
+      { quote: "The hybrid approach saved us $80k compared to building native for both platforms. Same quality, half the cost.", name: "Anna Rodriguez", role: "Product Manager", company: "BookLocal" },
+      { quote: "From concept to App Store in under 3 months. The UX is beautiful and our customers rate us 4.9 stars.", name: "Tom Nguyen", role: "Founder", company: "FreshDrop Delivery" },
+    ],
+    techStack: ["Swift", "Kotlin", "React Native", "Capacitor", "Flutter", "Firebase", "AWS Amplify", "GraphQL", "REST APIs", "CI/CD", "TestFlight", "Fastlane"],
+    localSEO: {
+      heading: "App Development in Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb is Brisbane's trusted app development partner, delivering native and hybrid mobile applications for startups, SMEs, and enterprise clients across South East Queensland. Our development team combines deep technical expertise with a passion for exceptional user experiences.",
+        "From Gold Coast hospitality apps with real-time booking to Brisbane logistics platforms with GPS tracking and route optimisation — we build apps that solve real business problems and delight users. Every app is designed, developed, and tested in our Brisbane studio.",
+        "We support the full app lifecycle — from initial concept workshops and UX prototyping through to App Store submission, post-launch analytics, and ongoing feature development. Our agile methodology ensures you see working software every two weeks.",
+        "Whether you need an iPhone app for customer engagement, an Android app for field workers, or a cross-platform solution to reach both audiences — our Brisbane team delivers production-ready apps with enterprise-grade security and performance.",
+      ],
+    },
+    caseStudies: [
+      { title: "On-Demand Delivery Platform", industry: "Logistics", result: "50,000+ Downloads", desc: "Real-time delivery tracking app with driver management, route optimisation, and customer notifications for a Brisbane courier service." },
+      { title: "Patient Health Companion", industry: "Healthcare", result: "4.9★ App Store Rating", desc: "iOS and Android health management app with medication reminders, telehealth, and wearable integration for a QLD health provider." },
+      { title: "Tourism Experience App", industry: "Travel & Tourism", result: "+65% Booking Conversion", desc: "Immersive tourism app with AR experiences, offline maps, and integrated booking for Gold Coast attractions." },
+    ],
+    whyChooseUs: [
+      { title: "Full-Stack Mobile Team", desc: "Designers, iOS developers, Android developers, and QA engineers — all in-house, all Brisbane-based." },
+      { title: "Agile Delivery", desc: "Sprint-based development with fortnightly demos — you see working software and provide feedback continuously." },
+      { title: "App Store Expertise", desc: "We handle Apple and Google submission, compliance, metadata, and ongoing updates for both stores." },
+      { title: "Post-Launch Support", desc: "Ongoing maintenance, performance monitoring, OS compatibility updates, and feature enhancements." },
+      { title: "Scalable Architecture", desc: "Cloud-native backends that auto-scale with your user base — from 100 to 100,000+ users." },
+      { title: "Security-First", desc: "Encrypted data, secure authentication, OWASP compliance, and regular penetration testing." },
+    ],
   },
   "website-development": {
     slug: "website-development",
