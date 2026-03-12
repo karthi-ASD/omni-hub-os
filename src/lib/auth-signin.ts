@@ -5,7 +5,14 @@ const LOCAL_SIGNOUT_TIMEOUT_MS = 1500;
 const AUTH_TIMEOUT_CODE = "AUTH_TIMEOUT";
 const SIGNOUT_TIMEOUT_CODE = "AUTH_SIGNOUT_TIMEOUT";
 
-type AuthSignInResult = Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>;
+type PasswordAuthResult = {
+  data: {
+    user: unknown | null;
+    session: unknown | null;
+    [key: string]: unknown;
+  };
+  error: unknown;
+};
 
 type ProxyAuthPayload = {
   access_token?: string;
@@ -45,7 +52,7 @@ const withTimeout = async <T>(
   }
 };
 
-const proxyPasswordSignIn = async (email: string, password: string): Promise<AuthSignInResult> => {
+const proxyPasswordSignIn = async (email: string, password: string): Promise<PasswordAuthResult> => {
   const { data, error: invokeError } = await withTimeout(
     () =>
       supabase.functions.invoke("auth-password-proxy", {
@@ -83,18 +90,24 @@ const proxyPasswordSignIn = async (email: string, password: string): Promise<Aut
     refresh_token: payload.refresh_token,
   });
 
-  return { data: sessionData, error: sessionError };
+  return {
+    data: { ...(sessionData as object) },
+    error: sessionError,
+  };
 };
 
-export const signInWithPasswordResilient = async (email: string, password: string) => {
+export const signInWithPasswordResilient = async (
+  email: string,
+  password: string
+): Promise<PasswordAuthResult> => {
   const credentials = { email: email.trim(), password };
 
   try {
-    return await withTimeout(
+    return (await withTimeout(
       () => supabase.auth.signInWithPassword(credentials),
       AUTH_TIMEOUT_MS,
       AUTH_TIMEOUT_CODE
-    );
+    )) as unknown as PasswordAuthResult;
   } catch (error) {
     if (!shouldFallbackToProxy(error)) throw error;
 
@@ -105,11 +118,11 @@ export const signInWithPasswordResilient = async (email: string, password: strin
     ).catch(() => undefined);
 
     try {
-      return await withTimeout(
+      return (await withTimeout(
         () => supabase.auth.signInWithPassword(credentials),
         AUTH_TIMEOUT_MS,
         AUTH_TIMEOUT_CODE
-      );
+      )) as unknown as PasswordAuthResult;
     } catch (secondError) {
       if (!shouldFallbackToProxy(secondError)) throw secondError;
       return proxyPasswordSignIn(email, password);
