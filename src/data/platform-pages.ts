@@ -260,6 +260,24 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "250%", label: "Email ROI" },
       { value: "45%", label: "Higher Engagement" },
     ],
+    testimonials: [
+      { quote: "Our email open rates jumped from 18% to 42% with personalised automation. The segmentation engine is incredibly powerful.", name: "Claire Morgan", role: "Marketing Manager", company: "EduTech QLD" },
+      { quote: "We replaced three separate marketing tools with NextWeb. Everything is connected and the data actually makes sense now.", name: "Ryan Cooper", role: "CMO", company: "Lifestyle Brands AU" },
+      { quote: "Lead nurturing sequences converted 35% more prospects. The ROI on marketing automation paid for itself in month one.", name: "Jessica Tan", role: "Growth Lead", company: "PropStart Brisbane" },
+    ],
+    useCases: [
+      { title: "Education Lead Nurturing", industry: "Education", result: "+35% Enrolment Rate", desc: "Automated drip campaigns for prospective students with behaviour-triggered content and application reminders." },
+      { title: "Real Estate Nurture Sequences", industry: "Real Estate", result: "3x Lead Conversion", desc: "Property alert automation with suburb-specific content, open home reminders, and vendor reporting." },
+      { title: "Retail Campaign Engine", industry: "Retail", result: "+250% Email ROI", desc: "Segmented promotional campaigns with abandoned cart recovery, loyalty triggers, and seasonal automation." },
+    ],
+    integrations: ["Sales CRM", "Customer 360", "Email", "SMS", "WhatsApp", "Social Media", "Google Ads", "Facebook Ads"],
+    localSEO: {
+      heading: "Marketing Automation in Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb Marketing Automation empowers Brisbane and Gold Coast businesses to run sophisticated multi-channel campaigns without a massive marketing team. Our platform handles email, SMS, WhatsApp, social media, and web push — all from one connected system.",
+        "Our local team provides campaign setup, audience strategy, and ongoing optimisation for businesses across South East Queensland.",
+      ],
+    },
   },
   "commerce": {
     slug: "commerce",
