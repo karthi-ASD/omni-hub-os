@@ -57,6 +57,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "Clients", icon: Users, to: "/clients" },
       { label: "Proposals", icon: FileText, to: "/proposals" },
       { label: "Contracts", icon: FileText, to: "/contracts" },
+      { label: "SEO Intel (Sales)", icon: Search, to: "/sales-seo-intel" },
     ],
   },
   {
