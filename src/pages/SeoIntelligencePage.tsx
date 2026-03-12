@@ -48,7 +48,7 @@ const SeoIntelligencePage = () => {
 
   const {
     analyses, keywords, roadmap, contentWorkflow, trafficEstimate,
-    loading: engineLoading, analyzing, runDomainAnalysis,
+    loading: engineLoading, analyzing, analysisProgress, runDomainAnalysis,
     updateRoadmapItem, updateContentWorkflow,
   } = useSeoIntelligenceEngine(projectId);
 
@@ -103,8 +103,14 @@ const SeoIntelligencePage = () => {
           {analyzing && (
             <div className="mt-4 space-y-2">
               <p className="text-sm text-muted-foreground">Running proprietary SEO intelligence engine...</p>
-              <Progress value={45} className="h-2" />
-              <p className="text-xs text-muted-foreground">Crawling → Keyword Discovery → Competitor Analysis → Audit → Scoring</p>
+              <Progress value={analysisProgress} className="h-2" />
+              <p className="text-xs text-muted-foreground">
+                {analysisProgress < 20 ? "Initializing crawl..." :
+                 analysisProgress < 40 ? "Crawling domain & parsing content..." :
+                 analysisProgress < 60 ? "Generating 200+ keywords & 30+ competitors..." :
+                 analysisProgress < 80 ? "Running on-page & technical audit..." :
+                 "Finalizing analysis & storing results..."}
+              </p>
             </div>
           )}
         </CardContent>

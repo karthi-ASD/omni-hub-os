@@ -47,6 +47,7 @@ import SeoOperationsPage from "./pages/SeoOperationsPage";
 import SeoProjectDetailPage from "./pages/SeoProjectDetailPage";
 import SeoTeamDashboardPage from "./pages/SeoTeamDashboardPage";
 import SeoIntelligencePage from "./pages/SeoIntelligencePage";
+import SalesSeoPitchPage from "./pages/SalesSeoPitchPage";
 import CommunicationsPage from "./pages/CommunicationsPage";
 import SystemMonitorPage from "./pages/SystemMonitorPage";
 import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
@@ -262,6 +263,7 @@ const App = () => (
               <Route path="/seo-team" element={<SeoTeamDashboardPage />} />
               <Route path="/seo-intel/:projectId" element={<SeoIntelligencePage />} />
               <Route path="/seo-exec/:projectId" element={<SeoCampaignDetailPage />} />
+              <Route path="/sales-seo-intel" element={<SalesSeoPitchPage />} />
               <Route path="/communications" element={<CommunicationsPage />} />
               <Route path="/analytics" element={<AnalyticsDashboardPage />} />
               <Route path="/ai-insights" element={<AIInsightsPage />} />
