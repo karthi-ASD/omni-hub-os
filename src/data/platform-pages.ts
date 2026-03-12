@@ -575,6 +575,22 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "< 2s", label: "Load Time" },
       { value: "4.8★", label: "App Rating" },
     ],
+    testimonials: [
+      { quote: "Our field team went from paper forms to real-time mobile data capture. Productivity is up 40% and data accuracy is perfect.", name: "Greg Patterson", role: "Field Operations", company: "QLD Electrical Services" },
+      { quote: "The offline capability is crucial for our rural sites. Data syncs perfectly when connectivity returns.", name: "Amy Chen", role: "Project Manager", company: "AgriTech Queensland" },
+    ],
+    useCases: [
+      { title: "Field Service Operations", industry: "Trades", result: "+40% Productivity", desc: "Mobile job management with GPS check-in, photo capture, digital forms, and field payment collection." },
+      { title: "Real Estate Agent App", industry: "Real Estate", result: "4.9★ App Rating", desc: "Property listing management, client CRM, inspection scheduling, and offer tracking for agents on the go." },
+    ],
+    integrations: ["iOS App Store", "Google Play", "Push Notifications", "GPS", "Camera", "Biometrics", "Offline Sync"],
+    localSEO: {
+      heading: "Mobile Apps for Brisbane & Gold Coast Businesses",
+      paragraphs: [
+        "NextWeb Mobile Technology keeps Brisbane and Gold Coast teams productive from anywhere — with native iOS and Android apps featuring offline capability, GPS tracking, and real-time data sync.",
+        "Whether your team works in Brisbane CBD offices, Gold Coast construction sites, or rural Queensland — our mobile platform ensures full platform access on every device.",
+      ],
+    },
   },
   "ai-automation": {
     slug: "ai-automation",
