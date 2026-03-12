@@ -80,7 +80,7 @@ const ServiceDetailPage: React.FC = () => {
       <section className="py-20 md:py-28 bg-[hsl(222,47%,8%)]">
         <div className="container mx-auto px-4 md:px-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-center">What We Deliver</h2>
-          <p className="text-[hsl(210,20%,55%)] text-center mb-12 max-w-2xl mx-auto">Comprehensive {page.title.toLowerCase()} services tailored for Brisbane, Gold Coast, and Australian businesses.</p>
+          <p className="text-[hsl(210,20%,55%)] text-center mb-12 max-w-2xl mx-auto">Comprehensive {page.title.toLowerCase()} tailored for Brisbane, Gold Coast, and Australian businesses.</p>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {page.offerings.map((o) => (
               <div key={o.title} className="bg-[hsl(222,35%,11%)] border border-[hsl(222,30%,16%)] rounded-xl p-6 hover:border-[hsl(190,80%,55%)]/30 transition-all group">
