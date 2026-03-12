@@ -6,131 +6,46 @@ import { cn } from "@/lib/utils";
 import { NWLogo } from "@/components/NWLogo";
 import { TenantSelector } from "@/components/TenantSelector";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarFooter,
-  SidebarHeader,
-  useSidebar,
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
+  SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
+  SidebarFooter, SidebarHeader, useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  Home, Target, FolderKanban, Users, ClipboardList, Globe, BarChart3,
-  Receipt, Briefcase, Mail, Bot, Settings, Shield, Ticket,
-  Calendar, Megaphone, Headphones, Building2, FileText, Zap,
-  Phone, DollarSign, Wrench, Network, Heart, PieChart,
-  Palette, Activity, Layers, UserCog, LogOut, Search, Bell,
-  BookOpen, Lock, Cpu, Workflow, Store, Gauge, Brain,
-} from "lucide-react";
+import { LogOut } from "lucide-react";
+import { NAV_SECTIONS, type NavItem, type NavSection } from "@/components/sidebar/nav-sections";
 
-interface NavItem {
-  label: string;
-  icon: React.ElementType;
-  to: string;
-  roles?: string[];
+function matchesDept(list: string[] | undefined, deptName: string | null): boolean {
+  if (!list || list.length === 0 || !deptName) return false;
+  const lower = deptName.toLowerCase();
+  return list.some(d => lower.includes(d));
 }
-
-interface NavSection {
-  title: string;
-  items: NavItem[];
-}
-
-const NAV_SECTIONS: NavSection[] = [
-  {
-    title: "Core",
-    items: [
-      { label: "Dashboard", icon: Home, to: "/dashboard" },
-      { label: "Calendar", icon: Calendar, to: "/calendar" },
-      { label: "Notifications", icon: Bell, to: "/notifications" },
-    ],
-  },
-  {
-    title: "Sales & CRM",
-    items: [
-      { label: "Inquiries", icon: Mail, to: "/inquiries" },
-      { label: "Leads", icon: Target, to: "/leads" },
-      { label: "Deals", icon: FolderKanban, to: "/deals" },
-      { label: "Clients", icon: Users, to: "/clients" },
-      { label: "Proposals", icon: FileText, to: "/proposals" },
-      { label: "Contracts", icon: FileText, to: "/contracts" },
-      { label: "SEO Intel (Sales)", icon: Search, to: "/sales-seo-intel" },
-    ],
-  },
-  {
-    title: "Delivery",
-    items: [
-      { label: "Projects", icon: Briefcase, to: "/projects" },
-      { label: "Tasks", icon: ClipboardList, to: "/tasks" },
-      { label: "Website Dev", icon: Globe, to: "/website-dev-stages" },
-      { label: "Content Mgmt", icon: FileText, to: "/content-management" },
-      { label: "Job CRM", icon: Wrench, to: "/job-crm" },
-    ],
-  },
-  {
-    title: "Marketing & SEO",
-    items: [
-      { label: "SEO Engine", icon: Search, to: "/seo" },
-      { label: "SEO Projects", icon: FolderKanban, to: "/seo-ops" },
-      { label: "Marketing", icon: Megaphone, to: "/marketing" },
-      { label: "Ads", icon: BarChart3, to: "/analytics" },
-      { label: "Communications", icon: Mail, to: "/communications" },
-    ],
-  },
-  {
-    title: "Support",
-    items: [
-      { label: "Tickets", icon: Ticket, to: "/tickets" },
-      { label: "CS Dashboard", icon: Headphones, to: "/cs-dashboard" },
-      { label: "Knowledge Base", icon: BookOpen, to: "/knowledge-base" },
-    ],
-  },
-  {
-    title: "Finance",
-    items: [
-      { label: "Invoices", icon: Receipt, to: "/invoices" },
-      { label: "Payments", icon: DollarSign, to: "/payments" },
-      { label: "Finance", icon: PieChart, to: "/finance" },
-    ],
-  },
-  {
-    title: "HR",
-    items: [
-      { label: "Employees", icon: Users, to: "/hr/employees" },
-      { label: "Departments", icon: Building2, to: "/hr/departments" },
-      { label: "Leave", icon: Calendar, to: "/hr/leave" },
-      { label: "Payroll", icon: DollarSign, to: "/hr/payroll" },
-    ],
-  },
-  {
-    title: "AI & Automation",
-    items: [
-      { label: "AI Brain", icon: Brain, to: "/ai-brain" },
-      { label: "AI Agents", icon: Bot, to: "/ai-agents" },
-      { label: "Automation", icon: Zap, to: "/workflow-automation" },
-      { label: "Autopilot", icon: Cpu, to: "/autopilot/inbox" },
-    ],
-  },
-  {
-    title: "Admin",
-    items: [
-      { label: "Settings", icon: Settings, to: "/settings" },
-      { label: "Users", icon: UserCog, to: "/users" },
-      { label: "Roles", icon: Shield, to: "/role-management" },
-      { label: "Audit Logs", icon: Activity, to: "/audit-logs" },
-      { label: "SA Tools", icon: Wrench, to: "/super-admin-tools", roles: ["super_admin"] },
-    ],
-  },
-];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { profile, isSuperAdmin, roles, signOut } = useAuth();
+  const { profile, isSuperAdmin, isBusinessAdmin, roles, signOut } = useAuth();
+  const { departmentName } = useEmployeeDepartment();
+
+  const isAdmin = isSuperAdmin || isBusinessAdmin;
+
+  const filteredSections = NAV_SECTIONS.filter(section => {
+    // Admins see everything
+    if (isAdmin) return true;
+    // Dept-specific sections: only show if user is in that dept
+    if (section.departments && !matchesDept(section.departments, departmentName)) return false;
+    // Hidden from dept sections
+    if (section.hiddenFromDepartments && matchesDept(section.hiddenFromDepartments, departmentName)) return false;
+    return true;
+  });
+
+  const filterItems = (items: NavItem[]) =>
+    items.filter(item => {
+      if (item.roles && !item.roles.some(r => roles.includes(r as any))) return false;
+      if (isAdmin) return true;
+      if (item.hiddenFromDepartments && matchesDept(item.hiddenFromDepartments, departmentName)) return false;
+      if (item.departments && !matchesDept(item.departments, departmentName)) return false;
+      return true;
+    });
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
@@ -156,43 +71,45 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2">
-        {NAV_SECTIONS.map(section => (
-          <SidebarGroup key={section.title}>
-            {!collapsed && (
-              <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-sidebar-foreground/50 font-semibold px-2">
-                {section.title}
-              </SidebarGroupLabel>
-            )}
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {section.items
-                  .filter(item => !item.roles || item.roles.some(r => roles.includes(r as any)))
-                  .map(item => {
-                  const active = location.pathname === item.to || location.pathname.startsWith(item.to + "/");
-                  return (
-                    <SidebarMenuItem key={item.to}>
-                      <SidebarMenuButton asChild isActive={active}>
-                        <NavLink
-                          to={item.to}
-                          end={item.to === "/dashboard"}
-                          className={cn(
-                            "flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-all",
-                            active
-                              ? "bg-sidebar-accent text-sidebar-primary font-medium"
-                              : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                          )}
-                        >
-                          <item.icon className={cn("h-4 w-4 shrink-0", active && "text-sidebar-primary")} />
-                          {!collapsed && <span className="truncate">{item.label}</span>}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+        {filteredSections.map(section => {
+          const visibleItems = filterItems(section.items);
+          if (visibleItems.length === 0) return null;
+          return (
+            <SidebarGroup key={section.title}>
+              {!collapsed && (
+                <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-sidebar-foreground/50 font-semibold px-2">
+                  {section.title}
+                </SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {visibleItems.map(item => {
+                    const active = location.pathname === item.to || location.pathname.startsWith(item.to + "/");
+                    return (
+                      <SidebarMenuItem key={item.to + item.label}>
+                        <SidebarMenuButton asChild isActive={active}>
+                          <NavLink
+                            to={item.to}
+                            end={item.to === "/dashboard"}
+                            className={cn(
+                              "flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-all",
+                              active
+                                ? "bg-sidebar-accent text-sidebar-primary font-medium"
+                                : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                            )}
+                          >
+                            <item.icon className={cn("h-4 w-4 shrink-0", active && "text-sidebar-primary")} />
+                            {!collapsed && <span className="truncate">{item.label}</span>}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          );
+        })}
       </SidebarContent>
 
       <SidebarFooter className="p-3">
