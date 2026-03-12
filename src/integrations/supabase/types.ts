@@ -5575,6 +5575,81 @@ export type Database = {
           },
         ]
       }
+      cold_calls: {
+        Row: {
+          business_id: string
+          business_name: string
+          call_result: string
+          caller_user_id: string
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          follow_up_date: string | null
+          follow_up_time: string | null
+          follow_up_type: string | null
+          id: string
+          industry: string | null
+          lead_id: string | null
+          location: string | null
+          notes: string | null
+          phone: string | null
+          website: string | null
+        }
+        Insert: {
+          business_id: string
+          business_name: string
+          call_result?: string
+          caller_user_id: string
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          follow_up_date?: string | null
+          follow_up_time?: string | null
+          follow_up_type?: string | null
+          id?: string
+          industry?: string | null
+          lead_id?: string | null
+          location?: string | null
+          notes?: string | null
+          phone?: string | null
+          website?: string | null
+        }
+        Update: {
+          business_id?: string
+          business_name?: string
+          call_result?: string
+          caller_user_id?: string
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          follow_up_date?: string | null
+          follow_up_time?: string | null
+          follow_up_type?: string | null
+          id?: string
+          industry?: string | null
+          lead_id?: string | null
+          location?: string | null
+          notes?: string | null
+          phone?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cold_calls_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cold_calls_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       communications_log: {
         Row: {
           body: string | null
