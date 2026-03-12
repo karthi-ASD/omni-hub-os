@@ -4,6 +4,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { industryPages } from "@/data/industry-pages";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronRight, AlertTriangle, CheckCircle2, HelpCircle } from "lucide-react";
+import { JsonLdScript, buildServiceJsonLd, buildBreadcrumbJsonLd, buildFaqJsonLd } from "@/components/public/JsonLd";
 
 const IndustryDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -13,8 +14,19 @@ const IndustryDetailPage: React.FC = () => {
 
   usePageTitle(page.metaTitle, page.metaDescription);
 
+  const schemas = [
+    buildServiceJsonLd(`${page.title} Solutions`, page.metaDescription),
+    buildBreadcrumbJsonLd([
+      { name: "Home", url: "/" },
+      { name: "Industries", url: "/industries" },
+      { name: page.title, url: `/industries/${slug}` },
+    ]),
+    buildFaqJsonLd(page.faqs),
+  ].filter(Boolean) as object[];
+
   return (
     <>
+      <JsonLdScript data={schemas} />
       {/* Hero */}
       <section className="relative py-20 md:py-32 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[hsl(222,47%,6%)] via-[hsl(222,47%,10%)] to-[hsl(200,40%,10%)]" />

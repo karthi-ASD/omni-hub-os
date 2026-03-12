@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import AuthDiagnostics from "@/components/AuthDiagnostics";
+import { JsonLdScript, organizationJsonLd, buildBreadcrumbJsonLd } from "@/components/public/JsonLd";
 import {
   ArrowRight, Shield, Zap, BarChart3, Users, Globe, Brain,
   CheckCircle2, ChevronRight, Smartphone, Monitor, Search,
@@ -18,6 +19,11 @@ const Index = () => {
     "NextWeb OS is an all-in-one platform for CRM, AI, websites, apps, SEO, payroll, and business operations, serving Australia with focus on Brisbane and Gold Coast."
   );
   const { session, loading } = useAuth();
+
+  const homepageJsonLd = [
+    organizationJsonLd,
+    buildBreadcrumbJsonLd([{ name: "Home", url: "/" }]),
+  ];
 
   if (loading) {
     return (
@@ -88,6 +94,7 @@ const Index = () => {
 
   return (
     <>
+      <JsonLdScript data={homepageJsonLd} />
       {/* ─── HERO ─── */}
       <section className="relative min-h-[90vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[hsl(222,47%,6%)] via-[hsl(222,47%,10%)] to-[hsl(200,40%,10%)]" />
