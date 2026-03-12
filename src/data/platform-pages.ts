@@ -832,6 +832,21 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "Xero", label: "Integrated" },
       { value: "AUD", label: "Native Currency" },
     ],
+    testimonials: [
+      { quote: "Quote-to-cash automation eliminated double-entry between CRM and accounting. Our billing cycle dropped from 2 weeks to 2 days.", name: "Peter O'Sullivan", role: "Finance Director", company: "BuildPro Queensland" },
+      { quote: "Automated payment reminders recovered $80K in overdue invoices in the first month. The Xero sync is flawless.", name: "Kathy Nguyen", role: "Accounts Manager", company: "Digital Studios Brisbane" },
+    ],
+    useCases: [
+      { title: "Professional Services Billing", industry: "Consulting", result: "50% Faster Payments", desc: "Time-based invoicing with project tracking, milestone billing, and automated Xero reconciliation." },
+      { title: "Trades Invoice Automation", industry: "Trades", result: "$80K Recovered", desc: "Field-generated invoices with photo attachments, automated reminders, and instant payment links." },
+    ],
+    integrations: ["Xero", "Stripe", "PayPal", "eWAY", "Sales CRM", "Projects", "Bank Feed"],
+    localSEO: {
+      heading: "Finance & Invoicing for Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb Finance & Invoicing helps Brisbane and Gold Coast businesses get paid faster with automated invoicing, payment tracking, and Xero integration — all designed for Australian GST and BAS compliance.",
+      ],
+    },
   },
   "hr-payroll": {
     slug: "hr-payroll",
