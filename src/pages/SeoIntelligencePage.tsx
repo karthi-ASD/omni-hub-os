@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSeoProjects } from "@/hooks/useSeoProjects";
+import { useSeoIntelligenceEngine } from "@/hooks/useSeoIntelligenceEngine";
 import { useSeoRankChecks } from "@/hooks/useSeoRankChecks";
 import { useSeoBacklinks, LINK_TYPES, BACKLINK_STATUSES } from "@/hooks/useSeoBacklinks";
 import { useSeoContentGeneration, CONTENT_TYPES, TONES, CONTENT_STATUSES } from "@/hooks/useSeoContentGeneration";
@@ -10,19 +11,34 @@ import { useSeoCompetitors } from "@/hooks/useSeoCompetitors";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  ArrowLeft, Plus, TrendingUp, TrendingDown, Link2, FileText, BarChart3,
-  Target, Sparkles, Search, Loader2,
+  ArrowLeft, TrendingUp, TrendingDown, Search, Loader2, Globe,
+  Target, Sparkles, BarChart3, Link2, FileText, Shield, Map,
+  Zap, CheckCircle2, AlertTriangle, XCircle, ArrowUpRight,
 } from "lucide-react";
+
+const scoreColor = (score: number) => {
+  if (score >= 80) return "text-success";
+  if (score >= 50) return "text-warning";
+  return "text-destructive";
+};
+
+const scoreBadge = (score: number) => {
+  if (score >= 80) return "default";
+  if (score >= 50) return "secondary";
+  return "destructive";
+};
+
+const priorityColor = (p: string) => {
+  if (p === "high") return "destructive";
+  if (p === "medium") return "secondary";
+  return "outline";
+};
 
 const SeoIntelligencePage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -30,297 +46,523 @@ const SeoIntelligencePage = () => {
   const { projects } = useSeoProjects();
   const project = projects.find(p => p.id === projectId);
 
-  const { checks, loading: ranksLoading, addCheck } = useSeoRankChecks(projectId);
-  const { backlinks, loading: blLoading, addBacklink, updateBacklink } = useSeoBacklinks(projectId);
-  const { items: contentItems, loading: ctLoading, generating, generate, updateItem } = useSeoContentGeneration(projectId);
-  const { scores, loading: scLoading, scanning, scanPage } = useSeoPageScores(projectId);
-  const { gaps, loading: gapLoading, analyzing, analyzeGaps } = useSeoCompetitorGap(projectId);
+  const {
+    analyses, keywords, roadmap, contentWorkflow, trafficEstimate,
+    loading: engineLoading, analyzing, runDomainAnalysis,
+    updateRoadmapItem, updateContentWorkflow,
+  } = useSeoIntelligenceEngine(projectId);
+
+  const { checks, loading: ranksLoading } = useSeoRankChecks(projectId);
+  const { backlinks, loading: blLoading } = useSeoBacklinks(projectId);
+  const { scores, loading: scLoading } = useSeoPageScores(projectId);
+  const { gaps, loading: gapLoading, analyzing: gapAnalyzing, analyzeGaps } = useSeoCompetitorGap(projectId);
   const { competitors } = useSeoCompetitors(projectId);
 
-  // Form states
-  const [rankForm, setRankForm] = useState({ keyword: "", rank_position: "", location: "", device_type: "desktop" });
-  const [blForm, setBlForm] = useState({ source_url: "", target_url: "", anchor_text: "", link_type: "DOFOLLOW" });
-  const [contentForm, setContentForm] = useState({ content_type: "BLOG", title: "", target_keyword: "", tone: "professional" });
-  const [scanUrl, setScanUrl] = useState("");
-  const [scanKeyword, setScanKeyword] = useState("");
-  const [rankOpen, setRankOpen] = useState(false);
-  const [blOpen, setBlOpen] = useState(false);
-  const [contentOpen, setContentOpen] = useState(false);
+  const [domainInput, setDomainInput] = useState(project?.website_domain || "");
+  const latestAnalysis = analyses[0];
 
-  const scoreColor = (score: number) => {
-    if (score >= 80) return "text-green-600";
-    if (score >= 60) return "text-yellow-600";
-    return "text-destructive";
+  const handleAnalyze = () => {
+    if (!domainInput.trim()) return;
+    runDomainAnalysis(domainInput.trim());
   };
 
-  // Stats
-  const activeBacklinks = backlinks.filter(b => b.status === "ACTIVE").length;
-  const lostBacklinks = backlinks.filter(b => b.status === "LOST").length;
-  const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, s) => a + s.seo_score, 0) / scores.length) : 0;
-  const highOppGaps = gaps.filter(g => (g.opportunity_score || 0) >= 70).length;
+  if (!projectId) return <div className="p-6 text-muted-foreground">Select an SEO project first.</div>;
+
+  const loading = engineLoading || ranksLoading;
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate(`/seo-ops/${projectId}`)}><ArrowLeft className="h-4 w-4" /></Button>
-        <div>
-          <h1 className="text-2xl font-bold">SEO Intelligence</h1>
-          <p className="text-sm text-muted-foreground">{project?.project_name} — {project?.website_domain}</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-foreground">SEO Intelligence Engine</h1>
+          <p className="text-sm text-muted-foreground">{project?.project_name || "Project"}</p>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Rank Checks</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold">{checks.length}</p></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Active Backlinks</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-green-600">{activeBacklinks}</p></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Lost Backlinks</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-destructive">{lostBacklinks}</p></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Avg SEO Score</CardTitle></CardHeader><CardContent><p className={`text-2xl font-bold ${scoreColor(avgScore)}`}>{avgScore}/100</p></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">High Opportunities</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-primary">{highOppGaps}</p></CardContent></Card>
-      </div>
+      {/* Domain Analysis Input */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <Input
+                placeholder="Enter domain to analyze (e.g. example.com.au)"
+                value={domainInput}
+                onChange={e => setDomainInput(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleAnalyze()}
+              />
+            </div>
+            <Button onClick={handleAnalyze} disabled={analyzing || !domainInput.trim()}>
+              {analyzing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
+              {analyzing ? "Analyzing..." : "Run Full Analysis"}
+            </Button>
+          </div>
+          {analyzing && (
+            <div className="mt-4 space-y-2">
+              <p className="text-sm text-muted-foreground">Running proprietary SEO intelligence engine...</p>
+              <Progress value={45} className="h-2" />
+              <p className="text-xs text-muted-foreground">Crawling → Keyword Discovery → Competitor Analysis → Audit → Scoring</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      <Tabs defaultValue="rankings">
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="rankings"><TrendingUp className="h-3 w-3 mr-1" /> Rankings</TabsTrigger>
-          <TabsTrigger value="backlinks"><Link2 className="h-3 w-3 mr-1" /> Backlinks</TabsTrigger>
-          <TabsTrigger value="content"><FileText className="h-3 w-3 mr-1" /> AI Content</TabsTrigger>
-          <TabsTrigger value="scores"><BarChart3 className="h-3 w-3 mr-1" /> Page Scores</TabsTrigger>
-          <TabsTrigger value="gaps"><Target className="h-3 w-3 mr-1" /> Competitor Gap</TabsTrigger>
+      {/* KPI Cards */}
+      {latestAnalysis && (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <Card>
+            <CardContent className="pt-4 pb-4 text-center">
+              <div className={`text-3xl font-bold ${scoreColor(latestAnalysis.seo_score)}`}>
+                {latestAnalysis.seo_score}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">SEO Score</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-4 text-center">
+              <div className="text-3xl font-bold text-foreground">
+                {latestAnalysis.total_keywords}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Keywords</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-4 text-center">
+              <div className="text-3xl font-bold text-foreground">
+                {latestAnalysis.estimated_traffic.toLocaleString()}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Est. Traffic/mo</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-4 text-center">
+              <div className="text-3xl font-bold text-foreground">
+                {competitors.length}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Competitors</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-4 text-center">
+              <div className="text-3xl font-bold text-foreground">
+                {backlinks.length}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Backlinks</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Main Tabs */}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="flex flex-wrap h-auto gap-1">
+          <TabsTrigger value="overview"><Globe className="h-3 w-3 mr-1" />Overview</TabsTrigger>
+          <TabsTrigger value="keywords"><Target className="h-3 w-3 mr-1" />Keywords</TabsTrigger>
+          <TabsTrigger value="competitors"><BarChart3 className="h-3 w-3 mr-1" />Competitors</TabsTrigger>
+          <TabsTrigger value="audit"><Shield className="h-3 w-3 mr-1" />Page Audit</TabsTrigger>
+          <TabsTrigger value="backlinks"><Link2 className="h-3 w-3 mr-1" />Backlinks</TabsTrigger>
+          <TabsTrigger value="gaps"><Zap className="h-3 w-3 mr-1" />Gap Analysis</TabsTrigger>
+          <TabsTrigger value="roadmap"><Map className="h-3 w-3 mr-1" />Roadmap</TabsTrigger>
+          <TabsTrigger value="content"><FileText className="h-3 w-3 mr-1" />Content</TabsTrigger>
         </TabsList>
 
-        {/* RANKINGS TAB */}
-        <TabsContent value="rankings" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold">Google Rank Checks</h2>
-            <Dialog open={rankOpen} onOpenChange={setRankOpen}>
-              <DialogTrigger asChild><Button size="sm"><Plus className="h-3 w-3 mr-1" /> Add Check</Button></DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Record Rank Check</DialogTitle></DialogHeader>
-                <div className="space-y-3">
-                  <div><Label>Keyword *</Label><Input value={rankForm.keyword} onChange={e => setRankForm({ ...rankForm, keyword: e.target.value })} /></div>
-                  <div><Label>Position</Label><Input type="number" value={rankForm.rank_position} onChange={e => setRankForm({ ...rankForm, rank_position: e.target.value })} /></div>
-                  <div><Label>Location</Label><Input value={rankForm.location} onChange={e => setRankForm({ ...rankForm, location: e.target.value })} placeholder="Brisbane, QLD" /></div>
-                  <div><Label>Device</Label>
-                    <Select value={rankForm.device_type} onValueChange={v => setRankForm({ ...rankForm, device_type: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent><SelectItem value="desktop">Desktop</SelectItem><SelectItem value="mobile">Mobile</SelectItem></SelectContent>
-                    </Select>
-                  </div>
-                  <Button className="w-full" onClick={async () => {
-                    if (!rankForm.keyword) return;
-                    await addCheck({ keyword: rankForm.keyword, rank_position: rankForm.rank_position ? parseInt(rankForm.rank_position) : undefined, location: rankForm.location || undefined, device_type: rankForm.device_type });
-                    setRankOpen(false);
-                    setRankForm({ keyword: "", rank_position: "", location: "", device_type: "desktop" });
-                  }}>Save</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-          {ranksLoading ? <Skeleton className="h-24 w-full" /> : checks.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">No rank checks recorded yet</CardContent></Card>
+        {/* OVERVIEW TAB */}
+        <TabsContent value="overview" className="space-y-4">
+          {loading ? (
+            <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-24" />)}</div>
+          ) : !latestAnalysis ? (
+            <Card><CardContent className="py-12 text-center text-muted-foreground">
+              <Sparkles className="h-12 w-12 mx-auto mb-4 text-primary opacity-50" />
+              <p className="text-lg font-medium">No analysis yet</p>
+              <p className="text-sm">Enter a domain above to run the NextWeb SEO Intelligence Engine</p>
+            </CardContent></Card>
           ) : (
-            <Card><Table><TableHeader><TableRow>
-              <TableHead>Keyword</TableHead><TableHead>Position</TableHead><TableHead>Location</TableHead><TableHead>Device</TableHead><TableHead>URL Found</TableHead><TableHead>Date</TableHead>
-            </TableRow></TableHeader><TableBody>
-              {checks.slice(0, 100).map(c => (
-                <TableRow key={c.id}>
-                  <TableCell className="font-medium">{c.keyword}</TableCell>
-                  <TableCell><Badge variant={c.rank_position && c.rank_position <= 10 ? "default" : "secondary"}>#{c.rank_position || "—"}</Badge></TableCell>
-                  <TableCell className="text-sm">{c.location || "—"}</TableCell>
-                  <TableCell className="text-xs">{c.device_type}</TableCell>
-                  <TableCell className="text-xs max-w-[200px] truncate">{c.url_found || "—"}</TableCell>
-                  <TableCell className="text-sm">{c.search_date}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody></Table></Card>
+            <>
+              <Card>
+                <CardHeader><CardTitle className="text-sm">Analysis Summary — {latestAnalysis.domain}</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div><span className="text-muted-foreground">Status:</span> <Badge variant={latestAnalysis.status === "completed" ? "default" : "secondary"}>{latestAnalysis.status}</Badge></div>
+                    <div><span className="text-muted-foreground">Pages Crawled:</span> {latestAnalysis.total_pages_crawled}</div>
+                    <div><span className="text-muted-foreground">Keywords Found:</span> {latestAnalysis.total_keywords}</div>
+                    <div><span className="text-muted-foreground">Completed:</span> {latestAnalysis.completed_at ? new Date(latestAnalysis.completed_at).toLocaleString() : "—"}</div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Scores breakdown */}
+              {latestAnalysis.analysis_json?.page_audit && (
+                <Card>
+                  <CardHeader><CardTitle className="text-sm">SEO Score Breakdown</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {Object.entries(latestAnalysis.analysis_json.page_audit).map(([key, val]) => (
+                        <div key={key} className="space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground capitalize">{key.replace(/_/g, " ")}</span>
+                            <span className={scoreColor(Number(val))}>{String(val)}/100</span>
+                          </div>
+                          <Progress value={Number(val)} className="h-1.5" />
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Issues Summary */}
+              {latestAnalysis.analysis_json?.on_page_issues?.length > 0 && (
+                <Card>
+                  <CardHeader><CardTitle className="text-sm">Issues Found ({latestAnalysis.analysis_json.on_page_issues.length})</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {latestAnalysis.analysis_json.on_page_issues.map((issue: any, i: number) => (
+                        <div key={i} className="flex items-start gap-2 text-sm p-2 rounded-md bg-muted/50">
+                          {issue.severity === "high" ? <XCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" /> :
+                           issue.severity === "medium" ? <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" /> :
+                           <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-0.5" />}
+                          <div>
+                            <p className="font-medium">{issue.issue}</p>
+                            {issue.recommendation && <p className="text-xs text-muted-foreground mt-0.5">{issue.recommendation}</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
+        </TabsContent>
+
+        {/* KEYWORDS TAB */}
+        <TabsContent value="keywords" className="space-y-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="outline">{keywords.length} keywords</Badge>
+            {["primary","secondary","long_tail","lsi","local","question"].map(type => {
+              const count = keywords.filter(k => k.keyword_type === type).length;
+              return count > 0 ? <Badge key={type} variant="secondary">{type.replace("_"," ")}: {count}</Badge> : null;
+            })}
+          </div>
+          {keywords.length === 0 ? (
+            <Card><CardContent className="py-8 text-center text-muted-foreground">
+              Run domain analysis to discover keywords
+            </CardContent></Card>
+          ) : (
+            <Card>
+              <CardContent className="p-0">
+                <div className="max-h-[500px] overflow-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Keyword</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Intent</TableHead>
+                        <TableHead>Volume</TableHead>
+                        <TableHead>Difficulty</TableHead>
+                        <TableHead>Opportunity</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {keywords.slice(0, 100).map(kw => (
+                        <TableRow key={kw.id}>
+                          <TableCell className="font-medium">{kw.keyword}</TableCell>
+                          <TableCell><Badge variant="outline" className="text-[10px]">{kw.keyword_type}</Badge></TableCell>
+                          <TableCell><Badge variant="secondary" className="text-[10px]">{kw.intent}</Badge></TableCell>
+                          <TableCell>{kw.estimated_volume}</TableCell>
+                          <TableCell>
+                            <span className={scoreColor(100 - kw.difficulty_score)}>{kw.difficulty_score}</span>
+                          </TableCell>
+                          <TableCell>
+                            <span className={scoreColor(kw.opportunity_score)}>{kw.opportunity_score}</span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* COMPETITORS TAB */}
+        <TabsContent value="competitors" className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Badge variant="outline">{competitors.length} competitors</Badge>
+          </div>
+          {competitors.length === 0 ? (
+            <Card><CardContent className="py-8 text-center text-muted-foreground">
+              Run domain analysis to auto-discover competitors
+            </CardContent></Card>
+          ) : (
+            <Card>
+              <CardContent className="p-0">
+                <div className="max-h-[400px] overflow-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>#</TableHead>
+                        <TableHead>Domain</TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Discovered</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {competitors.map((c, i) => (
+                        <TableRow key={c.id}>
+                          <TableCell>{i + 1}</TableCell>
+                          <TableCell className="font-medium">
+                            <a href={`https://${c.competitor_domain}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                              {c.competitor_domain} <ArrowUpRight className="h-3 w-3" />
+                            </a>
+                          </TableCell>
+                          <TableCell>{c.competitor_name}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* PAGE AUDIT TAB */}
+        <TabsContent value="audit" className="space-y-4">
+          {scores.length === 0 && !latestAnalysis?.analysis_json?.page_audit ? (
+            <Card><CardContent className="py-8 text-center text-muted-foreground">
+              Run domain analysis to generate page audits
+            </CardContent></Card>
+          ) : (
+            <>
+              {latestAnalysis?.analysis_json?.technical_issues?.length > 0 && (
+                <Card>
+                  <CardHeader><CardTitle className="text-sm">Technical Issues</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {latestAnalysis.analysis_json.technical_issues.map((issue: any, i: number) => (
+                        <div key={i} className="flex items-center gap-2 text-sm p-2 rounded bg-muted/50">
+                          {issue.severity === "high" ? <XCircle className="h-4 w-4 text-destructive" /> :
+                           <AlertTriangle className="h-4 w-4 text-warning" />}
+                          <span>{issue.issue}</span>
+                          <Badge variant={priorityColor(issue.severity)} className="ml-auto">{issue.severity}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              {scores.length > 0 && (
+                <Card>
+                  <CardHeader><CardTitle className="text-sm">Page Scores ({scores.length})</CardTitle></CardHeader>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Page URL</TableHead>
+                          <TableHead>Score</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {scores.map(s => (
+                          <TableRow key={s.id}>
+                            <TableCell className="font-mono text-xs truncate max-w-[300px]">{(s as any).page_url}</TableCell>
+                            <TableCell><Badge variant={scoreBadge((s as any).seo_score || 0)}>{(s as any).seo_score || 0}</Badge></TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              )}
+            </>
           )}
         </TabsContent>
 
         {/* BACKLINKS TAB */}
         <TabsContent value="backlinks" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold">Backlink Monitor</h2>
-            <Dialog open={blOpen} onOpenChange={setBlOpen}>
-              <DialogTrigger asChild><Button size="sm"><Plus className="h-3 w-3 mr-1" /> Add Backlink</Button></DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Add Backlink</DialogTitle></DialogHeader>
-                <div className="space-y-3">
-                  <div><Label>Source URL *</Label><Input value={blForm.source_url} onChange={e => setBlForm({ ...blForm, source_url: e.target.value })} placeholder="https://example.com/article" /></div>
-                  <div><Label>Target URL</Label><Input value={blForm.target_url} onChange={e => setBlForm({ ...blForm, target_url: e.target.value })} /></div>
-                  <div><Label>Anchor Text</Label><Input value={blForm.anchor_text} onChange={e => setBlForm({ ...blForm, anchor_text: e.target.value })} /></div>
-                  <div><Label>Link Type</Label>
-                    <Select value={blForm.link_type} onValueChange={v => setBlForm({ ...blForm, link_type: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{LINK_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <Button className="w-full" onClick={async () => {
-                    if (!blForm.source_url) return;
-                    await addBacklink(blForm);
-                    setBlOpen(false);
-                    setBlForm({ source_url: "", target_url: "", anchor_text: "", link_type: "DOFOLLOW" });
-                  }}>Add</Button>
+          <div className="flex gap-2">
+            <Badge variant="outline">{backlinks.length} backlinks tracked</Badge>
+          </div>
+          {backlinks.length === 0 ? (
+            <Card><CardContent className="py-8 text-center text-muted-foreground">
+              No backlinks tracked yet
+            </CardContent></Card>
+          ) : (
+            <Card>
+              <CardContent className="p-0">
+                <div className="max-h-[400px] overflow-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Source URL</TableHead>
+                        <TableHead>Target</TableHead>
+                        <TableHead>Anchor</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {backlinks.map(bl => (
+                        <TableRow key={bl.id}>
+                          <TableCell className="font-mono text-xs truncate max-w-[200px]">{bl.source_url}</TableCell>
+                          <TableCell className="font-mono text-xs truncate max-w-[200px]">{bl.target_url}</TableCell>
+                          <TableCell>{bl.anchor_text}</TableCell>
+                          <TableCell><Badge variant="outline">{bl.link_type}</Badge></TableCell>
+                          <TableCell><Badge variant="secondary">{bl.status}</Badge></TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-          {blLoading ? <Skeleton className="h-24 w-full" /> : backlinks.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">No backlinks tracked yet</CardContent></Card>
-          ) : (
-            <Card><Table><TableHeader><TableRow>
-              <TableHead>Source</TableHead><TableHead>Target</TableHead><TableHead>Anchor</TableHead><TableHead>Type</TableHead><TableHead>DA</TableHead><TableHead>Status</TableHead>
-            </TableRow></TableHeader><TableBody>
-              {backlinks.map(b => (
-                <TableRow key={b.id}>
-                  <TableCell className="text-xs max-w-[200px] truncate">{b.source_url}</TableCell>
-                  <TableCell className="text-xs max-w-[150px] truncate">{b.target_url || "—"}</TableCell>
-                  <TableCell className="text-sm">{b.anchor_text || "—"}</TableCell>
-                  <TableCell><Badge variant="outline" className="text-xs">{b.link_type}</Badge></TableCell>
-                  <TableCell>{b.domain_authority || "—"}</TableCell>
-                  <TableCell>
-                    <Select value={b.status} onValueChange={v => updateBacklink(b.id, { status: v })}>
-                      <SelectTrigger className="h-7 w-24 text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>{BACKLINK_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody></Table></Card>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 
-        {/* AI CONTENT TAB */}
-        <TabsContent value="content" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold">AI Content Generator</h2>
-            <Dialog open={contentOpen} onOpenChange={setContentOpen}>
-              <DialogTrigger asChild><Button size="sm"><Sparkles className="h-3 w-3 mr-1" /> Generate Content</Button></DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Generate SEO Content</DialogTitle></DialogHeader>
-                <div className="space-y-3">
-                  <div><Label>Content Type</Label>
-                    <Select value={contentForm.content_type} onValueChange={v => setContentForm({ ...contentForm, content_type: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{CONTENT_TYPES.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div><Label>Title *</Label><Input value={contentForm.title} onChange={e => setContentForm({ ...contentForm, title: e.target.value })} placeholder="Best Plumber in Brisbane" /></div>
-                  <div><Label>Target Keyword</Label><Input value={contentForm.target_keyword} onChange={e => setContentForm({ ...contentForm, target_keyword: e.target.value })} /></div>
-                  <div><Label>Tone</Label>
-                    <Select value={contentForm.tone} onValueChange={v => setContentForm({ ...contentForm, tone: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{TONES.map(t => <SelectItem key={t} value={t} className="capitalize">{t}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <Button className="w-full" disabled={generating} onClick={async () => {
-                    if (!contentForm.title) return;
-                    await generate(contentForm);
-                    setContentOpen(false);
-                    setContentForm({ content_type: "BLOG", title: "", target_keyword: "", tone: "professional" });
-                  }}>{generating ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Generating...</> : "Generate"}</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-          {ctLoading ? <Skeleton className="h-24 w-full" /> : contentItems.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">No AI-generated content yet. Click Generate to start.</CardContent></Card>
-          ) : (
-            <div className="space-y-4">
-              {contentItems.map(item => (
-                <Card key={item.id}>
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-base">{item.title}</CardTitle>
-                        <p className="text-xs text-muted-foreground">{item.content_type.replace(/_/g, " ")} · {item.target_keyword || "No keyword"} · {item.tone}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {item.seo_score && <Badge variant="outline" className={scoreColor(item.seo_score)}>{item.seo_score}/100</Badge>}
-                        <Select value={item.status} onValueChange={v => updateItem(item.id, { status: v })}>
-                          <SelectTrigger className="h-7 w-28 text-xs"><SelectValue /></SelectTrigger>
-                          <SelectContent>{CONTENT_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  {item.generated_content && (
-                    <CardContent>
-                      <div className="bg-muted/50 rounded p-3 max-h-48 overflow-y-auto text-sm whitespace-pre-wrap">{item.generated_content.slice(0, 1000)}{item.generated_content.length > 1000 ? "..." : ""}</div>
-                    </CardContent>
-                  )}
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        {/* PAGE SCORES TAB */}
-        <TabsContent value="scores" className="space-y-4">
-          <div className="flex justify-between items-center flex-wrap gap-2">
-            <h2 className="text-lg font-semibold">Page SEO Scores</h2>
-            <div className="flex items-center gap-2">
-              <Input value={scanUrl} onChange={e => setScanUrl(e.target.value)} placeholder="https://example.com/page" className="w-60" />
-              <Input value={scanKeyword} onChange={e => setScanKeyword(e.target.value)} placeholder="Keyword" className="w-40" />
-              <Button size="sm" disabled={scanning || !scanUrl} onClick={() => { scanPage(scanUrl, scanKeyword); setScanUrl(""); setScanKeyword(""); }}>
-                {scanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Search className="h-3 w-3 mr-1" /> Scan</>}
-              </Button>
-            </div>
-          </div>
-          {scLoading ? <Skeleton className="h-24 w-full" /> : scores.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">No pages scored yet. Enter a URL above to scan.</CardContent></Card>
-          ) : (
-            <Card><Table><TableHeader><TableRow>
-              <TableHead>Page</TableHead><TableHead>SEO Score</TableHead><TableHead>Technical</TableHead><TableHead>Meta</TableHead><TableHead>Content</TableHead><TableHead>Local</TableHead><TableHead>Scanned</TableHead>
-            </TableRow></TableHeader><TableBody>
-              {scores.map(s => (
-                <TableRow key={s.id}>
-                  <TableCell className="max-w-[250px] truncate text-sm">{s.page_url}</TableCell>
-                  <TableCell><span className={`font-bold ${scoreColor(s.seo_score)}`}>{s.seo_score}/100</span></TableCell>
-                  <TableCell>{s.technical_score ?? "—"}</TableCell>
-                  <TableCell>{s.meta_score ?? "—"}</TableCell>
-                  <TableCell>{s.content_score ?? "—"}</TableCell>
-                  <TableCell>{s.local_seo_score ?? "—"}</TableCell>
-                  <TableCell className="text-xs">{s.last_scanned_at ? new Date(s.last_scanned_at).toLocaleDateString() : "—"}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody></Table></Card>
-          )}
-        </TabsContent>
-
-        {/* COMPETITOR GAP TAB */}
+        {/* GAP ANALYSIS TAB */}
         <TabsContent value="gaps" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold">Competitor Gap Analysis</h2>
-            {competitors.length > 0 && (
-              <Button size="sm" disabled={analyzing} onClick={() => analyzeGaps({ competitor_id: competitors[0]?.id, competitor_domain: competitors[0]?.competitor_domain, client_domain: project?.website_domain })}>
-                {analyzing ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Analyzing...</> : <><Target className="h-3 w-3 mr-1" /> Analyze Gaps</>}
-              </Button>
-            )}
+          <div className="flex gap-2">
+            <Button onClick={() => analyzeGaps({ competitors: competitors.map(c => c.competitor_domain) })} disabled={gapAnalyzing} size="sm">
+              {gapAnalyzing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Zap className="h-4 w-4 mr-1" />}
+              Run Gap Analysis
+            </Button>
           </div>
-          {competitors.length === 0 && (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">Add competitors in the project detail page first</CardContent></Card>
-          )}
-          {gapLoading ? <Skeleton className="h-24 w-full" /> : gaps.length === 0 ? (
-            competitors.length > 0 && <Card><CardContent className="py-8 text-center text-muted-foreground">No gaps analyzed yet. Click Analyze to start.</CardContent></Card>
-          ) : (
-            <Card><Table><TableHeader><TableRow>
-              <TableHead>Keyword</TableHead><TableHead>Gap Type</TableHead><TableHead>Client Rank</TableHead><TableHead>Competitor Rank</TableHead><TableHead>Opportunity</TableHead><TableHead>Recommendation</TableHead>
-            </TableRow></TableHeader><TableBody>
-              {gaps.map(g => (
-                <TableRow key={g.id}>
-                  <TableCell className="font-medium">{g.keyword || "—"}</TableCell>
-                  <TableCell><Badge variant="outline" className="text-xs">{g.gap_type.replace(/_/g, " ")}</Badge></TableCell>
-                  <TableCell>{g.client_rank ?? "—"}</TableCell>
-                  <TableCell>{g.competitor_rank ?? "—"}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Progress value={g.opportunity_score || 0} className="w-16 h-2" />
-                      <span className="text-sm">{g.opportunity_score || 0}</span>
+          {/* Content Gaps from AI */}
+          {latestAnalysis?.analysis_json?.content_gaps?.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-sm">Content Gaps Discovered</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {latestAnalysis.analysis_json.content_gaps.map((gap: any, i: number) => (
+                    <div key={i} className="flex items-center gap-2 text-sm p-2 rounded bg-muted/50">
+                      <FileText className="h-4 w-4 text-primary" />
+                      <span className="flex-1">{gap.topic}</span>
+                      <Badge variant="outline">{gap.type}</Badge>
+                      <Badge variant={priorityColor(gap.priority)}>{gap.priority}</Badge>
                     </div>
-                  </TableCell>
-                  <TableCell className="text-xs max-w-[250px]">{g.recommendation || "—"}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody></Table></Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {gaps.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-sm">Keyword Gaps ({gaps.length})</CardTitle></CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Keyword</TableHead>
+                      <TableHead>Gap Type</TableHead>
+                      <TableHead>Opportunity</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {gaps.slice(0, 50).map(g => (
+                      <TableRow key={g.id}>
+                        <TableCell className="font-medium">{g.keyword}</TableCell>
+                        <TableCell><Badge variant="outline">{g.gap_type}</Badge></TableCell>
+                        <TableCell><span className={scoreColor(g.opportunity_score)}>{g.opportunity_score}</span></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* ROADMAP TAB */}
+        <TabsContent value="roadmap" className="space-y-4">
+          {roadmap.length === 0 ? (
+            <Card><CardContent className="py-8 text-center text-muted-foreground">
+              Run domain analysis to auto-generate SEO roadmap
+            </CardContent></Card>
+          ) : (
+            <>
+              {["high", "medium", "low"].map(priority => {
+                const items = roadmap.filter(r => r.priority === priority);
+                if (items.length === 0) return null;
+                return (
+                  <Card key={priority}>
+                    <CardHeader>
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Badge variant={priorityColor(priority)}>{priority} priority</Badge>
+                        <span className="text-muted-foreground">({items.length} items)</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {items.map(item => (
+                          <div key={item.id} className="flex items-center gap-3 text-sm p-2 rounded bg-muted/50">
+                            <button
+                              onClick={() => updateRoadmapItem(item.id, { status: item.status === "completed" ? "pending" : "completed", completed_at: item.status === "completed" ? null : new Date().toISOString() })}
+                              className="shrink-0"
+                            >
+                              {item.status === "completed" ? <CheckCircle2 className="h-4 w-4 text-success" /> : <div className="h-4 w-4 rounded-full border-2 border-muted-foreground" />}
+                            </button>
+                            <span className={item.status === "completed" ? "line-through text-muted-foreground" : ""}>{item.title}</span>
+                            <Badge variant="outline" className="ml-auto text-[10px]">{item.category}</Badge>
+                            <Badge variant="secondary" className="text-[10px]">Impact: {item.estimated_impact}</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </>
+          )}
+        </TabsContent>
+
+        {/* CONTENT WORKFLOW TAB */}
+        <TabsContent value="content" className="space-y-4">
+          {contentWorkflow.length === 0 ? (
+            <Card><CardContent className="py-8 text-center text-muted-foreground">
+              Content gaps will be auto-populated after domain analysis
+            </CardContent></Card>
+          ) : (
+            <Card>
+              <CardContent className="p-0">
+                <div className="max-h-[400px] overflow-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {contentWorkflow.map(cw => (
+                        <TableRow key={cw.id}>
+                          <TableCell className="font-medium">{cw.title}</TableCell>
+                          <TableCell><Badge variant="outline">{cw.content_type}</Badge></TableCell>
+                          <TableCell><Badge variant="secondary">{cw.status.replace(/_/g, " ")}</Badge></TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm" variant="ghost"
+                              onClick={() => updateContentWorkflow(cw.id, {
+                                status: cw.status === "brief_created" ? "writing" : cw.status === "writing" ? "seo_review" : "published"
+                              })}
+                            >
+                              Advance →
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
       </Tabs>

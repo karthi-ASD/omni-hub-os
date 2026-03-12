@@ -249,18 +249,25 @@ function applyThemeVars(theme: ThemeConfig) {
   root.style.setProperty("--chart-5", theme.accent);
 }
 
+type RotateMode = "off" | "daily" | "timed";
+
 interface ThemeContextType {
   currentTheme: ThemeConfig;
   setThemeById: (id: string) => void;
   isLocked: boolean;
   lockTheme: (locked: boolean) => void;
   allThemes: ThemeConfig[];
+  rotateMode: RotateMode;
+  setRotateMode: (mode: RotateMode) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [isLocked, setIsLocked] = useState(() => localStorage.getItem("nw-theme-locked") === "true");
+  const [rotateMode, setRotateModeState] = useState<RotateMode>(() => {
+    return (localStorage.getItem("nw-theme-rotate") as RotateMode) || "daily";
+  });
   const [themeId, setThemeId] = useState<string>(() => {
     const saved = localStorage.getItem("nw-theme-id");
     if (saved && isLocked) return saved;
@@ -273,11 +280,26 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     applyThemeVars(currentTheme);
   }, [currentTheme]);
 
+  // 20-minute auto-rotation
+  useEffect(() => {
+    if (rotateMode !== "timed" || isLocked) return;
+    const rotate = () => {
+      setThemeId(prev => {
+        const idx = THEMES.findIndex(t => t.id === prev);
+        return THEMES[(idx + 1) % THEMES.length].id;
+      });
+    };
+    const interval = setInterval(rotate, DEFAULT_ROTATE_MS);
+    return () => clearInterval(interval);
+  }, [rotateMode, isLocked]);
+
   const setThemeById = useCallback((id: string) => {
     setThemeId(id);
     setIsLocked(true);
+    setRotateModeState("off");
     localStorage.setItem("nw-theme-id", id);
     localStorage.setItem("nw-theme-locked", "true");
+    localStorage.setItem("nw-theme-rotate", "off");
   }, []);
 
   const lockTheme = useCallback((locked: boolean) => {
@@ -287,11 +309,32 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const autoId = THEMES[getDayThemeIndex()].id;
       setThemeId(autoId);
       localStorage.removeItem("nw-theme-id");
+      setRotateModeState("daily");
+      localStorage.setItem("nw-theme-rotate", "daily");
+    }
+  }, []);
+
+  const setRotateMode = useCallback((mode: RotateMode) => {
+    setRotateModeState(mode);
+    localStorage.setItem("nw-theme-rotate", mode);
+    if (mode === "timed") {
+      setIsLocked(false);
+      localStorage.setItem("nw-theme-locked", "false");
+    } else if (mode === "off") {
+      setIsLocked(true);
+      localStorage.setItem("nw-theme-locked", "true");
+    } else {
+      // daily
+      setIsLocked(false);
+      localStorage.setItem("nw-theme-locked", "false");
+      const autoId = THEMES[getDayThemeIndex()].id;
+      setThemeId(autoId);
+      localStorage.removeItem("nw-theme-id");
     }
   }, []);
 
   return (
-    <ThemeContext.Provider value={{ currentTheme, setThemeById, isLocked, lockTheme, allThemes: THEMES }}>
+    <ThemeContext.Provider value={{ currentTheme, setThemeById, isLocked, lockTheme, allThemes: THEMES, rotateMode, setRotateMode }}>
       {children}
     </ThemeContext.Provider>
   );
