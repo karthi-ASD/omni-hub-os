@@ -196,6 +196,8 @@ import SalesFollowUpsPage from "./pages/SalesFollowUpsPage";
 import SalesTeamPerformancePage from "./pages/SalesTeamPerformancePage";
 import AISalesAssistantPage from "./pages/AISalesAssistantPage";
 import SalesKnowledgeBasePage from "./pages/SalesKnowledgeBasePage";
+import ProspectFinderPage from "./pages/ProspectFinderPage";
+import SalesOpportunitiesPage from "./pages/SalesOpportunitiesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -250,6 +252,8 @@ const App = () => (
               <Route path="/sales-team-performance" element={<SalesTeamPerformancePage />} />
               <Route path="/ai-sales-assistant" element={<AISalesAssistantPage />} />
               <Route path="/sales-knowledge" element={<SalesKnowledgeBasePage />} />
+              <Route path="/prospect-finder" element={<ProspectFinderPage />} />
+              <Route path="/sales-opportunities" element={<SalesOpportunitiesPage />} />
               <Route path="/more" element={<MorePage />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/inquiries" element={<InquiriesPage />} />

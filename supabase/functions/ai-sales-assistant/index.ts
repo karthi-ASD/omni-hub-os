@@ -123,6 +123,26 @@ ${context.seoScore ? `SEO Score: ${context.seoScore}/100` : ""}
 ${context.notes ? `Notes: ${context.notes}` : ""}`;
         break;
 
+      case "prospect_search":
+        systemPrompt = `You are a business prospecting AI for a digital marketing agency (NextWeb).
+Given an industry, city, and/or country, suggest 5-8 realistic businesses that would benefit from SEO services.
+
+For each prospect, provide:
+## Prospect 1: [Business Name]
+- **Website**: example.com (realistic placeholder)
+- **Location**: City, Country
+- **Industry**: specific niche
+- **Opportunity Score**: X/100
+- **SEO Weaknesses**: 2-3 bullet points
+- **Recommended Approach**: one-liner pitch angle
+
+Sort by opportunity score descending. Be specific and realistic.`;
+        userPrompt = `Find SEO prospects in:
+${context.industry ? `Industry: ${context.industry}` : ""}
+${context.city ? `City: ${context.city}` : ""}
+${context.country ? `Country: ${context.country}` : ""}`;
+        break;
+
       default:
         return new Response(JSON.stringify({ error: "Unknown type" }), {
           status: 400,
