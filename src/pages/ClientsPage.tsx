@@ -94,12 +94,16 @@ const ClientsPage = () => {
         <Button size="sm" variant="outline" onClick={handleSyncClients} disabled={syncing}>
           <RefreshCw className={`h-4 w-4 mr-1 ${syncing ? "animate-spin" : ""}`} /> {syncing ? "Syncing..." : "Sync"}
         </Button>
-        <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
-          <Upload className="h-4 w-4 mr-1" /> Import
-        </Button>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" /> New
-        </Button>
+        {canCreate && (
+          <>
+            <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload className="h-4 w-4 mr-1" /> Import
+            </Button>
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" /> New
+            </Button>
+          </>
+        )}
       </PageHeader>
 
       {/* KPI strip */}
