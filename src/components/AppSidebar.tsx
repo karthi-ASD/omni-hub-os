@@ -120,6 +120,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "Users", icon: UserCog, to: "/users" },
       { label: "Roles", icon: Shield, to: "/role-management" },
       { label: "Audit Logs", icon: Activity, to: "/audit-logs" },
+      { label: "SA Tools", icon: Wrench, to: "/super-admin-tools", roles: ["super_admin"] },
     ],
   },
 ];
