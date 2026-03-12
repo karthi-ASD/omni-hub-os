@@ -12,6 +12,10 @@ export interface PlatformPageData {
   relatedServices: { label: string; to: string }[];
   relatedIndustries: { label: string; to: string }[];
   stats: { value: string; label: string }[];
+  testimonials?: { quote: string; name: string; role: string; company: string }[];
+  useCases?: { title: string; industry: string; result: string; desc: string }[];
+  localSEO?: { heading: string; paragraphs: string[] };
+  integrations?: string[];
 }
 
 export const platformPages: Record<string, PlatformPageData> = {
@@ -61,6 +65,24 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "3x", label: "Cross-Sell Revenue" },
       { value: "97%", label: "Data Accuracy" },
     ],
+    testimonials: [
+      { quote: "Customer 360 eliminated the 'who spoke to this client last?' problem. Now every team member has full context instantly.", name: "Sarah Mitchell", role: "Head of CX", company: "HealthBridge QLD" },
+      { quote: "We reduced duplicate records by 95% and improved our cross-sell rate by 3x within six months.", name: "James Chen", role: "Revenue Director", company: "Coastal Financial Group" },
+      { quote: "The interaction timeline alone has saved our account managers hours per week. Game-changing visibility.", name: "Rebecca Torres", role: "VP Sales", company: "TechScale Brisbane" },
+    ],
+    useCases: [
+      { title: "Multi-Location Healthcare", industry: "Healthcare", result: "+40% Patient Retention", desc: "Unified patient records across 12 clinic locations with appointment history, billing, and communication logs in one view." },
+      { title: "Financial Advisory Firm", industry: "Finance", result: "3x Cross-Sell Revenue", desc: "Connected investment, insurance, and tax data for holistic client profiles enabling proactive upsell recommendations." },
+      { title: "Retail Chain Analytics", industry: "Retail", result: "95% Data Accuracy", desc: "Merged online and in-store purchase data, loyalty programs, and support interactions for true omnichannel customer insights." },
+    ],
+    integrations: ["Sales CRM", "Service CRM", "Invoicing", "Marketing", "Projects", "SEO OS", "Analytics", "WhatsApp", "Email"],
+    localSEO: {
+      heading: "Customer 360 for Brisbane & Gold Coast Businesses",
+      paragraphs: [
+        "NextWeb Customer 360 gives Brisbane and Gold Coast businesses a complete, real-time view of every customer interaction across sales, service, marketing, and finance. No more switching between spreadsheets, email threads, and disconnected tools.",
+        "Our Brisbane-based team helps businesses implement Customer 360 with data migration, workflow configuration, and team training — ensuring every department has the context they need to deliver exceptional customer experiences.",
+      ],
+    },
   },
   "sales-crm": {
     slug: "sales-crm",
@@ -108,6 +130,24 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "85%", label: "Forecast Accuracy" },
       { value: "60%", label: "Less Manual Entry" },
     ],
+    testimonials: [
+      { quote: "Our pipeline visibility went from guesswork to real-time accuracy. Win rates are up 40% since switching to NextWeb.", name: "Tom Bradley", role: "Sales Director", company: "PropConnect QLD" },
+      { quote: "The AI forecasting is scary accurate. Our quarterly projections are now within 5% every time.", name: "Michelle Park", role: "Head of Sales", company: "DataFlow Solutions" },
+      { quote: "Automated follow-ups alone recovered $200K in deals we would have lost. The ROI was immediate.", name: "Chris Anderson", role: "BDM", company: "Gold Coast Insurance Group" },
+    ],
+    useCases: [
+      { title: "Real Estate Sales Pipeline", industry: "Real Estate", result: "+55% Conversion Rate", desc: "Automated lead capture from property portals with AI scoring, nurture sequences, and agent assignment for a Brisbane real estate group." },
+      { title: "SaaS Sales Acceleration", industry: "Software", result: "2x Pipeline Velocity", desc: "Visual pipeline with automated demo scheduling, proposal generation, and renewal tracking for a QLD SaaS company." },
+      { title: "Financial Services Growth", industry: "Finance", result: "+$1.2M New Revenue", desc: "Lead routing, compliance tracking, and automated follow-ups for a Gold Coast financial advisory firm." },
+    ],
+    integrations: ["Customer 360", "Invoicing", "Marketing Automation", "Email", "Calendar", "WhatsApp", "Xero", "Proposals"],
+    localSEO: {
+      heading: "Sales CRM for Brisbane & Gold Coast Teams",
+      paragraphs: [
+        "NextWeb Sales CRM is trusted by hundreds of Brisbane and Gold Coast sales teams to manage leads, pipelines, and revenue forecasting. Our platform replaces disconnected spreadsheets and legacy CRMs with one intelligent system that grows with your business.",
+        "With local implementation support, hands-on training, and data migration services from our Brisbane team, you can be up and running in weeks — not months. Whether you're a two-person startup or a 200-person enterprise, our CRM scales to fit.",
+      ],
+    },
   },
   "service-crm": {
     slug: "service-crm",
@@ -155,6 +195,24 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "4.8★", label: "Customer Rating" },
       { value: "70%", label: "Self-Service Rate" },
     ],
+    testimonials: [
+      { quote: "Our average resolution time dropped from 4 hours to 45 minutes. Customers are noticeably happier.", name: "Angela Wu", role: "Support Manager", company: "QLD Plumbing Group" },
+      { quote: "The omnichannel inbox is a lifesaver. WhatsApp, email, phone — everything in one place.", name: "Daniel Foster", role: "CX Lead", company: "GoldCoast IT" },
+      { quote: "SLA tracking with automatic escalation means we never miss a deadline. Our compliance rate hit 95%.", name: "Laura Bennett", role: "Operations Director", company: "MediServe Brisbane" },
+    ],
+    useCases: [
+      { title: "Field Service Dispatch", industry: "Trades & Services", result: "50% Faster Dispatch", desc: "GPS-tracked field technician dispatch with photo uploads, job forms, and real-time status updates for a Brisbane trades company." },
+      { title: "Healthcare Patient Support", industry: "Healthcare", result: "95% SLA Compliance", desc: "Multi-channel patient support with priority routing, knowledge base, and SLA tracking across 8 clinic locations." },
+      { title: "Government Citizen Services", industry: "Government", result: "60% Self-Service Rate", desc: "Citizen request portal with automated categorisation, department routing, and public knowledge base for a QLD council." },
+    ],
+    integrations: ["Customer 360", "WhatsApp", "Email", "Phone", "Live Chat", "SMS", "Knowledge Base", "Calendar"],
+    localSEO: {
+      heading: "Service CRM for Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb Service CRM helps Brisbane and Gold Coast businesses deliver exceptional customer support with omnichannel ticketing, SLA management, and field dispatch — all in one platform.",
+        "From trade businesses needing field dispatch to healthcare providers managing patient enquiries, our local team implements and supports Service CRM for businesses across South East Queensland.",
+      ],
+    },
   },
   "marketing-automation": {
     slug: "marketing-automation",
@@ -202,6 +260,24 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "250%", label: "Email ROI" },
       { value: "45%", label: "Higher Engagement" },
     ],
+    testimonials: [
+      { quote: "Our email open rates jumped from 18% to 42% with personalised automation. The segmentation engine is incredibly powerful.", name: "Claire Morgan", role: "Marketing Manager", company: "EduTech QLD" },
+      { quote: "We replaced three separate marketing tools with NextWeb. Everything is connected and the data actually makes sense now.", name: "Ryan Cooper", role: "CMO", company: "Lifestyle Brands AU" },
+      { quote: "Lead nurturing sequences converted 35% more prospects. The ROI on marketing automation paid for itself in month one.", name: "Jessica Tan", role: "Growth Lead", company: "PropStart Brisbane" },
+    ],
+    useCases: [
+      { title: "Education Lead Nurturing", industry: "Education", result: "+35% Enrolment Rate", desc: "Automated drip campaigns for prospective students with behaviour-triggered content and application reminders." },
+      { title: "Real Estate Nurture Sequences", industry: "Real Estate", result: "3x Lead Conversion", desc: "Property alert automation with suburb-specific content, open home reminders, and vendor reporting." },
+      { title: "Retail Campaign Engine", industry: "Retail", result: "+250% Email ROI", desc: "Segmented promotional campaigns with abandoned cart recovery, loyalty triggers, and seasonal automation." },
+    ],
+    integrations: ["Sales CRM", "Customer 360", "Email", "SMS", "WhatsApp", "Social Media", "Google Ads", "Facebook Ads"],
+    localSEO: {
+      heading: "Marketing Automation in Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb Marketing Automation empowers Brisbane and Gold Coast businesses to run sophisticated multi-channel campaigns without a massive marketing team. Our platform handles email, SMS, WhatsApp, social media, and web push — all from one connected system.",
+        "Our local team provides campaign setup, audience strategy, and ongoing optimisation for businesses across South East Queensland.",
+      ],
+    },
   },
   "commerce": {
     slug: "commerce",
@@ -249,6 +325,21 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "99.9%", label: "Uptime" },
       { value: "$2M+", label: "GMV Processed" },
     ],
+    testimonials: [
+      { quote: "Our online store conversion rate increased 35% with the optimised checkout flow. The CRM integration is brilliant.", name: "Sophie Lee", role: "eCommerce Manager", company: "Coastal Living AU" },
+      { quote: "Managing inventory across website and social selling from one dashboard saved us from overselling disasters.", name: "Marcus Patel", role: "Founder", company: "GoldCoast Supplements" },
+    ],
+    useCases: [
+      { title: "Multi-Channel Fashion Retail", industry: "Retail", result: "+35% Conversion", desc: "Unified storefront with social selling, abandoned cart recovery, and CRM-connected customer journeys." },
+      { title: "B2B Wholesale Portal", industry: "Manufacturing", result: "2x Order Value", desc: "Custom wholesale portal with tiered pricing, bulk ordering, and automated reorder reminders." },
+    ],
+    integrations: ["Stripe", "PayPal", "eWAY", "Afterpay", "Australia Post", "SEO OS", "Analytics", "CRM"],
+    localSEO: {
+      heading: "eCommerce Platform for Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb Commerce helps Brisbane and Gold Coast retailers sell online with integrated storefronts, payment processing, and CRM — all designed for the Australian market with GST compliance and local payment gateways.",
+      ],
+    },
   },
   "analytics": {
     slug: "analytics",
@@ -296,6 +387,23 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "50+", label: "Chart Types" },
       { value: "100%", label: "Cross-Module" },
     ],
+    testimonials: [
+      { quote: "The real-time dashboards replaced our weekly manual reporting. Leadership now has instant access to KPIs.", name: "David Kim", role: "CFO", company: "BrightPath Healthcare" },
+      { quote: "Predictive analytics flagged a churn risk we would have missed. We saved three enterprise accounts worth $500K.", name: "Natalie Brooks", role: "VP Strategy", company: "InnovateTech QLD" },
+    ],
+    useCases: [
+      { title: "Executive KPI Dashboard", industry: "Multi-Industry", result: "90% Less Reporting Time", desc: "Real-time executive dashboards pulling data from CRM, finance, projects, and HR for instant business visibility." },
+      { title: "Revenue Intelligence", industry: "SaaS", result: "+25% Forecast Accuracy", desc: "AI-powered revenue forecasting with cohort analysis, churn prediction, and expansion opportunity scoring." },
+      { title: "Marketing Attribution", industry: "Agency", result: "100% Revenue Attribution", desc: "Multi-touch attribution modelling connecting marketing spend to closed revenue across every channel and campaign." },
+    ],
+    integrations: ["All NextWeb Modules", "Google Analytics", "Google Ads", "Facebook Ads", "Xero", "Custom APIs"],
+    localSEO: {
+      heading: "Business Analytics for Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb Analytics & BI gives Brisbane and Gold Coast businesses real-time visibility into every aspect of their operations. Replace spreadsheets and disconnected reports with interactive dashboards that update automatically.",
+        "Our Brisbane analytics team helps businesses design dashboards, build custom reports, and implement predictive analytics for data-driven decision making.",
+      ],
+    },
   },
   "integration": {
     slug: "integration",
@@ -343,6 +451,21 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "Real-Time", label: "Data Sync" },
       { value: "99.9%", label: "API Uptime" },
     ],
+    testimonials: [
+      { quote: "The Xero integration alone saved our accounts team 15 hours per week. Invoices and payments sync perfectly.", name: "Andrew Walsh", role: "Finance Manager", company: "BuildRight QLD" },
+      { quote: "We connected NextWeb to Slack, Google Workspace, and our warehouse system in a single afternoon. Incredible.", name: "Lisa Chang", role: "CTO", company: "FreshSupply Co" },
+    ],
+    useCases: [
+      { title: "Accounting Automation", industry: "Professional Services", result: "15hrs/week Saved", desc: "Bi-directional Xero sync automating invoice creation, payment reconciliation, and contact management." },
+      { title: "Warehouse Integration", industry: "Logistics", result: "Real-Time Stock Sync", desc: "Custom API integration connecting warehouse management system with NextWeb orders and inventory." },
+    ],
+    integrations: ["Xero", "Stripe", "Google Workspace", "Slack", "Zapier", "Twilio", "Mailgun", "AWS", "Custom APIs"],
+    localSEO: {
+      heading: "Integration Platform for Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb Integration connects your Brisbane or Gold Coast business tools into one unified system. Whether you need Xero accounting sync, Stripe payments, or custom API integrations — our platform and local team make it seamless.",
+      ],
+    },
   },
   "low-code": {
     slug: "low-code",
@@ -390,6 +513,21 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "100+", label: "App Templates" },
       { value: "Enterprise", label: "Grade Security" },
     ],
+    testimonials: [
+      { quote: "Our HR team built a leave management app in two days without writing a single line of code. Previously that would've taken months.", name: "Karen O'Neil", role: "HR Director", company: "TechVenture Brisbane" },
+      { quote: "The low-code platform let us prototype and launch three internal tools in a single sprint. Incredible velocity.", name: "Ben Masters", role: "Head of Digital", company: "GovServe QLD" },
+    ],
+    useCases: [
+      { title: "Government Workflow Automation", industry: "Government", result: "10x Faster Development", desc: "Citizen request workflows with approval chains, status tracking, and automated notifications built in days." },
+      { title: "Healthcare Forms System", industry: "Healthcare", result: "Zero Code Required", desc: "Patient intake forms, consent workflows, and referral management built by clinical staff using visual builder." },
+    ],
+    integrations: ["All NextWeb Modules", "Custom APIs", "Webhooks", "Database", "File Storage", "Email"],
+    localSEO: {
+      heading: "Low-Code Platform for Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb's low-code platform empowers Brisbane and Gold Coast businesses to build custom applications without traditional development timelines. Our visual builder lets business users create forms, workflows, and dashboards while developers extend with code when needed.",
+      ],
+    },
   },
   "mobile": {
     slug: "mobile",
@@ -437,6 +575,22 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "< 2s", label: "Load Time" },
       { value: "4.8★", label: "App Rating" },
     ],
+    testimonials: [
+      { quote: "Our field team went from paper forms to real-time mobile data capture. Productivity is up 40% and data accuracy is perfect.", name: "Greg Patterson", role: "Field Operations", company: "QLD Electrical Services" },
+      { quote: "The offline capability is crucial for our rural sites. Data syncs perfectly when connectivity returns.", name: "Amy Chen", role: "Project Manager", company: "AgriTech Queensland" },
+    ],
+    useCases: [
+      { title: "Field Service Operations", industry: "Trades", result: "+40% Productivity", desc: "Mobile job management with GPS check-in, photo capture, digital forms, and field payment collection." },
+      { title: "Real Estate Agent App", industry: "Real Estate", result: "4.9★ App Rating", desc: "Property listing management, client CRM, inspection scheduling, and offer tracking for agents on the go." },
+    ],
+    integrations: ["iOS App Store", "Google Play", "Push Notifications", "GPS", "Camera", "Biometrics", "Offline Sync"],
+    localSEO: {
+      heading: "Mobile Apps for Brisbane & Gold Coast Businesses",
+      paragraphs: [
+        "NextWeb Mobile Technology keeps Brisbane and Gold Coast teams productive from anywhere — with native iOS and Android apps featuring offline capability, GPS tracking, and real-time data sync.",
+        "Whether your team works in Brisbane CBD offices, Gold Coast construction sites, or rural Queensland — our mobile platform ensures full platform access on every device.",
+      ],
+    },
   },
   "ai-automation": {
     slug: "ai-automation",
@@ -484,6 +638,24 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "40%", label: "Cost Reduction" },
       { value: "24/7", label: "AI Operations" },
     ],
+    testimonials: [
+      { quote: "AI lead scoring identified our best prospects automatically. Our sales team's conversion rate jumped 40% in the first quarter.", name: "David Huang", role: "VP Sales", company: "InsureTech Brisbane" },
+      { quote: "The AI chatbot handles 70% of customer enquiries without human intervention. Our support costs dropped dramatically.", name: "Emily Walker", role: "Head of Support", company: "TravelEasy QLD" },
+      { quote: "Anomaly detection caught a billing discrepancy worth $50K before it became a problem. The AI pays for itself.", name: "Michael Ross", role: "CFO", company: "LogiFreight Gold Coast" },
+    ],
+    useCases: [
+      { title: "AI-Powered Support", industry: "Travel & Tourism", result: "70% Automated", desc: "Intelligent chatbot handling booking enquiries, cancellations, and FAQ responses with seamless human handoff." },
+      { title: "Sales Intelligence", industry: "Financial Services", result: "+40% Win Rate", desc: "Predictive lead scoring and next-best-action recommendations for a Brisbane financial advisory team." },
+      { title: "Operations Anomaly Detection", industry: "Logistics", result: "$50K Savings", desc: "AI monitoring of billing, routing, and delivery data to flag anomalies and prevent revenue leakage." },
+    ],
+    integrations: ["Google Gemini", "OpenAI GPT", "Customer 360", "Sales CRM", "Service CRM", "Analytics", "Email"],
+    localSEO: {
+      heading: "AI Automation for Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb AI Automation brings enterprise-grade artificial intelligence to Brisbane and Gold Coast businesses without requiring a data science team. Our platform includes pre-built AI capabilities — lead scoring, chatbots, anomaly detection, and intelligent workflows — that work out of the box.",
+        "Our Brisbane AI team provides strategy, implementation, and training to help you unlock the full potential of AI across sales, support, marketing, and operations.",
+      ],
+    },
   },
   "security": {
     slug: "security",
@@ -531,6 +703,23 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "99.99%", label: "Uptime" },
       { value: "Zero", label: "Data Breaches" },
     ],
+    testimonials: [
+      { quote: "Row-level security means our team only sees their own client data. Compliance audits are now stress-free.", name: "Helen Wright", role: "Compliance Officer", company: "AusFinance Group" },
+      { quote: "The audit logging gives us complete visibility into every data access. Our board loves the governance reports.", name: "Robert Chang", role: "CIO", company: "HealthNet Queensland" },
+    ],
+    useCases: [
+      { title: "Healthcare Data Governance", industry: "Healthcare", result: "100% Audit Compliance", desc: "Patient data protection with RLS, encryption, audit logging, and Australian Privacy Act compliance across 15 clinics." },
+      { title: "Financial Compliance", industry: "Finance", result: "Zero Data Breaches", desc: "Multi-tenant isolation, encrypted records, and automated compliance reporting for an AFSL-licensed advisory firm." },
+      { title: "Government Security Standards", industry: "Government", result: "SOC 2 Certified", desc: "Enterprise security implementation meeting Essential Eight and PSPF requirements for a QLD government department." },
+    ],
+    integrations: ["SSO / SAML", "Multi-Factor Auth", "Encryption", "Audit Logs", "RBAC", "Data Residency"],
+    localSEO: {
+      heading: "Enterprise Security for Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb Security provides enterprise-grade data protection for Brisbane and Gold Coast businesses — with Australian data residency, encryption, row-level security, and compliance frameworks built in.",
+        "Our security team provides penetration testing, compliance consulting, and security architecture reviews for businesses across South East Queensland.",
+      ],
+    },
   },
   "seo-os": {
     slug: "seo-os",
@@ -578,6 +767,24 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "White-Label", label: "Reports" },
       { value: "Local SEO", label: "Brisbane & GC" },
     ],
+    testimonials: [
+      { quote: "SEO OS replaced Ahrefs, SEMrush, and our project management tool. Everything in one platform with client reporting built in.", name: "Amanda Price", role: "SEO Director", company: "Digital Edge Agency" },
+      { quote: "Ranking tracking on Google.com.au with daily updates gives us the local accuracy no other tool provides.", name: "Jake Morrison", role: "SEO Manager", company: "LocalRank Brisbane" },
+      { quote: "White-label reports saved our team 20 hours per month. Clients love the professional presentation.", name: "Sarah Lin", role: "Agency Owner", company: "Coast Digital Gold Coast" },
+    ],
+    useCases: [
+      { title: "SEO Agency Management", industry: "Agency", result: "20hrs/month Saved", desc: "Multi-client SEO campaign management with white-label reporting, content workflows, and automated audits." },
+      { title: "Local Business SEO", industry: "Small Business", result: "Page 1 Rankings", desc: "Local SEO management for 25+ small business clients with GBP optimisation and citation tracking." },
+      { title: "Enterprise SEO Operations", industry: "Enterprise", result: "200+ Pages Audited", desc: "Large-scale technical SEO audits, content gap analysis, and competitor monitoring for enterprise websites." },
+    ],
+    integrations: ["Google Search Console", "Google Analytics", "Google Business Profile", "Content CMS", "Sales CRM"],
+    localSEO: {
+      heading: "SEO Platform for Brisbane & Gold Coast Agencies",
+      paragraphs: [
+        "NextWeb SEO OS is the complete SEO operating system for Brisbane and Gold Coast agencies and enterprises. Track rankings on Google.com.au, run automated technical audits, manage content workflows, and deliver white-label client reports — all from one platform.",
+        "Built by SEO practitioners for SEO practitioners, our platform includes local SEO tools specifically designed for Australian businesses targeting Brisbane, Gold Coast, and South East Queensland markets.",
+      ],
+    },
   },
   "finance": {
     slug: "finance",
@@ -625,6 +832,21 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "Xero", label: "Integrated" },
       { value: "AUD", label: "Native Currency" },
     ],
+    testimonials: [
+      { quote: "Quote-to-cash automation eliminated double-entry between CRM and accounting. Our billing cycle dropped from 2 weeks to 2 days.", name: "Peter O'Sullivan", role: "Finance Director", company: "BuildPro Queensland" },
+      { quote: "Automated payment reminders recovered $80K in overdue invoices in the first month. The Xero sync is flawless.", name: "Kathy Nguyen", role: "Accounts Manager", company: "Digital Studios Brisbane" },
+    ],
+    useCases: [
+      { title: "Professional Services Billing", industry: "Consulting", result: "50% Faster Payments", desc: "Time-based invoicing with project tracking, milestone billing, and automated Xero reconciliation." },
+      { title: "Trades Invoice Automation", industry: "Trades", result: "$80K Recovered", desc: "Field-generated invoices with photo attachments, automated reminders, and instant payment links." },
+    ],
+    integrations: ["Xero", "Stripe", "PayPal", "eWAY", "Sales CRM", "Projects", "Bank Feed"],
+    localSEO: {
+      heading: "Finance & Invoicing for Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb Finance & Invoicing helps Brisbane and Gold Coast businesses get paid faster with automated invoicing, payment tracking, and Xero integration — all designed for Australian GST and BAS compliance.",
+      ],
+    },
   },
   "hr-payroll": {
     slug: "hr-payroll",
@@ -672,5 +894,21 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "Super", label: "Automated" },
       { value: "24/7", label: "Self-Service" },
     ],
+    testimonials: [
+      { quote: "Payroll processing that used to take 2 days now takes 30 minutes. STP reporting is completely automated.", name: "Michelle Adams", role: "HR Manager", company: "HealthStaff QLD" },
+      { quote: "Employee self-service for leave requests and payslips reduced HR admin by 60%. Staff love it.", name: "Tony Martinez", role: "People & Culture", company: "GoldCoast Hospitality Group" },
+    ],
+    useCases: [
+      { title: "Multi-Site Payroll", industry: "Healthcare", result: "80% Time Saved", desc: "Automated payroll for 500+ employees across 12 locations with STP, super, and award interpretation." },
+      { title: "Hospitality Rostering", industry: "Hospitality", result: "60% Less Admin", desc: "Shift rostering, attendance tracking, and payroll integration for a Gold Coast hotel group." },
+    ],
+    integrations: ["ATO STP", "Superannuation Funds", "Xero", "Time Tracking", "Leave Calendar", "Employee Portal"],
+    localSEO: {
+      heading: "HR & Payroll for Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb HR & Payroll handles Australian employment requirements — STP reporting, superannuation, Fair Work compliance, and award interpretation — for Brisbane and Gold Coast businesses of all sizes.",
+        "From employee onboarding and leave management to payroll processing and performance reviews, our platform simplifies people management with local Australian compliance built in.",
+      ],
+    },
   },
 };
