@@ -638,6 +638,24 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "40%", label: "Cost Reduction" },
       { value: "24/7", label: "AI Operations" },
     ],
+    testimonials: [
+      { quote: "AI lead scoring identified our best prospects automatically. Our sales team's conversion rate jumped 40% in the first quarter.", name: "David Huang", role: "VP Sales", company: "InsureTech Brisbane" },
+      { quote: "The AI chatbot handles 70% of customer enquiries without human intervention. Our support costs dropped dramatically.", name: "Emily Walker", role: "Head of Support", company: "TravelEasy QLD" },
+      { quote: "Anomaly detection caught a billing discrepancy worth $50K before it became a problem. The AI pays for itself.", name: "Michael Ross", role: "CFO", company: "LogiFreight Gold Coast" },
+    ],
+    useCases: [
+      { title: "AI-Powered Support", industry: "Travel & Tourism", result: "70% Automated", desc: "Intelligent chatbot handling booking enquiries, cancellations, and FAQ responses with seamless human handoff." },
+      { title: "Sales Intelligence", industry: "Financial Services", result: "+40% Win Rate", desc: "Predictive lead scoring and next-best-action recommendations for a Brisbane financial advisory team." },
+      { title: "Operations Anomaly Detection", industry: "Logistics", result: "$50K Savings", desc: "AI monitoring of billing, routing, and delivery data to flag anomalies and prevent revenue leakage." },
+    ],
+    integrations: ["Google Gemini", "OpenAI GPT", "Customer 360", "Sales CRM", "Service CRM", "Analytics", "Email"],
+    localSEO: {
+      heading: "AI Automation for Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb AI Automation brings enterprise-grade artificial intelligence to Brisbane and Gold Coast businesses without requiring a data science team. Our platform includes pre-built AI capabilities — lead scoring, chatbots, anomaly detection, and intelligent workflows — that work out of the box.",
+        "Our Brisbane AI team provides strategy, implementation, and training to help you unlock the full potential of AI across sales, support, marketing, and operations.",
+      ],
+    },
   },
   "security": {
     slug: "security",
