@@ -20,17 +20,22 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("[Login] handleSubmit called with email:", form.email);
     setLoading(true);
     try {
-      const { error } = await signInWithPasswordResilient(form.email, form.password);
+      console.log("[Login] calling signInWithPasswordResilient...");
+      const { error, data } = await signInWithPasswordResilient(form.email, form.password);
+      console.log("[Login] signIn result - error:", error, "data:", data);
       if (error) throw error;
       const { data: { user } } = await supabase.auth.getUser();
+      console.log("[Login] getUser result:", user?.id);
       if (user) {
-        await supabase.from("system_events").insert({ event_type: "LOGIN", payload_json: { email: form.email.trim() } });
+        try { await supabase.from("system_events").insert({ event_type: "LOGIN", payload_json: { email: form.email.trim() } }); } catch {}
       }
       toast.success("Welcome back!");
       navigate("/dashboard");
     } catch (err: any) {
+      console.error("[Login] error:", err);
       if (isAuthTimeoutError(err)) {
         toast.error("Sign-in timed out. Please try again.");
       } else {
