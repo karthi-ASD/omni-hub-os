@@ -280,6 +280,106 @@ const FinanceDashboardPage = () => {
           </div>
         </TabsContent>
 
+        {/* Client Metrics */}
+        <TabsContent value="clientMetrics">
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { title: "Total Clients", value: String(totalClients), icon: Users, color: "" },
+                { title: "Active Clients", value: String(activeClients), icon: CheckCircle, color: "text-[hsl(152,60%,42%)]" },
+                { title: "Cancelled Clients", value: String(cancelledClients), icon: XCircle, color: "text-destructive" },
+                { title: "Pending Clients", value: String(pendingClients), icon: Clock, color: "text-warning" },
+              ].map(card => (
+                <Card key={card.title} className="rounded-2xl shadow-elevated">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
+                    <card.icon className={`h-4 w-4 ${card.color || "text-muted-foreground"}`} />
+                  </CardHeader>
+                  <CardContent><p className="text-2xl font-bold">{card.value}</p></CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+              <Card className="rounded-2xl shadow-elevated">
+                <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Revenue from Active Clients</CardTitle></CardHeader>
+                <CardContent><p className="text-xl font-bold">{fmt(revenueFromActive)}</p></CardContent>
+              </Card>
+              <Card className="rounded-2xl shadow-elevated">
+                <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Revenue from Cancelled Clients</CardTitle></CardHeader>
+                <CardContent><p className="text-xl font-bold">{fmt(revenueFromCancelled)}</p></CardContent>
+              </Card>
+              <Card className="rounded-2xl shadow-elevated">
+                <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Avg Revenue per Client</CardTitle></CardHeader>
+                <CardContent><p className="text-xl font-bold">{fmt(activeClients > 0 ? revenueFromActive / activeClients : 0)}</p></CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader><CardTitle className="text-base">Active vs Cancelled Clients</CardTitle></CardHeader>
+                <CardContent className="h-[300px]">
+                  {clientStatusPieData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RePieChart>
+                        <Pie data={clientStatusPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                          {clientStatusPieData.map((d, i) => <Cell key={i} fill={d.fill} />)}
+                        </Pie>
+                        <Tooltip />
+                      </RePieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">No client data available.</div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader><CardTitle className="text-base">Revenue by Client Status</CardTitle></CardHeader>
+                <CardContent className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={[
+                      { status: "Active", revenue: revenueFromActive },
+                      { status: "Cancelled", revenue: revenueFromCancelled },
+                    ]}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="status" stroke="hsl(var(--muted-foreground))" />
+                      <YAxis tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} stroke="hsl(var(--muted-foreground))" />
+                      <Tooltip formatter={(v: number) => fmt(v)} />
+                      <Bar dataKey="revenue" radius={[4, 4, 0, 0]}>
+                        <Cell fill="hsl(152, 60%, 42%)" />
+                        <Cell fill="hsl(0, 72%, 51%)" />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader><CardTitle className="text-base">Top 10 Clients by Revenue</CardTitle></CardHeader>
+              <CardContent>
+                {revenueByClient.length > 0 ? (
+                  <Table>
+                    <TableHeader><TableRow>
+                      <TableHead>Client</TableHead>
+                      <TableHead className="text-right">Total Revenue</TableHead>
+                    </TableRow></TableHeader>
+                    <TableBody>
+                      {revenueByClient.map((c, i) => (
+                        <TableRow key={i}>
+                          <TableCell className="font-medium">{c.name}</TableCell>
+                          <TableCell className="text-right font-semibold">{fmt(c.revenue)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : <p className="text-muted-foreground py-8 text-center">No client revenue data yet.</p>}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
         {/* Department */}
         <TabsContent value="department">
           <Card>
