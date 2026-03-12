@@ -7,7 +7,7 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const publishableKey =
-    env.VITE_SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_ANON_KEY || "";
+    env.VITE_SUPABASE_ANON_KEY || env.VITE_SUPABASE_PUBLISHABLE_KEY || "";
 
   return {
     server: {
@@ -19,6 +19,7 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(publishableKey),
+      "import.meta.env.VITE_SUPABASE_ANON_KEY": JSON.stringify(publishableKey),
     },
     plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
     resolve: {
