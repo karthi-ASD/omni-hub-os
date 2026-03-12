@@ -223,6 +223,7 @@ const FinanceDashboardPage = () => {
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="flex-wrap">
           <TabsTrigger value="overview"><BarChart3 className="h-4 w-4 mr-1" /> Overview</TabsTrigger>
+          <TabsTrigger value="clientMetrics"><UserCheck className="h-4 w-4 mr-1" /> Client Metrics</TabsTrigger>
           <TabsTrigger value="department"><Building2 className="h-4 w-4 mr-1" /> By Department</TabsTrigger>
           <TabsTrigger value="clients"><Users className="h-4 w-4 mr-1" /> By Client</TabsTrigger>
           <TabsTrigger value="invoices"><FileText className="h-4 w-4 mr-1" /> Invoices</TabsTrigger>

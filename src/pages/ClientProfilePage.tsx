@@ -221,6 +221,8 @@ const ClientProfilePage = () => {
           <Card className="rounded-xl">
             <CardContent className="p-4 space-y-3">
               {[
+                ["Client Status", client.client_status?.charAt(0).toUpperCase() + client.client_status?.slice(1)],
+                ["Client Since", client.client_start_date || financials.clientSince || "—"],
                 ["Contact Name", client.contact_name],
                 ["Company", client.company_name],
                 ["Email", client.email],
