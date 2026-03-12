@@ -703,6 +703,23 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "99.99%", label: "Uptime" },
       { value: "Zero", label: "Data Breaches" },
     ],
+    testimonials: [
+      { quote: "Row-level security means our team only sees their own client data. Compliance audits are now stress-free.", name: "Helen Wright", role: "Compliance Officer", company: "AusFinance Group" },
+      { quote: "The audit logging gives us complete visibility into every data access. Our board loves the governance reports.", name: "Robert Chang", role: "CIO", company: "HealthNet Queensland" },
+    ],
+    useCases: [
+      { title: "Healthcare Data Governance", industry: "Healthcare", result: "100% Audit Compliance", desc: "Patient data protection with RLS, encryption, audit logging, and Australian Privacy Act compliance across 15 clinics." },
+      { title: "Financial Compliance", industry: "Finance", result: "Zero Data Breaches", desc: "Multi-tenant isolation, encrypted records, and automated compliance reporting for an AFSL-licensed advisory firm." },
+      { title: "Government Security Standards", industry: "Government", result: "SOC 2 Certified", desc: "Enterprise security implementation meeting Essential Eight and PSPF requirements for a QLD government department." },
+    ],
+    integrations: ["SSO / SAML", "Multi-Factor Auth", "Encryption", "Audit Logs", "RBAC", "Data Residency"],
+    localSEO: {
+      heading: "Enterprise Security for Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb Security provides enterprise-grade data protection for Brisbane and Gold Coast businesses — with Australian data residency, encryption, row-level security, and compliance frameworks built in.",
+        "Our security team provides penetration testing, compliance consulting, and security architecture reviews for businesses across South East Queensland.",
+      ],
+    },
   },
   "seo-os": {
     slug: "seo-os",
