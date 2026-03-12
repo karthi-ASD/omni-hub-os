@@ -428,7 +428,7 @@ const SeoIntelligencePage = () => {
         {/* GAP ANALYSIS TAB */}
         <TabsContent value="gaps" className="space-y-4">
           <div className="flex gap-2">
-            <Button onClick={() => analyzeGaps()} disabled={gapAnalyzing} size="sm">
+            <Button onClick={() => analyzeGaps({ competitors: competitors.map(c => c.competitor_domain) })} disabled={gapAnalyzing} size="sm">
               {gapAnalyzing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Zap className="h-4 w-4 mr-1" />}
               Run Gap Analysis
             </Button>
