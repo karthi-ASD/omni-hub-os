@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import {
   DollarSign, TrendingUp, TrendingDown, AlertTriangle, CheckCircle,
   Clock, FileText, BarChart3, PieChart, RefreshCw, Plus, Wallet,
-  Building2, Users, ArrowUpRight, ArrowDownRight, Calendar, Brain, Link, Unlink, Zap
+  Building2, Users, ArrowUpRight, ArrowDownRight, Calendar, Brain, Link, Unlink, Zap, UserCheck, XCircle
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend } from "recharts";
 import { useState, useCallback, useEffect } from "react";
