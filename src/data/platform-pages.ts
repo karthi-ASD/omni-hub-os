@@ -513,6 +513,21 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "100+", label: "App Templates" },
       { value: "Enterprise", label: "Grade Security" },
     ],
+    testimonials: [
+      { quote: "Our HR team built a leave management app in two days without writing a single line of code. Previously that would've taken months.", name: "Karen O'Neil", role: "HR Director", company: "TechVenture Brisbane" },
+      { quote: "The low-code platform let us prototype and launch three internal tools in a single sprint. Incredible velocity.", name: "Ben Masters", role: "Head of Digital", company: "GovServe QLD" },
+    ],
+    useCases: [
+      { title: "Government Workflow Automation", industry: "Government", result: "10x Faster Development", desc: "Citizen request workflows with approval chains, status tracking, and automated notifications built in days." },
+      { title: "Healthcare Forms System", industry: "Healthcare", result: "Zero Code Required", desc: "Patient intake forms, consent workflows, and referral management built by clinical staff using visual builder." },
+    ],
+    integrations: ["All NextWeb Modules", "Custom APIs", "Webhooks", "Database", "File Storage", "Email"],
+    localSEO: {
+      heading: "Low-Code Platform for Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb's low-code platform empowers Brisbane and Gold Coast businesses to build custom applications without traditional development timelines. Our visual builder lets business users create forms, workflows, and dashboards while developers extend with code when needed.",
+      ],
+    },
   },
   "mobile": {
     slug: "mobile",
