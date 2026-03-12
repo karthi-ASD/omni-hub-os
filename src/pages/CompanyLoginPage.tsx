@@ -8,6 +8,11 @@ import { toast } from "sonner";
 import { Eye, EyeOff, ArrowRight, Building2 } from "lucide-react";
 import { NWLogo } from "@/components/NWLogo";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import {
+  isAuthConfigError,
+  isAuthTimeoutError,
+  signInWithPasswordResilient,
+} from "@/lib/auth-signin";
 
 const CompanyLogin: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -38,15 +43,18 @@ const CompanyLogin: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: form.email.trim(),
-        password: form.password,
-      });
-      if (error) throw error;
+      const result = await signInWithPasswordResilient(form.email, form.password);
+      if (result.error) throw result.error;
       toast.success("Welcome back!");
       navigate("/dashboard");
     } catch (err: any) {
-      toast.error(err.message || "Login failed");
+      if (isAuthConfigError(err)) {
+        toast.error("Auth client config is missing. Check URL and anon key env variables.");
+      } else if (isAuthTimeoutError(err)) {
+        toast.error("Sign-in timed out. Please try again.");
+      } else {
+        toast.error(err.message || "Login failed");
+      }
     } finally {
       setLoading(false);
     }

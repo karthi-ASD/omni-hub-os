@@ -9,7 +9,11 @@ import { toast } from "sonner";
 import { Eye, EyeOff, Shield, Zap, Globe, ArrowRight, Sparkles } from "lucide-react";
 import { NWLogo } from "@/components/NWLogo";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { isAuthTimeoutError, signInWithPasswordResilient } from "@/lib/auth-signin";
+import {
+  isAuthConfigError,
+  isAuthTimeoutError,
+  signInWithPasswordResilient,
+} from "@/lib/auth-signin";
 
 const GOOGLE_AUTH_TIMEOUT_MS = 30000;
 
@@ -24,11 +28,10 @@ const Login: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await signInWithPasswordResilient(form.email, form.password);
-      if (error) throw error;
+      const result = await signInWithPasswordResilient(form.email, form.password);
+      if (result.error) throw result.error;
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      if (result.data?.user) {
         try {
           await supabase.from("system_events").insert({ event_type: "LOGIN", payload_json: { email: form.email.trim() } });
         } catch {
@@ -39,7 +42,9 @@ const Login: React.FC = () => {
       toast.success("Welcome back!");
       navigate("/dashboard");
     } catch (err: any) {
-      if (isAuthTimeoutError(err)) {
+      if (isAuthConfigError(err)) {
+        toast.error("Auth client config is missing. Check URL and anon key env variables.");
+      } else if (isAuthTimeoutError(err)) {
         toast.error("Sign-in timed out. Please try again.");
       } else {
         toast.error(err.message || "Login failed");
