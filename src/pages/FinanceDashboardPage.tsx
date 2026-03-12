@@ -42,6 +42,24 @@ const FinanceDashboardPage = () => {
     addExpense, addBillingSchedule, departments, refresh,
   } = useFinanceDashboard();
 
+  const { clients: allClients, totalCount: totalClients } = useClients();
+  const activeClients = allClients.filter(c => c.client_status === "active").length;
+  const cancelledClients = allClients.filter(c => c.client_status === "cancelled").length;
+  const pendingClients = allClients.filter(c => c.client_status === "pending").length;
+  const revenueFromActive = (() => {
+    const ids = new Set(allClients.filter(c => c.client_status === "active").map(c => c.id));
+    return paidInvoices.filter(i => i.client_id && ids.has(i.client_id)).reduce((s, i) => s + Number(i.total_amount), 0);
+  })();
+  const revenueFromCancelled = (() => {
+    const ids = new Set(allClients.filter(c => c.client_status === "cancelled").map(c => c.id));
+    return paidInvoices.filter(i => i.client_id && ids.has(i.client_id)).reduce((s, i) => s + Number(i.total_amount), 0);
+  })();
+  const clientStatusPieData = [
+    { name: "Active", value: activeClients, fill: "hsl(152, 60%, 42%)" },
+    { name: "Cancelled", value: cancelledClients, fill: "hsl(0, 72%, 51%)" },
+    { name: "Pending", value: pendingClients, fill: "hsl(38, 92%, 50%)" },
+  ].filter(d => d.value > 0);
+
   const [expenseForm, setExpenseForm] = useState({ category: "", department: "", description: "", amount: "", expense_date: format(new Date(), "yyyy-MM-dd") });
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
