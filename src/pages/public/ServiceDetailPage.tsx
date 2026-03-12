@@ -4,6 +4,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { servicePages } from "@/data/service-pages";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronRight, HelpCircle, Star, MapPin, CheckCircle2 } from "lucide-react";
+import { JsonLdScript, buildServiceJsonLd, buildBreadcrumbJsonLd, buildFaqJsonLd } from "@/components/public/JsonLd";
 
 const ServiceDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
