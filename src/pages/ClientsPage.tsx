@@ -130,6 +130,18 @@ const ClientsPage = () => {
             <SelectItem value="suspended">Suspended</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={salesFilter} onValueChange={setSalesFilter}>
+          <SelectTrigger className="w-40 h-10 rounded-xl">
+            <UserCheck className="h-3.5 w-3.5 mr-1" />
+            <SelectValue placeholder="Salesperson" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Salespeople</SelectItem>
+            {salesTeam.map(m => (
+              <SelectItem key={m.user_id} value={m.user_id}>{m.full_name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Client cards */}
