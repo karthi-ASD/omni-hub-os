@@ -18,6 +18,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import LoginV2 from "./pages/LoginV2";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -258,6 +259,7 @@ const App = () => (
             <Route path="/company/:slug/:department" element={<DepartmentSignupPage />} />
             <Route path="/client/login" element={<ClientLoginPage />} />
             <Route path="/security-setup" element={<FirstLoginSecurityPage />} />
+            <Route path="/login-v2" element={<LoginV2 />} />
 
             {/* Protected app shell */}
             <Route
