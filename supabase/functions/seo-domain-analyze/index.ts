@@ -364,7 +364,7 @@ CRITICAL:
 });
 
 async function callAI(apiKey: string, prompt: string): Promise<string> {
-  const resp = await fetch("https://api.lovable.dev/v1/chat/completions", {
+  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${apiKey}`,
