@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -77,6 +77,8 @@ export function useSeoIntelligenceEngine(projectId?: string) {
   const [trafficEstimate, setTrafficEstimate] = useState<SeoTrafficEstimate | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchAll = useCallback(async () => {
     if (!projectId) {
@@ -105,20 +107,76 @@ export function useSeoIntelligenceEngine(projectId?: string) {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, []);
+
+  const pollForCompletion = useCallback((analysisId: string) => {
+    let elapsed = 0;
+    pollingRef.current = setInterval(async () => {
+      elapsed += 3;
+      setAnalysisProgress(Math.min(95, elapsed * 2));
+
+      const { data } = await (supabase.from("seo_domain_analyses") as any)
+        .select("status, seo_score, total_keywords")
+        .eq("id", analysisId)
+        .single();
+
+      if (data?.status === "completed") {
+        if (pollingRef.current) clearInterval(pollingRef.current);
+        pollingRef.current = null;
+        setAnalyzing(false);
+        setAnalysisProgress(100);
+        toast.success(`Analysis complete! SEO Score: ${data.seo_score}/100, ${data.total_keywords} keywords discovered`);
+        fetchAll();
+      } else if (data?.status === "failed") {
+        if (pollingRef.current) clearInterval(pollingRef.current);
+        pollingRef.current = null;
+        setAnalyzing(false);
+        setAnalysisProgress(0);
+        toast.error("Analysis failed. Please try again.");
+      }
+
+      // Timeout after 3 minutes
+      if (elapsed > 180) {
+        if (pollingRef.current) clearInterval(pollingRef.current);
+        pollingRef.current = null;
+        setAnalyzing(false);
+        setAnalysisProgress(0);
+        toast.error("Analysis timed out. Results may still populate shortly.");
+        fetchAll();
+      }
+    }, 3000);
+  }, [fetchAll]);
+
   const runDomainAnalysis = async (domain: string) => {
     if (!profile?.business_id || !projectId) return;
     setAnalyzing(true);
+    setAnalysisProgress(5);
     try {
       const { data, error } = await supabase.functions.invoke("seo-domain-analyze", {
         body: { domain, business_id: profile.business_id, seo_project_id: projectId },
       });
       if (error) throw error;
-      toast.success(`Domain analysis complete! SEO Score: ${data?.seo_score || 0}/100, ${data?.keywords_found || 0} keywords discovered`);
-      fetchAll();
+
+      const analysisId = data?.analysis_id;
+      if (analysisId) {
+        toast.info("SEO analysis started. Processing keywords, competitors, audit...");
+        pollForCompletion(analysisId);
+      } else {
+        // Legacy sync response
+        setAnalyzing(false);
+        setAnalysisProgress(100);
+        toast.success(`Analysis complete! SEO Score: ${data?.seo_score || 0}/100`);
+        fetchAll();
+      }
     } catch (e: any) {
-      toast.error("Analysis failed: " + (e.message || "Unknown error"));
-    } finally {
       setAnalyzing(false);
+      setAnalysisProgress(0);
+      toast.error("Analysis failed: " + (e.message || "Unknown error"));
     }
   };
 
@@ -136,7 +194,7 @@ export function useSeoIntelligenceEngine(projectId?: string) {
 
   return {
     analyses, keywords, roadmap, contentWorkflow, trafficEstimate,
-    loading, analyzing, runDomainAnalysis,
+    loading, analyzing, analysisProgress, runDomainAnalysis,
     updateRoadmapItem, updateContentWorkflow,
     refetch: fetchAll,
   };
