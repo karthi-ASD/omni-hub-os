@@ -17,17 +17,27 @@ export function useSalesTeam() {
   const fetch = useCallback(async () => {
     if (!profile?.business_id) return;
 
-    // Get users who have a sales-related role or belong to the sales department
-    // First try employee_profiles with department = 'sales'
+    // Get employee_profiles with department containing 'sales'
     const { data: empData } = await supabase
       .from("employee_profiles")
-      .select("user_id, full_name, department")
+      .select("user_id, department_id")
+      .eq("business_id", profile.business_id);
+
+    // Check departments for sales-related ones
+    const { data: deptData } = await supabase
+      .from("hr_departments")
+      .select("id, name")
       .eq("business_id", profile.business_id)
-      .ilike("department", "%sales%");
+      .ilike("name", "%sales%");
 
-    const salesUserIds = new Set((empData || []).map(e => e.user_id).filter(Boolean));
+    const salesDeptIds = new Set((deptData || []).map(d => d.id));
+    const salesUserIds = new Set(
+      (empData || [])
+        .filter(e => e.department_id && salesDeptIds.has(e.department_id))
+        .map(e => e.user_id)
+    );
 
-    // Also get profiles for those users + any with sales roles
+    // Also get users with sales-related roles
     const { data: roleData } = await supabase
       .from("user_roles")
       .select("user_id, role")
@@ -36,7 +46,7 @@ export function useSalesTeam() {
     (roleData || []).forEach(r => salesUserIds.add(r.user_id));
 
     if (salesUserIds.size === 0) {
-      // Fallback: return all non-client profiles for this business
+      // Fallback: return all profiles for this business so admin can still assign
       const { data: allProfiles } = await supabase
         .from("profiles")
         .select("user_id, full_name, email, avatar_url")

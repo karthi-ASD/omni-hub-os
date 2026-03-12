@@ -24,7 +24,6 @@ import { useClientFinancials } from "@/hooks/useClientFinancials";
 import { useSalesTeam } from "@/hooks/useSalesTeam";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const statusColor = (s: string) => {
