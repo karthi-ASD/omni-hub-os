@@ -19,6 +19,11 @@ const Index = () => {
   );
   const { session, loading } = useAuth();
 
+  const homepageJsonLd = [
+    organizationJsonLd,
+    buildBreadcrumbJsonLd([{ name: "Home", url: "/" }]),
+  ];
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[hsl(222,47%,8%)]">
