@@ -15828,6 +15828,47 @@ export type Database = {
           },
         ]
       }
+      seo_competitor_fetch_logs: {
+        Row: {
+          business_id: string
+          created_at: string
+          error_message: string | null
+          fetch_time: string
+          id: string
+          results_count: number
+          seo_project_id: string
+          status: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          error_message?: string | null
+          fetch_time?: string
+          id?: string
+          results_count?: number
+          seo_project_id: string
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          error_message?: string | null
+          fetch_time?: string
+          id?: string
+          results_count?: number
+          seo_project_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_competitor_fetch_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_competitor_gap: {
         Row: {
           business_id: string
@@ -15908,8 +15949,11 @@ export type Database = {
           client_id: string | null
           competitor_domain: string
           competitor_name: string | null
+          competitor_title: string | null
           created_at: string
+          discovered_date: string | null
           id: string
+          ranking_position: number | null
           seo_project_id: string
         }
         Insert: {
@@ -15917,8 +15961,11 @@ export type Database = {
           client_id?: string | null
           competitor_domain: string
           competitor_name?: string | null
+          competitor_title?: string | null
           created_at?: string
+          discovered_date?: string | null
           id?: string
+          ranking_position?: number | null
           seo_project_id: string
         }
         Update: {
@@ -15926,8 +15973,11 @@ export type Database = {
           client_id?: string | null
           competitor_domain?: string
           competitor_name?: string | null
+          competitor_title?: string | null
           created_at?: string
+          discovered_date?: string | null
           id?: string
+          ranking_position?: number | null
           seo_project_id?: string
         }
         Relationships: [
