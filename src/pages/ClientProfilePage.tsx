@@ -107,9 +107,16 @@ const ClientProfilePage = () => {
             </p>
           )}
         </div>
-        <Badge className={statusColor(client.onboarding_status)}>
-          {client.onboarding_status.replace("_", " ")}
-        </Badge>
+        <Select value={client.client_status || "pending"} onValueChange={v => updateClientStatus(client.id, v as ClientStatus)}>
+          <SelectTrigger className="w-32 h-8 text-xs rounded-lg"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="prospect">Prospect</SelectItem>
+            <SelectItem value="suspended">Suspended</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Quick Info Bar */}
