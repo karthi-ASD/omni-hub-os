@@ -8,6 +8,8 @@ import CompanyBillingPortalPage from "./pages/CompanyBillingPortalPage";
 import WhiteLabelSettingsPage from "./pages/WhiteLabelSettingsPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import PublicLayout from "@/components/public/PublicLayout";
+import PublicPlaceholderPage from "@/pages/public/PublicPlaceholderPage";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
@@ -212,26 +214,42 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
             <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Index />} />
+            {/* Public routes with mega-menu layout */}
+            <Route element={<PublicLayout />}>
+              <Route path="/" element={<Index />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/security" element={<SecurityPage />} />
+              <Route path="/careers" element={<CareersPage />} />
+              <Route path="/blog" element={<BlogPage />} />
+              <Route path="/demo" element={<DemoRequestPage />} />
+              <Route path="/web-development" element={<WebDevelopmentPage />} />
+              <Route path="/mobile-technology" element={<MobileTechnologyPage />} />
+              <Route path="/it-solutions" element={<ITSolutionsPage />} />
+              <Route path="/e-marketing" element={<EMarketingPage />} />
+              <Route path="/automation" element={<AutomationPage />} />
+              {/* Platform pages */}
+              <Route path="/platform/:slug" element={<PublicPlaceholderPage />} />
+              {/* Service pages */}
+              <Route path="/services/:slug" element={<PublicPlaceholderPage />} />
+              {/* Industry pages */}
+              <Route path="/industries/:slug" element={<PublicPlaceholderPage />} />
+              {/* Solution pages */}
+              <Route path="/solutions" element={<PublicPlaceholderPage />} />
+              <Route path="/solutions/:slug" element={<PublicPlaceholderPage />} />
+              {/* Resources pages */}
+              <Route path="/resources" element={<PublicPlaceholderPage />} />
+              <Route path="/resources/:slug" element={<PublicPlaceholderPage />} />
+            </Route>
+
+            {/* Auth routes (no mega-menu layout) */}
             <Route path="/login" element={<Login />} />
             <Route path="/admin" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
-            <Route path="/terms" element={<TermsPage />} />
-            <Route path="/security" element={<SecurityPage />} />
-            <Route path="/careers" element={<CareersPage />} />
-            <Route path="/blog" element={<BlogPage />} />
-            <Route path="/demo" element={<DemoRequestPage />} />
-            <Route path="/web-development" element={<WebDevelopmentPage />} />
-            <Route path="/mobile-technology" element={<MobileTechnologyPage />} />
-            <Route path="/it-solutions" element={<ITSolutionsPage />} />
-            <Route path="/e-marketing" element={<EMarketingPage />} />
-            <Route path="/automation" element={<AutomationPage />} />
             <Route path="/company/:slug/login" element={<CompanyLoginPage />} />
             <Route path="/company/:slug/signup" element={<CompanySignupPage />} />
             <Route path="/company/:slug/:department" element={<DepartmentSignupPage />} />

@@ -1,30 +1,28 @@
 import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { PremiumFooter } from "@/components/PremiumFooter";
-import {
-  ArrowRight, Shield, Zap, BarChart3, Users, Globe, Brain,
-  FileText, Phone, Calendar, Target, TrendingUp, Lock, Layers, Star,
-  CheckCircle2, ChevronRight, Briefcase, Receipt, MapPin, Headphones,
-  Smartphone, Monitor, Tablet, Award, Sparkles
-} from "lucide-react";
-import { NWLogo } from "@/components/NWLogo";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import AuthDiagnostics from "@/components/AuthDiagnostics";
-import heroBg from "@/assets/hero-bg.jpg";
-import dashboardPreview from "@/assets/dashboard-preview.jpg";
-import teamCollab from "@/assets/team-collab.jpg";
-import aiAutomation from "@/assets/ai-automation.jpg";
-import multiDevice from "@/assets/multi-device.jpg";
+import {
+  ArrowRight, Shield, Zap, BarChart3, Users, Globe, Brain,
+  CheckCircle2, ChevronRight, Smartphone, Monitor, Search,
+  Headphones, Receipt, Mail, ShoppingCart, PieChart, Link2,
+  Code2, Briefcase, Star, Target, TrendingUp, Layers, Lock,
+  Palette, Server, GraduationCap, Landmark, Home, Factory,
+  Plane, DollarSign, Film, Store, Leaf, Award, Sparkles, Phone, MapPin,
+} from "lucide-react";
 
 const Index = () => {
-  usePageTitle("", "NextWeb OS — the all-in-one business operating system. CRM, AI, invoicing, SEO, payroll, and 100+ modules for modern enterprises.");
+  usePageTitle(
+    "NextWeb OS | CRM, AI, App Development, Website Design & Digital Growth in Australia",
+    "NextWeb OS is an all-in-one platform for CRM, AI, websites, apps, SEO, payroll, and business operations, serving Australia with focus on Brisbane and Gold Coast."
+  );
   const { session, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-sidebar">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      <div className="flex min-h-screen items-center justify-center bg-[hsl(222,47%,8%)]">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[hsl(190,80%,55%)] border-t-transparent" />
         <AuthDiagnostics />
       </div>
     );
@@ -34,215 +32,329 @@ const Index = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  return (
-    <div className="min-h-screen bg-sidebar text-primary-foreground overflow-x-hidden">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-sidebar/95 backdrop-blur-xl border-b border-sidebar-border">
-        <div className="container mx-auto flex items-center justify-between h-16 px-4 md:px-8">
-          <NWLogo />
-          <div className="hidden md:flex items-center gap-8 text-sm">
-            <a href="#features" className="text-sidebar-foreground hover:text-primary-foreground transition-colors">Features</a>
-            <a href="#platform" className="text-sidebar-foreground hover:text-primary-foreground transition-colors">Platform</a>
-            <a href="#pricing" className="text-sidebar-foreground hover:text-primary-foreground transition-colors">Pricing</a>
-            <Link to="/web-development" className="text-sidebar-foreground hover:text-primary-foreground transition-colors">Services</Link>
-            <Link to="/automation" className="text-sidebar-foreground hover:text-primary-foreground transition-colors">Automation</Link>
-            <Link to="/about" className="text-sidebar-foreground hover:text-primary-foreground transition-colors">About</Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link to="/login">
-              <Button variant="ghost" className="text-sidebar-foreground hover:text-primary-foreground hover:bg-sidebar-accent">
-                Sign In
-              </Button>
-            </Link>
-            <Link to="/signup">
-              <Button className="bg-primary text-primary-foreground font-semibold hover:bg-primary/90 shadow-lg">
-                Get Started Free
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
+  const nw = {
+    navy: "hsl(222,47%,8%)",
+    navyLight: "hsl(222,35%,12%)",
+    navyMid: "hsl(222,30%,16%)",
+    aqua: "hsl(190,80%,55%)",
+    aquaDark: "hsl(190,80%,45%)",
+    white: "#ffffff",
+    textMuted: "hsl(210,20%,65%)",
+    textDim: "hsl(210,20%,50%)",
+  };
 
-      {/* Hero Section */}
-      <section className="relative pt-16 min-h-screen flex items-center">
-        <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: `url(${heroBg})` }} />
-        <div className="absolute inset-0 bg-gradient-to-b from-sidebar/60 via-sidebar/40 to-sidebar" />
+  const platformModules = [
+    { icon: Users, label: "Customer 360", desc: "Unified view across sales, service & ops", to: "/platform/customer-360" },
+    { icon: BarChart3, label: "Sales CRM", desc: "Leads, pipelines, forecasting & analytics", to: "/platform/sales-crm" },
+    { icon: Headphones, label: "Service CRM", desc: "Tickets, routing & faster resolution", to: "/platform/service-crm" },
+    { icon: Mail, label: "Marketing Automation", desc: "Campaigns, segmentation & nurturing", to: "/platform/marketing-automation" },
+    { icon: ShoppingCart, label: "Commerce", desc: "Storefronts, catalogues & payments", to: "/platform/commerce" },
+    { icon: PieChart, label: "Analytics & BI", desc: "Dashboards, reports & intelligence", to: "/platform/analytics" },
+    { icon: Link2, label: "Integration", desc: "APIs, connectors & data sync", to: "/platform/integration" },
+    { icon: Brain, label: "AI Automation", desc: "Intelligent workflows & predictions", to: "/platform/ai-automation" },
+    { icon: Shield, label: "Security", desc: "Encryption, RLS & compliance", to: "/platform/security" },
+  ];
+
+  const serviceCapabilities = [
+    { icon: Palette, label: "Website Design", to: "/services/website-design" },
+    { icon: Smartphone, label: "App Development", to: "/services/app-development" },
+    { icon: Search, label: "SEO", to: "/services/search-engine-optimization" },
+    { icon: Users, label: "CRM", to: "/services/crm" },
+    { icon: Brain, label: "AI Solutions", to: "/services/artificial-intelligence" },
+    { icon: Server, label: "DevOps", to: "/services/devops" },
+    { icon: PieChart, label: "Business Intelligence", to: "/services/business-intelligence" },
+    { icon: ShoppingCart, label: "eCommerce", to: "/services/ecommerce-design" },
+  ];
+
+  const industries = [
+    { icon: Briefcase, label: "Healthcare", to: "/industries/healthcare" },
+    { icon: GraduationCap, label: "Education", to: "/industries/education" },
+    { icon: DollarSign, label: "Finance", to: "/industries/finance" },
+    { icon: Landmark, label: "Government", to: "/industries/government" },
+    { icon: Home, label: "Real Estate", to: "/industries/real-estate" },
+    { icon: Plane, label: "Travel & Tourism", to: "/industries/travel-tourism" },
+    { icon: Factory, label: "Manufacturing", to: "/industries/manufacturing" },
+    { icon: Store, label: "Retail", to: "/industries/retail" },
+    { icon: Monitor, label: "Software & Tech", to: "/industries/software-technology" },
+  ];
+
+  const whyChoose = [
+    { icon: Code2, title: "Technical Expertise", desc: "World-class engineers across CRM, AI, cloud, mobile, and enterprise systems." },
+    { icon: Zap, title: "Agile Methodology", desc: "Rapid delivery with iterative development, continuous feedback, and fast time to value." },
+    { icon: Users, title: "Client-Centric Approach", desc: "Every solution is built around your unique business requirements and growth goals." },
+    { icon: Brain, title: "Innovation Culture", desc: "Cutting-edge AI, automation, and emerging tech baked into everything we build." },
+    { icon: Award, title: "Long-Term Partnership", desc: "We don't just deliver and disappear — we grow with you as your strategic technology partner." },
+  ];
+
+  return (
+    <>
+      {/* ─── HERO ─── */}
+      <section className="relative min-h-[90vh] flex items-center overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(222,47%,6%)] via-[hsl(222,47%,10%)] to-[hsl(200,40%,10%)]" />
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-20 -left-20 w-[500px] h-[500px] bg-[hsl(190,80%,55%)]/10 rounded-full blur-[120px]" />
+          <div className="absolute bottom-10 right-10 w-[600px] h-[600px] bg-[hsl(252,85%,60%)]/8 rounded-full blur-[140px]" />
+        </div>
         <div className="container mx-auto px-4 md:px-8 relative z-10 py-20 md:py-32">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-primary/15 border border-primary/30 rounded-full px-4 py-2 mb-8">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm text-primary font-medium">Trusted by 500+ Agencies Worldwide</span>
+            <div className="inline-flex items-center gap-2 bg-[hsl(190,80%,55%)]/10 border border-[hsl(190,80%,55%)]/25 rounded-full px-5 py-2 mb-8">
+              <Sparkles className="h-4 w-4 text-[hsl(190,80%,55%)]" />
+              <span className="text-sm text-[hsl(190,80%,55%)] font-medium">Australia's All-in-One Business Platform</span>
             </div>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-tight">
-              The Ultimate{" "}
-              <span className="text-gradient">Business Operating System</span>{" "}
-              for Modern Enterprises
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1]">
+              Your Complete{" "}
+              <span className="bg-gradient-to-r from-[hsl(190,80%,55%)] to-[hsl(252,85%,65%)] bg-clip-text text-transparent">
+                Business Operating System
+              </span>
             </h1>
-            <p className="text-lg md:text-xl text-sidebar-foreground mt-8 max-w-2xl mx-auto leading-relaxed">
-              CRM, project management, invoicing, SEO, AI automation, field job tracking, payroll, and 100+ modules — unified in one powerful platform built for digital agencies and enterprises.
+            <p className="text-lg md:text-xl text-[hsl(210,20%,65%)] mt-8 max-w-3xl mx-auto leading-relaxed">
+              CRM, AI, app development, website design, SEO, marketing, invoicing, payroll, and 100+ integrated modules —
+              built for Australian businesses with a focus on Brisbane and Gold Coast.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
-              <Link to="/signup">
-                <Button size="lg" className="bg-primary text-primary-foreground font-bold text-lg px-8 py-6 hover:bg-primary/90 shadow-2xl shadow-primary/30 transition-all hover:scale-105">
-                  Start Your Free Trial <ArrowRight className="ml-2 h-5 w-5" />
+              <Link to="/demo">
+                <Button size="lg" className="bg-[hsl(190,80%,45%)] text-white font-bold text-lg px-8 py-6 hover:bg-[hsl(190,80%,40%)] shadow-2xl shadow-[hsl(190,80%,45%)]/30 transition-all hover:scale-105">
+                  Book a Demo <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link to="/login">
-                <Button variant="outline" size="lg" className="border-primary/40 text-primary hover:bg-primary/10 px-8 py-6 text-lg">
-                  Watch Demo
+              <Link to="/contact">
+                <Button variant="outline" size="lg" className="border-[hsl(190,80%,55%)]/30 text-[hsl(190,80%,55%)] hover:bg-[hsl(190,80%,55%)]/10 px-8 py-6 text-lg">
+                  Request a Quote
                 </Button>
               </Link>
             </div>
-            <div className="flex items-center justify-center gap-8 mt-12 text-sm text-sidebar-foreground">
-              <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success" /> No credit card required</div>
-              <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success" /> 14-day free trial</div>
-              <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success" /> Cancel anytime</div>
+            <div className="flex flex-wrap items-center justify-center gap-6 mt-12 text-sm text-[hsl(210,20%,55%)]">
+              <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[hsl(152,60%,48%)]" /> No credit card required</span>
+              <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[hsl(152,60%,48%)]" /> Brisbane & Gold Coast based</span>
+              <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[hsl(152,60%,48%)]" /> Australian owned & operated</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Dashboard Preview */}
-      <section className="relative py-16 md:py-24">
+      {/* ─── TRUST RIBBON ─── */}
+      <section className="py-12 border-y border-[hsl(222,30%,14%)] bg-[hsl(222,47%,6%)]">
         <div className="container mx-auto px-4 md:px-8">
-          <div className="relative max-w-5xl mx-auto">
-            <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-info/20 to-primary/20 rounded-2xl blur-xl" />
-            <img src={dashboardPreview} alt="NextWeb OS Dashboard — comprehensive CRM analytics and business intelligence" className="relative rounded-xl shadow-2xl shadow-primary/10 border border-primary/20 w-full" loading="lazy" />
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Bar */}
-      <section className="py-16 border-y border-sidebar-border bg-sidebar-accent">
-        <div className="container mx-auto px-4 md:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            {[
-              { value: "500+", label: "Agencies Trust Us" },
-              { value: "100+", label: "Built-in Modules" },
-              { value: "99.9%", label: "Uptime SLA" },
-              { value: "50K+", label: "Active Users" },
-            ].map((stat) => (
-              <div key={stat.label}>
-                <div className="text-3xl md:text-4xl font-bold text-gradient">{stat.value}</div>
-                <div className="text-sidebar-foreground mt-2 text-sm">{stat.label}</div>
+          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6 text-[hsl(210,20%,45%)]">
+            {["Government Approved Supplier", "Enterprise Security", "99.9% Uptime SLA", "ISO Compliant", "GDPR Ready", "SOC 2 Certified"].map((badge) => (
+              <div key={badge} className="flex items-center gap-2 text-sm font-medium">
+                <Shield className="h-4 w-4 text-[hsl(190,80%,55%)]" />
+                {badge}
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Why NextWeb OS */}
-      <section id="features" className="py-20 md:py-32">
+      {/* ─── PLATFORM OVERVIEW ─── */}
+      <section className="py-20 md:py-28 bg-[hsl(222,47%,8%)]">
         <div className="container mx-auto px-4 md:px-8">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 bg-primary/15 border border-primary/30 rounded-full px-4 py-2 mb-6">
-              <Zap className="h-4 w-4 text-primary" />
-              <span className="text-sm text-primary font-medium">Why Choose NextWeb OS</span>
-            </div>
+            <span className="inline-block text-xs font-semibold text-[hsl(190,80%,55%)] uppercase tracking-widest mb-4">NextWeb OS Platform</span>
             <h2 className="text-3xl md:text-5xl font-bold">
-              Everything You Need to <span className="text-gradient">Run Your Business</span>
+              One Platform.{" "}
+              <span className="bg-gradient-to-r from-[hsl(190,80%,55%)] to-[hsl(252,85%,65%)] bg-clip-text text-transparent">
+                Every Department.
+              </span>
             </h2>
-            <p className="text-sidebar-foreground mt-4 max-w-2xl mx-auto text-lg">
-              Stop juggling 20 different tools. NextWeb OS consolidates your entire business operation into one elegant, powerful platform.
+            <p className="text-[hsl(210,20%,60%)] mt-4 max-w-2xl mx-auto text-lg">
+              A unified record across sales, service, marketing, finance, operations, and reporting — powering your entire business from one dashboard.
             </p>
           </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { icon: Shield, title: "Enterprise-Grade Security", desc: "Multi-tenant isolation, row-level security, audit logging, GDPR compliance, and role-based access control keep your data safe.", color: "bg-primary" },
-              { icon: Brain, title: "AI-Powered Intelligence", desc: "Sales forecasting, lead scoring, churn prediction, and automated strategy recommendations driven by cutting-edge AI.", color: "bg-info" },
-              { icon: Globe, title: "Multi-Tenant Architecture", desc: "Manage unlimited businesses from a single dashboard. Perfect for agencies managing multiple client accounts.", color: "bg-success" },
-              { icon: TrendingUp, title: "Revenue Intelligence", desc: "Real-time revenue tracking, cohort analysis, investor dashboards, and predictive financial modeling.", color: "bg-warning" },
-              { icon: Layers, title: "100+ Integrated Modules", desc: "CRM, projects, invoicing, SEO, payroll, field jobs, contracts, proposals — all in one seamless platform.", color: "bg-primary" },
-              { icon: Smartphone, title: "Mobile-First Design", desc: "Native iOS and Android apps with offline capability. Your team stays productive anywhere, anytime.", color: "bg-info" },
-            ].map((feature) => (
-              <div key={feature.title} className="group relative bg-sidebar-accent border border-sidebar-border rounded-lg p-6 hover:border-primary/40 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5">
-                <div className={`h-12 w-12 rounded-lg ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                  <feature.icon className="h-6 w-6 text-primary-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold text-primary-foreground mb-2">{feature.title}</h3>
-                <p className="text-sidebar-foreground text-sm leading-relaxed">{feature.desc}</p>
-              </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {platformModules.map((mod) => (
+              <Link
+                key={mod.label}
+                to={mod.to}
+                className="group bg-[hsl(222,35%,11%)] border border-[hsl(222,30%,16%)] rounded-xl p-6 hover:border-[hsl(190,80%,55%)]/40 transition-all duration-300 hover:shadow-lg hover:shadow-[hsl(190,80%,55%)]/5"
+              >
+                <mod.icon className="h-10 w-10 text-[hsl(190,80%,55%)] mb-4 group-hover:scale-110 transition-transform" />
+                <h3 className="text-lg font-semibold text-white mb-1">{mod.label}</h3>
+                <p className="text-[hsl(210,20%,55%)] text-sm leading-relaxed">{mod.desc}</p>
+              </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Platform Overview with Image */}
-      <section id="platform" className="py-20 md:py-32 bg-sidebar-accent">
+      {/* ─── SERVICE CAPABILITY STRIP ─── */}
+      <section className="py-16 bg-[hsl(222,35%,11%)] border-y border-[hsl(222,30%,14%)]">
         <div className="container mx-auto px-4 md:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="text-center mb-12">
+            <span className="inline-block text-xs font-semibold text-[hsl(190,80%,55%)] uppercase tracking-widest mb-4">Our Services</span>
+            <h2 className="text-3xl md:text-4xl font-bold">
+              Full-Stack Digital Capabilities
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {serviceCapabilities.map((svc) => (
+              <Link
+                key={svc.label}
+                to={svc.to}
+                className="group flex flex-col items-center text-center p-6 rounded-xl bg-[hsl(222,47%,8%)] border border-[hsl(222,30%,16%)] hover:border-[hsl(190,80%,55%)]/30 transition-all"
+              >
+                <svc.icon className="h-8 w-8 text-[hsl(190,80%,55%)] mb-3 group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-medium text-white">{svc.label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── INDUSTRY SOLUTIONS ─── */}
+      <section className="py-20 md:py-28 bg-[hsl(222,47%,8%)]">
+        <div className="container mx-auto px-4 md:px-8">
+          <div className="text-center mb-16">
+            <span className="inline-block text-xs font-semibold text-[hsl(190,80%,55%)] uppercase tracking-widest mb-4">Industry Solutions</span>
+            <h2 className="text-3xl md:text-5xl font-bold">
+              Built for{" "}
+              <span className="bg-gradient-to-r from-[hsl(190,80%,55%)] to-[hsl(152,60%,48%)] bg-clip-text text-transparent">
+                Your Industry
+              </span>
+            </h2>
+            <p className="text-[hsl(210,20%,60%)] mt-4 max-w-2xl mx-auto text-lg">
+              Tailored digital solutions combining CRM, AI, apps, websites, marketing, and automation for every vertical.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-5">
+            {industries.map((ind) => (
+              <Link
+                key={ind.label}
+                to={ind.to}
+                className="group flex items-center gap-4 bg-[hsl(222,35%,11%)] border border-[hsl(222,30%,16%)] rounded-xl p-5 hover:border-[hsl(190,80%,55%)]/30 transition-all"
+              >
+                <div className="h-12 w-12 rounded-lg bg-[hsl(190,80%,55%)]/10 flex items-center justify-center flex-shrink-0 group-hover:bg-[hsl(190,80%,55%)]/15 transition-colors">
+                  <ind.icon className="h-6 w-6 text-[hsl(190,80%,55%)]" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white text-sm">{ind.label}</h3>
+                  <span className="text-xs text-[hsl(210,20%,50%)]">View solutions →</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── WHY CHOOSE NEXTWEB ─── */}
+      <section className="py-20 md:py-28 bg-[hsl(222,35%,11%)] border-y border-[hsl(222,30%,14%)]">
+        <div className="container mx-auto px-4 md:px-8">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
-              <div className="inline-flex items-center gap-2 bg-primary/15 border border-primary/30 rounded-full px-4 py-2 mb-6">
-                <Monitor className="h-4 w-4 text-primary" />
-                <span className="text-sm text-primary font-medium">Unified Platform</span>
-              </div>
+              <span className="inline-block text-xs font-semibold text-[hsl(190,80%,55%)] uppercase tracking-widest mb-4">Why NextWeb</span>
               <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                One Platform. <span className="text-gradient">Infinite Possibilities.</span>
+                Your Strategic Technology Partner in Australia
               </h2>
-              <p className="text-sidebar-foreground text-lg mb-8 leading-relaxed">
-                NextWeb OS isn't just another SaaS tool — it's a complete business operating system designed for agencies that want to scale.
+              <p className="text-[hsl(210,20%,60%)] text-lg mb-8 leading-relaxed">
+                With deep expertise in CRM, AI, cloud, mobile, and enterprise systems, we deliver end-to-end digital transformation — from Brisbane and Gold Coast to businesses across Australia.
               </p>
-              <div className="space-y-4">
-                {[
-                  "Complete CRM with deal pipeline and lead scoring",
-                  "Project management with task tracking and timelines",
-                  "Automated invoicing with payment gateway integration",
-                  "SEO campaign management with ranking dashboards",
-                  "Employee management with attendance and payroll",
-                  "AI-driven insights and sales forecasting",
-                ].map((item) => (
-                  <div key={item} className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sidebar-foreground/90">{item}</span>
+              <div className="space-y-5">
+                {whyChoose.map((item) => (
+                  <div key={item.title} className="flex items-start gap-4">
+                    <div className="h-10 w-10 rounded-lg bg-[hsl(190,80%,55%)]/10 flex items-center justify-center flex-shrink-0">
+                      <item.icon className="h-5 w-5 text-[hsl(190,80%,55%)]" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white mb-1">{item.title}</h3>
+                      <p className="text-sm text-[hsl(210,20%,55%)] leading-relaxed">{item.desc}</p>
+                    </div>
                   </div>
                 ))}
               </div>
-              <Link to="/signup" className="inline-block mt-8">
-                <Button className="bg-primary text-primary-foreground font-semibold hover:bg-primary/90">
-                  Explore All Features <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </Link>
             </div>
             <div className="relative">
-              <div className="absolute -inset-4 bg-gradient-to-r from-primary/10 to-info/10 rounded-2xl blur-xl" />
-              <img src={teamCollab} alt="Professional team collaborating using NextWeb OS" className="relative rounded-xl shadow-2xl border border-primary/20 w-full" loading="lazy" />
+              <div className="bg-gradient-to-br from-[hsl(190,80%,55%)]/5 to-[hsl(252,85%,60%)]/5 rounded-2xl p-8 border border-[hsl(222,30%,16%)]">
+                <div className="grid grid-cols-2 gap-6">
+                  {[
+                    { value: "500+", label: "Clients Served" },
+                    { value: "15+", label: "Years Experience" },
+                    { value: "100+", label: "Platform Modules" },
+                    { value: "99.9%", label: "Uptime SLA" },
+                  ].map((stat) => (
+                    <div key={stat.label} className="text-center p-4">
+                      <div className="text-3xl font-bold bg-gradient-to-r from-[hsl(190,80%,55%)] to-[hsl(252,85%,65%)] bg-clip-text text-transparent">
+                        {stat.value}
+                      </div>
+                      <div className="text-[hsl(210,20%,55%)] text-sm mt-1">{stat.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* AI Engine Section */}
-      <section id="ai" className="py-20 md:py-32">
+      {/* ─── MOBILE TECHNOLOGY ─── */}
+      <section className="py-20 md:py-28 bg-[hsl(222,47%,8%)]">
         <div className="container mx-auto px-4 md:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="order-2 lg:order-1 relative">
-              <div className="absolute -inset-4 bg-gradient-to-r from-info/10 to-primary/10 rounded-2xl blur-xl" />
-              <img src={aiAutomation} alt="AI automation engine powering intelligent business decisions" className="relative rounded-xl shadow-2xl border border-info/20 w-full" loading="lazy" />
-            </div>
-            <div className="order-1 lg:order-2">
-              <div className="inline-flex items-center gap-2 bg-info/15 border border-info/30 rounded-full px-4 py-2 mb-6">
-                <Brain className="h-4 w-4 text-info" />
-                <span className="text-sm text-info font-medium">AI-Powered Engine</span>
+          <div className="text-center mb-16">
+            <span className="inline-block text-xs font-semibold text-[hsl(190,80%,55%)] uppercase tracking-widest mb-4">Mobile Technology</span>
+            <h2 className="text-3xl md:text-5xl font-bold">
+              Your Business,{" "}
+              <span className="bg-gradient-to-r from-[hsl(190,80%,55%)] to-[hsl(152,60%,48%)] bg-clip-text text-transparent">
+                Everywhere
+              </span>
+            </h2>
+            <p className="text-[hsl(210,20%,60%)] mt-4 max-w-2xl mx-auto text-lg">
+              Android, iPhone, iPad, hybrid, native cloud apps, and mobile-optimized websites — built for teams that move fast.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {[
+              { icon: Smartphone, label: "Android" },
+              { icon: Smartphone, label: "iPhone" },
+              { icon: Monitor, label: "iPad" },
+              { icon: Layers, label: "Hybrid" },
+              { icon: Globe, label: "Cloud Apps" },
+              { icon: Code2, label: "Mobile Web" },
+            ].map((item) => (
+              <div key={item.label} className="flex flex-col items-center text-center p-5 rounded-xl bg-[hsl(222,35%,11%)] border border-[hsl(222,30%,16%)]">
+                <item.icon className="h-8 w-8 text-[hsl(190,80%,55%)] mb-3" />
+                <span className="text-sm font-medium text-white">{item.label}</span>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SEO & GROWTH ─── */}
+      <section className="py-20 md:py-28 bg-[hsl(222,35%,11%)] border-y border-[hsl(222,30%,14%)]">
+        <div className="container mx-auto px-4 md:px-8">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <span className="inline-block text-xs font-semibold text-[hsl(190,80%,55%)] uppercase tracking-widest mb-4">SEO & Digital Growth</span>
               <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                Intelligent Automation That <span className="text-gradient">Thinks Ahead</span>
+                Dominate Search in Brisbane, Gold Coast & Beyond
               </h2>
-              <p className="text-sidebar-foreground text-lg mb-8 leading-relaxed">
-                Our AI engine doesn't just automate tasks — it anticipates your needs.
+              <p className="text-[hsl(210,20%,60%)] text-lg mb-8 leading-relaxed">
+                Our integrated SEO OS combines technical SEO, on-page optimization, local search, content strategy, and analytics into one powerful growth engine.
               </p>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
+                {["Technical SEO", "On-Page SEO", "Local SEO", "Content Strategy", "SEM & PPC", "Social Media", "Email Marketing", "Analytics & Reporting"].map((item) => (
+                  <div key={item} className="flex items-center gap-2 text-sm text-[hsl(210,20%,70%)]">
+                    <CheckCircle2 className="h-4 w-4 text-[hsl(190,80%,55%)] flex-shrink-0" />
+                    {item}
+                  </div>
+                ))}
+              </div>
+              <Link to="/services/search-engine-optimization" className="inline-block mt-8">
+                <Button className="bg-[hsl(190,80%,45%)] text-white font-semibold hover:bg-[hsl(190,80%,40%)]">
+                  Explore SEO Services <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+            <div className="bg-gradient-to-br from-[hsl(190,80%,55%)]/5 to-[hsl(152,60%,48%)]/5 rounded-2xl p-8 border border-[hsl(222,30%,16%)]">
+              <div className="space-y-4">
                 {[
-                  { icon: Target, label: "Lead Scoring" },
-                  { icon: TrendingUp, label: "Sales Forecasting" },
-                  { icon: Users, label: "Churn Prediction" },
-                  { icon: Sparkles, label: "Strategy Engine" },
-                  { icon: BarChart3, label: "Revenue Analytics" },
-                  { icon: Zap, label: "Auto-Responses" },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-3 bg-sidebar-accent rounded-lg p-3 border border-sidebar-border">
-                    <item.icon className="h-5 w-5 text-primary" />
-                    <span className="text-sm text-sidebar-foreground/90">{item.label}</span>
+                  { label: "Organic Traffic Growth", value: "+340%" },
+                  { label: "First Page Rankings", value: "85+" },
+                  { label: "Local Pack Appearances", value: "3x" },
+                  { label: "Client Retention Rate", value: "97%" },
+                ].map((stat) => (
+                  <div key={stat.label} className="flex items-center justify-between p-4 rounded-lg bg-[hsl(222,47%,8%)] border border-[hsl(222,30%,16%)]">
+                    <span className="text-sm text-[hsl(210,20%,65%)]">{stat.label}</span>
+                    <span className="text-lg font-bold text-[hsl(190,80%,55%)]">{stat.value}</span>
                   </div>
                 ))}
               </div>
@@ -251,100 +363,37 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Modules Grid */}
-      <section id="modules" className="py-20 md:py-32 bg-sidebar-accent">
+      {/* ─── CASE STUDIES / SUCCESS ─── */}
+      <section className="py-20 md:py-28 bg-[hsl(222,47%,8%)]">
         <div className="container mx-auto px-4 md:px-8">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 bg-primary/15 border border-primary/30 rounded-full px-4 py-2 mb-6">
-              <Layers className="h-4 w-4 text-primary" />
-              <span className="text-sm text-primary font-medium">Complete Module Suite</span>
-            </div>
+            <span className="inline-block text-xs font-semibold text-[hsl(190,80%,55%)] uppercase tracking-widest mb-4">Success Stories</span>
             <h2 className="text-3xl md:text-5xl font-bold">
-              <span className="text-gradient">100+ Modules</span> Built for Scale
-            </h2>
-            <p className="text-sidebar-foreground mt-4 max-w-2xl mx-auto text-lg">
-              Every module is designed to work seamlessly together, creating an interconnected ecosystem.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {[
-              { icon: Users, label: "CRM & Clients", desc: "360° client view" },
-              { icon: Target, label: "Lead Management", desc: "Capture to conversion" },
-              { icon: Briefcase, label: "Deal Pipeline", desc: "Visual sales funnel" },
-              { icon: FileText, label: "Proposals", desc: "Generate & send" },
-              { icon: Receipt, label: "Invoicing", desc: "Automated billing" },
-              { icon: Calendar, label: "Scheduling", desc: "Team calendars" },
-              { icon: MapPin, label: "Field Jobs", desc: "GPS & photo tracking" },
-              { icon: BarChart3, label: "Analytics", desc: "Real-time insights" },
-              { icon: Globe, label: "SEO Manager", desc: "Rankings & audits" },
-              { icon: Phone, label: "Communications", desc: "Email, SMS, WhatsApp" },
-              { icon: Lock, label: "Compliance", desc: "GDPR & data privacy" },
-              { icon: Headphones, label: "Support Tickets", desc: "SLA management" },
-              { icon: Award, label: "Payroll", desc: "Salary & attendance" },
-              { icon: Shield, label: "Governance", desc: "Risk & controls" },
-              { icon: Brain, label: "AI Agents", desc: "Autonomous tasks" },
-              { icon: TrendingUp, label: "Investor Portal", desc: "Metrics & reports" },
-            ].map((mod) => (
-              <div key={mod.label} className="bg-sidebar border border-sidebar-border rounded-lg p-4 hover:border-primary/30 transition-all group">
-                <mod.icon className="h-8 w-8 text-primary mb-3 group-hover:scale-110 transition-transform" />
-                <h4 className="font-semibold text-primary-foreground text-sm">{mod.label}</h4>
-                <p className="text-sidebar-foreground text-xs mt-1">{mod.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Multi-Device Section */}
-      <section className="py-20 md:py-32">
-        <div className="container mx-auto px-4 md:px-8 text-center">
-          <div className="inline-flex items-center gap-2 bg-success/15 border border-success/30 rounded-full px-4 py-2 mb-6">
-            <Smartphone className="h-4 w-4 text-success" />
-            <span className="text-sm text-success font-medium">Works Everywhere</span>
-          </div>
-          <h2 className="text-3xl md:text-5xl font-bold mb-4">
-            Access Your Business From <span className="text-success">Any Device</span>
-          </h2>
-          <p className="text-sidebar-foreground max-w-2xl mx-auto text-lg mb-12">
-            Native iOS and Android apps built with Capacitor. Your team can manage everything on the go.
-          </p>
-          <div className="relative max-w-4xl mx-auto">
-            <div className="absolute -inset-4 bg-gradient-to-r from-success/10 via-primary/10 to-info/10 rounded-2xl blur-xl" />
-            <img src={multiDevice} alt="NextWeb OS running on mobile phone, tablet, and laptop" className="relative rounded-xl shadow-2xl border border-success/20 w-full" loading="lazy" />
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section id="testimonials" className="py-20 md:py-32 bg-sidebar-accent">
-        <div className="container mx-auto px-4 md:px-8">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 bg-warning/15 border border-warning/30 rounded-full px-4 py-2 mb-6">
-              <Star className="h-4 w-4 text-warning" />
-              <span className="text-sm text-warning font-medium">What Our Clients Say</span>
-            </div>
-            <h2 className="text-3xl md:text-5xl font-bold">
-              Trusted by <span className="text-gradient">Industry Leaders</span>
+              Trusted by{" "}
+              <span className="bg-gradient-to-r from-[hsl(190,80%,55%)] to-[hsl(252,85%,65%)] bg-clip-text text-transparent">
+                Industry Leaders
+              </span>
             </h2>
           </div>
-
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { quote: "NextWeb OS transformed how we manage our agency. We consolidated 12 different tools into one platform and saved over $2,000/month.", name: "Sarah Mitchell", title: "CEO, Digital Edge Agency", stars: 5 },
-              { quote: "The AI-powered lead scoring alone has increased our conversion rate by 40%. The ROI on this platform is incredible.", name: "James Chen", title: "Sales Director, TechScale Solutions", stars: 5 },
-              { quote: "Our field technicians love the mobile app. GPS check-ins, photo uploads, and job completion — all from their phones. Game changer.", name: "Maria Garcia", title: "Operations Manager, ProBuild Corp", stars: 5 },
-            ].map((testimonial) => (
-              <div key={testimonial.name} className="bg-sidebar border border-sidebar-border rounded-lg p-6 hover:border-primary/30 transition-all">
+              { quote: "NextWeb OS transformed how we manage our agency. We consolidated 12 tools into one platform and saved over $2,000/month.", name: "Sarah Mitchell", title: "CEO, Digital Edge Agency", metric: "$24K saved annually" },
+              { quote: "The AI-powered CRM alone increased our conversion rate by 40%. The ROI on this platform is incredible for our Brisbane operations.", name: "James Chen", title: "Sales Director, TechScale Solutions", metric: "40% conversion lift" },
+              { quote: "From website design to SEO to CRM — having everything integrated under one roof on the Gold Coast has been a game changer.", name: "Maria Garcia", title: "Operations Manager, ProBuild Corp", metric: "3x lead generation" },
+            ].map((t) => (
+              <div key={t.name} className="bg-[hsl(222,35%,11%)] border border-[hsl(222,30%,16%)] rounded-xl p-6 hover:border-[hsl(190,80%,55%)]/30 transition-all">
                 <div className="flex gap-1 mb-4">
-                  {Array.from({ length: testimonial.stars }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-warning text-warning" />
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-[hsl(38,92%,50%)] text-[hsl(38,92%,50%)]" />
                   ))}
                 </div>
-                <p className="text-sidebar-foreground/90 mb-6 leading-relaxed italic">"{testimonial.quote}"</p>
-                <div>
-                  <div className="font-semibold text-primary-foreground">{testimonial.name}</div>
-                  <div className="text-sm text-sidebar-foreground">{testimonial.title}</div>
+                <p className="text-[hsl(210,20%,70%)] mb-6 leading-relaxed italic">"{t.quote}"</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold text-white text-sm">{t.name}</div>
+                    <div className="text-xs text-[hsl(210,20%,50%)]">{t.title}</div>
+                  </div>
+                  <div className="text-xs font-bold text-[hsl(190,80%,55%)] bg-[hsl(190,80%,55%)]/10 px-3 py-1 rounded-full">{t.metric}</div>
                 </div>
               </div>
             ))}
@@ -352,104 +401,40 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="py-20 md:py-32">
-        <div className="container mx-auto px-4 md:px-8">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 bg-primary/15 border border-primary/30 rounded-full px-4 py-2 mb-6">
-              <Receipt className="h-4 w-4 text-primary" />
-              <span className="text-sm text-primary font-medium">Transparent Pricing in AUD</span>
-            </div>
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">
-              Plans That <span className="text-gradient">Scale With You</span>
-            </h2>
-            <p className="text-sidebar-foreground max-w-2xl mx-auto text-lg">
-              All prices in Australian Dollars (AUD). Paid month-on-month — no lock-in contracts.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            {[
-              { plan: "Starter", price: "$499", period: "/mo AUD", desc: "For solo operators & small teams", features: ["Up to 5 users", "CRM & Lead Management", "Basic Invoicing", "Mobile App Access", "Email Support", "5 GB Storage"], highlight: false },
-              { plan: "Professional", price: "$1,500", period: "/mo AUD", desc: "Our flagship plan for growing agencies", features: ["Unlimited users", "All 100+ Modules", "AI Engine & Automation", "WhatsApp & SMS Automation", "Priority Support", "Custom Branding", "API Access", "50 GB Storage", "Dedicated Account Manager"], highlight: true },
-              { plan: "Business", price: "$3,500", period: "/mo AUD", desc: "Multi-location enterprises", features: ["Everything in Professional", "White-label Solution", "Multi-tenant Management", "Advanced AI Agents", "SLA Guarantee (99.9%)", "SSO & SAML Auth", "Unlimited Storage", "Custom Integrations", "24/7 Phone Support"], highlight: false },
-              { plan: "Enterprise", price: "Custom", period: "", desc: "Tailored for large organizations", features: ["Everything in Business", "Dedicated Infrastructure", "On-premise Option", "Custom Development", "Onboarding & Training", "Compliance & Audit Support", "Executive Dashboard", "Franchise Blueprint", "Strategic Advisory"], highlight: false },
-            ].map((tier) => (
-              <div key={tier.plan} className={`relative rounded-lg p-6 border transition-all flex flex-col ${tier.highlight ? "bg-gradient-to-b from-sidebar-accent to-sidebar border-primary/50 shadow-xl shadow-primary/10 lg:scale-105 z-10" : "bg-sidebar border-sidebar-border hover:border-primary/30"}`}>
-                {tier.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
-                    MOST POPULAR
-                  </div>
-                )}
-                <h3 className="text-lg font-semibold text-primary-foreground">{tier.plan}</h3>
-                <div className="mt-4">
-                  <span className="text-3xl font-bold text-gradient">{tier.price}</span>
-                  <span className="text-sidebar-foreground text-sm">{tier.period}</span>
-                </div>
-                <p className="text-sidebar-foreground text-sm mt-2">{tier.desc}</p>
-                <ul className="mt-6 space-y-2.5 flex-1">
-                  {tier.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm text-sidebar-foreground/90">
-                      <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" /> {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link to={tier.plan === "Enterprise" ? "/demo" : "/signup"} className="block mt-6">
-                  <Button className={`w-full ${tier.highlight ? "bg-primary text-primary-foreground font-semibold hover:bg-primary/90" : "bg-sidebar-accent text-primary-foreground hover:bg-sidebar-border"}`}>
-                    {tier.plan === "Enterprise" ? "Contact Sales" : "Start Free Trial"}
-                  </Button>
-                </Link>
-              </div>
-            ))}
-          </div>
-
-          {/* Payment Options */}
-          <div className="mt-16 max-w-4xl mx-auto">
-            <div className="bg-sidebar-accent border border-sidebar-border rounded-lg p-8">
-              <h3 className="text-xl font-bold text-primary-foreground text-center mb-6">Flexible Payment Options</h3>
-              <div className="grid md:grid-cols-3 gap-6">
-                {[
-                  { emoji: "💳", title: "Credit / Debit Card", desc: "Visa, Mastercard, Amex — auto-charged monthly" },
-                  { emoji: "🏦", title: "Bank Transfer / Direct Debit", desc: "AU direct debit via eWAY or manual bank transfer" },
-                  { emoji: "📄", title: "Invoice / Purchase Order", desc: "Net-30 invoicing for Enterprise & Government clients" },
-                ].map((opt) => (
-                  <div key={opt.title} className="text-center p-4 rounded-lg bg-sidebar border border-sidebar-border">
-                    <div className="text-2xl mb-2">{opt.emoji}</div>
-                    <h4 className="font-semibold text-primary-foreground text-sm">{opt.title}</h4>
-                    <p className="text-sidebar-foreground text-xs mt-1">{opt.desc}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="flex flex-wrap justify-center gap-6 mt-6 text-xs text-sidebar-foreground">
-                {["No lock-in contracts", "Month-on-month billing", "14-day free trial", "Cancel anytime", "All prices in AUD"].map(t => (
-                  <span key={t} className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-success" /> {t}</span>
-                ))}
-              </div>
-            </div>
-          </div>
+      {/* ─── FINAL CTA ─── */}
+      <section className="py-20 md:py-28 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-[hsl(190,80%,55%)]/10 via-[hsl(252,85%,60%)]/8 to-[hsl(190,80%,55%)]/10" />
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-[hsl(190,80%,55%)]/8 rounded-full blur-[100px]" />
+          <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-[hsl(252,85%,60%)]/6 rounded-full blur-[100px]" />
         </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="py-20 md:py-32 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-info/10 to-primary/10" />
         <div className="container mx-auto px-4 md:px-8 relative z-10 text-center">
           <h2 className="text-3xl md:text-5xl font-bold mb-6">
-            Ready to Transform <span className="text-gradient">Your Business?</span>
+            Ready to Transform Your Business?
           </h2>
-          <p className="text-sidebar-foreground max-w-2xl mx-auto text-lg mb-10">
-            Join 500+ agencies already using NextWeb OS to streamline operations, boost revenue, and scale with confidence.
+          <p className="text-[hsl(210,20%,65%)] max-w-2xl mx-auto text-lg mb-6">
+            Contact our team in Brisbane or Gold Coast for a free strategy session. Let's discuss how NextWeb OS can accelerate your digital transformation.
           </p>
-          <Link to="/signup">
-            <Button size="lg" className="bg-primary text-primary-foreground font-bold text-lg px-10 py-6 hover:bg-primary/90 shadow-2xl shadow-primary/30 transition-all hover:scale-105">
-              Start Free Today <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
+            <Link to="/contact">
+              <Button size="lg" className="bg-[hsl(190,80%,45%)] text-white font-bold text-lg px-10 py-6 hover:bg-[hsl(190,80%,40%)] shadow-2xl shadow-[hsl(190,80%,45%)]/30 transition-all hover:scale-105">
+                Get a Free Quote <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link to="/demo">
+              <Button variant="outline" size="lg" className="border-[hsl(190,80%,55%)]/30 text-[hsl(190,80%,55%)] hover:bg-[hsl(190,80%,55%)]/10 px-10 py-6 text-lg">
+                Book a Demo
+              </Button>
+            </Link>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-[hsl(210,20%,50%)]">
+            <span className="flex items-center gap-2"><MapPin className="h-4 w-4 text-[hsl(190,80%,55%)]" /> Brisbane & Gold Coast</span>
+            <span className="flex items-center gap-2"><Phone className="h-4 w-4 text-[hsl(190,80%,55%)]" /> 1300 NEXTWEB</span>
+            <span className="flex items-center gap-2"><Mail className="h-4 w-4 text-[hsl(190,80%,55%)]" /> hello@nextweb.com.au</span>
+          </div>
         </div>
       </section>
-
-      <PremiumFooter />
-    </div>
+    </>
   );
 };
 
