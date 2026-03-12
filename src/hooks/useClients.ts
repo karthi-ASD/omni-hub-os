@@ -24,6 +24,7 @@ export interface Client {
   client_status: ClientStatus;
   client_start_date: string | null;
   salesperson_owner: string | null;
+  sales_owner_id: string | null;
   user_id: string | null;
   created_at: string;
   updated_at: string;

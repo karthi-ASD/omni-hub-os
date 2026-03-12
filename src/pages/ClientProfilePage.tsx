@@ -21,8 +21,10 @@ import { useOnboardingChecklist } from "@/hooks/useOnboardingChecklist";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useClientFinancials } from "@/hooks/useClientFinancials";
+import { useSalesTeam } from "@/hooks/useSalesTeam";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 const statusColor = (s: string) => {
   const m: Record<string, string> = {
@@ -53,6 +55,17 @@ const ClientProfilePage = () => {
   } = useClientProfile(id);
   const financials = useClientFinancials(id);
   const onboarding = useOnboardingChecklist(id);
+  const { members: salesTeam } = useSalesTeam();
+
+  const handleSalesOwnerChange = async (userId: string) => {
+    if (!client) return;
+    const member = salesTeam.find(m => m.user_id === userId);
+    await supabase.from("clients").update({
+      sales_owner_id: userId || null,
+      salesperson_owner: member?.full_name || null,
+    } as any).eq("id", client.id);
+    toast.success("Sales owner updated");
+  };
 
   const [websiteDialog, setWebsiteDialog] = useState(false);
   const [appDialog, setAppDialog] = useState(false);
@@ -107,6 +120,15 @@ const ClientProfilePage = () => {
             </p>
           )}
         </div>
+        <Select value={client.sales_owner_id || "unassigned"} onValueChange={v => v !== "unassigned" && handleSalesOwnerChange(v)}>
+          <SelectTrigger className="w-36 h-8 text-xs rounded-lg"><SelectValue placeholder="Assign Sales" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="unassigned" disabled>Assign Sales</SelectItem>
+            {salesTeam.map(m => (
+              <SelectItem key={m.user_id} value={m.user_id}>{m.full_name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={client.client_status || "pending"} onValueChange={v => updateClientStatus(client.id, v as ClientStatus)}>
           <SelectTrigger className="w-32 h-8 text-xs rounded-lg"><SelectValue /></SelectTrigger>
           <SelectContent>

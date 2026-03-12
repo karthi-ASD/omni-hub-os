@@ -5469,6 +5469,7 @@ export type Database = {
           mobile: string | null
           onboarding_status: Database["public"]["Enums"]["onboarding_status"]
           phone: string | null
+          sales_owner_id: string | null
           salesperson_owner: string | null
           state: string | null
           tax_number: string | null
@@ -5495,6 +5496,7 @@ export type Database = {
           mobile?: string | null
           onboarding_status?: Database["public"]["Enums"]["onboarding_status"]
           phone?: string | null
+          sales_owner_id?: string | null
           salesperson_owner?: string | null
           state?: string | null
           tax_number?: string | null
@@ -5521,6 +5523,7 @@ export type Database = {
           mobile?: string | null
           onboarding_status?: Database["public"]["Enums"]["onboarding_status"]
           phone?: string | null
+          sales_owner_id?: string | null
           salesperson_owner?: string | null
           state?: string | null
           tax_number?: string | null

@@ -1,7 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useClients, Client, ClientStatus } from "@/hooks/useClients";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSalesTeam } from "@/hooks/useSalesTeam";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,8 +36,10 @@ const ClientsPage = () => {
   const [importOpen, setImportOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [salesFilter, setSalesFilter] = useState<string>("all");
   const [syncing, setSyncing] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const { members: salesTeam } = useSalesTeam();
 
   const handleSearchChange = (value: string) => {
     setSearchInput(value);
@@ -66,9 +69,22 @@ const ClientsPage = () => {
     pending: clients.filter(c => c.client_status === "pending").length,
   };
 
-  const filteredClients = statusFilter === "all"
-    ? clients
-    : clients.filter(c => c.client_status === statusFilter);
+  const filteredClients = useMemo(() => {
+    let list = clients;
+    if (statusFilter !== "all") list = list.filter(c => c.client_status === statusFilter);
+    if (salesFilter !== "all") list = list.filter(c => c.sales_owner_id === salesFilter);
+    return list;
+  }, [clients, statusFilter, salesFilter]);
+
+  const handleSalesOwnerChange = async (clientId: string, userId: string) => {
+    const member = salesTeam.find(m => m.user_id === userId);
+    await supabase.from("clients").update({
+      sales_owner_id: userId || null,
+      salesperson_owner: member?.full_name || null,
+    } as any).eq("id", clientId);
+    toast.success("Sales owner updated");
+    refetch();
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -112,6 +128,18 @@ const ClientsPage = () => {
             <SelectItem value="suspended">Suspended</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={salesFilter} onValueChange={setSalesFilter}>
+          <SelectTrigger className="w-40 h-10 rounded-xl">
+            <UserCheck className="h-3.5 w-3.5 mr-1" />
+            <SelectValue placeholder="Salesperson" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Salespeople</SelectItem>
+            {salesTeam.map(m => (
+              <SelectItem key={m.user_id} value={m.user_id}>{m.full_name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Client cards */}
@@ -147,6 +175,17 @@ const ClientsPage = () => {
                         <SelectItem value="pending">Pending</SelectItem>
                         <SelectItem value="prospect">Prospect</SelectItem>
                         <SelectItem value="suspended">Suspended</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={c.sales_owner_id || "none"} onValueChange={v => { if (v !== "none") handleSalesOwnerChange(c.id, v); }}>
+                      <SelectTrigger className="w-28 h-7 text-[10px] rounded-lg" onClick={e => e.stopPropagation()}>
+                        <SelectValue placeholder="Assign" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none" disabled>Assign</SelectItem>
+                        {salesTeam.map(m => (
+                          <SelectItem key={m.user_id} value={m.user_id}>{m.full_name}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
