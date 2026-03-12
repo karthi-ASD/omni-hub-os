@@ -5,7 +5,7 @@ import {
   Phone, DollarSign, Wrench, Network, Heart, PieChart,
   Palette, Activity, Layers, UserCog, LogOut, Search, Bell,
   BookOpen, Lock, Cpu, Workflow, Store, Gauge, Brain,
-  TrendingUp, Code, FileEdit,
+  TrendingUp, Code, FileEdit, PhoneCall, CalendarCheck, Handshake,
 } from "lucide-react";
 
 export interface NavItem {
@@ -29,6 +29,7 @@ export interface NavSection {
 }
 
 const SEO_DEPTS = ["seo", "seo department", "digital marketing"];
+const SALES_DEPTS = ["sales", "sales department", "business development"];
 const FINANCE_DEPTS = ["finance", "accounts", "accounting"];
 
 export const NAV_SECTIONS: NavSection[] = [
@@ -40,9 +41,26 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Notifications", icon: Bell, to: "/notifications" },
     ],
   },
+  // ── Sales Department Section ──
+  {
+    title: "Sales Operations",
+    departments: [...SALES_DEPTS],
+    items: [
+      { label: "Sales Dashboard", icon: BarChart3, to: "/sales-dashboard" },
+      { label: "Cold Calling", icon: PhoneCall, to: "/cold-calling" },
+      { label: "Leads", icon: Target, to: "/leads" },
+      { label: "Follow-Ups", icon: CalendarCheck, to: "/sales-follow-ups" },
+      { label: "Deals", icon: FolderKanban, to: "/deals" },
+      { label: "SEO Intel (Sales)", icon: Search, to: "/sales-seo-intel" },
+      { label: "Register Business", icon: Building2, to: "/businesses" },
+      { label: "Reports", icon: BarChart3, to: "/reports" },
+      { label: "Team Performance", icon: Users, to: "/sales-team-performance" },
+      { label: "Tickets", icon: Ticket, to: "/internal-tickets" },
+    ],
+  },
   {
     title: "Sales & CRM",
-    hiddenFromDepartments: SEO_DEPTS,
+    hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS],
     items: [
       { label: "Inquiries", icon: Mail, to: "/inquiries" },
       { label: "Leads", icon: Target, to: "/leads" },
@@ -69,7 +87,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     title: "Delivery",
-    hiddenFromDepartments: SEO_DEPTS,
+    hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS],
     items: [
       { label: "Projects", icon: Briefcase, to: "/projects" },
       { label: "Tasks", icon: ClipboardList, to: "/tasks" },
@@ -80,7 +98,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     title: "Marketing & SEO",
-    hiddenFromDepartments: SEO_DEPTS,
+    hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS],
     items: [
       { label: "SEO Engine", icon: Search, to: "/seo" },
       { label: "SEO Projects", icon: FolderKanban, to: "/seo-ops" },
@@ -91,6 +109,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     title: "Support",
+    hiddenFromDepartments: [...SALES_DEPTS],
     items: [
       { label: "Tickets", icon: Ticket, to: "/tickets" },
       { label: "Internal Tickets", icon: Ticket, to: "/internal-tickets" },
@@ -100,7 +119,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     title: "Finance",
-    hiddenFromDepartments: SEO_DEPTS,
+    hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS],
     items: [
       { label: "Invoices", icon: Receipt, to: "/invoices" },
       { label: "Payments", icon: DollarSign, to: "/payments" },
@@ -113,12 +132,12 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Team Members", icon: Users, to: "/hr/employees" },
       { label: "Departments", icon: Building2, to: "/hr/departments" },
       { label: "Leave", icon: Calendar, to: "/hr/leave" },
-      { label: "Payroll", icon: DollarSign, to: "/hr/payroll", hiddenFromDepartments: SEO_DEPTS },
+      { label: "Payroll", icon: DollarSign, to: "/hr/payroll", hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS] },
     ],
   },
   {
     title: "AI & Automation",
-    hiddenFromDepartments: SEO_DEPTS,
+    hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS],
     items: [
       { label: "AI Brain", icon: Brain, to: "/ai-brain" },
       { label: "AI Agents", icon: Bot, to: "/ai-agents" },
@@ -128,7 +147,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     title: "Admin",
-    hiddenFromDepartments: SEO_DEPTS,
+    hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS],
     items: [
       { label: "Settings", icon: Settings, to: "/settings" },
       { label: "Users", icon: UserCog, to: "/users" },

@@ -190,6 +190,10 @@ import ClientLoginPage from "./pages/ClientLoginPage";
 import FirstLoginSecurityPage from "./pages/FirstLoginSecurityPage";
 import SuperAdminToolsPage from "./pages/SuperAdminToolsPage";
 import UserProfilePage from "./pages/UserProfilePage";
+import SalesDashboardPage from "./pages/SalesDashboardPage";
+import ColdCallingPage from "./pages/ColdCallingPage";
+import SalesFollowUpsPage from "./pages/SalesFollowUpsPage";
+import SalesTeamPerformancePage from "./pages/SalesTeamPerformancePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -238,6 +242,10 @@ const App = () => (
               }
             >
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/sales-dashboard" element={<SalesDashboardPage />} />
+              <Route path="/cold-calling" element={<ColdCallingPage />} />
+              <Route path="/sales-follow-ups" element={<SalesFollowUpsPage />} />
+              <Route path="/sales-team-performance" element={<SalesTeamPerformancePage />} />
               <Route path="/more" element={<MorePage />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/inquiries" element={<InquiriesPage />} />
