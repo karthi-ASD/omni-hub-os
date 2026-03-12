@@ -8,6 +8,8 @@ import CompanyBillingPortalPage from "./pages/CompanyBillingPortalPage";
 import WhiteLabelSettingsPage from "./pages/WhiteLabelSettingsPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import PublicLayout from "@/components/public/PublicLayout";
+import PublicPlaceholderPage from "@/pages/public/PublicPlaceholderPage";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
