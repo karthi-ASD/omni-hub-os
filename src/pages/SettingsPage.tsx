@@ -77,6 +77,9 @@ const SettingsPage = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Theme Management */}
+      <ThemeManagementPanel />
     </div>
   );
 };
