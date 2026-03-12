@@ -252,6 +252,8 @@ const App = () => (
               <Route path="/sales-team-performance" element={<SalesTeamPerformancePage />} />
               <Route path="/ai-sales-assistant" element={<AISalesAssistantPage />} />
               <Route path="/sales-knowledge" element={<SalesKnowledgeBasePage />} />
+              <Route path="/prospect-finder" element={<ProspectFinderPage />} />
+              <Route path="/sales-opportunities" element={<SalesOpportunitiesPage />} />
               <Route path="/more" element={<MorePage />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/inquiries" element={<InquiriesPage />} />
