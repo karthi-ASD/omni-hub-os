@@ -376,7 +376,22 @@ async function callAI(apiKey: string, prompt: string): Promise<string> {
       temperature: 0.3,
     }),
   });
-  const data = await resp.json();
+
+  const rawText = await resp.text();
+
+  if (!resp.ok) {
+    console.error(`[callAI] HTTP ${resp.status}: ${rawText.substring(0, 500)}`);
+    throw new Error(`AI API returned HTTP ${resp.status}`);
+  }
+
+  let data: any;
+  try {
+    data = JSON.parse(rawText);
+  } catch (e) {
+    console.error(`[callAI] Non-JSON response: ${rawText.substring(0, 500)}`);
+    throw new Error("AI API returned non-JSON response");
+  }
+
   return data.choices?.[0]?.message?.content || "";
 }
 
