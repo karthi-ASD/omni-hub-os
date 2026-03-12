@@ -1,8 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useClients, Client } from "@/hooks/useClients";
+import { useClients, Client, ClientStatus } from "@/hooks/useClients";
 import { useClientProfile } from "@/hooks/useClientProfile";
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
