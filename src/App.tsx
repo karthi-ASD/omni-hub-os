@@ -234,11 +234,11 @@ const App = () => (
               <Route path="/e-marketing" element={<EMarketingPage />} />
               <Route path="/automation" element={<AutomationPage />} />
               {/* Platform pages */}
-              <Route path="/platform/:slug" element={<PublicPlaceholderPage />} />
+              <Route path="/platform/:slug" element={<PlatformModulePage />} />
               {/* Service pages */}
-              <Route path="/services/:slug" element={<PublicPlaceholderPage />} />
+              <Route path="/services/:slug" element={<ServiceDetailPage />} />
               {/* Industry pages */}
-              <Route path="/industries/:slug" element={<PublicPlaceholderPage />} />
+              <Route path="/industries/:slug" element={<IndustryDetailPage />} />
               {/* Solution pages */}
               <Route path="/solutions" element={<PublicPlaceholderPage />} />
               <Route path="/solutions/:slug" element={<PublicPlaceholderPage />} />
