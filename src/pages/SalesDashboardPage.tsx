@@ -55,9 +55,9 @@ const SalesDashboardPage = () => {
       callsToday: callsRes.count || 0,
       leadsToday: leadsRes.count || 0,
       followUpsToday: followUpsRes.count || 0,
-      dealsWon: deals.filter(d => d.stage === "closed_won").length,
-      dealsLost: deals.filter(d => d.stage === "closed_lost").length,
-      dealsInProgress: deals.filter(d => !["closed_won", "closed_lost"].includes(d.stage)).length,
+      dealsWon: deals.filter(d => d.stage === "won").length,
+      dealsLost: deals.filter(d => d.stage === "lost").length,
+      dealsInProgress: deals.filter(d => !["won", "lost"].includes(d.stage)).length,
       totalActiveLeads: activeLeadsRes.count || 0,
     });
 
