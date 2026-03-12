@@ -387,6 +387,23 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "50+", label: "Chart Types" },
       { value: "100%", label: "Cross-Module" },
     ],
+    testimonials: [
+      { quote: "The real-time dashboards replaced our weekly manual reporting. Leadership now has instant access to KPIs.", name: "David Kim", role: "CFO", company: "BrightPath Healthcare" },
+      { quote: "Predictive analytics flagged a churn risk we would have missed. We saved three enterprise accounts worth $500K.", name: "Natalie Brooks", role: "VP Strategy", company: "InnovateTech QLD" },
+    ],
+    useCases: [
+      { title: "Executive KPI Dashboard", industry: "Multi-Industry", result: "90% Less Reporting Time", desc: "Real-time executive dashboards pulling data from CRM, finance, projects, and HR for instant business visibility." },
+      { title: "Revenue Intelligence", industry: "SaaS", result: "+25% Forecast Accuracy", desc: "AI-powered revenue forecasting with cohort analysis, churn prediction, and expansion opportunity scoring." },
+      { title: "Marketing Attribution", industry: "Agency", result: "100% Revenue Attribution", desc: "Multi-touch attribution modelling connecting marketing spend to closed revenue across every channel and campaign." },
+    ],
+    integrations: ["All NextWeb Modules", "Google Analytics", "Google Ads", "Facebook Ads", "Xero", "Custom APIs"],
+    localSEO: {
+      heading: "Business Analytics for Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb Analytics & BI gives Brisbane and Gold Coast businesses real-time visibility into every aspect of their operations. Replace spreadsheets and disconnected reports with interactive dashboards that update automatically.",
+        "Our Brisbane analytics team helps businesses design dashboards, build custom reports, and implement predictive analytics for data-driven decision making.",
+      ],
+    },
   },
   "integration": {
     slug: "integration",
