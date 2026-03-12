@@ -195,6 +195,24 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "4.8★", label: "Customer Rating" },
       { value: "70%", label: "Self-Service Rate" },
     ],
+    testimonials: [
+      { quote: "Our average resolution time dropped from 4 hours to 45 minutes. Customers are noticeably happier.", name: "Angela Wu", role: "Support Manager", company: "QLD Plumbing Group" },
+      { quote: "The omnichannel inbox is a lifesaver. WhatsApp, email, phone — everything in one place.", name: "Daniel Foster", role: "CX Lead", company: "GoldCoast IT" },
+      { quote: "SLA tracking with automatic escalation means we never miss a deadline. Our compliance rate hit 95%.", name: "Laura Bennett", role: "Operations Director", company: "MediServe Brisbane" },
+    ],
+    useCases: [
+      { title: "Field Service Dispatch", industry: "Trades & Services", result: "50% Faster Dispatch", desc: "GPS-tracked field technician dispatch with photo uploads, job forms, and real-time status updates for a Brisbane trades company." },
+      { title: "Healthcare Patient Support", industry: "Healthcare", result: "95% SLA Compliance", desc: "Multi-channel patient support with priority routing, knowledge base, and SLA tracking across 8 clinic locations." },
+      { title: "Government Citizen Services", industry: "Government", result: "60% Self-Service Rate", desc: "Citizen request portal with automated categorisation, department routing, and public knowledge base for a QLD council." },
+    ],
+    integrations: ["Customer 360", "WhatsApp", "Email", "Phone", "Live Chat", "SMS", "Knowledge Base", "Calendar"],
+    localSEO: {
+      heading: "Service CRM for Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb Service CRM helps Brisbane and Gold Coast businesses deliver exceptional customer support with omnichannel ticketing, SLA management, and field dispatch — all in one platform.",
+        "From trade businesses needing field dispatch to healthcare providers managing patient enquiries, our local team implements and supports Service CRM for businesses across South East Queensland.",
+      ],
+    },
   },
   "marketing-automation": {
     slug: "marketing-automation",
