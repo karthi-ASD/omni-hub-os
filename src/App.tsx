@@ -242,6 +242,10 @@ const App = () => (
               }
             >
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/sales-dashboard" element={<SalesDashboardPage />} />
+              <Route path="/cold-calling" element={<ColdCallingPage />} />
+              <Route path="/sales-follow-ups" element={<SalesFollowUpsPage />} />
+              <Route path="/sales-team-performance" element={<SalesTeamPerformancePage />} />
               <Route path="/more" element={<MorePage />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/inquiries" element={<InquiriesPage />} />
