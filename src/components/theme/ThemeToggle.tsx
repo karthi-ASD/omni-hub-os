@@ -74,7 +74,7 @@ export function ThemeToggle() {
           {rotateMode === "daily" && <span className="ml-auto text-xs text-primary">✓</span>}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setRotateMode("timed")} className="gap-2">
-          <Timer className="h-3 w-3" /> Every 20 min
+          <Timer className="h-3 w-3" /> Every 10 min
           {rotateMode === "timed" && <span className="ml-auto text-xs text-primary">✓</span>}
         </DropdownMenuItem>
 
