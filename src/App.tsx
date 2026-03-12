@@ -10,6 +10,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import PublicLayout from "@/components/public/PublicLayout";
 import PublicPlaceholderPage from "@/pages/public/PublicPlaceholderPage";
+import PlatformModulePage from "@/pages/public/PlatformModulePage";
+import ServiceDetailPage from "@/pages/public/ServiceDetailPage";
+import IndustryDetailPage from "@/pages/public/IndustryDetailPage";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
@@ -231,11 +234,11 @@ const App = () => (
               <Route path="/e-marketing" element={<EMarketingPage />} />
               <Route path="/automation" element={<AutomationPage />} />
               {/* Platform pages */}
-              <Route path="/platform/:slug" element={<PublicPlaceholderPage />} />
+              <Route path="/platform/:slug" element={<PlatformModulePage />} />
               {/* Service pages */}
-              <Route path="/services/:slug" element={<PublicPlaceholderPage />} />
+              <Route path="/services/:slug" element={<ServiceDetailPage />} />
               {/* Industry pages */}
-              <Route path="/industries/:slug" element={<PublicPlaceholderPage />} />
+              <Route path="/industries/:slug" element={<IndustryDetailPage />} />
               {/* Solution pages */}
               <Route path="/solutions" element={<PublicPlaceholderPage />} />
               <Route path="/solutions/:slug" element={<PublicPlaceholderPage />} />
