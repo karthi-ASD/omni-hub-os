@@ -10964,6 +10964,60 @@ export type Database = {
           },
         ]
       }
+      internal_ticket_activity: {
+        Row: {
+          action_type: string
+          business_id: string
+          created_at: string
+          details: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          ticket_id: string
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          action_type: string
+          business_id: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          ticket_id: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          action_type?: string
+          business_id?: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          ticket_id?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_ticket_activity_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_ticket_activity_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "internal_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       internal_ticket_comments: {
         Row: {
           business_id: string
@@ -11011,6 +11065,7 @@ export type Database = {
       }
       internal_tickets: {
         Row: {
+          assigned_to_department: string | null
           assigned_to_user_id: string | null
           business_id: string
           created_at: string
@@ -11021,12 +11076,15 @@ export type Database = {
           priority: string
           resolved_at: string | null
           resolved_by_user_id: string | null
+          source_department: string | null
+          source_type: string
           status: string
           ticket_number: string
           title: string
           updated_at: string
         }
         Insert: {
+          assigned_to_department?: string | null
           assigned_to_user_id?: string | null
           business_id: string
           created_at?: string
@@ -11037,12 +11095,15 @@ export type Database = {
           priority?: string
           resolved_at?: string | null
           resolved_by_user_id?: string | null
+          source_department?: string | null
+          source_type?: string
           status?: string
           ticket_number?: string
           title: string
           updated_at?: string
         }
         Update: {
+          assigned_to_department?: string | null
           assigned_to_user_id?: string | null
           business_id?: string
           created_at?: string
@@ -11053,6 +11114,8 @@ export type Database = {
           priority?: string
           resolved_at?: string | null
           resolved_by_user_id?: string | null
+          source_department?: string | null
+          source_type?: string
           status?: string
           ticket_number?: string
           title?: string
