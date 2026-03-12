@@ -1,9 +1,10 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useClients, Client } from "@/hooks/useClients";
+import { useClients, Client, ClientStatus } from "@/hooks/useClients";
 import { useClientProfile } from "@/hooks/useClientProfile";
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,7 +45,7 @@ const statusColor = (s: string) => {
 const ClientProfilePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { clients, loading: clientsLoading } = useClients();
+  const { clients, loading: clientsLoading, updateClientStatus } = useClients();
   const client = clients.find((c) => c.id === id);
   const {
     services, websites, apps, seoProjects, invoices, contracts, tickets, timeline,
@@ -106,9 +107,16 @@ const ClientProfilePage = () => {
             </p>
           )}
         </div>
-        <Badge className={statusColor(client.onboarding_status)}>
-          {client.onboarding_status.replace("_", " ")}
-        </Badge>
+        <Select value={client.client_status || "pending"} onValueChange={v => updateClientStatus(client.id, v as ClientStatus)}>
+          <SelectTrigger className="w-32 h-8 text-xs rounded-lg"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="prospect">Prospect</SelectItem>
+            <SelectItem value="suspended">Suspended</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Quick Info Bar */}
@@ -213,6 +221,8 @@ const ClientProfilePage = () => {
           <Card className="rounded-xl">
             <CardContent className="p-4 space-y-3">
               {[
+                ["Client Status", client.client_status?.charAt(0).toUpperCase() + client.client_status?.slice(1)],
+                ["Client Since", client.client_start_date || financials.clientSince || "—"],
                 ["Contact Name", client.contact_name],
                 ["Company", client.company_name],
                 ["Email", client.email],

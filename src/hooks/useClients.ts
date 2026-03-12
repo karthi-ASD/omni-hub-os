@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 export type OnboardingStatus = "pending" | "in_progress" | "completed";
+export type ClientStatus = "active" | "cancelled" | "pending" | "prospect" | "suspended";
 
 export interface Client {
   id: string;
@@ -20,6 +21,8 @@ export interface Client {
   state: string | null;
   country: string | null;
   onboarding_status: OnboardingStatus;
+  client_status: ClientStatus;
+  client_start_date: string | null;
   user_id: string | null;
   created_at: string;
   updated_at: string;
@@ -206,9 +209,28 @@ export function useClients() {
     fetchClients(page, search);
   };
 
+  const updateClientStatus = async (clientId: string, status: ClientStatus) => {
+    if (!profile) return;
+    await supabase.from("clients").update({ client_status: status } as any).eq("id", clientId);
+    await supabase.from("system_events").insert({
+      business_id: profile.business_id,
+      event_type: "CLIENT_STATUS_UPDATED",
+      payload_json: { entity_type: "client", entity_id: clientId, actor_user_id: profile.user_id, short_message: `Status: ${status}` },
+    });
+    await supabase.from("audit_logs").insert({
+      business_id: profile.business_id,
+      actor_user_id: profile.user_id,
+      action_type: "UPDATE_CLIENT_STATUS",
+      entity_type: "client",
+      entity_id: clientId,
+    });
+    toast.success("Client status updated");
+    fetchClients(page, search);
+  };
+
   return {
     clients, loading, totalCount, page, hasMore,
-    createClient, updateOnboardingStatus, getClientServices,
+    createClient, updateOnboardingStatus, updateClientStatus, getClientServices,
     loadMore, setSearchTerm,
     refetch: () => fetchClients(0, search),
   };

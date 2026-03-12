@@ -5457,6 +5457,8 @@ export type Database = {
           business_id: string
           city: string | null
           client_since: string | null
+          client_start_date: string | null
+          client_status: string
           company_name: string | null
           contact_name: string
           country: string | null
@@ -5480,6 +5482,8 @@ export type Database = {
           business_id: string
           city?: string | null
           client_since?: string | null
+          client_start_date?: string | null
+          client_status?: string
           company_name?: string | null
           contact_name: string
           country?: string | null
@@ -5503,6 +5507,8 @@ export type Database = {
           business_id?: string
           city?: string | null
           client_since?: string | null
+          client_start_date?: string | null
+          client_status?: string
           company_name?: string | null
           contact_name?: string
           country?: string | null

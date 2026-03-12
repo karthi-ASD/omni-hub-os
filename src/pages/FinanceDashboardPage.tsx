@@ -1,4 +1,5 @@
 import { useFinanceDashboard } from "@/hooks/useFinanceDashboard";
+import { useClients } from "@/hooks/useClients";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import {
   DollarSign, TrendingUp, TrendingDown, AlertTriangle, CheckCircle,
   Clock, FileText, BarChart3, PieChart, RefreshCw, Plus, Wallet,
-  Building2, Users, ArrowUpRight, ArrowDownRight, Calendar, Brain, Link, Unlink, Zap
+  Building2, Users, ArrowUpRight, ArrowDownRight, Calendar, Brain, Link, Unlink, Zap, UserCheck, XCircle
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend } from "recharts";
 import { useState, useCallback, useEffect } from "react";
@@ -40,6 +41,24 @@ const FinanceDashboardPage = () => {
     mrr, arr, activeSchedules, revenueGrowth,
     addExpense, addBillingSchedule, departments, refresh,
   } = useFinanceDashboard();
+
+  const { clients: allClients, totalCount: totalClients } = useClients();
+  const activeClients = allClients.filter(c => c.client_status === "active").length;
+  const cancelledClients = allClients.filter(c => c.client_status === "cancelled").length;
+  const pendingClients = allClients.filter(c => c.client_status === "pending").length;
+  const revenueFromActive = (() => {
+    const ids = new Set(allClients.filter(c => c.client_status === "active").map(c => c.id));
+    return paidInvoices.filter(i => i.client_id && ids.has(i.client_id)).reduce((s, i) => s + Number(i.total_amount), 0);
+  })();
+  const revenueFromCancelled = (() => {
+    const ids = new Set(allClients.filter(c => c.client_status === "cancelled").map(c => c.id));
+    return paidInvoices.filter(i => i.client_id && ids.has(i.client_id)).reduce((s, i) => s + Number(i.total_amount), 0);
+  })();
+  const clientStatusPieData = [
+    { name: "Active", value: activeClients, fill: "hsl(152, 60%, 42%)" },
+    { name: "Cancelled", value: cancelledClients, fill: "hsl(0, 72%, 51%)" },
+    { name: "Pending", value: pendingClients, fill: "hsl(38, 92%, 50%)" },
+  ].filter(d => d.value > 0);
 
   const [expenseForm, setExpenseForm] = useState({ category: "", department: "", description: "", amount: "", expense_date: format(new Date(), "yyyy-MM-dd") });
   const [expenseOpen, setExpenseOpen] = useState(false);
@@ -222,6 +241,7 @@ const FinanceDashboardPage = () => {
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="flex-wrap">
           <TabsTrigger value="overview"><BarChart3 className="h-4 w-4 mr-1" /> Overview</TabsTrigger>
+          <TabsTrigger value="clientMetrics"><UserCheck className="h-4 w-4 mr-1" /> Client Metrics</TabsTrigger>
           <TabsTrigger value="department"><Building2 className="h-4 w-4 mr-1" /> By Department</TabsTrigger>
           <TabsTrigger value="clients"><Users className="h-4 w-4 mr-1" /> By Client</TabsTrigger>
           <TabsTrigger value="invoices"><FileText className="h-4 w-4 mr-1" /> Invoices</TabsTrigger>
@@ -273,6 +293,106 @@ const FinanceDashboardPage = () => {
                     Assign department categories to invoices for breakdown.
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Client Metrics */}
+        <TabsContent value="clientMetrics">
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { title: "Total Clients", value: String(totalClients), icon: Users, color: "" },
+                { title: "Active Clients", value: String(activeClients), icon: CheckCircle, color: "text-[hsl(152,60%,42%)]" },
+                { title: "Cancelled Clients", value: String(cancelledClients), icon: XCircle, color: "text-destructive" },
+                { title: "Pending Clients", value: String(pendingClients), icon: Clock, color: "text-warning" },
+              ].map(card => (
+                <Card key={card.title} className="rounded-2xl shadow-elevated">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
+                    <card.icon className={`h-4 w-4 ${card.color || "text-muted-foreground"}`} />
+                  </CardHeader>
+                  <CardContent><p className="text-2xl font-bold">{card.value}</p></CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+              <Card className="rounded-2xl shadow-elevated">
+                <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Revenue from Active Clients</CardTitle></CardHeader>
+                <CardContent><p className="text-xl font-bold">{fmt(revenueFromActive)}</p></CardContent>
+              </Card>
+              <Card className="rounded-2xl shadow-elevated">
+                <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Revenue from Cancelled Clients</CardTitle></CardHeader>
+                <CardContent><p className="text-xl font-bold">{fmt(revenueFromCancelled)}</p></CardContent>
+              </Card>
+              <Card className="rounded-2xl shadow-elevated">
+                <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Avg Revenue per Client</CardTitle></CardHeader>
+                <CardContent><p className="text-xl font-bold">{fmt(activeClients > 0 ? revenueFromActive / activeClients : 0)}</p></CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader><CardTitle className="text-base">Active vs Cancelled Clients</CardTitle></CardHeader>
+                <CardContent className="h-[300px]">
+                  {clientStatusPieData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RePieChart>
+                        <Pie data={clientStatusPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                          {clientStatusPieData.map((d, i) => <Cell key={i} fill={d.fill} />)}
+                        </Pie>
+                        <Tooltip />
+                      </RePieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">No client data available.</div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader><CardTitle className="text-base">Revenue by Client Status</CardTitle></CardHeader>
+                <CardContent className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={[
+                      { status: "Active", revenue: revenueFromActive },
+                      { status: "Cancelled", revenue: revenueFromCancelled },
+                    ]}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="status" stroke="hsl(var(--muted-foreground))" />
+                      <YAxis tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} stroke="hsl(var(--muted-foreground))" />
+                      <Tooltip formatter={(v: number) => fmt(v)} />
+                      <Bar dataKey="revenue" radius={[4, 4, 0, 0]}>
+                        <Cell fill="hsl(152, 60%, 42%)" />
+                        <Cell fill="hsl(0, 72%, 51%)" />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader><CardTitle className="text-base">Top 10 Clients by Revenue</CardTitle></CardHeader>
+              <CardContent>
+                {revenueByClient.length > 0 ? (
+                  <Table>
+                    <TableHeader><TableRow>
+                      <TableHead>Client</TableHead>
+                      <TableHead className="text-right">Total Revenue</TableHead>
+                    </TableRow></TableHeader>
+                    <TableBody>
+                      {revenueByClient.map((c, i) => (
+                        <TableRow key={i}>
+                          <TableCell className="font-medium">{c.name}</TableCell>
+                          <TableCell className="text-right font-semibold">{fmt(c.revenue)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : <p className="text-muted-foreground py-8 text-center">No client revenue data yet.</p>}
               </CardContent>
             </Card>
           </div>
