@@ -12,6 +12,10 @@ export interface PlatformPageData {
   relatedServices: { label: string; to: string }[];
   relatedIndustries: { label: string; to: string }[];
   stats: { value: string; label: string }[];
+  testimonials?: { quote: string; name: string; role: string; company: string }[];
+  useCases?: { title: string; industry: string; result: string; desc: string }[];
+  localSEO?: { heading: string; paragraphs: string[] };
+  integrations?: string[];
 }
 
 export const platformPages: Record<string, PlatformPageData> = {
