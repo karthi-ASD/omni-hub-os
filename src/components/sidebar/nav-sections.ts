@@ -122,12 +122,13 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    title: "Finance",
+    title: "Finance & Accounts",
     hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS],
     items: [
       { label: "Invoices", icon: Receipt, to: "/invoices" },
       { label: "Payments", icon: DollarSign, to: "/payments" },
       { label: "Finance", icon: PieChart, to: "/finance" },
+      { label: "Client Intelligence", icon: Brain, to: "/accounts/client-intelligence-dashboard", departments: [...FINANCE_DEPTS] },
     ],
   },
   {
