@@ -4,6 +4,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { platformPages } from "@/data/platform-pages";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronRight, CheckCircle2, HelpCircle, Star, MapPin } from "lucide-react";
+import { JsonLdScript, buildSoftwareAppJsonLd, buildBreadcrumbJsonLd, buildFaqJsonLd } from "@/components/public/JsonLd";
 
 const PlatformModulePage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
