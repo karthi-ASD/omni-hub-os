@@ -400,6 +400,34 @@ export const servicePages: Record<string, ServicePageData> = {
       { value: "< 6mo", label: "Time to Value" },
       { value: "40%", label: "Cost Reduction" },
     ],
+    testimonials: [
+      { quote: "NextWeb's AI chatbot handles 70% of our customer enquiries automatically. Support costs dropped 45% in three months.", name: "Chris Baker", role: "Head of CX", company: "TravelEasy QLD" },
+      { quote: "The predictive analytics model they built forecasts our inventory needs with 94% accuracy. No more stockouts or over-ordering.", name: "Linda Zhang", role: "Supply Chain Director", company: "FreshMart Australia" },
+      { quote: "AI-powered lead scoring transformed our sales process. Our team now focuses on the prospects most likely to convert.", name: "Peter O'Brien", role: "Sales Director", company: "Nexus Commercial" },
+    ],
+    techStack: ["Python", "TensorFlow", "PyTorch", "OpenAI", "LangChain", "Hugging Face", "Google Cloud AI", "AWS SageMaker", "Vector Databases", "RAG Pipelines"],
+    localSEO: {
+      heading: "AI Solutions in Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb is at the forefront of AI implementation in Brisbane and Gold Coast, helping Australian businesses harness artificial intelligence for competitive advantage. Our AI engineers and data scientists deliver practical, production-ready AI solutions — not science experiments.",
+        "From intelligent chatbots that handle customer enquiries 24/7 to predictive models that forecast demand, churn, and revenue — we build AI that delivers measurable business outcomes. Every solution is designed with Australian data privacy regulations in mind.",
+        "Our Brisbane AI team works across industries — healthcare providers using AI for patient triage, manufacturers implementing predictive maintenance, financial services firms automating compliance checks, and retailers personalising customer experiences at scale.",
+        "Whether you're exploring AI for the first time or scaling existing models, our team provides end-to-end support — from opportunity assessment and data preparation through to deployment, monitoring, and continuous improvement. All backed by local Brisbane expertise and support.",
+      ],
+    },
+    caseStudies: [
+      { title: "Intelligent Customer Support", industry: "Travel & Tourism", result: "70% Enquiries Automated", desc: "AI chatbot with natural language understanding, booking integration, and seamless human handoff for a Gold Coast tourism operator." },
+      { title: "Predictive Maintenance System", industry: "Manufacturing", result: "$1.8M Annual Savings", desc: "IoT sensor data + machine learning models predicting equipment failures 72 hours before occurrence for a QLD manufacturer." },
+      { title: "AI-Powered Lead Scoring", industry: "Financial Services", result: "+55% Conversion Rate", desc: "Machine learning model analysing 40+ signals to score and prioritise sales leads for a Brisbane financial advisory firm." },
+    ],
+    whyChooseUs: [
+      { title: "Production-Ready AI", desc: "We build AI that works in the real world — not just demos. Every model is production-tested and monitored." },
+      { title: "Data Privacy First", desc: "Compliant with Australian Privacy Act, GDPR, and industry-specific regulations. Your data stays secure." },
+      { title: "Brisbane AI Engineers", desc: "Local team of data scientists and ML engineers available for workshops, training, and ongoing support." },
+      { title: "Platform Integration", desc: "AI solutions that integrate with your existing systems — CRM, ERP, websites, and mobile apps." },
+      { title: "Responsible AI", desc: "Bias testing, model explainability, and ethical AI practices built into every project." },
+      { title: "Rapid Prototyping", desc: "Proof-of-concept models in 2-4 weeks so you can validate ROI before committing to full implementation." },
+    ],
   },
   "devops": {
     slug: "devops",
