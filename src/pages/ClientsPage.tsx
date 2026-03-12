@@ -71,9 +71,22 @@ const ClientsPage = () => {
     pending: clients.filter(c => c.client_status === "pending").length,
   };
 
-  const filteredClients = statusFilter === "all"
-    ? clients
-    : clients.filter(c => c.client_status === statusFilter);
+  const filteredClients = useMemo(() => {
+    let list = clients;
+    if (statusFilter !== "all") list = list.filter(c => c.client_status === statusFilter);
+    if (salesFilter !== "all") list = list.filter(c => c.sales_owner_id === salesFilter);
+    return list;
+  }, [clients, statusFilter, salesFilter]);
+
+  const handleSalesOwnerChange = async (clientId: string, userId: string) => {
+    const member = salesTeam.find(m => m.user_id === userId);
+    await supabase.from("clients").update({
+      sales_owner_id: userId || null,
+      salesperson_owner: member?.full_name || null,
+    } as any).eq("id", clientId);
+    toast.success("Sales owner updated");
+    refetch();
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
