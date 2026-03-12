@@ -1400,6 +1400,99 @@ serve(async (req) => {
       }];
       toolChoice = { type: "function", function: { name: "ceo_insights" } };
 
+    } else if (task_type === "ticket_contextual_reply") {
+      // Context-aware reply: includes client data, project data, past conversations
+      systemPrompt = `You are a professional customer support AI assistant for a digital agency CRM called NextWeb OS. 
+You have full context about the ticket, client, their projects, SEO campaigns, and past communications.
+Generate a highly contextual, personalized reply that:
+- Addresses the specific issue using knowledge of the client's account
+- References relevant project/campaign details when applicable
+- Maintains a professional, warm, and helpful tone
+- Provides actionable next steps
+- Is ready to send (no placeholders)
+
+Context provided includes: ticket details, client profile, active projects, SEO campaigns, recent communications, and conversation history.`;
+      userPrompt = `Generate a context-aware reply for this ticket with full business context:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "contextual_reply",
+          description: "Return a context-aware ticket reply with metadata",
+          parameters: {
+            type: "object",
+            properties: {
+              reply: { type: "string", description: "The full reply text ready to send" },
+              tone: { type: "string", enum: ["professional", "empathetic", "urgent", "informative"] },
+              confidence: { type: "number", description: "0-100 confidence in reply quality" },
+              referenced_context: { type: "array", items: { type: "string" }, description: "What context was used (e.g. 'SEO campaign data', 'recent invoice')" },
+              follow_up_actions: { type: "array", items: { type: "string" }, description: "Suggested internal follow-up actions" },
+              escalation_needed: { type: "boolean", description: "Whether this should be escalated" },
+            },
+            required: ["reply", "tone", "confidence", "referenced_context", "follow_up_actions", "escalation_needed"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "contextual_reply" } };
+
+    } else if (task_type === "email_draft") {
+      systemPrompt = `You are a professional email copywriter for a digital agency. Generate polished, ready-to-send email drafts based on the given context. Emails should be professional, clear, and actionable. Include proper greeting, body, and sign-off.`;
+      userPrompt = `Generate an email draft:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "draft_email",
+          description: "Return a structured email draft",
+          parameters: {
+            type: "object",
+            properties: {
+              subject: { type: "string" },
+              greeting: { type: "string" },
+              body: { type: "string" },
+              sign_off: { type: "string" },
+              full_text: { type: "string", description: "Complete email text" },
+              tone: { type: "string", enum: ["formal", "friendly", "urgent", "follow_up"] },
+            },
+            required: ["subject", "body", "full_text", "tone"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "draft_email" } };
+
+    } else if (task_type === "internal_ticket_reply") {
+      systemPrompt = `You are an internal operations AI assistant for a digital agency. Generate professional replies for internal department-to-department tickets. Be concise, technical when needed, and action-oriented. Reference relevant team processes and suggest clear next steps.`;
+      userPrompt = `Generate an internal ticket reply:\n${JSON.stringify(payload)}`;
+      tools = [{
+        type: "function",
+        function: {
+          name: "internal_reply",
+          description: "Return an internal ticket reply suggestion",
+          parameters: {
+            type: "object",
+            properties: {
+              replies: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    style: { type: "string", enum: ["concise", "detailed", "action_oriented"] },
+                    text: { type: "string" },
+                  },
+                  required: ["style", "text"],
+                  additionalProperties: false,
+                },
+              },
+              suggested_status: { type: "string", enum: ["open", "under_review", "in_progress", "resolved", "closed"] },
+              suggested_assignee_department: { type: "string" },
+            },
+            required: ["replies"],
+            additionalProperties: false,
+          },
+        },
+      }];
+      toolChoice = { type: "function", function: { name: "internal_reply" } };
+
     } else {
       return new Response(JSON.stringify({ error: "Unknown task_type" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
