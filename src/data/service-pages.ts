@@ -64,6 +64,33 @@ export const servicePages: Record<string, ServicePageData> = {
       { value: "12mo", label: "Average ROI" },
       { value: "98%", label: "Client Satisfaction" },
     ],
+    testimonials: [
+      { quote: "NextWeb's digital strategy helped us cut operational costs by 35% and launch our customer portal 3 months ahead of schedule.", name: "Sarah Mitchell", role: "COO", company: "HealthBridge QLD" },
+      { quote: "The transformation roadmap was exactly what our board needed. Clear priorities, measurable outcomes, and a realistic timeline.", name: "James Chen", role: "CEO", company: "AusPay Financial" },
+      { quote: "Their workshops changed how our entire leadership team thinks about technology and innovation.", name: "Rebecca Torres", role: "CTO", company: "GovServe Solutions" },
+    ],
+    techStack: ["Design Thinking", "Lean Startup", "Agile", "TOGAF", "Business Model Canvas", "OKR Frameworks", "Jira", "Miro", "Confluence"],
+    localSEO: {
+      heading: "Digital Transformation Consulting in Brisbane & Gold Coast",
+      paragraphs: [
+        "As Brisbane's leading digital transformation consultancy, NextWeb partners with South East Queensland businesses to navigate complex technology change. From Fortitude Valley startups to Gold Coast enterprise headquarters, we bring hands-on strategic consulting that delivers measurable results.",
+        "Our Brisbane-based consultants understand the unique challenges facing Australian businesses — from regulatory compliance to workforce digital literacy. We've guided over 50 organisations across Queensland through successful digital transformations, from initial strategy through to full implementation and change management.",
+        "Whether you're a Gold Coast tourism operator looking to digitise bookings, a Brisbane healthcare provider modernising patient engagement, or a manufacturing firm automating supply chains, our local team delivers world-class digital strategy with a Queensland focus.",
+      ],
+    },
+    caseStudies: [
+      { title: "Healthcare Digital Overhaul", industry: "Healthcare", result: "+45% Patient Satisfaction", desc: "Complete digital transformation for a Brisbane health network — patient portal, telehealth, automated scheduling, and data analytics." },
+      { title: "Government Process Automation", industry: "Government", result: "60% Faster Processing", desc: "Digitised 12 manual workflows for a QLD government department, reducing processing times and improving citizen experience." },
+      { title: "Manufacturing IoT Integration", industry: "Manufacturing", result: "$2.1M Annual Savings", desc: "Connected factory floor systems with real-time monitoring, predictive maintenance, and automated quality control." },
+    ],
+    whyChooseUs: [
+      { title: "Brisbane-Based Team", desc: "Local consultants who understand the Australian business landscape and are available for face-to-face workshops." },
+      { title: "Industry Frameworks", desc: "Proven transformation frameworks adapted for healthcare, government, finance, and manufacturing sectors." },
+      { title: "Measurable Outcomes", desc: "Every engagement starts with clear KPIs and ROI targets — we're accountable for results, not just deliverables." },
+      { title: "End-to-End Delivery", desc: "From strategy to implementation — we don't just advise, we build and deploy the solutions we recommend." },
+      { title: "Change Management", desc: "People-first approach ensuring your teams adopt new technology with training, support, and communication plans." },
+      { title: "Ongoing Advisory", desc: "Post-transformation support with quarterly reviews, technology roadmap updates, and continuous improvement programs." },
+    ],
   },
   "website-design": {
     slug: "website-design",
