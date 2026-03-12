@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff, Shield, Zap, Globe, ArrowRight, Sparkles } from "lucide-react";
 import { NWLogo } from "@/components/NWLogo";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { isAuthTimeoutError, signInWithPasswordResilient } from "@/lib/auth-signin";
 
 const Login: React.FC = () => {
   usePageTitle("Sign In", "Sign in to your NextWeb OS dashboard. Access CRM, projects, invoicing, and 100+ business modules.");
@@ -21,7 +22,7 @@ const Login: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email: form.email.trim(), password: form.password });
+      const { error } = await signInWithPasswordResilient(form.email, form.password);
       if (error) throw error;
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -30,7 +31,11 @@ const Login: React.FC = () => {
       toast.success("Welcome back!");
       navigate("/dashboard");
     } catch (err: any) {
-      toast.error(err.message || "Login failed");
+      if (isAuthTimeoutError(err)) {
+        toast.error("Sign-in timed out. Please try again.");
+      } else {
+        toast.error(err.message || "Login failed");
+      }
     } finally {
       setLoading(false);
     }
