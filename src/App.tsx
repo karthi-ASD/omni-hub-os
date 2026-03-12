@@ -198,6 +198,7 @@ import AISalesAssistantPage from "./pages/AISalesAssistantPage";
 import SalesKnowledgeBasePage from "./pages/SalesKnowledgeBasePage";
 import ProspectFinderPage from "./pages/ProspectFinderPage";
 import SalesOpportunitiesPage from "./pages/SalesOpportunitiesPage";
+import ClientIntelligenceDashboardPage from "./pages/ClientIntelligenceDashboardPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -535,9 +536,12 @@ const App = () => (
               } />
               <Route path="/revenue-intelligence" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><RevenueIntelligencePage /></ProtectedRoute>
-              } />
+               } />
                <Route path="/finance" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><FinanceDashboardPage /></ProtectedRoute>
+              } />
+              <Route path="/accounts/client-intelligence-dashboard" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><ClientIntelligenceDashboardPage /></ProtectedRoute>
               } />
               <Route path="/xero-test" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><XeroTestPage /></ProtectedRoute>
