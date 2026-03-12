@@ -163,7 +163,7 @@ const SuperAdminToolsPage = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title="Super Admin Tools" description="System management, user operations, and automation controls." />
+      <PageHeader title="Super Admin Tools" subtitle="System management, user operations, and automation controls." />
 
       {/* Business Management */}
       <Card className="rounded-2xl shadow-elevated">

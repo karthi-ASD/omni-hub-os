@@ -65,12 +65,10 @@ const UserProfilePage = () => {
     }
 
     // Fetch employee record if exists
-    const { data: emp } = await supabase
-      .from("hr_employees" as any)
-      .select("*")
-      .eq("user_id", userId!)
-      .maybeSingle();
-    setEmployee(emp);
+    try {
+      const { data: emp } = await (supabase.from("hr_employees" as any).select("*").eq("user_id", userId!) as any).maybeSingle();
+      setEmployee(emp);
+    } catch { /* hr_employees may not exist */ }
 
     // Task stats
     const { count: assigned } = await supabase
