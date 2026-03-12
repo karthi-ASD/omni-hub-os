@@ -11,6 +11,8 @@ import { NWLogo } from "@/components/NWLogo";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { isAuthTimeoutError, signInWithPasswordResilient } from "@/lib/auth-signin";
 
+const GOOGLE_AUTH_TIMEOUT_MS = 30000;
+
 const Login: React.FC = () => {
   usePageTitle("Sign In", "Sign in to your NextWeb OS dashboard. Access CRM, projects, invoicing, and 100+ business modules.");
   const navigate = useNavigate();
@@ -135,7 +137,7 @@ const Login: React.FC = () => {
               let timeoutId: number | undefined;
               try {
                 const timeoutPromise = new Promise<never>((_, reject) => {
-                  timeoutId = window.setTimeout(() => reject(new Error("GOOGLE_AUTH_TIMEOUT")), 12000);
+                  timeoutId = window.setTimeout(() => reject(new Error("GOOGLE_AUTH_TIMEOUT")), GOOGLE_AUTH_TIMEOUT_MS);
                 });
 
                 const result = await Promise.race([
@@ -150,7 +152,7 @@ const Login: React.FC = () => {
                 }
               } catch (err: any) {
                 if (err?.message === "GOOGLE_AUTH_TIMEOUT") {
-                  toast.error("Google sign-in timed out. Please try again.");
+                  toast.error("Google sign-in is taking too long. Please try again.");
                 } else {
                   toast.error(err.message || "Google sign-in failed");
                 }
@@ -175,3 +177,4 @@ const Login: React.FC = () => {
 };
 
 export default Login;
+

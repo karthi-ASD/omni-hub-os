@@ -5,8 +5,24 @@ const LOCAL_SIGNOUT_TIMEOUT_MS = 1500;
 const AUTH_TIMEOUT_CODE = "AUTH_TIMEOUT";
 const SIGNOUT_TIMEOUT_CODE = "AUTH_SIGNOUT_TIMEOUT";
 
+type AuthSignInResult = Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>;
+
+type ProxyAuthPayload = {
+  access_token?: string;
+  refresh_token?: string;
+  error?: string;
+  error_description?: string;
+  msg?: string;
+};
+
 const isTimeoutError = (error: unknown, code: string) =>
   error instanceof Error && error.message === code;
+
+const isNetworkAuthError = (error: unknown) =>
+  error instanceof Error && /failed to fetch|networkerror|load failed|err_failed/i.test(error.message);
+
+const shouldFallbackToProxy = (error: unknown) =>
+  isTimeoutError(error, AUTH_TIMEOUT_CODE) || isNetworkAuthError(error);
 
 const withTimeout = async <T>(
   operation: () => Promise<T>,
@@ -29,48 +45,45 @@ const withTimeout = async <T>(
   }
 };
 
-const directPasswordSignIn = async (email: string, password: string) => {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-  const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
-
-  if (!supabaseUrl || !publishableKey) {
-    throw new Error("Missing backend configuration");
-  }
-
-  const response = await withTimeout(
+const proxyPasswordSignIn = async (email: string, password: string): Promise<AuthSignInResult> => {
+  const { data, error: invokeError } = await withTimeout(
     () =>
-      fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
-        method: "POST",
-        headers: {
-          apikey: publishableKey,
-          "Content-Type": "application/json",
-          "x-client-info": "nextweb-auth-fallback",
-        },
-        body: JSON.stringify({ email: email.trim(), password }),
+      supabase.functions.invoke("auth-password-proxy", {
+        body: { email: email.trim(), password },
       }),
     AUTH_TIMEOUT_MS,
-    AUTH_TIMEOUT_CODE,
+    AUTH_TIMEOUT_CODE
   );
 
-  const payload = await response.json().catch(() => ({} as any));
-
-  if (!response.ok) {
-    return { data: { user: null, session: null }, error: new Error(payload?.msg || payload?.error_description || "Invalid login credentials") };
+  if (invokeError) {
+    return {
+      data: { user: null, session: null },
+      error: new Error(invokeError.message || "Login failed"),
+    };
   }
 
-  const accessToken = payload?.access_token;
-  const refreshToken = payload?.refresh_token;
+  const payload = (data ?? {}) as ProxyAuthPayload;
 
-  if (!accessToken || !refreshToken) {
-    return { data: { user: null, session: null }, error: new Error("Login succeeded but session could not be restored") };
+  if (payload.error) {
+    return {
+      data: { user: null, session: null },
+      error: new Error(payload.msg || payload.error_description || payload.error),
+    };
   }
 
-  const { data, error } = await supabase.auth.setSession({
-    access_token: accessToken,
-    refresh_token: refreshToken,
+  if (!payload.access_token || !payload.refresh_token) {
+    return {
+      data: { user: null, session: null },
+      error: new Error("Login succeeded but session could not be restored"),
+    };
+  }
+
+  const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+    access_token: payload.access_token,
+    refresh_token: payload.refresh_token,
   });
 
-  return { data, error };
+  return { data: sessionData, error: sessionError };
 };
 
 export const signInWithPasswordResilient = async (email: string, password: string) => {
@@ -83,7 +96,7 @@ export const signInWithPasswordResilient = async (email: string, password: strin
       AUTH_TIMEOUT_CODE
     );
   } catch (error) {
-    if (!isTimeoutError(error, AUTH_TIMEOUT_CODE)) throw error;
+    if (!shouldFallbackToProxy(error)) throw error;
 
     await withTimeout(
       () => supabase.auth.signOut({ scope: "local" }),
@@ -98,12 +111,11 @@ export const signInWithPasswordResilient = async (email: string, password: strin
         AUTH_TIMEOUT_CODE
       );
     } catch (secondError) {
-      if (!isTimeoutError(secondError, AUTH_TIMEOUT_CODE)) throw secondError;
-      return directPasswordSignIn(email, password);
+      if (!shouldFallbackToProxy(secondError)) throw secondError;
+      return proxyPasswordSignIn(email, password);
     }
   }
 };
 
 export const isAuthTimeoutError = (error: unknown) =>
   isTimeoutError(error, AUTH_TIMEOUT_CODE);
-
