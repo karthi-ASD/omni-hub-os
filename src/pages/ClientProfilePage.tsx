@@ -121,6 +121,15 @@ const ClientProfilePage = () => {
             </p>
           )}
         </div>
+        <Select value={client.sales_owner_id || "unassigned"} onValueChange={v => v !== "unassigned" && handleSalesOwnerChange(v)}>
+          <SelectTrigger className="w-36 h-8 text-xs rounded-lg"><SelectValue placeholder="Assign Sales" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="unassigned" disabled>Assign Sales</SelectItem>
+            {salesTeam.map(m => (
+              <SelectItem key={m.user_id} value={m.user_id}>{m.full_name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={client.client_status || "pending"} onValueChange={v => updateClientStatus(client.id, v as ClientStatus)}>
           <SelectTrigger className="w-32 h-8 text-xs rounded-lg"><SelectValue /></SelectTrigger>
           <SelectContent>
