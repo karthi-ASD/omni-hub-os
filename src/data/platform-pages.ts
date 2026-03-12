@@ -65,6 +65,24 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "3x", label: "Cross-Sell Revenue" },
       { value: "97%", label: "Data Accuracy" },
     ],
+    testimonials: [
+      { quote: "Customer 360 eliminated the 'who spoke to this client last?' problem. Now every team member has full context instantly.", name: "Sarah Mitchell", role: "Head of CX", company: "HealthBridge QLD" },
+      { quote: "We reduced duplicate records by 95% and improved our cross-sell rate by 3x within six months.", name: "James Chen", role: "Revenue Director", company: "Coastal Financial Group" },
+      { quote: "The interaction timeline alone has saved our account managers hours per week. Game-changing visibility.", name: "Rebecca Torres", role: "VP Sales", company: "TechScale Brisbane" },
+    ],
+    useCases: [
+      { title: "Multi-Location Healthcare", industry: "Healthcare", result: "+40% Patient Retention", desc: "Unified patient records across 12 clinic locations with appointment history, billing, and communication logs in one view." },
+      { title: "Financial Advisory Firm", industry: "Finance", result: "3x Cross-Sell Revenue", desc: "Connected investment, insurance, and tax data for holistic client profiles enabling proactive upsell recommendations." },
+      { title: "Retail Chain Analytics", industry: "Retail", result: "95% Data Accuracy", desc: "Merged online and in-store purchase data, loyalty programs, and support interactions for true omnichannel customer insights." },
+    ],
+    integrations: ["Sales CRM", "Service CRM", "Invoicing", "Marketing", "Projects", "SEO OS", "Analytics", "WhatsApp", "Email"],
+    localSEO: {
+      heading: "Customer 360 for Brisbane & Gold Coast Businesses",
+      paragraphs: [
+        "NextWeb Customer 360 gives Brisbane and Gold Coast businesses a complete, real-time view of every customer interaction across sales, service, marketing, and finance. No more switching between spreadsheets, email threads, and disconnected tools.",
+        "Our Brisbane-based team helps businesses implement Customer 360 with data migration, workflow configuration, and team training — ensuring every department has the context they need to deliver exceptional customer experiences.",
+      ],
+    },
   },
   "sales-crm": {
     slug: "sales-crm",
