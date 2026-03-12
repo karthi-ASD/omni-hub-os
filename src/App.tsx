@@ -248,6 +248,8 @@ const App = () => (
               <Route path="/cold-calling" element={<ColdCallingPage />} />
               <Route path="/sales-follow-ups" element={<SalesFollowUpsPage />} />
               <Route path="/sales-team-performance" element={<SalesTeamPerformancePage />} />
+              <Route path="/ai-sales-assistant" element={<AISalesAssistantPage />} />
+              <Route path="/sales-knowledge" element={<SalesKnowledgeBasePage />} />
               <Route path="/more" element={<MorePage />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/inquiries" element={<InquiriesPage />} />

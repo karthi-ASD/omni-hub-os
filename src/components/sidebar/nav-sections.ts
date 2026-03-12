@@ -48,10 +48,12 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "Sales Dashboard", icon: BarChart3, to: "/sales-dashboard" },
       { label: "Cold Calling", icon: PhoneCall, to: "/cold-calling" },
+      { label: "AI Assistant", icon: Bot, to: "/ai-sales-assistant" },
       { label: "Leads", icon: Target, to: "/leads" },
       { label: "Follow-Ups", icon: CalendarCheck, to: "/sales-follow-ups" },
       { label: "Deals", icon: FolderKanban, to: "/deals" },
       { label: "SEO Intel (Sales)", icon: Search, to: "/sales-seo-intel" },
+      { label: "Knowledge Center", icon: BookOpen, to: "/sales-knowledge" },
       { label: "Register Business", icon: Building2, to: "/businesses" },
       { label: "Reports", icon: BarChart3, to: "/reports" },
       { label: "Team Performance", icon: Users, to: "/sales-team-performance" },
