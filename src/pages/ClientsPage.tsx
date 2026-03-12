@@ -1,7 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useClients, Client, ClientStatus } from "@/hooks/useClients";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSalesTeam } from "@/hooks/useSalesTeam";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
