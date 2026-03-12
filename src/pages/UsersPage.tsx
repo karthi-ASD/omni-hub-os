@@ -25,6 +25,7 @@ const AVAILABLE_ROLES: AppRole[] = ["super_admin", "business_admin", "manager", 
 
 const UsersPage = () => {
   const { isSuperAdmin, isBusinessAdmin, profile } = useAuth();
+  const navigate = useNavigate();
   const [users, setUsers] = useState<ProfileWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [editUser, setEditUser] = useState<ProfileWithRole | null>(null);
