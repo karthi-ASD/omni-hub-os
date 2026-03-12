@@ -190,6 +190,10 @@ import ClientLoginPage from "./pages/ClientLoginPage";
 import FirstLoginSecurityPage from "./pages/FirstLoginSecurityPage";
 import SuperAdminToolsPage from "./pages/SuperAdminToolsPage";
 import UserProfilePage from "./pages/UserProfilePage";
+import SalesDashboardPage from "./pages/SalesDashboardPage";
+import ColdCallingPage from "./pages/ColdCallingPage";
+import SalesFollowUpsPage from "./pages/SalesFollowUpsPage";
+import SalesTeamPerformancePage from "./pages/SalesTeamPerformancePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
