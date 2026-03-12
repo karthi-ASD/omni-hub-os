@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import AuthDiagnostics from "@/components/AuthDiagnostics";
+import { JsonLdScript, organizationJsonLd, buildBreadcrumbJsonLd } from "@/components/public/JsonLd";
 import {
   ArrowRight, Shield, Zap, BarChart3, Users, Globe, Brain,
   CheckCircle2, ChevronRight, Smartphone, Monitor, Search,
