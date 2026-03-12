@@ -136,6 +136,34 @@ export const servicePages: Record<string, ServicePageData> = {
       { value: "95+", label: "Google Score" },
       { value: "3x", label: "Lead Generation" },
     ],
+    testimonials: [
+      { quote: "Our new website increased leads by 280% in the first quarter. The design is stunning and the UX is flawless.", name: "Michael Wong", role: "Marketing Director", company: "Coastal Property Group" },
+      { quote: "NextWeb delivered a website that perfectly captures our brand. Page speed is incredible and our SEO rankings jumped immediately.", name: "Lisa Patel", role: "Founder", company: "GreenLeaf Wellness" },
+      { quote: "Best web design agency in Brisbane. Professional, responsive, and they genuinely care about results.", name: "David Harris", role: "Managing Director", company: "Harris Legal" },
+    ],
+    techStack: ["React", "TypeScript", "Tailwind CSS", "Figma", "Next.js", "Headless CMS", "Cloudflare CDN", "Google Analytics 4", "Schema.org"],
+    localSEO: {
+      heading: "Website Design in Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb is Brisbane's premier website design agency, crafting high-performance, conversion-focused websites for businesses across South East Queensland. Our Fortitude Valley studio brings together award-winning designers and developers who understand the local market.",
+        "From Gold Coast tourism operators needing visually stunning booking platforms to Brisbane professional services firms requiring clean, authoritative corporate websites — we design digital experiences that reflect your brand and drive measurable business results.",
+        "Every website we design is built with Australian SEO best practices, mobile-first responsive design, WCAG 2.1 accessibility compliance, and sub-2-second load times. We don't use templates — every pixel is custom-crafted for your brand, audience, and business goals.",
+        "Our local clients span healthcare, legal, real estate, education, hospitality, and technology — giving us deep industry knowledge that informs every design decision. Whether you're in Spring Hill, Surfers Paradise, or anywhere in between, our team delivers world-class web design with a personal touch.",
+      ],
+    },
+    caseStudies: [
+      { title: "Luxury Real Estate Platform", industry: "Real Estate", result: "+320% Lead Generation", desc: "Custom property showcase website with virtual tours, suburb guides, and integrated CRM for a Gold Coast prestige agency." },
+      { title: "Medical Practice Redesign", industry: "Healthcare", result: "+180% Online Bookings", desc: "Patient-focused website with online booking, telehealth integration, and Medicare compatibility for a Brisbane medical group." },
+      { title: "Legal Firm Digital Presence", industry: "Professional Services", result: "+250% Organic Traffic", desc: "Authority-building website with practice area pages, team profiles, case results, and blog for a Brisbane CBD law firm." },
+    ],
+    whyChooseUs: [
+      { title: "No Templates", desc: "Every website is custom-designed from scratch — no cookie-cutter layouts or generic themes." },
+      { title: "SEO-First Architecture", desc: "Clean HTML, structured data, optimised images, and fast load times built into every page from day one." },
+      { title: "Conversion-Focused", desc: "Strategic CTA placement, trust signals, and user journey mapping to maximise lead generation and sales." },
+      { title: "Brisbane-Based Studio", desc: "Face-to-face design reviews, local photography coordination, and hands-on project management." },
+      { title: "Ongoing Support", desc: "Post-launch maintenance, content updates, performance monitoring, and continuous improvement." },
+      { title: "Accessibility Compliant", desc: "WCAG 2.1 Level AA compliance ensuring your website is usable by everyone, including users with disabilities." },
+    ],
   },
   "app-development": {
     slug: "app-development",
