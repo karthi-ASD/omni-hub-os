@@ -194,6 +194,8 @@ import SalesDashboardPage from "./pages/SalesDashboardPage";
 import ColdCallingPage from "./pages/ColdCallingPage";
 import SalesFollowUpsPage from "./pages/SalesFollowUpsPage";
 import SalesTeamPerformancePage from "./pages/SalesTeamPerformancePage";
+import AISalesAssistantPage from "./pages/AISalesAssistantPage";
+import SalesKnowledgeBasePage from "./pages/SalesKnowledgeBasePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -246,6 +248,8 @@ const App = () => (
               <Route path="/cold-calling" element={<ColdCallingPage />} />
               <Route path="/sales-follow-ups" element={<SalesFollowUpsPage />} />
               <Route path="/sales-team-performance" element={<SalesTeamPerformancePage />} />
+              <Route path="/ai-sales-assistant" element={<AISalesAssistantPage />} />
+              <Route path="/sales-knowledge" element={<SalesKnowledgeBasePage />} />
               <Route path="/more" element={<MorePage />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/inquiries" element={<InquiriesPage />} />
