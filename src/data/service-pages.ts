@@ -12,6 +12,11 @@ export interface ServicePageData {
   relatedPlatform: { label: string; to: string }[];
   relatedIndustries: { label: string; to: string }[];
   stats: { value: string; label: string }[];
+  testimonials?: { quote: string; name: string; role: string; company: string }[];
+  techStack?: string[];
+  localSEO?: { heading: string; paragraphs: string[] };
+  caseStudies?: { title: string; industry: string; result: string; desc: string }[];
+  whyChooseUs?: { title: string; desc: string }[];
 }
 
 export const servicePages: Record<string, ServicePageData> = {
