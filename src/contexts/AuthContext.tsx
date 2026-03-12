@@ -50,87 +50,128 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, user_id, business_id, full_name, email, avatar_url")
-      .eq("user_id", userId)
-      .single();
-    setRawProfile(data);
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, user_id, business_id, full_name, email, avatar_url")
+        .eq("user_id", userId)
+        .single();
+
+      if (error) {
+        setRawProfile(null);
+        return null;
+      }
+
+      setRawProfile(data);
+      return data;
+    } catch {
+      setRawProfile(null);
+      return null;
+    }
   };
 
   const fetchRoles = async (userId: string) => {
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
-    const userRoles = data?.map((r) => r.role) ?? [];
-    setRoles(userRoles);
-    return userRoles;
+    try {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId);
+      const userRoles = data?.map((r) => r.role) ?? [];
+      setRoles(userRoles);
+      return userRoles;
+    } catch {
+      setRoles([]);
+      return [] as AppRole[];
+    }
   };
 
   const fetchBusinesses = async () => {
-    const { data } = await supabase
-      .from("businesses")
-      .select("id, name, status")
-      .order("name");
-    setAllBusinesses(data || []);
-    return data || [];
+    try {
+      const { data } = await supabase
+        .from("businesses")
+        .select("id, name, status")
+        .order("name");
+      const businesses = data || [];
+      setAllBusinesses(businesses);
+      return businesses;
+    } catch {
+      setAllBusinesses([]);
+      return [] as TenantBusiness[];
+    }
   };
 
   useEffect(() => {
+    let isMounted = true;
+    const forceStopTimer = window.setTimeout(() => {
+      if (isMounted) setLoading(false);
+    }, 10000);
+
+    const finalizeLoading = () => {
+      if (!isMounted) return;
+      window.clearTimeout(forceStopTimer);
+      setLoading(false);
+    };
+
+    const hydrateUserState = async (nextSession: Session) => {
+      try {
+        const [, userRoles] = await Promise.all([
+          fetchProfile(nextSession.user.id),
+          fetchRoles(nextSession.user.id),
+        ]);
+
+        if (userRoles.includes("super_admin")) {
+          const biz = await fetchBusinesses();
+          if (biz.length > 0) {
+            setSelectedTenantId((current) => {
+              if (current) return current;
+              const active = biz.find((b) => b.status === "active");
+              return active?.id || biz[0].id;
+            });
+          }
+        }
+      } finally {
+        finalizeLoading();
+      }
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          setTimeout(async () => {
-            const [, userRoles] = await Promise.all([
-              fetchProfile(session.user.id),
-              fetchRoles(session.user.id),
-            ]);
-            // If super_admin, fetch all businesses for tenant selector
-            if (userRoles.includes("super_admin")) {
-              const biz = await fetchBusinesses();
-              if (biz.length > 0 && !selectedTenantId) {
-                const active = biz.find((b) => b.status === "active");
-                setSelectedTenantId(active?.id || biz[0].id);
-              }
-            }
-            setLoading(false);
+      (_event, nextSession) => {
+        setSession(nextSession);
+        setUser(nextSession?.user ?? null);
+
+        if (nextSession?.user) {
+          setTimeout(() => {
+            if (!isMounted) return;
+            void hydrateUserState(nextSession);
           }, 0);
         } else {
           setRawProfile(null);
           setRoles([]);
           setAllBusinesses([]);
           setSelectedTenantId(null);
-          setLoading(false);
+          finalizeLoading();
         }
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        Promise.all([
-          fetchProfile(session.user.id),
-          fetchRoles(session.user.id),
-        ]).then(async ([, userRoles]) => {
-          if (userRoles.includes("super_admin")) {
-            const biz = await fetchBusinesses();
-            if (biz.length > 0) {
-              const active = biz.find((b) => b.status === "active");
-              setSelectedTenantId(active?.id || biz[0].id);
-            }
-          }
-          setLoading(false);
-        });
-      } else {
-        setLoading(false);
-      }
-    });
+    supabase.auth.getSession()
+      .then(({ data: { session: currentSession } }) => {
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
 
-    return () => subscription.unsubscribe();
+        if (currentSession?.user) {
+          void hydrateUserState(currentSession);
+        } else {
+          finalizeLoading();
+        }
+      })
+      .catch(() => finalizeLoading());
+
+    return () => {
+      isMounted = false;
+      window.clearTimeout(forceStopTimer);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
