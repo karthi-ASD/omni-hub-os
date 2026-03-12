@@ -16,11 +16,31 @@ export function useSalesTeam() {
 
   const fetch = useCallback(async () => {
     if (!profile?.business_id) return;
-    // Return all team profiles for this business
+    // Get employee IDs from the Sales department only
+    const { data: salesDept } = await supabase
+      .from("departments")
+      .select("id")
+      .eq("business_id", profile.business_id)
+      .ilike("name", "%sales%")
+      .limit(1)
+      .maybeSingle();
+
+    if (!salesDept?.id) { setMembers([]); setLoading(false); return; }
+
+    const { data: salesEmps } = await supabase
+      .from("hr_employees")
+      .select("user_id")
+      .eq("business_id", profile.business_id)
+      .eq("department_id", salesDept.id)
+      .not("user_id", "is", null);
+
+    const userIds = (salesEmps || []).map(e => e.user_id).filter(Boolean) as string[];
+    if (userIds.length === 0) { setMembers([]); setLoading(false); return; }
+
     const { data } = await supabase
       .from("profiles")
       .select("user_id, full_name, email, avatar_url")
-      .eq("business_id", profile.business_id)
+      .in("user_id", userIds)
       .order("full_name");
     setMembers(data || []);
     setLoading(false);
