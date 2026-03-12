@@ -4326,34 +4326,109 @@ export type Database = {
       }
       businesses: {
         Row: {
+          address: string | null
+          city: string | null
+          cms_platform: string | null
+          competitors: string[] | null
+          country: string | null
           created_at: string
           deleted_at: string | null
+          domain_name: string | null
+          email: string | null
+          hosting_provider: string | null
           id: string
+          industry: string | null
           logo_url: string | null
           name: string
+          owner_name: string | null
+          phone: string | null
+          postcode: string | null
+          registered_by_user_id: string | null
+          registration_method: string | null
+          services_offered: string[] | null
           slug: string | null
+          social_facebook: string | null
+          social_gbp: string | null
+          social_instagram: string | null
+          social_linkedin: string | null
+          social_youtube: string | null
+          state: string | null
           status: Database["public"]["Enums"]["business_status"]
+          sub_industry: string | null
+          subscribed_services: string[] | null
+          target_locations: string[] | null
           updated_at: string
+          website_url: string | null
         }
         Insert: {
+          address?: string | null
+          city?: string | null
+          cms_platform?: string | null
+          competitors?: string[] | null
+          country?: string | null
           created_at?: string
           deleted_at?: string | null
+          domain_name?: string | null
+          email?: string | null
+          hosting_provider?: string | null
           id?: string
+          industry?: string | null
           logo_url?: string | null
           name: string
+          owner_name?: string | null
+          phone?: string | null
+          postcode?: string | null
+          registered_by_user_id?: string | null
+          registration_method?: string | null
+          services_offered?: string[] | null
           slug?: string | null
+          social_facebook?: string | null
+          social_gbp?: string | null
+          social_instagram?: string | null
+          social_linkedin?: string | null
+          social_youtube?: string | null
+          state?: string | null
           status?: Database["public"]["Enums"]["business_status"]
+          sub_industry?: string | null
+          subscribed_services?: string[] | null
+          target_locations?: string[] | null
           updated_at?: string
+          website_url?: string | null
         }
         Update: {
+          address?: string | null
+          city?: string | null
+          cms_platform?: string | null
+          competitors?: string[] | null
+          country?: string | null
           created_at?: string
           deleted_at?: string | null
+          domain_name?: string | null
+          email?: string | null
+          hosting_provider?: string | null
           id?: string
+          industry?: string | null
           logo_url?: string | null
           name?: string
+          owner_name?: string | null
+          phone?: string | null
+          postcode?: string | null
+          registered_by_user_id?: string | null
+          registration_method?: string | null
+          services_offered?: string[] | null
           slug?: string | null
+          social_facebook?: string | null
+          social_gbp?: string | null
+          social_instagram?: string | null
+          social_linkedin?: string | null
+          social_youtube?: string | null
+          state?: string | null
           status?: Database["public"]["Enums"]["business_status"]
+          sub_industry?: string | null
+          subscribed_services?: string[] | null
+          target_locations?: string[] | null
           updated_at?: string
+          website_url?: string | null
         }
         Relationships: []
       }
@@ -8815,6 +8890,39 @@ export type Database = {
           },
         ]
       }
+      first_login_security: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          email_verified: boolean | null
+          id: string
+          mobile_verified: boolean | null
+          password_changed: boolean | null
+          requires_security_setup: boolean | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          email_verified?: boolean | null
+          id?: string
+          mobile_verified?: boolean | null
+          password_changed?: boolean | null
+          requires_security_setup?: boolean | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          email_verified?: boolean | null
+          id?: string
+          mobile_verified?: boolean | null
+          password_changed?: boolean | null
+          requires_security_setup?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       followups: {
         Row: {
           account_id: string | null
@@ -12875,6 +12983,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      otp_verifications: {
+        Row: {
+          attempts: number | null
+          created_at: string | null
+          email: string | null
+          expires_at: string
+          id: string
+          otp_code: string
+          otp_type: string
+          phone: string | null
+          user_id: string
+          verified: boolean | null
+        }
+        Insert: {
+          attempts?: number | null
+          created_at?: string | null
+          email?: string | null
+          expires_at: string
+          id?: string
+          otp_code: string
+          otp_type?: string
+          phone?: string | null
+          user_id: string
+          verified?: boolean | null
+        }
+        Update: {
+          attempts?: number | null
+          created_at?: string | null
+          email?: string | null
+          expires_at?: string
+          id?: string
+          otp_code?: string
+          otp_type?: string
+          phone?: string | null
+          user_id?: string
+          verified?: boolean | null
+        }
+        Relationships: []
       }
       partner_attribution: {
         Row: {
@@ -17417,6 +17564,60 @@ export type Database = {
           },
         ]
       }
+      sub_customers: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          customer_id: string
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          role: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          customer_id: string
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          role?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          customer_id?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          role?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sub_customers_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sub_customers_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_metrics_daily: {
         Row: {
           arr: number
@@ -19912,12 +20113,73 @@ export type Database = {
     }
     Functions: {
       get_user_business_id: { Args: { _user_id: string }; Returns: string }
+      handle_business_registration: {
+        Args: {
+          _address?: string
+          _business_name: string
+          _city?: string
+          _cms_platform?: string
+          _competitors?: string[]
+          _country?: string
+          _domain_name?: string
+          _email: string
+          _hosting_provider?: string
+          _industry?: string
+          _owner_name: string
+          _phone: string
+          _postcode?: string
+          _registered_by_user_id?: string
+          _registration_method?: string
+          _services_offered?: string[]
+          _social_facebook?: string
+          _social_gbp?: string
+          _social_instagram?: string
+          _social_linkedin?: string
+          _social_youtube?: string
+          _state?: string
+          _sub_industry?: string
+          _subscribed_services?: string[]
+          _target_locations?: string[]
+          _website_url?: string
+        }
+        Returns: string
+      }
       handle_company_signup: {
         Args: {
           _business_slug: string
           _email: string
           _full_name: string
           _user_id: string
+        }
+        Returns: string
+      }
+      handle_full_signup: {
+        Args: {
+          _address?: string
+          _business_name: string
+          _city?: string
+          _cms_platform?: string
+          _competitors?: string[]
+          _country?: string
+          _domain_name?: string
+          _email: string
+          _hosting_provider?: string
+          _industry?: string
+          _owner_name?: string
+          _phone?: string
+          _postcode?: string
+          _services_offered?: string[]
+          _social_facebook?: string
+          _social_gbp?: string
+          _social_instagram?: string
+          _social_linkedin?: string
+          _social_youtube?: string
+          _state?: string
+          _sub_industry?: string
+          _subscribed_services?: string[]
+          _target_locations?: string[]
+          _user_id: string
+          _website_url?: string
         }
         Returns: string
       }

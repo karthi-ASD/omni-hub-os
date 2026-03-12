@@ -185,6 +185,7 @@ import CompanyLoginPage from "./pages/CompanyLoginPage";
 import CompanySignupPage from "./pages/CompanySignupPage";
 import DepartmentSignupPage from "./pages/DepartmentSignupPage";
 import ClientLoginPage from "./pages/ClientLoginPage";
+import FirstLoginSecurityPage from "./pages/FirstLoginSecurityPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -222,6 +223,7 @@ const App = () => (
             <Route path="/company/:slug/signup" element={<CompanySignupPage />} />
             <Route path="/company/:slug/:department" element={<DepartmentSignupPage />} />
             <Route path="/client/login" element={<ClientLoginPage />} />
+            <Route path="/security-setup" element={<FirstLoginSecurityPage />} />
 
             {/* Protected app shell */}
             <Route
