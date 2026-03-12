@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 export type OnboardingStatus = "pending" | "in_progress" | "completed";
+export type ClientStatus = "active" | "cancelled" | "pending" | "prospect" | "suspended";
 
 export interface Client {
   id: string;
@@ -20,6 +21,8 @@ export interface Client {
   state: string | null;
   country: string | null;
   onboarding_status: OnboardingStatus;
+  client_status: ClientStatus;
+  client_start_date: string | null;
   user_id: string | null;
   created_at: string;
   updated_at: string;
