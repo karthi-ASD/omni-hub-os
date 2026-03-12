@@ -894,5 +894,21 @@ export const platformPages: Record<string, PlatformPageData> = {
       { value: "Super", label: "Automated" },
       { value: "24/7", label: "Self-Service" },
     ],
+    testimonials: [
+      { quote: "Payroll processing that used to take 2 days now takes 30 minutes. STP reporting is completely automated.", name: "Michelle Adams", role: "HR Manager", company: "HealthStaff QLD" },
+      { quote: "Employee self-service for leave requests and payslips reduced HR admin by 60%. Staff love it.", name: "Tony Martinez", role: "People & Culture", company: "GoldCoast Hospitality Group" },
+    ],
+    useCases: [
+      { title: "Multi-Site Payroll", industry: "Healthcare", result: "80% Time Saved", desc: "Automated payroll for 500+ employees across 12 locations with STP, super, and award interpretation." },
+      { title: "Hospitality Rostering", industry: "Hospitality", result: "60% Less Admin", desc: "Shift rostering, attendance tracking, and payroll integration for a Gold Coast hotel group." },
+    ],
+    integrations: ["ATO STP", "Superannuation Funds", "Xero", "Time Tracking", "Leave Calendar", "Employee Portal"],
+    localSEO: {
+      heading: "HR & Payroll for Brisbane & Gold Coast",
+      paragraphs: [
+        "NextWeb HR & Payroll handles Australian employment requirements — STP reporting, superannuation, Fair Work compliance, and award interpretation — for Brisbane and Gold Coast businesses of all sizes.",
+        "From employee onboarding and leave management to payroll processing and performance reviews, our platform simplifies people management with local Australian compliance built in.",
+      ],
+    },
   },
 };
