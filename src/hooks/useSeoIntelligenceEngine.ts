@@ -68,6 +68,8 @@ export interface SeoTrafficEstimate {
   estimated_at: string;
 }
 
+export type SeoModuleStatus = "not_started" | "running" | "completed" | "failed";
+
 export function useSeoIntelligenceEngine(projectId?: string) {
   const { profile } = useAuth();
   const [analyses, setAnalyses] = useState<SeoDomainAnalysis[]>([]);
@@ -78,7 +80,13 @@ export function useSeoIntelligenceEngine(projectId?: string) {
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [moduleStatuses, setModuleStatuses] = useState<Record<string, SeoModuleStatus>>({});
+  const [sitemapData, setSitemapData] = useState<{ sitemap_found: boolean; total_pages: number; urls: string[] } | null>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const setModuleStatus = (module: string, status: SeoModuleStatus) => {
+    setModuleStatuses(prev => ({ ...prev, [module]: status }));
+  };
 
   const fetchAll = useCallback(async () => {
     if (!projectId) {
@@ -107,7 +115,6 @@ export function useSeoIntelligenceEngine(projectId?: string) {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // Cleanup polling on unmount
   useEffect(() => {
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
@@ -118,7 +125,7 @@ export function useSeoIntelligenceEngine(projectId?: string) {
     let elapsed = 0;
     pollingRef.current = setInterval(async () => {
       elapsed += 3;
-      setAnalysisProgress(Math.min(95, elapsed * 2));
+      setAnalysisProgress(Math.min(95, elapsed * 1.5));
 
       const { data } = await (supabase.from("seo_domain_analyses") as any)
         .select("status, seo_score, total_keywords")
@@ -137,16 +144,15 @@ export function useSeoIntelligenceEngine(projectId?: string) {
         pollingRef.current = null;
         setAnalyzing(false);
         setAnalysisProgress(0);
-        toast.error("Analysis failed. Please try again.");
+        toast.error("Analysis failed. Try running individual modules instead.");
       }
 
-      // Timeout after 3 minutes
-      if (elapsed > 180) {
+      if (elapsed > 300) {
         if (pollingRef.current) clearInterval(pollingRef.current);
         pollingRef.current = null;
         setAnalyzing(false);
         setAnalysisProgress(0);
-        toast.error("Analysis timed out. Results may still populate shortly.");
+        toast.error("Analysis timed out. Try running individual modules.");
         fetchAll();
       }
     }, 3000);
@@ -164,19 +170,42 @@ export function useSeoIntelligenceEngine(projectId?: string) {
 
       const analysisId = data?.analysis_id;
       if (analysisId) {
-        toast.info("SEO analysis started. Processing keywords, competitors, audit...");
+        toast.info("Full SEO analysis started. This may take a few minutes...");
         pollForCompletion(analysisId);
       } else {
-        // Legacy sync response
         setAnalyzing(false);
         setAnalysisProgress(100);
-        toast.success(`Analysis complete! SEO Score: ${data?.seo_score || 0}/100`);
         fetchAll();
       }
     } catch (e: any) {
       setAnalyzing(false);
       setAnalysisProgress(0);
       toast.error("Analysis failed: " + (e.message || "Unknown error"));
+    }
+  };
+
+  const runModuleAnalysis = async (module: string, domain: string) => {
+    if (!profile?.business_id || !projectId) return;
+    setModuleStatus(module, "running");
+    try {
+      const { data, error } = await supabase.functions.invoke("seo-domain-analyze", {
+        body: { domain, business_id: profile.business_id, seo_project_id: projectId, module },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Module analysis failed");
+
+      setModuleStatus(module, "completed");
+
+      if (module === "sitemap") {
+        setSitemapData(data);
+        toast.success(`Sitemap: ${data.total_pages} pages discovered`);
+      } else {
+        toast.success(`${module.charAt(0).toUpperCase() + module.slice(1)} analysis complete`);
+        fetchAll();
+      }
+    } catch (e: any) {
+      setModuleStatus(module, "failed");
+      toast.error(`${module} analysis failed: ${e.message || "Unknown error"}`);
     }
   };
 
@@ -195,6 +224,7 @@ export function useSeoIntelligenceEngine(projectId?: string) {
   return {
     analyses, keywords, roadmap, contentWorkflow, trafficEstimate,
     loading, analyzing, analysisProgress, runDomainAnalysis,
+    runModuleAnalysis, moduleStatuses, sitemapData,
     updateRoadmapItem, updateContentWorkflow,
     refetch: fetchAll,
   };
