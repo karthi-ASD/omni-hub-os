@@ -179,6 +179,17 @@ const ClientsPage = () => {
                         <SelectItem value="suspended">Suspended</SelectItem>
                       </SelectContent>
                     </Select>
+                    <Select value={c.sales_owner_id || "none"} onValueChange={v => { if (v !== "none") handleSalesOwnerChange(c.id, v); }}>
+                      <SelectTrigger className="w-28 h-7 text-[10px] rounded-lg" onClick={e => e.stopPropagation()}>
+                        <SelectValue placeholder="Assign" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none" disabled>Assign</SelectItem>
+                        {salesTeam.map(m => (
+                          <SelectItem key={m.user_id} value={m.user_id}>{m.full_name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border/50">
