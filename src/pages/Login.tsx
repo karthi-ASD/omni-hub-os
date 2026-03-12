@@ -23,10 +23,13 @@ const Login: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const result = await signInWithPasswordResilient(form.email, form.password);
-      if (result.error) throw result.error;
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: form.email.trim(),
+        password: form.password,
+      });
+      if (error) throw error;
 
-      if (result.data?.user) {
+      if (data?.user) {
         try {
           await supabase.from("system_events").insert({ event_type: "LOGIN", payload_json: { email: form.email.trim() } });
         } catch {
@@ -37,13 +40,7 @@ const Login: React.FC = () => {
       toast.success("Welcome back!");
       navigate("/dashboard");
     } catch (err: any) {
-      if (isAuthConfigError(err)) {
-        toast.error("Auth client config is missing. Check URL and anon key env variables.");
-      } else if (isAuthTimeoutError(err)) {
-        toast.error("Sign-in timed out. Please try again.");
-      } else {
-        toast.error(err.message || "Login failed");
-      }
+      toast.error(err.message || "Login failed");
     } finally {
       setLoading(false);
     }

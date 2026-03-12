@@ -19,6 +19,7 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(publishableKey),
+      "import.meta.env.VITE_SUPABASE_ANON_KEY": JSON.stringify(publishableKey),
     },
     plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
     resolve: {

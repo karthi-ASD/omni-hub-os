@@ -38,18 +38,16 @@ const CompanyLogin: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const result = await signInWithPasswordResilient(form.email, form.password);
-      if (result.error) throw result.error;
+      const { error } = await supabase.auth.signInWithPassword({
+        email: form.email.trim(),
+        password: form.password,
+      });
+      if (error) throw error;
+
       toast.success("Welcome back!");
       navigate("/dashboard");
     } catch (err: any) {
-      if (isAuthConfigError(err)) {
-        toast.error("Auth client config is missing. Check URL and anon key env variables.");
-      } else if (isAuthTimeoutError(err)) {
-        toast.error("Sign-in timed out. Please try again.");
-      } else {
-        toast.error(err.message || "Login failed");
-      }
+      toast.error(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
