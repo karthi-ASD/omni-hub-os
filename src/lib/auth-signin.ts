@@ -90,8 +90,14 @@ const proxyPasswordSignIn = async (email: string, password: string): Promise<Pas
     refresh_token: payload.refresh_token,
   });
 
+  const normalizedSessionData = (sessionData as { user?: unknown; session?: unknown; [key: string]: unknown } | null) ?? {};
+
   return {
-    data: { ...(sessionData as object) },
+    data: {
+      ...normalizedSessionData,
+      user: normalizedSessionData.user ?? null,
+      session: normalizedSessionData.session ?? null,
+    },
     error: sessionError,
   };
 };
