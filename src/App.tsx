@@ -398,6 +398,7 @@ const App = () => (
               <Route path="/qa-checklist" element={
                 <ProtectedRoute requiredRoles={["super_admin"]}><QAChecklistPage /></ProtectedRoute>
               } />
+              <Route path="/team-directory" element={<TeamDirectoryPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/tasks" element={<TasksPage />} />
               <Route path="/tickets" element={<TicketsPage />} />
