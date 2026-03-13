@@ -35,6 +35,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "Dashboard", icon: Home, to: "/dashboard" },
       { label: "Executive View", icon: BarChart3, to: "/executive-dashboard", roles: ["super_admin", "business_admin"] },
+      { label: "Team", icon: Users, to: "/team-directory" },
       { label: "Calendar", icon: Calendar, to: "/calendar" },
       { label: "Notifications", icon: Bell, to: "/notifications" },
     ],
