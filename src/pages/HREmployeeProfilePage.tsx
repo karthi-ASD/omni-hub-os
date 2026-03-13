@@ -47,7 +47,7 @@ const HREmployeeProfilePage = () => {
     if (!employeeId) return;
     setLoading(true);
     const [empR, eduR, bankR, insR, emgR, docR, attR, allEmpR] = await Promise.all([
-      supabase.from("hr_employees").select("*, departments(name)").eq("id", employeeId).single(),
+      supabase.from("hr_employees").select("*, departments(name)").eq("id", employeeId).maybeSingle(),
       supabase.from("hr_employee_education").select("*").eq("employee_id", employeeId),
       supabase.from("hr_employee_bank_details").select("*").eq("employee_id", employeeId).maybeSingle(),
       supabase.from("hr_employee_insurance").select("*").eq("employee_id", employeeId),
