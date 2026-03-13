@@ -5453,6 +5453,7 @@ export type Database = {
       clients: {
         Row: {
           address: string | null
+          assigned_seo_manager_id: string | null
           billing_address: string | null
           business_id: string
           city: string | null
@@ -5461,16 +5462,21 @@ export type Database = {
           client_status: string
           company_name: string | null
           contact_name: string
+          contract_value: number | null
           country: string | null
           created_at: string
           deal_id: string | null
           email: string
           id: string
+          last_payment_date: string | null
           mobile: string | null
           onboarding_status: Database["public"]["Enums"]["onboarding_status"]
+          payment_status: string | null
           phone: string | null
+          renewal_date: string | null
           sales_owner_id: string | null
           salesperson_owner: string | null
+          service_category: string | null
           state: string | null
           tax_number: string | null
           updated_at: string
@@ -5480,6 +5486,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          assigned_seo_manager_id?: string | null
           billing_address?: string | null
           business_id: string
           city?: string | null
@@ -5488,16 +5495,21 @@ export type Database = {
           client_status?: string
           company_name?: string | null
           contact_name: string
+          contract_value?: number | null
           country?: string | null
           created_at?: string
           deal_id?: string | null
           email: string
           id?: string
+          last_payment_date?: string | null
           mobile?: string | null
           onboarding_status?: Database["public"]["Enums"]["onboarding_status"]
+          payment_status?: string | null
           phone?: string | null
+          renewal_date?: string | null
           sales_owner_id?: string | null
           salesperson_owner?: string | null
+          service_category?: string | null
           state?: string | null
           tax_number?: string | null
           updated_at?: string
@@ -5507,6 +5519,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          assigned_seo_manager_id?: string | null
           billing_address?: string | null
           business_id?: string
           city?: string | null
@@ -5515,16 +5528,21 @@ export type Database = {
           client_status?: string
           company_name?: string | null
           contact_name?: string
+          contract_value?: number | null
           country?: string | null
           created_at?: string
           deal_id?: string | null
           email?: string
           id?: string
+          last_payment_date?: string | null
           mobile?: string | null
           onboarding_status?: Database["public"]["Enums"]["onboarding_status"]
+          payment_status?: string | null
           phone?: string | null
+          renewal_date?: string | null
           sales_owner_id?: string | null
           salesperson_owner?: string | null
+          service_category?: string | null
           state?: string | null
           tax_number?: string | null
           updated_at?: string
@@ -14605,6 +14623,66 @@ export type Database = {
             columns: ["calendar_event_id"]
             isOneToOne: false
             referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      renewal_reminders: {
+        Row: {
+          assigned_accounts_user_id: string | null
+          assigned_sales_rep_id: string | null
+          business_id: string
+          client_id: string
+          contract_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          reminder_date: string
+          reminder_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_accounts_user_id?: string | null
+          assigned_sales_rep_id?: string | null
+          business_id: string
+          client_id: string
+          contract_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reminder_date: string
+          reminder_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_accounts_user_id?: string | null
+          assigned_sales_rep_id?: string | null
+          business_id?: string
+          client_id?: string
+          contract_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reminder_date?: string
+          reminder_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "renewal_reminders_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "renewal_reminders_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
