@@ -5339,6 +5339,57 @@ export type Database = {
           },
         ]
       }
+      client_risk_alerts: {
+        Row: {
+          alert_type: string
+          business_id: string
+          client_id: string
+          created_at: string
+          id: string
+          is_resolved: boolean | null
+          message: string
+          resolved_at: string | null
+          severity: string
+        }
+        Insert: {
+          alert_type: string
+          business_id: string
+          client_id: string
+          created_at?: string
+          id?: string
+          is_resolved?: boolean | null
+          message: string
+          resolved_at?: string | null
+          severity?: string
+        }
+        Update: {
+          alert_type?: string
+          business_id?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_resolved?: boolean | null
+          message?: string
+          resolved_at?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_risk_alerts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_risk_alerts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_services: {
         Row: {
           assigned_department: string | null
@@ -5456,10 +5507,12 @@ export type Database = {
           assigned_seo_manager_id: string | null
           billing_address: string | null
           business_id: string
+          churn_risk: string | null
           city: string | null
           client_since: string | null
           client_start_date: string | null
           client_status: string
+          commission_rate: number | null
           company_name: string | null
           contact_name: string
           contract_value: number | null
@@ -5467,6 +5520,7 @@ export type Database = {
           created_at: string
           deal_id: string | null
           email: string
+          health_score: string | null
           id: string
           last_payment_date: string | null
           mobile: string | null
@@ -5474,8 +5528,10 @@ export type Database = {
           payment_status: string | null
           phone: string | null
           renewal_date: string | null
+          renewal_probability: string | null
           sales_owner_id: string | null
           salesperson_owner: string | null
+          seo_payment_hold: boolean | null
           service_category: string | null
           state: string | null
           tax_number: string | null
@@ -5489,10 +5545,12 @@ export type Database = {
           assigned_seo_manager_id?: string | null
           billing_address?: string | null
           business_id: string
+          churn_risk?: string | null
           city?: string | null
           client_since?: string | null
           client_start_date?: string | null
           client_status?: string
+          commission_rate?: number | null
           company_name?: string | null
           contact_name: string
           contract_value?: number | null
@@ -5500,6 +5558,7 @@ export type Database = {
           created_at?: string
           deal_id?: string | null
           email: string
+          health_score?: string | null
           id?: string
           last_payment_date?: string | null
           mobile?: string | null
@@ -5507,8 +5566,10 @@ export type Database = {
           payment_status?: string | null
           phone?: string | null
           renewal_date?: string | null
+          renewal_probability?: string | null
           sales_owner_id?: string | null
           salesperson_owner?: string | null
+          seo_payment_hold?: boolean | null
           service_category?: string | null
           state?: string | null
           tax_number?: string | null
@@ -5522,10 +5583,12 @@ export type Database = {
           assigned_seo_manager_id?: string | null
           billing_address?: string | null
           business_id?: string
+          churn_risk?: string | null
           city?: string | null
           client_since?: string | null
           client_start_date?: string | null
           client_status?: string
+          commission_rate?: number | null
           company_name?: string | null
           contact_name?: string
           contract_value?: number | null
@@ -5533,6 +5596,7 @@ export type Database = {
           created_at?: string
           deal_id?: string | null
           email?: string
+          health_score?: string | null
           id?: string
           last_payment_date?: string | null
           mobile?: string | null
@@ -5540,8 +5604,10 @@ export type Database = {
           payment_status?: string | null
           phone?: string | null
           renewal_date?: string | null
+          renewal_probability?: string | null
           sales_owner_id?: string | null
           salesperson_owner?: string | null
+          seo_payment_hold?: boolean | null
           service_category?: string | null
           state?: string | null
           tax_number?: string | null
@@ -15199,6 +15265,72 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_commissions: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          business_id: string
+          client_id: string
+          commission_amount: number
+          commission_rate: number
+          created_at: string
+          deal_value: number
+          id: string
+          notes: string | null
+          payment_received_at: string | null
+          sales_rep_id: string | null
+          sales_rep_name: string | null
+          status: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          business_id: string
+          client_id: string
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          deal_value?: number
+          id?: string
+          notes?: string | null
+          payment_received_at?: string | null
+          sales_rep_id?: string | null
+          sales_rep_name?: string | null
+          status?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          business_id?: string
+          client_id?: string
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          deal_value?: number
+          id?: string
+          notes?: string | null
+          payment_received_at?: string | null
+          sales_rep_id?: string | null
+          sales_rep_name?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_commissions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_commissions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
