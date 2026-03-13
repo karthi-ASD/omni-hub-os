@@ -10345,6 +10345,7 @@ export type Database = {
           joining_date: string | null
           mobile_number: string | null
           permanent_address: string | null
+          profile_photo_url: string | null
           reporting_manager_id: string | null
           updated_at: string
           user_id: string | null
@@ -10369,6 +10370,7 @@ export type Database = {
           joining_date?: string | null
           mobile_number?: string | null
           permanent_address?: string | null
+          profile_photo_url?: string | null
           reporting_manager_id?: string | null
           updated_at?: string
           user_id?: string | null
@@ -10393,6 +10395,7 @@ export type Database = {
           joining_date?: string | null
           mobile_number?: string | null
           permanent_address?: string | null
+          profile_photo_url?: string | null
           reporting_manager_id?: string | null
           updated_at?: string
           user_id?: string | null

@@ -78,6 +78,7 @@ import ExpansionEnginePage from "./pages/ExpansionEnginePage";
 import AcquisitionsPage from "./pages/AcquisitionsPage";
 import IPOReadinessPage from "./pages/IPOReadinessPage";
 import FranchiseBlueprintPage from "./pages/FranchiseBlueprintPage";
+import TeamDirectoryPage from "./pages/TeamDirectoryPage";
 import CompetitiveIntelPage from "./pages/CompetitiveIntelPage";
 import CapitalAllocationPage from "./pages/CapitalAllocationPage";
 import ObservabilityPage from "./pages/ObservabilityPage";
@@ -398,6 +399,7 @@ const App = () => (
               <Route path="/qa-checklist" element={
                 <ProtectedRoute requiredRoles={["super_admin"]}><QAChecklistPage /></ProtectedRoute>
               } />
+              <Route path="/team-directory" element={<TeamDirectoryPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/tasks" element={<TasksPage />} />
               <Route path="/tickets" element={<TicketsPage />} />
