@@ -122,8 +122,8 @@ const RenewalsPage = () => {
         </Card>
         <Card>
           <CardContent className="pt-6 flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
-              <CheckCircle className="h-6 w-6 text-green-600" />
+            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <CheckCircle className="h-6 w-6 text-primary" />
             </div>
             <div>
               <p className="text-2xl font-bold">{completed.length}</p>

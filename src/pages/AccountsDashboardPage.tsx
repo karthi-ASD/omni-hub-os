@@ -58,15 +58,15 @@ const AccountsDashboardPage = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader heading="Accounts Dashboard" text="Financial overview, billing, and renewal management" />
+      <PageHeader title="Accounts Dashboard" subtitle="Financial overview, billing, and renewal management" />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        <StatCard title="Active Clients" value={stats.activeClients} icon={<Users className="h-4 w-4" />} />
-        <StatCard title="Total Revenue" value={`$${stats.totalRevenue.toLocaleString()}`} icon={<DollarSign className="h-4 w-4" />} />
-        <StatCard title="Pending Payments" value={`$${stats.pendingAmount.toLocaleString()}`} icon={<Receipt className="h-4 w-4" />} />
-        <StatCard title="Overdue Amount" value={`$${stats.overdueAmount.toLocaleString()}`} icon={<AlertTriangle className="h-4 w-4 text-destructive" />} />
-        <StatCard title="Overdue Invoices" value={stats.overdueCount} icon={<AlertTriangle className="h-4 w-4 text-destructive" />} />
-        <StatCard title="Upcoming Renewals" value={stats.upcomingRenewals} icon={<CalendarCheck className="h-4 w-4" />} />
+        <StatCard title="Active Clients" value={stats.activeClients} icon={Users} />
+        <StatCard title="Total Revenue" value={`$${stats.totalRevenue.toLocaleString()}`} icon={DollarSign} />
+        <StatCard title="Pending Payments" value={`$${stats.pendingAmount.toLocaleString()}`} icon={Receipt} />
+        <StatCard title="Overdue Amount" value={`$${stats.overdueAmount.toLocaleString()}`} icon={AlertTriangle} alert />
+        <StatCard title="Overdue Invoices" value={stats.overdueCount} icon={AlertTriangle} alert />
+        <StatCard title="Upcoming Renewals" value={stats.upcomingRenewals} icon={CalendarCheck} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

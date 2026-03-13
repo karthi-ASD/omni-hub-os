@@ -81,7 +81,7 @@ const StatewideClientsPage = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader heading="Statewide Clients" text="Filter and view clients across all states and service categories" />
+      <PageHeader title="Statewide Clients" subtitle="Filter and view clients across all states and service categories" />
 
       <Card>
         <CardContent className="pt-6">
