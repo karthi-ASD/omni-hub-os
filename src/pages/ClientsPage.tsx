@@ -46,7 +46,7 @@ const ClientsPage = () => {
 
   // Determine if user is a salesperson (in Sales department AND not admin)
   const isSalesOnly = useMemo(() => {
-    const adminRoles = ["super_admin", "business_admin", "hr_manager"];
+    const adminRoles = ["super_admin", "business_admin", "hr_manager", "manager"];
     const isAdmin = roles.some(r => adminRoles.includes(r));
     if (isAdmin) return false;
     // Only restrict to own clients if user is in the Sales department
