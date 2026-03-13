@@ -46,24 +46,32 @@ const HREmployeeProfilePage = () => {
   const fetchAll = useCallback(async () => {
     if (!employeeId) return;
     setLoading(true);
-    const [empR, eduR, bankR, insR, emgR, docR, attR, allEmpR] = await Promise.all([
-      supabase.from("hr_employees").select("*, departments(name)").eq("id", employeeId).single(),
-      supabase.from("hr_employee_education").select("*").eq("employee_id", employeeId),
-      supabase.from("hr_employee_bank_details").select("*").eq("employee_id", employeeId).maybeSingle(),
-      supabase.from("hr_employee_insurance").select("*").eq("employee_id", employeeId),
-      supabase.from("hr_employee_emergency_contacts").select("*").eq("employee_id", employeeId),
-      supabase.from("hr_employee_documents").select("*").eq("employee_id", employeeId).order("uploaded_at", { ascending: false }),
-      supabase.from("hr_employee_attendance").select("*").eq("employee_id", employeeId).order("date", { ascending: false }).limit(50),
-      supabase.from("hr_employees").select("id, full_name").eq("employment_status", "active"),
-    ]);
-    setEmployee(empR.data);
-    setAllEmployees(allEmpR.data ?? []);
-    setEducation(eduR.data ?? []);
-    setBankDetails(bankR.data);
-    setInsurance(insR.data ?? []);
-    setEmergencyContacts(emgR.data ?? []);
-    setDocuments(docR.data ?? []);
-    setAttendance(attR.data ?? []);
+    try {
+      const [empR, eduR, bankR, insR, emgR, docR, attR, allEmpR] = await Promise.all([
+        supabase.from("hr_employees").select("*, departments(name)").eq("id", employeeId).maybeSingle(),
+        supabase.from("hr_employee_education").select("*").eq("employee_id", employeeId),
+        supabase.from("hr_employee_bank_details").select("*").eq("employee_id", employeeId).maybeSingle(),
+        supabase.from("hr_employee_insurance").select("*").eq("employee_id", employeeId),
+        supabase.from("hr_employee_emergency_contacts").select("*").eq("employee_id", employeeId),
+        supabase.from("hr_employee_documents").select("*").eq("employee_id", employeeId).order("uploaded_at", { ascending: false }),
+        supabase.from("hr_employee_attendance").select("*").eq("employee_id", employeeId).order("date", { ascending: false }).limit(50),
+        supabase.from("hr_employees").select("id, full_name").eq("employment_status", "active"),
+      ]);
+      if (empR.error) {
+        console.error("Failed to load employee:", empR.error);
+      }
+      setEmployee(empR.data);
+      setAllEmployees(allEmpR.data ?? []);
+      setEducation(eduR.data ?? []);
+      setBankDetails(bankR.data);
+      setInsurance(insR.data ?? []);
+      setEmergencyContacts(emgR.data ?? []);
+      setDocuments(docR.data ?? []);
+      setAttendance(attR.data ?? []);
+    } catch (err) {
+      console.error("Error fetching employee details:", err);
+      setEmployee(null);
+    }
     setLoading(false);
   }, [employeeId]);
 
@@ -204,7 +212,13 @@ const HREmployeeProfilePage = () => {
   };
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
-  if (!employee) return <div className="text-center py-12 text-muted-foreground">Employee not found</div>;
+  if (!employee) return (
+    <div className="space-y-4 py-12 text-center">
+      <p className="text-lg font-medium text-muted-foreground">Unable to load employee details</p>
+      <p className="text-sm text-muted-foreground">The employee record may not exist or you may not have permission to view it.</p>
+      <Button variant="outline" onClick={() => navigate("/hr/employees")}><ArrowLeft className="h-4 w-4 mr-1" /> Back to Employee Directory</Button>
+    </div>
+  );
 
   const docTypes = ["Aadhar Card", "PAN Card", "Passport Photo", "Bank Details", "Resume", "Certificates", "Agreement", "Insurance", "Offer Letter"];
   const manager = employee.reporting_manager_id ? allEmployees.find(m => m.id === employee.reporting_manager_id) : null;
