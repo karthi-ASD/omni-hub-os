@@ -6,6 +6,7 @@ import {
   Palette, Activity, Layers, UserCog, LogOut, Search, Bell,
   BookOpen, Lock, Cpu, Workflow, Store, Gauge, Brain,
   TrendingUp, Code, FileEdit, PhoneCall, CalendarCheck, Handshake,
+  MapPin, RefreshCw,
 } from "lucide-react";
 
 export interface NavItem {
@@ -13,18 +14,14 @@ export interface NavItem {
   icon: React.ElementType;
   to: string;
   roles?: string[];
-  /** departments that can see this item (if set, only these depts see it) */
   departments?: string[];
-  /** if true, hidden from listed departments */
   hiddenFromDepartments?: string[];
 }
 
 export interface NavSection {
   title: string;
   items: NavItem[];
-  /** only show this section to these departments */
   departments?: string[];
-  /** hide this section from these departments */
   hiddenFromDepartments?: string[];
 }
 
@@ -41,7 +38,23 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Notifications", icon: Bell, to: "/notifications" },
     ],
   },
-  // ── Sales Department Section ──
+  // ── Accounts / Finance Department ──
+  {
+    title: "Accounts",
+    departments: [...FINANCE_DEPTS],
+    items: [
+      { label: "Accounts Dashboard", icon: PieChart, to: "/accounts-dashboard" },
+      { label: "Clients", icon: Users, to: "/clients" },
+      { label: "Invoices", icon: Receipt, to: "/invoices" },
+      { label: "Payments", icon: DollarSign, to: "/payments" },
+      { label: "Renewals", icon: RefreshCw, to: "/renewals" },
+      { label: "Finance", icon: PieChart, to: "/finance" },
+      { label: "Statewide Clients", icon: MapPin, to: "/statewide-clients" },
+      { label: "Client Intelligence", icon: Brain, to: "/accounts/client-intelligence-dashboard" },
+      { label: "Reports", icon: BarChart3, to: "/reports" },
+    ],
+  },
+  // ── Sales Department ──
   {
     title: "Sales Operations",
     departments: [...SALES_DEPTS],
@@ -54,7 +67,10 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Follow-Ups", icon: CalendarCheck, to: "/sales-follow-ups" },
       { label: "Deals", icon: FolderKanban, to: "/deals" },
       { label: "Opportunities", icon: TrendingUp, to: "/sales-opportunities" },
+      { label: "My Clients", icon: Users, to: "/clients" },
+      { label: "Renewal Alerts", icon: RefreshCw, to: "/renewals" },
       { label: "SEO Intel (Sales)", icon: Search, to: "/sales-seo-intel" },
+      { label: "Statewide Clients", icon: MapPin, to: "/statewide-clients" },
       { label: "Knowledge Center", icon: BookOpen, to: "/sales-knowledge" },
       { label: "Register Business", icon: Building2, to: "/businesses" },
       { label: "Reports", icon: BarChart3, to: "/reports" },
@@ -64,7 +80,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     title: "Sales & CRM",
-    hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS],
+    hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS, ...FINANCE_DEPTS],
     items: [
       { label: "Inquiries", icon: Mail, to: "/inquiries" },
       { label: "Leads", icon: Target, to: "/leads" },
@@ -75,6 +91,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "SEO Intel (Sales)", icon: Search, to: "/sales-seo-intel" },
     ],
   },
+  // ── SEO Department ──
   {
     title: "SEO Operations",
     departments: [...SEO_DEPTS],
@@ -84,6 +101,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "SEO Engine", icon: Search, to: "/seo" },
       { label: "Clients", icon: Users, to: "/clients" },
       { label: "Leads", icon: Target, to: "/leads" },
+      { label: "Statewide Clients", icon: MapPin, to: "/statewide-clients" },
       { label: "Client Reports", icon: BarChart3, to: "/seo-client-reports" },
       { label: "Dev Requests", icon: Code, to: "/internal-tickets?dept=development" },
       { label: "Content Requests", icon: FileEdit, to: "/internal-tickets?dept=content" },
@@ -91,7 +109,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     title: "Delivery",
-    hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS],
+    hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS, ...FINANCE_DEPTS],
     items: [
       { label: "Projects", icon: Briefcase, to: "/projects" },
       { label: "Tasks", icon: ClipboardList, to: "/tasks" },
@@ -102,7 +120,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     title: "Marketing & SEO",
-    hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS],
+    hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS, ...FINANCE_DEPTS],
     items: [
       { label: "SEO Engine", icon: Search, to: "/seo" },
       { label: "SEO Projects", icon: FolderKanban, to: "/seo-ops" },
@@ -113,7 +131,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     title: "Support",
-    hiddenFromDepartments: [...SALES_DEPTS],
+    hiddenFromDepartments: [...SALES_DEPTS, ...FINANCE_DEPTS],
     items: [
       { label: "Tickets", icon: Ticket, to: "/tickets" },
       { label: "Internal Tickets", icon: Ticket, to: "/internal-tickets" },
@@ -123,12 +141,13 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     title: "Finance & Accounts",
-    hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS],
+    hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS, ...FINANCE_DEPTS],
     items: [
       { label: "Invoices", icon: Receipt, to: "/invoices" },
       { label: "Payments", icon: DollarSign, to: "/payments" },
       { label: "Finance", icon: PieChart, to: "/finance" },
-      { label: "Client Intelligence", icon: Brain, to: "/accounts/client-intelligence-dashboard", departments: [...FINANCE_DEPTS] },
+      { label: "Renewals", icon: RefreshCw, to: "/renewals" },
+      { label: "Statewide Clients", icon: MapPin, to: "/statewide-clients" },
     ],
   },
   {
@@ -142,7 +161,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     title: "AI & Automation",
-    hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS],
+    hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS, ...FINANCE_DEPTS],
     items: [
       { label: "AI Brain", icon: Brain, to: "/ai-brain" },
       { label: "AI Agents", icon: Bot, to: "/ai-agents" },
@@ -152,7 +171,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     title: "Admin",
-    hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS],
+    hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS, ...FINANCE_DEPTS],
     items: [
       { label: "Settings", icon: Settings, to: "/settings" },
       { label: "Users", icon: UserCog, to: "/users" },

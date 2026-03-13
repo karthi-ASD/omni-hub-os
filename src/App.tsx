@@ -205,6 +205,9 @@ import SalesKnowledgeBasePage from "./pages/SalesKnowledgeBasePage";
 import ProspectFinderPage from "./pages/ProspectFinderPage";
 import SalesOpportunitiesPage from "./pages/SalesOpportunitiesPage";
 import ClientIntelligenceDashboardPage from "./pages/ClientIntelligenceDashboardPage";
+import AccountsDashboardPage from "./pages/AccountsDashboardPage";
+import StatewideClientsPage from "./pages/StatewideClientsPage";
+import RenewalsPage from "./pages/RenewalsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -297,6 +300,9 @@ const App = () => (
               } />
               <Route path="/tenant-billing" element={<TenantBillingPage />} />
               <Route path="/gateways" element={<GatewayConfigPage />} />
+              <Route path="/accounts-dashboard" element={<AccountsDashboardPage />} />
+              <Route path="/statewide-clients" element={<StatewideClientsPage />} />
+              <Route path="/renewals" element={<RenewalsPage />} />
               <Route path="/seo" element={<SeoDashboardPage />} />
               <Route path="/seo/:campaignId" element={<SeoCampaignDetailPage />} />
               <Route path="/seo-ops" element={<SeoOperationsPage />} />
