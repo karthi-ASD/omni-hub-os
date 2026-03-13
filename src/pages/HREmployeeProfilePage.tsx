@@ -294,6 +294,18 @@ const HREmployeeProfilePage = () => {
           </Card>
         </TabsContent>
 
+        {/* Job Role & Responsibilities */}
+        <TabsContent value="jobrole">
+          <JobRoleSection
+            employee={employee}
+            employeeId={employeeId!}
+            canManage={canManage}
+            businessId={profile?.business_id}
+            userId={profile?.user_id}
+            onRefresh={fetchAll}
+          />
+        </TabsContent>
+
         {/* Education */}
         <TabsContent value="education">
           <Card>
