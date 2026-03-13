@@ -58,7 +58,14 @@ export interface CreateClientInput {
 
 const PAGE_SIZE = 50;
 
-export function useClients() {
+export interface UseClientsOptions {
+  /** Filter clients by sales_owner_id server-side */
+  salesOwnerId?: string | null;
+  /** Filter clients by status server-side */
+  statusFilter?: string | null;
+}
+
+export function useClients(options?: UseClientsOptions) {
   const { profile } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +73,9 @@ export function useClients() {
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [hasMore, setHasMore] = useState(true);
+
+  const salesOwnerId = options?.salesOwnerId;
+  const statusFilter = options?.statusFilter;
 
   const fetchClients = useCallback(async (pageNum = 0, searchTerm = "", append = false) => {
     if (!append) setLoading(true);
@@ -81,6 +91,12 @@ export function useClients() {
       countQuery = countQuery.or(
         `contact_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,company_name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`
       );
+    }
+    if (salesOwnerId && salesOwnerId !== "all") {
+      countQuery = countQuery.eq("sales_owner_id", salesOwnerId);
+    }
+    if (statusFilter && statusFilter !== "all") {
+      countQuery = countQuery.eq("client_status", statusFilter);
     }
 
     const { count } = await countQuery;
@@ -98,6 +114,12 @@ export function useClients() {
         `contact_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,company_name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`
       );
     }
+    if (salesOwnerId && salesOwnerId !== "all") {
+      dataQuery = dataQuery.eq("sales_owner_id", salesOwnerId);
+    }
+    if (statusFilter && statusFilter !== "all") {
+      dataQuery = dataQuery.eq("client_status", statusFilter);
+    }
 
     const { data } = await dataQuery;
     const batch = (data as any as Client[]) || [];
@@ -111,7 +133,7 @@ export function useClients() {
     setHasMore(batch.length === PAGE_SIZE);
     setPage(pageNum);
     setLoading(false);
-  }, []);
+  }, [salesOwnerId, statusFilter]);
 
   useEffect(() => {
     fetchClients(0, search);
@@ -125,7 +147,6 @@ export function useClients() {
 
   const setSearchTerm = (term: string) => {
     setSearch(term);
-    // Reset to page 0 on search change — fetchClients will trigger via useEffect
   };
 
   const createClient = async (input: CreateClientInput) => {
@@ -230,10 +251,31 @@ export function useClients() {
     fetchClients(page, search);
   };
 
+  const bulkAssignSalesperson = async (clientIds: string[], userId: string, userName: string) => {
+    if (!profile) return;
+    const { error } = await supabase
+      .from("clients")
+      .update({ sales_owner_id: userId, salesperson_owner: userName } as any)
+      .in("id", clientIds);
+    if (error) { toast.error("Bulk assignment failed"); return; }
+
+    await supabase.from("audit_logs").insert({
+      business_id: profile.business_id,
+      actor_user_id: profile.user_id,
+      action_type: "BULK_ASSIGN_SALESPERSON",
+      entity_type: "client",
+      entity_id: clientIds.join(","),
+      new_value_json: { sales_owner_id: userId, salesperson_owner: userName, count: clientIds.length },
+    } as any);
+
+    toast.success(`Assigned ${clientIds.length} clients to ${userName}`);
+    fetchClients(0, search);
+  };
+
   return {
     clients, loading, totalCount, page, hasMore,
     createClient, updateOnboardingStatus, updateClientStatus, getClientServices,
-    loadMore, setSearchTerm,
+    loadMore, setSearchTerm, bulkAssignSalesperson,
     refetch: () => fetchClients(0, search),
   };
 }
