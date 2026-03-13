@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, User, GraduationCap, Landmark, Shield, Heart, FileText, Clock, Plus, Upload, Pencil } from "lucide-react";
+import { ArrowLeft, User, GraduationCap, Landmark, Shield, Heart, FileText, Clock, Plus, Upload, Pencil, Briefcase } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -262,6 +263,7 @@ const HREmployeeProfilePage = () => {
       <Tabs defaultValue="personal">
         <TabsList className="flex-wrap">
           <TabsTrigger value="personal"><User className="h-4 w-4 mr-1" /> Personal</TabsTrigger>
+          <TabsTrigger value="jobrole"><Briefcase className="h-4 w-4 mr-1" /> Job Role</TabsTrigger>
           <TabsTrigger value="education"><GraduationCap className="h-4 w-4 mr-1" /> Education</TabsTrigger>
           <TabsTrigger value="bank"><Landmark className="h-4 w-4 mr-1" /> Bank</TabsTrigger>
           <TabsTrigger value="emergency"><Shield className="h-4 w-4 mr-1" /> Emergency</TabsTrigger>
@@ -290,6 +292,18 @@ const HREmployeeProfilePage = () => {
               ))}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Job Role & Responsibilities */}
+        <TabsContent value="jobrole">
+          <JobRoleSection
+            employee={employee}
+            employeeId={employeeId!}
+            canManage={canManage}
+            businessId={profile?.business_id}
+            userId={profile?.user_id}
+            onRefresh={fetchAll}
+          />
         </TabsContent>
 
         {/* Education */}
@@ -584,5 +598,134 @@ const HREmployeeProfilePage = () => {
     </div>
   );
 };
+
+/* ───── Job Role & Responsibilities Section ───── */
+function JobRoleSection({
+  employee, employeeId, canManage, businessId, userId, onRefresh,
+}: {
+  employee: any; employeeId: string; canManage: boolean;
+  businessId: string | null | undefined; userId: string | undefined;
+  onRefresh: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [description, setDescription] = useState(employee?.job_role_description || "");
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    setDescription(employee?.job_role_description || "");
+  }, [employee?.job_role_description]);
+
+  const saveDescription = async () => {
+    await supabase.from("hr_employees").update({ job_role_description: description } as any).eq("id", employeeId);
+    if (businessId && userId) {
+      await supabase.from("audit_logs").insert({
+        business_id: businessId, actor_user_id: userId,
+        action_type: "UPDATE_JOB_ROLE", entity_type: "hr_employee", entity_id: employeeId,
+        new_value_json: { job_role_description: description.slice(0, 200) + "..." },
+      });
+    }
+    toast.success("Job role updated");
+    setEditing(false);
+    onRefresh();
+  };
+
+  const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !businessId) return;
+    const allowed = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    if (!allowed.includes(file.type)) { toast.error("Only PDF, DOC, DOCX allowed"); return; }
+    setUploading(true);
+    const path = `${businessId}/${employeeId}/job-role/${Date.now()}_${file.name}`;
+    const { error } = await supabase.storage.from("hr-documents").upload(path, file);
+    if (error) { toast.error("Upload failed"); setUploading(false); return; }
+    const { data: urlData } = supabase.storage.from("hr-documents").getPublicUrl(path);
+    await supabase.from("hr_employees").update({
+      job_role_document_url: urlData.publicUrl,
+      job_role_document_name: file.name,
+    } as any).eq("id", employeeId);
+    toast.success("Job role document uploaded");
+    setUploading(false);
+    onRefresh();
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="flex items-center gap-2">
+          <Briefcase className="h-5 w-5 text-primary" /> Job Role & Responsibilities
+        </CardTitle>
+        {canManage && !editing && (
+          <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
+            <Pencil className="h-4 w-4 mr-1" /> Edit
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {editing ? (
+          <>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Job Description & Responsibilities</Label>
+              <p className="text-xs text-muted-foreground">Include role overview, daily responsibilities, KPIs, work timing, and reporting structure.</p>
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={12}
+                placeholder={`Role Overview:\n\nDaily Responsibilities:\n• \n• \n\nWeekly Tasks:\n• \n\nKPIs & Performance Expectations:\n• \n\nWork Timing:\n\nReporting Structure:\n\nDepartment Responsibilities:\n• `}
+                className="font-mono text-sm"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={saveDescription}>Save</Button>
+              <Button variant="outline" onClick={() => { setEditing(false); setDescription(employee?.job_role_description || ""); }}>Cancel</Button>
+            </div>
+          </>
+        ) : (
+          <>
+            {employee?.job_role_description ? (
+              <div className="bg-muted/50 rounded-lg p-4 whitespace-pre-wrap text-sm leading-relaxed">
+                {employee.job_role_description}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-sm italic">No job role description assigned yet.</p>
+            )}
+          </>
+        )}
+
+        {/* Document section */}
+        <div className="border-t pt-4 mt-4">
+          <h4 className="text-sm font-semibold mb-2">Job Role Document</h4>
+          {employee?.job_role_document_url ? (
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+              <FileText className="h-5 w-5 text-primary shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{employee.job_role_document_name || "Document"}</p>
+                <a href={employee.job_role_document_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                  View / Download
+                </a>
+              </div>
+              {canManage && (
+                <label className="cursor-pointer">
+                  <Button size="sm" variant="outline" asChild><span><Upload className="h-3 w-3 mr-1" /> Replace</span></Button>
+                  <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={handleDocUpload} disabled={uploading} />
+                </label>
+              )}
+            </div>
+          ) : (
+            <>
+              {canManage ? (
+                <label className="cursor-pointer inline-flex items-center gap-2 text-sm text-primary hover:underline">
+                  <Upload className="h-4 w-4" /> Upload Job Role Document (PDF, DOC, DOCX)
+                  <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={handleDocUpload} disabled={uploading} />
+                </label>
+              ) : (
+                <p className="text-muted-foreground text-sm italic">No document uploaded.</p>
+              )}
+            </>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default HREmployeeProfilePage;

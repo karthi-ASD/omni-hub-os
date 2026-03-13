@@ -54,6 +54,7 @@ const HRAnalyticsDashboardPage = () => {
   const pendingLeaves = leaveRequests.filter(r => r.status === "pending").length;
   const totalPayroll = payroll.reduce((s, r) => s + (Number(r.net_salary) || 0), 0);
   const pendingTasks = tasks.filter(t => t.status === "pending" || t.status === "in_progress").length;
+  const missingJobRoles = activeEmps.filter(e => !(e as any).job_role_description).length;
 
   // Department breakdown for chart
   const deptData = departments
@@ -220,6 +221,26 @@ const HRAnalyticsDashboardPage = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Missing Job Roles Alert */}
+      {missingJobRoles > 0 && (
+        <Card className="border-amber-200 dark:border-amber-800 bg-amber-500/5">
+          <CardContent className="pt-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Missing Job Role Descriptions</p>
+                <p className="text-xs text-muted-foreground">{missingJobRoles} active employee{missingJobRoles > 1 ? "s" : ""} without a defined job role</p>
+              </div>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => navigate("/hr/employees")}>
+              <ArrowRight className="h-4 w-4 mr-1" /> View Employees
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

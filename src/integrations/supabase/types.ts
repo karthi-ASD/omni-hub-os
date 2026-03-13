@@ -10344,6 +10344,9 @@ export type Database = {
           gender: string | null
           id: string
           is_department_head: boolean | null
+          job_role_description: string | null
+          job_role_document_name: string | null
+          job_role_document_url: string | null
           joining_date: string | null
           mobile_number: string | null
           permanent_address: string | null
@@ -10372,6 +10375,9 @@ export type Database = {
           gender?: string | null
           id?: string
           is_department_head?: boolean | null
+          job_role_description?: string | null
+          job_role_document_name?: string | null
+          job_role_document_url?: string | null
           joining_date?: string | null
           mobile_number?: string | null
           permanent_address?: string | null
@@ -10400,6 +10406,9 @@ export type Database = {
           gender?: string | null
           id?: string
           is_department_head?: boolean | null
+          job_role_description?: string | null
+          job_role_document_name?: string | null
+          job_role_document_url?: string | null
           joining_date?: string | null
           mobile_number?: string | null
           permanent_address?: string | null
