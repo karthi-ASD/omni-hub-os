@@ -4,6 +4,7 @@ import { useClients, Client, ClientStatus } from "@/hooks/useClients";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSalesTeam } from "@/hooks/useSalesTeam";
 import { useCanCreateClient } from "@/hooks/useCanCreateClient";
+import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,14 +40,19 @@ const ClientsPage = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkSalesId, setBulkSalesId] = useState<string>("");
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
-  const { members: salesTeam } = useSalesTeam();
+  const { members: salesTeam, loading: salesLoading } = useSalesTeam();
   const { canCreate } = useCanCreateClient();
+  const { departmentName } = useEmployeeDepartment();
 
-  // Determine if user is a salesperson (employee role, not admin/super_admin)
+  // Determine if user is a salesperson (in Sales department AND not admin)
   const isSalesOnly = useMemo(() => {
     const adminRoles = ["super_admin", "business_admin", "hr_manager"];
-    return roles.length > 0 && !roles.some(r => adminRoles.includes(r));
-  }, [roles]);
+    const isAdmin = roles.some(r => adminRoles.includes(r));
+    if (isAdmin) return false;
+    // Only restrict to own clients if user is in the Sales department
+    const salesDeptNames = ["sales", "sales department", "business development"];
+    return departmentName ? salesDeptNames.some(s => departmentName.toLowerCase().includes(s)) : false;
+  }, [roles, departmentName]);
 
   // For salespeople, force filter to their own user_id
   const effectiveSalesFilter = isSalesOnly ? (profile?.user_id || "all") : salesFilter;
@@ -179,6 +185,9 @@ const ClientsPage = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Salespeople</SelectItem>
+              {salesTeam.length === 0 && !salesLoading && (
+                <div className="px-2 py-1.5 text-xs text-muted-foreground">No sales team members available</div>
+              )}
               {salesTeam.map(m => (
                 <SelectItem key={m.user_id} value={m.user_id}>{m.full_name}</SelectItem>
               ))}
@@ -197,6 +206,9 @@ const ClientsPage = () => {
                 <SelectValue placeholder="Assign salesperson..." />
               </SelectTrigger>
               <SelectContent>
+                {salesTeam.length === 0 && !salesLoading && (
+                  <div className="px-2 py-1.5 text-xs text-muted-foreground">No sales team members available</div>
+                )}
                 {salesTeam.map(m => (
                   <SelectItem key={m.user_id} value={m.user_id}>{m.full_name}</SelectItem>
                 ))}
