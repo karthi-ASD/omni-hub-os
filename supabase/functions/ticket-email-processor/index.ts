@@ -1,9 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 // Junk sender patterns
@@ -22,21 +22,6 @@ const JUNK_SUBJECTS = [
   "delivery failure", "bounce", "vacation", "autoresponder",
 ];
 
-// Work-related keywords that indicate a real ticket
-const WORK_KEYWORDS = [
-  "task", "issue", "problem", "bug", "error", "fix", "update", "revision",
-  "change", "support", "help", "urgent", "priority", "invoice", "payment",
-  "report", "seo", "keyword", "ranking", "technical", "hosting", "domain",
-  "ssl", "website", "development", "campaign", "design", "login", "crm",
-];
-
-// Subject trigger tags
-const SUBJECT_TAGS: Record<string, string> = {
-  "[TICKET]": "general", "[TASK]": "general", "[SUPPORT]": "support",
-  "[URGENT]": "general", "[SEO]": "seo", "[DEV]": "development",
-  "[ACCOUNTS]": "accounts", "[HR]": "hr", "[SALES]": "sales",
-};
-
 // Department routing by recipient email
 const DEPT_BY_EMAIL: Record<string, string> = {
   "seo@nextweb.com.au": "seo",
@@ -49,11 +34,17 @@ const DEPT_BY_EMAIL: Record<string, string> = {
   "info@nextweb.com.au": "general",
 };
 
+// Subject trigger tags
+const SUBJECT_TAGS: Record<string, string> = {
+  "[TICKET]": "general", "[TASK]": "general", "[SUPPORT]": "support",
+  "[URGENT]": "general", "[SEO]": "seo", "[DEV]": "development",
+  "[ACCOUNTS]": "accounts", "[HR]": "hr", "[SALES]": "sales",
+};
+
 function isJunkEmail(from: string, subject: string, body: string): boolean {
   if (JUNK_SENDERS.some(p => p.test(from))) return true;
   const subjectLower = subject.toLowerCase();
   if (JUNK_SUBJECTS.some(k => subjectLower.includes(k))) return true;
-  // Auto-reply detection
   if (/auto-submitted:\s*auto-(replied|generated)/i.test(body)) return true;
   if (/^(re:\s*)?out of office/i.test(subject)) return true;
   return false;
@@ -68,23 +59,17 @@ function detectPriority(subject: string, body: string): string {
 }
 
 function detectDepartment(toEmail: string, subject: string, body: string): string {
-  // Check recipient mapping first
   const emailKey = toEmail.toLowerCase().trim();
   if (DEPT_BY_EMAIL[emailKey]) return DEPT_BY_EMAIL[emailKey];
-
-  // Check subject tags
   for (const [tag, dept] of Object.entries(SUBJECT_TAGS)) {
     if (subject.toUpperCase().includes(tag)) return dept;
   }
-
-  // Content-based detection
   const text = `${subject} ${body}`.toLowerCase();
   if (/(seo|keyword|ranking|backlink|google search|organic)/i.test(text)) return "seo";
   if (/(invoice|payment|bill|account|renewal|subscription)/i.test(text)) return "accounts";
   if (/(website|bug|error|code|develop|feature|api|hosting|ssl|domain)/i.test(text)) return "development";
   if (/(hiring|recruitment|leave|salary|payroll|employee)/i.test(text)) return "hr";
   if (/(quote|proposal|pricing|lead|prospect|demo)/i.test(text)) return "sales";
-
   return "support";
 }
 
@@ -93,14 +78,14 @@ function extractTicketIdFromSubject(subject: string): string | null {
   return match ? match[0].replace(/[\[\]#]/g, "").trim() : null;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
+  try {
     const {
       from_email, from_name, to_email, subject, body, body_html,
       message_id, in_reply_to, attachments, business_id,
@@ -113,7 +98,7 @@ serve(async (req) => {
       });
     }
 
-    // 2. Check for thread continuation (reply to existing ticket)
+    // 2. Thread continuation (reply to existing ticket)
     const ticketRef = extractTicketIdFromSubject(subject);
     if (ticketRef || in_reply_to) {
       let existingTicket = null;
@@ -132,7 +117,6 @@ serve(async (req) => {
         }
       }
       if (existingTicket) {
-        // Add message to existing ticket thread
         await supabase.from("ticket_messages").insert({
           business_id: existingTicket.business_id,
           ticket_id: existingTicket.id,
@@ -144,7 +128,6 @@ serve(async (req) => {
           message_id,
           in_reply_to,
         });
-        // Update ticket status if closed/resolved
         await supabase.from("support_tickets").update({
           status: "open", updated_at: new Date().toISOString(),
         }).eq("id", existingTicket.id).in("status", ["resolved", "closed"]);
@@ -165,7 +148,7 @@ serve(async (req) => {
       const senderEmail = from_email.toLowerCase().trim();
       const senderDomain = senderEmail.split("@")[1];
 
-      // Match by primary email
+      // Primary email match
       const { data: primaryMatch } = await supabase.from("clients")
         .select("id").eq("business_id", bid).ilike("email", senderEmail).limit(1).maybeSingle();
       if (primaryMatch) {
@@ -173,7 +156,7 @@ serve(async (req) => {
         clientMatchStatus = "matched";
       }
 
-      // Match by alternate emails
+      // Alternate email match
       if (!clientId) {
         const { data: altMatch } = await supabase.from("client_alternate_emails")
           .select("client_id").eq("business_id", bid).ilike("email", senderEmail).limit(1).maybeSingle();
@@ -183,7 +166,7 @@ serve(async (req) => {
         }
       }
 
-      // Match by domain similarity
+      // Domain similarity match
       if (!clientId && senderDomain) {
         const { data: domainMatches } = await supabase.from("clients")
           .select("id, contact_name, company, email, website")
@@ -201,18 +184,18 @@ serve(async (req) => {
         }
       }
 
-      // Match by Xero customer name (from sender name)
+      // Name match
       if (!clientId && from_name) {
-        const { data: xeroMatch } = await supabase.from("clients")
+        const { data: nameMatch } = await supabase.from("clients")
           .select("id").eq("business_id", bid)
           .or(`contact_name.ilike.%${from_name}%,company.ilike.%${from_name}%`)
           .limit(3);
-        if (xeroMatch && xeroMatch.length > 0) {
-          if (xeroMatch.length === 1) {
-            clientId = xeroMatch[0].id;
+        if (nameMatch && nameMatch.length > 0) {
+          if (nameMatch.length === 1) {
+            clientId = nameMatch[0].id;
             clientMatchStatus = "matched";
           } else {
-            suggestedClientIds = [...new Set([...suggestedClientIds, ...xeroMatch.map(c => c.id)])];
+            suggestedClientIds = [...new Set([...suggestedClientIds, ...nameMatch.map(c => c.id)])];
             if (clientMatchStatus !== "matched") clientMatchStatus = "suggested";
           }
         }
@@ -226,12 +209,12 @@ serve(async (req) => {
     // 5. Create ticket
     const { data: newTicket, error: ticketError } = await supabase.from("support_tickets").insert({
       business_id: bid,
-      created_by_user_id: "00000000-0000-0000-0000-000000000000", // system
+      created_by_user_id: "00000000-0000-0000-0000-000000000000",
       subject,
       description: body || null,
       category: department === "accounts" ? "billing" : "general",
       priority,
-      status: clientMatchStatus === "unmatched" ? "open" : "open",
+      status: "open",
       channel: "email",
       department,
       sender_email: from_email,
@@ -249,50 +232,79 @@ serve(async (req) => {
 
     if (ticketError) throw ticketError;
 
+    const ticket = newTicket as any;
+
     // 6. Create initial message in thread
-    if (newTicket) {
-      await supabase.from("ticket_messages").insert({
-        business_id: bid,
-        ticket_id: (newTicket as any).id,
-        sender_type: "customer",
-        sender_name: from_name,
-        sender_email: from_email,
-        content: body || subject,
-        content_html: body_html,
-        message_id,
-      });
+    await supabase.from("ticket_messages").insert({
+      business_id: bid,
+      ticket_id: ticket.id,
+      sender_type: "customer",
+      sender_name: from_name,
+      sender_email: from_email,
+      content: body || subject,
+      content_html: body_html,
+      message_id,
+    });
 
-      // 7. Log audit
-      await supabase.from("ticket_audit_log").insert({
-        business_id: bid,
-        ticket_id: (newTicket as any).id,
-        action_type: "ticket_created",
-        details: `Ticket created from email. Client match: ${clientMatchStatus}. Department: ${department}.`,
-      });
+    // 7. Audit log
+    await supabase.from("ticket_audit_log").insert({
+      business_id: bid,
+      ticket_id: ticket.id,
+      action_type: "ticket_created",
+      details: `Ticket created from email. Client match: ${clientMatchStatus}. Department: ${department}.`,
+    });
 
-      // 8. Create notification
-      await supabase.from("notifications").insert({
-        business_id: bid,
-        type: "info",
-        title: clientMatchStatus === "unmatched"
-          ? `New Unmatched Ticket: ${subject.slice(0, 50)}`
-          : `New Ticket: ${subject.slice(0, 50)}`,
-        message: `From: ${from_name || from_email}. Priority: ${priority}. Department: ${department}.`,
-      } as any);
+    // 8. ── AUTO-NOTIFY CLIENT ──
+    // Trigger the ticket-auto-reply function to send omni-channel notifications
+    try {
+      const autoReplyUrl = `${supabaseUrl}/functions/v1/ticket-auto-reply`;
+      await fetch(autoReplyUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({
+          ticket_id: ticket.id,
+          ticket_number: ticket.ticket_number,
+          recipient_email: from_email,
+          recipient_name: from_name,
+          channel: "email",
+          business_id: bid,
+          client_id: clientId,
+        }),
+      });
+      console.log(`Auto-reply triggered for email ticket ${ticket.ticket_number}`);
+    } catch (replyErr) {
+      console.warn("Auto-reply trigger failed:", replyErr);
     }
+
+    // 9. ── AI Classification (async, non-blocking) ──
+    try {
+      const classifyUrl = `${supabaseUrl}/functions/v1/ticket-ai-classify`;
+      fetch(classifyUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({ ticket_id: ticket.id }),
+      }).catch((e) => console.warn("AI classify trigger error:", e));
+    } catch { /* non-critical */ }
 
     return new Response(JSON.stringify({
       action: "ticket_created",
-      ticket_id: (newTicket as any)?.id,
-      ticket_number: (newTicket as any)?.ticket_number,
+      ticket_id: ticket.id,
+      ticket_number: ticket.ticket_number,
       client_match_status: clientMatchStatus,
       department,
       priority,
+      auto_reply: true,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (e) {
     console.error("ticket-email-processor error:", e);
-    return new Response(JSON.stringify({ error: e.message }), {
+    return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
