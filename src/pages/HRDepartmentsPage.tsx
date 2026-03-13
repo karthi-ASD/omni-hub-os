@@ -1,4 +1,6 @@
+import { useHREmployees } from "@/hooks/useHREmployees";
 import { useHRDepartments } from "@/hooks/useHRDepartments";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,12 +10,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Plus, Pencil, Trash2 } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Users, Eye } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const HRDepartmentsPage = () => {
   const { departments, loading, create, update, remove } = useHRDepartments();
+  const { employees } = useHREmployees();
+  const { isSuperAdmin } = useAuth();
+  const navigate = useNavigate();
   const [addOpen, setAddOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", description: "", status: "active" });
@@ -45,6 +51,9 @@ const HRDepartmentsPage = () => {
     toast.success("Department deleted");
   };
 
+  const getEmployeeCount = (deptId: string) =>
+    employees.filter(e => e.department_id === deptId && e.employment_status === "active").length;
+
   const formDialog = (isEdit: boolean) => (
     <div className="space-y-4 py-2">
       <div className="space-y-2">
@@ -71,16 +80,28 @@ const HRDepartmentsPage = () => {
     </div>
   );
 
+  const DEPT_COLORS = [
+    "bg-primary/10 text-primary",
+    "bg-blue-500/10 text-blue-600",
+    "bg-green-500/10 text-green-600",
+    "bg-purple-500/10 text-purple-600",
+    "bg-amber-500/10 text-amber-600",
+    "bg-red-500/10 text-red-600",
+    "bg-teal-500/10 text-teal-600",
+    "bg-pink-500/10 text-pink-600",
+    "bg-indigo-500/10 text-indigo-600",
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Department Management</h1>
-          <p className="text-muted-foreground">Manage organizational departments</p>
+          <h1 className="text-3xl font-bold tracking-tight">Departments</h1>
+          <p className="text-muted-foreground mt-1">Manage organizational departments & teams</p>
         </div>
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
-            <Button size="sm"><Plus className="h-4 w-4 mr-1" /> Add Department</Button>
+            <Button><Plus className="h-4 w-4 mr-2" /> Add Department</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Add New Department</DialogTitle></DialogHeader>
@@ -89,58 +110,90 @@ const HRDepartmentsPage = () => {
         </Dialog>
       </div>
 
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Total Departments</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{departments.length}</div></CardContent>
+        <Card className="border-0 shadow-elevated">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Building2 className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Departments</p>
+                <p className="text-2xl font-bold">{departments.length}</p>
+              </div>
+            </div>
+          </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Active</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{departments.filter(d => d.status === "active").length}</div></CardContent>
+        <Card className="border-0 shadow-elevated">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-green-500/10 flex items-center justify-center">
+                <Building2 className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Active</p>
+                <p className="text-2xl font-bold text-green-600">{departments.filter(d => d.status === "active").length}</p>
+              </div>
+            </div>
+          </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Inactive</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{departments.filter(d => d.status === "inactive").length}</div></CardContent>
+        <Card className="border-0 shadow-elevated">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center">
+                <Users className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Team Members</p>
+                <p className="text-2xl font-bold">{employees.filter(e => e.employment_status === "active").length}</p>
+              </div>
+            </div>
+          </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
-              ) : departments.length === 0 ? (
-                <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No departments found</TableCell></TableRow>
-              ) : departments.map(d => (
-                <TableRow key={d.id}>
-                  <TableCell className="font-medium flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-primary" /> {d.name}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground max-w-xs truncate">{d.description || "—"}</TableCell>
-                  <TableCell>
-                    <Badge variant={d.status === "active" ? "default" : "secondary"}>{d.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(d)}><Pencil className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDelete(d.id)}><Trash2 className="h-4 w-4" /></Button>
+      {/* Department Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {loading ? (
+          <div className="col-span-full text-center py-12 text-muted-foreground">Loading…</div>
+        ) : departments.length === 0 ? (
+          <div className="col-span-full text-center py-12 text-muted-foreground">No departments created yet</div>
+        ) : departments.map((d, idx) => {
+          const count = getEmployeeCount(d.id);
+          const colorClass = DEPT_COLORS[idx % DEPT_COLORS.length];
+          return (
+            <Card key={d.id} className="border-0 shadow-elevated hover:shadow-lg transition-shadow">
+              <CardContent className="pt-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${colorClass}`}>
+                      <Building2 className="h-6 w-6" />
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                    <div>
+                      <h3 className="font-semibold text-lg">{d.name}</h3>
+                      {d.description && <p className="text-xs text-muted-foreground line-clamp-1">{d.description}</p>}
+                    </div>
+                  </div>
+                  <Badge variant={d.status === "active" ? "default" : "secondary"}>{d.status}</Badge>
+                </div>
+                <div className="flex items-center justify-between pt-3 border-t">
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Users className="h-4 w-4" />
+                    <span>{count} member{count !== 1 ? "s" : ""}</span>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button size="icon" variant="ghost" onClick={() => openEdit(d)}><Pencil className="h-4 w-4" /></Button>
+                    {isSuperAdmin && (
+                      <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDelete(d.id)}><Trash2 className="h-4 w-4" /></Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
       {/* Edit Dialog */}
       <Dialog open={!!editId} onOpenChange={o => { if (!o) setEditId(null); }}>
