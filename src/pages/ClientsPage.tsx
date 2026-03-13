@@ -5,7 +5,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSalesTeam } from "@/hooks/useSalesTeam";
 import { useCanCreateClient } from "@/hooks/useCanCreateClient";
 import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
-import { useCanCreateClient } from "@/hooks/useCanCreateClient";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
