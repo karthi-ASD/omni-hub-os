@@ -277,7 +277,7 @@ const AccountsDashboardPage = () => {
             </Card>
             <Card>
               <CardContent className="pt-6 text-center">
-                <AlertTriangle className="h-8 w-8 mx-auto text-amber-500 mb-2" />
+                <AlertTriangle className="h-8 w-8 mx-auto text-accent mb-2" />
                 <p className="text-2xl font-bold">{forecast.healthDist.needs_attention}</p>
                 <p className="text-xs text-muted-foreground">Needs Attention</p>
               </CardContent>
