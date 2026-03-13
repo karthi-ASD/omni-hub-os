@@ -208,6 +208,7 @@ import ClientIntelligenceDashboardPage from "./pages/ClientIntelligenceDashboard
 import AccountsDashboardPage from "./pages/AccountsDashboardPage";
 import StatewideClientsPage from "./pages/StatewideClientsPage";
 import RenewalsPage from "./pages/RenewalsPage";
+import ExecutiveDashboardPage from "./pages/ExecutiveDashboardPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
