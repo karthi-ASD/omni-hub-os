@@ -45,7 +45,11 @@ const HREmployeeProfilePage = () => {
   });
 
   const fetchAll = useCallback(async () => {
-    if (!employeeId) return;
+    if (!employeeId) {
+      setEmployee(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const [empR, eduR, bankR, insR, emgR, docR, attR, allEmpR] = await Promise.all([
@@ -110,9 +114,12 @@ const HREmployeeProfilePage = () => {
     const changes: Record<string, any> = {};
     const oldValues: Record<string, any> = {};
     for (const key of Object.keys(editProfileForm) as (keyof typeof editProfileForm)[]) {
-      if (editProfileForm[key] !== (employee?.[key] || "")) {
-        changes[key] = editProfileForm[key];
-        oldValues[key] = employee?.[key] || "";
+      const newValue = key === "reporting_manager_id" ? (editProfileForm[key] || null) : editProfileForm[key];
+      const previousValue = key === "reporting_manager_id" ? (employee?.[key] || null) : (employee?.[key] || "");
+
+      if (newValue !== previousValue) {
+        changes[key] = newValue;
+        oldValues[key] = previousValue;
       }
     }
 
@@ -538,10 +545,10 @@ const HREmployeeProfilePage = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Reporting Manager</Label>
-                <Select value={editProfileForm.reporting_manager_id} onValueChange={v => setEditProfileForm({ ...editProfileForm, reporting_manager_id: v })}>
+                <Select value={editProfileForm.reporting_manager_id || "none"} onValueChange={v => setEditProfileForm({ ...editProfileForm, reporting_manager_id: v === "none" ? "" : v })}>
                   <SelectTrigger><SelectValue placeholder="Select manager" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {allEmployees.filter(m => m.id !== employeeId).map(m => (
                       <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
                     ))}
