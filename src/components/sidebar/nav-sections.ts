@@ -6,6 +6,12 @@ import {
   Palette, Activity, Layers, UserCog, LogOut, Search, Bell,
   BookOpen, Lock, Cpu, Workflow, Store, Gauge, Brain,
   TrendingUp, Code, FileEdit, PhoneCall, CalendarCheck, Handshake,
+  MapPin, RefreshCw, Star, ListChecks, Inbox,
+  Calendar, Megaphone, Headphones, Building2, FileText, Zap,
+  Phone, DollarSign, Wrench, Network, Heart, PieChart,
+  Palette, Activity, Layers, UserCog, LogOut, Search, Bell,
+  BookOpen, Lock, Cpu, Workflow, Store, Gauge, Brain,
+  TrendingUp, Code, FileEdit, PhoneCall, CalendarCheck, Handshake,
   MapPin, RefreshCw, Star, ListChecks,
 } from "lucide-react";
 
