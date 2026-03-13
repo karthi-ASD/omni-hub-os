@@ -9,12 +9,6 @@ export interface EmailConfig {
   config_name: string;
   provider_type: string;
   email_address: string;
-  imap_host: string | null;
-  imap_port: number | null;
-  smtp_host: string | null;
-  smtp_port: number | null;
-  encryption_type: string | null;
-  username: string | null;
   default_department: string | null;
   monitored: boolean;
   polling_interval_seconds: number;
@@ -35,6 +29,7 @@ export function useEmailConfigurations() {
       .from("email_configurations")
       .select("*")
       .eq("business_id", bid)
+      .eq("provider_type", "gmail")
       .order("created_at", { ascending: false });
     setConfigs((data as any[]) || []);
     setLoading(false);
@@ -47,9 +42,10 @@ export function useEmailConfigurations() {
     const { error } = await supabase.from("email_configurations").insert({
       ...data,
       business_id: bid,
+      provider_type: "gmail",
     } as any);
     if (error) { toast.error("Failed to create email config"); return; }
-    toast.success("Email configuration saved");
+    toast.success("Gmail mailbox added");
     fetch();
   }, [bid, fetch]);
 
