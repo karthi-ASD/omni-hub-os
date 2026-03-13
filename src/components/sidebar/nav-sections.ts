@@ -135,10 +135,12 @@ export const NAV_SECTIONS: NavSection[] = [
     title: "Support",
     hiddenFromDepartments: [...SALES_DEPTS, ...FINANCE_DEPTS],
     items: [
-      { label: "Tickets", icon: Ticket, to: "/tickets" },
+      { label: "Ticket Center", icon: Inbox, to: "/unified-tickets" },
+      { label: "Tickets (Legacy)", icon: Ticket, to: "/tickets" },
       { label: "Internal Tickets", icon: Ticket, to: "/internal-tickets" },
       { label: "CS Dashboard", icon: Headphones, to: "/cs-dashboard", hiddenFromDepartments: SEO_DEPTS },
       { label: "Knowledge Base", icon: BookOpen, to: "/knowledge-base" },
+      { label: "Email Config", icon: Mail, to: "/email-config", roles: ["super_admin", "business_admin"] },
     ],
   },
   {
