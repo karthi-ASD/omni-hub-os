@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// ── Gmail API helpers ──
+// ── Gmail OAuth token refresh ──
 
 async function getGmailAccessToken(): Promise<string> {
   const clientId = Deno.env.get("GMAIL_OAUTH_CLIENT_ID")!;
@@ -28,69 +28,169 @@ async function getGmailAccessToken(): Promise<string> {
   return data.access_token;
 }
 
+// ── Base64url decode helper ──
+
+function base64urlDecode(str: string): Uint8Array {
+  const base64 = str.replace(/-/g, "+").replace(/_/g, "/");
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+function base64urlDecodeText(str: string): string {
+  return atob(str.replace(/-/g, "+").replace(/_/g, "/"));
+}
+
+// ── Extract attachments from Gmail message parts ──
+
+interface AttachmentMeta {
+  filename: string;
+  mimeType: string;
+  attachmentId: string;
+  size: number;
+}
+
+function extractAttachmentMeta(parts: any[]): AttachmentMeta[] {
+  const attachments: AttachmentMeta[] = [];
+  for (const part of parts) {
+    if (part.filename && part.body?.attachmentId) {
+      attachments.push({
+        filename: part.filename,
+        mimeType: part.mimeType,
+        attachmentId: part.body.attachmentId,
+        size: part.body.size || 0,
+      });
+    }
+    if (part.parts) {
+      attachments.push(...extractAttachmentMeta(part.parts));
+    }
+  }
+  return attachments;
+}
+
+// ── Download a single Gmail attachment ──
+
+async function downloadGmailAttachment(
+  emailAddress: string,
+  messageId: string,
+  attachmentId: string,
+  accessToken: string,
+): Promise<Uint8Array> {
+  const url = `https://gmail.googleapis.com/gmail/v1/users/${encodeURIComponent(emailAddress)}/messages/${messageId}/attachments/${attachmentId}`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) throw new Error(`Attachment download failed: ${res.status}`);
+  const json = await res.json();
+  return base64urlDecode(json.data);
+}
+
+// ── Extract body text from Gmail message payload ──
+
+function extractBody(payload: any): { body: string; bodyHtml: string } {
+  let body = "";
+  let bodyHtml = "";
+  const parts = payload?.parts || [];
+
+  if (parts.length > 0) {
+    for (const part of parts) {
+      if (part.mimeType === "text/plain" && part.body?.data) {
+        body = base64urlDecodeText(part.body.data);
+      }
+      if (part.mimeType === "text/html" && part.body?.data) {
+        bodyHtml = base64urlDecodeText(part.body.data);
+      }
+      // Nested multipart
+      if (part.parts) {
+        const nested = extractBody(part);
+        if (!body && nested.body) body = nested.body;
+        if (!bodyHtml && nested.bodyHtml) bodyHtml = nested.bodyHtml;
+      }
+    }
+  } else if (payload?.body?.data) {
+    body = base64urlDecodeText(payload.body.data);
+  }
+
+  return { body, bodyHtml };
+}
+
+// ── Poll a single Gmail inbox ──
+
 async function pollGmailInbox(
   emailAddress: string,
   accessToken: string,
-  lastPolledAt: string | null
-): Promise<any[]> {
+  lastPolledAt: string | null,
+  supabase: any,
+  businessId: string,
+): Promise<{ emails: any[]; attachmentCount: number }> {
   const emails: any[] = [];
+  let attachmentCount = 0;
 
-  // Build query for unread messages after last poll
   let query = "is:unread in:inbox";
   if (lastPolledAt) {
     const afterEpoch = Math.floor(new Date(lastPolledAt).getTime() / 1000);
     query += ` after:${afterEpoch}`;
   }
 
-  // Use Gmail users.messages.list — we use "me" but delegate with the email
   const listUrl = `https://gmail.googleapis.com/gmail/v1/users/${encodeURIComponent(emailAddress)}/messages?q=${encodeURIComponent(query)}&maxResults=20`;
-
-  const listRes = await fetch(listUrl, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  const listRes = await fetch(listUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
 
   if (!listRes.ok) {
-    const errText = await listRes.text();
-    console.error(`Gmail list failed for ${emailAddress}:`, errText);
-    return emails;
+    console.error(`Gmail list failed for ${emailAddress}:`, await listRes.text());
+    return { emails, attachmentCount };
   }
 
   const listData = await listRes.json();
-  if (!listData.messages || listData.messages.length === 0) return emails;
+  if (!listData.messages?.length) return { emails, attachmentCount };
 
-  // Fetch each message
   for (const msg of listData.messages.slice(0, 20)) {
     try {
       const msgUrl = `https://gmail.googleapis.com/gmail/v1/users/${encodeURIComponent(emailAddress)}/messages/${msg.id}?format=full`;
-      const msgRes = await fetch(msgUrl, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const msgRes = await fetch(msgUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
       if (!msgRes.ok) continue;
       const msgData = await msgRes.json();
 
       const headers = msgData.payload?.headers || [];
-      const getHeader = (name: string) => headers.find((h: any) => h.name.toLowerCase() === name.toLowerCase())?.value || "";
+      const getHeader = (name: string) =>
+        headers.find((h: any) => h.name.toLowerCase() === name.toLowerCase())?.value || "";
 
       const fromRaw = getHeader("From");
       const fromMatch = fromRaw.match(/(?:"?([^"]*)"?\s*)?<?([^>]+@[^>]+)>?/);
       const fromName = fromMatch?.[1]?.trim() || "";
       const fromEmail = fromMatch?.[2]?.trim() || fromRaw;
 
-      // Extract body
-      let body = "";
-      let bodyHtml = "";
-      const parts = msgData.payload?.parts || [];
-      if (parts.length > 0) {
-        for (const part of parts) {
-          if (part.mimeType === "text/plain" && part.body?.data) {
-            body = atob(part.body.data.replace(/-/g, "+").replace(/_/g, "/"));
+      const { body, bodyHtml } = extractBody(msgData.payload);
+
+      // Extract and upload attachments
+      const attachmentMeta = extractAttachmentMeta(msgData.payload?.parts || []);
+      const uploadedAttachments: { name: string; url: string; type: string; size: number }[] = [];
+
+      for (const att of attachmentMeta) {
+        try {
+          const fileData = await downloadGmailAttachment(emailAddress, msg.id, att.attachmentId, accessToken);
+          const storagePath = `${businessId}/${msg.id}/${att.filename}`;
+
+          const { error: uploadErr } = await supabase.storage
+            .from("ticket-attachments")
+            .upload(storagePath, fileData, { contentType: att.mimeType, upsert: true });
+
+          if (!uploadErr) {
+            const { data: urlData } = supabase.storage
+              .from("ticket-attachments")
+              .getPublicUrl(storagePath);
+
+            uploadedAttachments.push({
+              name: att.filename,
+              url: urlData?.publicUrl || storagePath,
+              type: att.mimeType,
+              size: att.size,
+            });
+            attachmentCount++;
+          } else {
+            console.error(`Upload failed for ${att.filename}:`, uploadErr);
           }
-          if (part.mimeType === "text/html" && part.body?.data) {
-            bodyHtml = atob(part.body.data.replace(/-/g, "+").replace(/_/g, "/"));
-          }
+        } catch (attErr) {
+          console.error(`Attachment error ${att.filename}:`, attErr);
         }
-      } else if (msgData.payload?.body?.data) {
-        body = atob(msgData.payload.body.data.replace(/-/g, "+").replace(/_/g, "/"));
       }
 
       emails.push({
@@ -103,6 +203,7 @@ async function pollGmailInbox(
         body_html: bodyHtml,
         in_reply_to: getHeader("In-Reply-To") || null,
         gmail_thread_id: msgData.threadId,
+        attachments: uploadedAttachments.length > 0 ? uploadedAttachments : undefined,
       });
 
       // Mark as read
@@ -110,40 +211,16 @@ async function pollGmailInbox(
         `https://gmail.googleapis.com/gmail/v1/users/${encodeURIComponent(emailAddress)}/messages/${msg.id}/modify`,
         {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
           body: JSON.stringify({ removeLabelIds: ["UNREAD"] }),
-        }
+        },
       );
     } catch (e) {
       console.error(`Error processing Gmail message ${msg.id}:`, e);
     }
   }
-  return emails;
-}
 
-// ── IMAP helpers (via edge function HTTP-based approach) ──
-// Since Deno edge functions can't use raw TCP sockets for IMAP,
-// we use a lightweight fetch-based IMAP proxy approach.
-// For production, this would connect to an IMAP bridge service.
-// For now, we'll create a placeholder that logs and can be extended.
-
-async function pollImapInbox(
-  config: any,
-  password: string,
-  lastPolledAt: string | null
-): Promise<any[]> {
-  // IMAP polling in Deno edge functions requires a proxy/bridge service
-  // since Deno Deploy doesn't support raw TCP connections.
-  // This is a structured placeholder that logs the attempt.
-  console.log(`IMAP poll attempted for ${config.email_address} (${config.imap_host}:${config.imap_port})`);
-  console.log(`Last polled: ${lastPolledAt || "never"}`);
-  console.log("Note: IMAP requires a bridge service for Deno edge functions. Configure an IMAP-to-HTTP bridge for production use.");
-  
-  // Return empty — in production, replace with IMAP bridge API call
-  return [];
+  return { emails, attachmentCount };
 }
 
 // ── Main handler ──
@@ -156,57 +233,45 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get all active, monitored email configurations
+    // Get all active, monitored Gmail configurations
     const { data: configs, error: cfgErr } = await supabase
       .from("email_configurations")
       .select("*")
       .eq("is_active", true)
-      .eq("monitored", true);
+      .eq("monitored", true)
+      .eq("provider_type", "gmail");
 
-    if (cfgErr || !configs || configs.length === 0) {
-      return new Response(JSON.stringify({ message: "No active email configs", configs: 0 }), {
+    if (cfgErr || !configs?.length) {
+      return new Response(JSON.stringify({ message: "No active Gmail configs", configs: 0 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const results: any[] = [];
     let gmailToken: string | null = null;
+    try {
+      gmailToken = await getGmailAccessToken();
+    } catch (e) {
+      console.error("Gmail OAuth failed:", e);
+      return new Response(JSON.stringify({ error: "Gmail OAuth token refresh failed" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const results: any[] = [];
 
     for (const config of configs) {
       try {
-        let emails: any[] = [];
+        const { emails, attachmentCount } = await pollGmailInbox(
+          config.email_address, gmailToken!, config.last_polled_at, supabase, config.business_id,
+        );
 
-        if (config.provider_type === "gmail") {
-          // Get token once for all Gmail accounts
-          if (!gmailToken) {
-            try {
-              gmailToken = await getGmailAccessToken();
-            } catch (e) {
-              console.error("Gmail OAuth failed:", e);
-              results.push({ email: config.email_address, error: "OAuth token failed", emails: 0 });
-              continue;
-            }
-          }
-          emails = await pollGmailInbox(config.email_address, gmailToken, config.last_polled_at);
-        } else if (config.provider_type === "imap") {
-          const imapPassword = Deno.env.get("IMAP_DEFAULT_PASSWORD") || "";
-          emails = await pollImapInbox(config, imapPassword, config.last_polled_at);
-        }
-
-        // Process each email through ticket-email-processor
         let ticketsCreated = 0;
         for (const email of emails) {
           try {
             const processRes = await fetch(`${supabaseUrl}/functions/v1/ticket-email-processor`, {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${supabaseKey}`,
-              },
-              body: JSON.stringify({
-                ...email,
-                business_id: config.business_id,
-              }),
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseKey}` },
+              body: JSON.stringify({ ...email, business_id: config.business_id }),
             });
             const processResult = await processRes.json();
             if (processResult.action === "ticket_created" || processResult.action === "thread_updated") {
@@ -225,8 +290,8 @@ serve(async (req) => {
 
         results.push({
           email: config.email_address,
-          provider: config.provider_type,
           fetched: emails.length,
+          attachments: attachmentCount,
           tickets_created: ticketsCreated,
         });
       } catch (configErr) {
@@ -248,8 +313,7 @@ serve(async (req) => {
   } catch (e) {
     console.error("poll-email-inboxes error:", e);
     return new Response(JSON.stringify({ error: (e as Error).message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
