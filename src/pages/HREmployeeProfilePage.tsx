@@ -45,7 +45,11 @@ const HREmployeeProfilePage = () => {
   });
 
   const fetchAll = useCallback(async () => {
-    if (!employeeId) return;
+    if (!employeeId) {
+      setEmployee(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const [empR, eduR, bankR, insR, emgR, docR, attR, allEmpR] = await Promise.all([
