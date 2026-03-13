@@ -323,10 +323,10 @@ const HREmployeeListPage = () => {
               <div className="space-y-2"><Label>Designation</Label><Input value={editForm.designation} onChange={e => setEditForm({ ...editForm, designation: e.target.value })} /></div>
               <div className="space-y-2">
                 <Label>Reporting Manager</Label>
-                <Select value={editForm.reporting_manager_id} onValueChange={v => setEditForm({ ...editForm, reporting_manager_id: v })}>
+                <Select value={editForm.reporting_manager_id || "none"} onValueChange={v => setEditForm({ ...editForm, reporting_manager_id: v === "none" ? "" : v })}>
                   <SelectTrigger><SelectValue placeholder="Select manager" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {managerOptions.filter(m => m.id !== editingEmployee?.id).map(m => (
                       <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
                     ))}
