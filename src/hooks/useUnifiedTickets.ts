@@ -152,15 +152,32 @@ export function useUnifiedTickets(departmentFilter?: string) {
     } as any).select().single();
     if (error) { toast.error("Failed to create ticket"); return null; }
 
+    const ticket = inserted as any;
+
     // Log audit
     await supabase.from("ticket_audit_log").insert({
       business_id: bid,
-      ticket_id: (inserted as any).id,
+      ticket_id: ticket.id,
       user_id: profile.user_id,
       user_name: profile.full_name || profile.email,
       action_type: "ticket_created",
       details: `Manually created. Department: ${data.department || "support"}.`,
     } as any);
+
+    // Trigger auto-reply notification to client
+    try {
+      await supabase.functions.invoke("ticket-auto-reply", {
+        body: {
+          ticket_id: ticket.id,
+          ticket_number: ticket.ticket_number,
+          recipient_email: data.sender_email,
+          recipient_name: data.sender_name,
+          channel: data.source_type || "manual",
+          business_id: bid,
+          client_id: data.client_id,
+        },
+      });
+    } catch { /* non-critical */ }
 
     toast.success("Ticket created");
     fetchTickets();
