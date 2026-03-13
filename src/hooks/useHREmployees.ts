@@ -61,22 +61,27 @@ export function useHREmployeeDetail(employeeId: string | undefined) {
   const fetch = useCallback(async () => {
     if (!employeeId) return;
     setLoading(true);
-    const [empRes, eduRes, bankRes, insRes, emgRes, docRes, attRes] = await Promise.all([
-      supabase.from("hr_employees").select("*, departments(name)").eq("id", employeeId).maybeSingle(),
-      supabase.from("hr_employee_education").select("*").eq("employee_id", employeeId),
-      supabase.from("hr_employee_bank_details").select("*").eq("employee_id", employeeId).maybeSingle(),
-      supabase.from("hr_employee_insurance").select("*").eq("employee_id", employeeId),
-      supabase.from("hr_employee_emergency_contacts").select("*").eq("employee_id", employeeId),
-      supabase.from("hr_employee_documents").select("*").eq("employee_id", employeeId).order("uploaded_at", { ascending: false }),
-      supabase.from("hr_employee_attendance").select("*").eq("employee_id", employeeId).order("date", { ascending: false }).limit(50),
-    ]);
-    setEmployee(empRes.data);
-    setEducation(eduRes.data ?? []);
-    setBankDetails(bankRes.data);
-    setInsurance(insRes.data ?? []);
-    setEmergencyContacts(emgRes.data ?? []);
-    setDocuments(docRes.data ?? []);
-    setAttendance(attRes.data ?? []);
+    try {
+      const [empRes, eduRes, bankRes, insRes, emgRes, docRes, attRes] = await Promise.all([
+        supabase.from("hr_employees").select("*, departments(name)").eq("id", employeeId).maybeSingle(),
+        supabase.from("hr_employee_education").select("*").eq("employee_id", employeeId),
+        supabase.from("hr_employee_bank_details").select("*").eq("employee_id", employeeId).maybeSingle(),
+        supabase.from("hr_employee_insurance").select("*").eq("employee_id", employeeId),
+        supabase.from("hr_employee_emergency_contacts").select("*").eq("employee_id", employeeId),
+        supabase.from("hr_employee_documents").select("*").eq("employee_id", employeeId).order("uploaded_at", { ascending: false }),
+        supabase.from("hr_employee_attendance").select("*").eq("employee_id", employeeId).order("date", { ascending: false }).limit(50),
+      ]);
+      setEmployee(empRes.data);
+      setEducation(eduRes.data ?? []);
+      setBankDetails(bankRes.data);
+      setInsurance(insRes.data ?? []);
+      setEmergencyContacts(emgRes.data ?? []);
+      setDocuments(docRes.data ?? []);
+      setAttendance(attRes.data ?? []);
+    } catch (err) {
+      console.error("Error fetching employee detail:", err);
+      setEmployee(null);
+    }
     setLoading(false);
   }, [employeeId]);
 
