@@ -42,11 +42,11 @@ export default function TeamDirectoryPage() {
     if (!profile?.business_id) return;
     const { data } = await supabase
       .from("hr_employees")
-      .select("id, full_name, email, mobile_number, designation, department_id, employment_status, profile_photo_url, departments(name)")
+      .select("id, full_name, email, mobile_number, designation, department_id, employment_status, departments(name)")
       .eq("business_id", profile.business_id)
       .eq("employment_status", "active")
       .order("full_name");
-    const emps = (data ?? []) as Employee[];
+    const emps = (data ?? []).map((e: any) => ({ ...e, profile_photo_url: e.profile_photo_url ?? null })) as Employee[];
     setEmployees(emps);
 
     // Build department list from employees
