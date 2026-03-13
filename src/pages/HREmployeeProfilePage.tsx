@@ -114,9 +114,12 @@ const HREmployeeProfilePage = () => {
     const changes: Record<string, any> = {};
     const oldValues: Record<string, any> = {};
     for (const key of Object.keys(editProfileForm) as (keyof typeof editProfileForm)[]) {
-      if (editProfileForm[key] !== (employee?.[key] || "")) {
-        changes[key] = editProfileForm[key];
-        oldValues[key] = employee?.[key] || "";
+      const newValue = key === "reporting_manager_id" ? (editProfileForm[key] || null) : editProfileForm[key];
+      const previousValue = key === "reporting_manager_id" ? (employee?.[key] || null) : (employee?.[key] || "");
+
+      if (newValue !== previousValue) {
+        changes[key] = newValue;
+        oldValues[key] = previousValue;
       }
     }
 
