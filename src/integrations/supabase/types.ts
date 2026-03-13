@@ -10327,6 +10327,7 @@ export type Database = {
       }
       hr_employees: {
         Row: {
+          availability_status: string | null
           business_id: string
           created_at: string
           current_address: string | null
@@ -10342,16 +10343,19 @@ export type Database = {
           full_name: string
           gender: string | null
           id: string
+          is_department_head: boolean | null
           joining_date: string | null
           mobile_number: string | null
           permanent_address: string | null
           profile_photo_url: string | null
           reporting_manager_id: string | null
+          skill_tags: string[] | null
           updated_at: string
           user_id: string | null
           work_location: string | null
         }
         Insert: {
+          availability_status?: string | null
           business_id: string
           created_at?: string
           current_address?: string | null
@@ -10367,16 +10371,19 @@ export type Database = {
           full_name: string
           gender?: string | null
           id?: string
+          is_department_head?: boolean | null
           joining_date?: string | null
           mobile_number?: string | null
           permanent_address?: string | null
           profile_photo_url?: string | null
           reporting_manager_id?: string | null
+          skill_tags?: string[] | null
           updated_at?: string
           user_id?: string | null
           work_location?: string | null
         }
         Update: {
+          availability_status?: string | null
           business_id?: string
           created_at?: string
           current_address?: string | null
@@ -10392,11 +10399,13 @@ export type Database = {
           full_name?: string
           gender?: string | null
           id?: string
+          is_department_head?: boolean | null
           joining_date?: string | null
           mobile_number?: string | null
           permanent_address?: string | null
           profile_photo_url?: string | null
           reporting_manager_id?: string | null
+          skill_tags?: string[] | null
           updated_at?: string
           user_id?: string | null
           work_location?: string | null
