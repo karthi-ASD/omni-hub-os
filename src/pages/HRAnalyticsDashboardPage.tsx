@@ -54,6 +54,7 @@ const HRAnalyticsDashboardPage = () => {
   const pendingLeaves = leaveRequests.filter(r => r.status === "pending").length;
   const totalPayroll = payroll.reduce((s, r) => s + (Number(r.net_salary) || 0), 0);
   const pendingTasks = tasks.filter(t => t.status === "pending" || t.status === "in_progress").length;
+  const missingJobRoles = activeEmps.filter(e => !(e as any).job_role_description).length;
 
   // Department breakdown for chart
   const deptData = departments
