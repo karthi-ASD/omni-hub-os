@@ -545,10 +545,10 @@ const HREmployeeProfilePage = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Reporting Manager</Label>
-                <Select value={editProfileForm.reporting_manager_id} onValueChange={v => setEditProfileForm({ ...editProfileForm, reporting_manager_id: v })}>
+                <Select value={editProfileForm.reporting_manager_id || "none"} onValueChange={v => setEditProfileForm({ ...editProfileForm, reporting_manager_id: v === "none" ? "" : v })}>
                   <SelectTrigger><SelectValue placeholder="Select manager" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {allEmployees.filter(m => m.id !== employeeId).map(m => (
                       <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
                     ))}
