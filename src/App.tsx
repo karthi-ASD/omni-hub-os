@@ -406,6 +406,11 @@ const App = () => (
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/tasks" element={<TasksPage />} />
               <Route path="/tickets" element={<TicketsPage />} />
+              <Route path="/unified-tickets" element={<UnifiedTicketsPage />} />
+              <Route path="/unified-ticket/:id" element={<UnifiedTicketDetailPage />} />
+              <Route path="/email-config" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><EmailConfigPage /></ProtectedRoute>
+              } />
               <Route path="/internal-tickets" element={<InternalTicketsPage />} />
               <Route path="/internal-ticket/:id" element={<InternalTicketDetailPage />} />
               <Route path="/reports" element={<ReportsPage />} />
