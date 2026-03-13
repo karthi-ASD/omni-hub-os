@@ -212,7 +212,13 @@ const HREmployeeProfilePage = () => {
   };
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
-  if (!employee) return <div className="text-center py-12 text-muted-foreground">Employee not found</div>;
+  if (!employee) return (
+    <div className="space-y-4 py-12 text-center">
+      <p className="text-lg font-medium text-muted-foreground">Unable to load employee details</p>
+      <p className="text-sm text-muted-foreground">The employee record may not exist or you may not have permission to view it.</p>
+      <Button variant="outline" onClick={() => navigate("/hr/employees")}><ArrowLeft className="h-4 w-4 mr-1" /> Back to Employee Directory</Button>
+    </div>
+  );
 
   const docTypes = ["Aadhar Card", "PAN Card", "Passport Photo", "Bank Details", "Resume", "Certificates", "Agreement", "Insurance", "Offer Letter"];
   const manager = employee.reporting_manager_id ? allEmployees.find(m => m.id === employee.reporting_manager_id) : null;
