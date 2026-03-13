@@ -80,6 +80,41 @@ export function useCommunications() {
 
   const sendMessage = async (input: { channel: string; to_address: string; related_entity_type?: string; related_entity_id?: string }) => {
     if (!profile?.business_id) return;
+
+    const channel = input.channel.toLowerCase();
+
+    if (channel === "whatsapp") {
+      const entityKeyByType: Record<string, string> = {
+        lead: "lead_id",
+        client: "client_id",
+        ticket: "ticket_id",
+        job: "job_id",
+      };
+
+      const entityKey = input.related_entity_type ? entityKeyByType[input.related_entity_type] : undefined;
+      const entityPayload = entityKey && input.related_entity_id
+        ? { [entityKey]: input.related_entity_id }
+        : {};
+
+      const { data, error } = await supabase.functions.invoke("whatsapp-send-message", {
+        body: {
+          to: input.to_address,
+          template_name: "hello_world",
+          template_language: "en_US",
+          ...entityPayload,
+        },
+      });
+
+      if (error || !data?.success) {
+        toast.error("Failed to send WhatsApp message");
+        return;
+      }
+
+      toast.success("WhatsApp message sent");
+      fetchAll();
+      return;
+    }
+
     const { error } = await supabase.from("communications_sends").insert({
       business_id: profile.business_id,
       channel: input.channel,
