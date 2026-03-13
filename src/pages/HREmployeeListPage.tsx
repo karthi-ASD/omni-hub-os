@@ -97,9 +97,12 @@ const HREmployeeListPage = () => {
 
     // Track what changed for audit
     for (const key of Object.keys(editForm) as (keyof typeof editForm)[]) {
-      if (editForm[key] !== (editingEmployee[key] || "")) {
-        changes[key] = editForm[key];
-        oldValues[key] = editingEmployee[key] || "";
+      const newValue = key === "reporting_manager_id" ? (editForm[key] || null) : editForm[key];
+      const previousValue = key === "reporting_manager_id" ? (editingEmployee[key] || null) : (editingEmployee[key] || "");
+
+      if (newValue !== previousValue) {
+        changes[key] = newValue;
+        oldValues[key] = previousValue;
       }
     }
 
