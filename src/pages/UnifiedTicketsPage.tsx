@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Ticket, Plus, Clock, AlertTriangle, CheckCircle, Inbox, LinkIcon,
-  Mail, Search, Filter, Users, Building2, Zap,
+  Mail, Search, Filter, Users, Building2, Zap, MessageCircle, Phone,
 } from "lucide-react";
 
 const statusColors: Record<string, string> = {
