@@ -206,6 +206,9 @@ const ClientsPage = () => {
                 <SelectValue placeholder="Assign salesperson..." />
               </SelectTrigger>
               <SelectContent>
+                {salesTeam.length === 0 && !salesLoading && (
+                  <div className="px-2 py-1.5 text-xs text-muted-foreground">No sales team members available</div>
+                )}
                 {salesTeam.map(m => (
                   <SelectItem key={m.user_id} value={m.user_id}>{m.full_name}</SelectItem>
                 ))}
