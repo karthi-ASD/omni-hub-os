@@ -4702,6 +4702,51 @@ export type Database = {
           },
         ]
       }
+      client_alternate_emails: {
+        Row: {
+          added_by_user_id: string | null
+          business_id: string
+          client_id: string
+          created_at: string
+          email: string
+          id: string
+          label: string | null
+        }
+        Insert: {
+          added_by_user_id?: string | null
+          business_id: string
+          client_id: string
+          created_at?: string
+          email: string
+          id?: string
+          label?: string | null
+        }
+        Update: {
+          added_by_user_id?: string | null
+          business_id?: string
+          client_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_alternate_emails_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_alternate_emails_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_billing_schedules: {
         Row: {
           billing_cycle: string | null
@@ -8050,6 +8095,92 @@ export type Database = {
             columns: ["send_id"]
             isOneToOne: false
             referencedRelation: "communications_sends"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_configurations: {
+        Row: {
+          business_id: string
+          config_name: string
+          created_at: string
+          default_department: string | null
+          email_address: string
+          encryption_type: string | null
+          google_oauth_client_id: string | null
+          google_oauth_client_secret_key: string | null
+          google_refresh_token_key: string | null
+          id: string
+          imap_host: string | null
+          imap_port: number | null
+          is_active: boolean | null
+          last_message_uid: string | null
+          last_polled_at: string | null
+          monitored: boolean | null
+          password_secret_key: string | null
+          polling_interval_seconds: number | null
+          provider_type: string
+          smtp_host: string | null
+          smtp_port: number | null
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          business_id: string
+          config_name: string
+          created_at?: string
+          default_department?: string | null
+          email_address: string
+          encryption_type?: string | null
+          google_oauth_client_id?: string | null
+          google_oauth_client_secret_key?: string | null
+          google_refresh_token_key?: string | null
+          id?: string
+          imap_host?: string | null
+          imap_port?: number | null
+          is_active?: boolean | null
+          last_message_uid?: string | null
+          last_polled_at?: string | null
+          monitored?: boolean | null
+          password_secret_key?: string | null
+          polling_interval_seconds?: number | null
+          provider_type?: string
+          smtp_host?: string | null
+          smtp_port?: number | null
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          business_id?: string
+          config_name?: string
+          created_at?: string
+          default_department?: string | null
+          email_address?: string
+          encryption_type?: string | null
+          google_oauth_client_id?: string | null
+          google_oauth_client_secret_key?: string | null
+          google_refresh_token_key?: string | null
+          id?: string
+          imap_host?: string | null
+          imap_port?: number | null
+          is_active?: boolean | null
+          last_message_uid?: string | null
+          last_polled_at?: string | null
+          monitored?: boolean | null
+          password_secret_key?: string | null
+          polling_interval_seconds?: number | null
+          provider_type?: string
+          smtp_host?: string | null
+          smtp_port?: number | null
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_configurations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
@@ -18528,10 +18659,12 @@ export type Database = {
           ai_summary: string | null
           ai_tags: string[] | null
           assigned_to_user_id: string | null
+          auto_reply_sent: boolean | null
           business_id: string
           category: string
           channel: string | null
           client_id: string | null
+          client_match_status: string
           closed_at: string | null
           company_account_id: string | null
           created_at: string
@@ -18539,17 +18672,27 @@ export type Database = {
           csat_score: number | null
           department: string | null
           description: string | null
+          email_from: string | null
           email_thread_id: string | null
+          email_to: string | null
           escalated_at: string | null
           first_response_at: string | null
           id: string
+          in_reply_to: string | null
+          linked_at: string | null
+          linked_by_user_id: string | null
+          message_id: string | null
+          original_html: string | null
           priority: string
           resolved_at: string | null
           sender_email: string | null
+          sender_name: string | null
           sentiment: string | null
           sla_due_at: string | null
+          source_type: string
           status: string
           subject: string
+          suggested_client_ids: string[] | null
           ticket_number: string
           updated_at: string
         }
@@ -18557,10 +18700,12 @@ export type Database = {
           ai_summary?: string | null
           ai_tags?: string[] | null
           assigned_to_user_id?: string | null
+          auto_reply_sent?: boolean | null
           business_id: string
           category?: string
           channel?: string | null
           client_id?: string | null
+          client_match_status?: string
           closed_at?: string | null
           company_account_id?: string | null
           created_at?: string
@@ -18568,17 +18713,27 @@ export type Database = {
           csat_score?: number | null
           department?: string | null
           description?: string | null
+          email_from?: string | null
           email_thread_id?: string | null
+          email_to?: string | null
           escalated_at?: string | null
           first_response_at?: string | null
           id?: string
+          in_reply_to?: string | null
+          linked_at?: string | null
+          linked_by_user_id?: string | null
+          message_id?: string | null
+          original_html?: string | null
           priority?: string
           resolved_at?: string | null
           sender_email?: string | null
+          sender_name?: string | null
           sentiment?: string | null
           sla_due_at?: string | null
+          source_type?: string
           status?: string
           subject: string
+          suggested_client_ids?: string[] | null
           ticket_number?: string
           updated_at?: string
         }
@@ -18586,10 +18741,12 @@ export type Database = {
           ai_summary?: string | null
           ai_tags?: string[] | null
           assigned_to_user_id?: string | null
+          auto_reply_sent?: boolean | null
           business_id?: string
           category?: string
           channel?: string | null
           client_id?: string | null
+          client_match_status?: string
           closed_at?: string | null
           company_account_id?: string | null
           created_at?: string
@@ -18597,17 +18754,27 @@ export type Database = {
           csat_score?: number | null
           department?: string | null
           description?: string | null
+          email_from?: string | null
           email_thread_id?: string | null
+          email_to?: string | null
           escalated_at?: string | null
           first_response_at?: string | null
           id?: string
+          in_reply_to?: string | null
+          linked_at?: string | null
+          linked_by_user_id?: string | null
+          message_id?: string | null
+          original_html?: string | null
           priority?: string
           resolved_at?: string | null
           sender_email?: string | null
+          sender_name?: string | null
           sentiment?: string | null
           sla_due_at?: string | null
+          source_type?: string
           status?: string
           subject?: string
+          suggested_client_ids?: string[] | null
           ticket_number?: string
           updated_at?: string
         }
@@ -19250,6 +19417,121 @@ export type Database = {
           },
         ]
       }
+      ticket_attachments: {
+        Row: {
+          business_id: string
+          created_at: string
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          message_id: string | null
+          storage_path: string
+          ticket_id: string
+          uploaded_by_user_id: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          message_id?: string | null
+          storage_path: string
+          ticket_id: string
+          uploaded_by_user_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          message_id?: string | null
+          storage_path?: string
+          ticket_id?: string
+          uploaded_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_attachments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_attachments_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_attachments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_audit_log: {
+        Row: {
+          action_type: string
+          business_id: string
+          created_at: string
+          details: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          ticket_id: string
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          action_type: string
+          business_id: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          ticket_id: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          action_type?: string
+          business_id?: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          ticket_id?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_audit_log_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_audit_log_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_comments: {
         Row: {
           comment: string
@@ -19350,6 +19632,107 @@ export type Database = {
             columns: ["ticket_id"]
             isOneToOne: false
             referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_messages: {
+        Row: {
+          business_id: string
+          content: string
+          content_html: string | null
+          created_at: string
+          id: string
+          in_reply_to: string | null
+          is_internal: boolean | null
+          message_id: string | null
+          sender_email: string | null
+          sender_name: string | null
+          sender_type: string
+          sender_user_id: string | null
+          ticket_id: string
+        }
+        Insert: {
+          business_id: string
+          content: string
+          content_html?: string | null
+          created_at?: string
+          id?: string
+          in_reply_to?: string | null
+          is_internal?: boolean | null
+          message_id?: string | null
+          sender_email?: string | null
+          sender_name?: string | null
+          sender_type?: string
+          sender_user_id?: string | null
+          ticket_id: string
+        }
+        Update: {
+          business_id?: string
+          content?: string
+          content_html?: string | null
+          created_at?: string
+          id?: string
+          in_reply_to?: string | null
+          is_internal?: boolean | null
+          message_id?: string | null
+          sender_email?: string | null
+          sender_name?: string | null
+          sender_type?: string
+          sender_user_id?: string | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_messages_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_sla_policies: {
+        Row: {
+          business_id: string
+          created_at: string
+          first_response_minutes: number
+          id: string
+          is_active: boolean | null
+          priority: string
+          resolution_minutes: number
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          first_response_minutes?: number
+          id?: string
+          is_active?: boolean | null
+          priority: string
+          resolution_minutes?: number
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          first_response_minutes?: number
+          id?: string
+          is_active?: boolean | null
+          priority?: string
+          resolution_minutes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_sla_policies_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
