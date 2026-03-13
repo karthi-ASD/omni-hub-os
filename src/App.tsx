@@ -78,6 +78,7 @@ import ExpansionEnginePage from "./pages/ExpansionEnginePage";
 import AcquisitionsPage from "./pages/AcquisitionsPage";
 import IPOReadinessPage from "./pages/IPOReadinessPage";
 import FranchiseBlueprintPage from "./pages/FranchiseBlueprintPage";
+import TeamDirectoryPage from "./pages/TeamDirectoryPage";
 import CompetitiveIntelPage from "./pages/CompetitiveIntelPage";
 import CapitalAllocationPage from "./pages/CapitalAllocationPage";
 import ObservabilityPage from "./pages/ObservabilityPage";
