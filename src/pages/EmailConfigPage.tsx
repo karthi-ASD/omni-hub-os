@@ -22,6 +22,12 @@ const MAILBOX_ROUTING: Record<string, string> = {
   "accounts@nextweb.com.au": "Accounts",
   "melvin@nextweb.com.au": "SEO / Operations",
   "steve@nextweb.com.au": "Sales / Business Dev",
+  "david.johnson@nextweb.com.au": "Development",
+  "devorah@nextweb.com.au": "Support",
+  "justin@nextweb.com.au": "Support",
+  "alice@nextweb.com.au": "Support",
+  "jess@nextweb.com.au": "Support",
+  "benny.maxwell@nextweb.com.au": "Support",
 };
 
 const EmailConfigPage = () => {
