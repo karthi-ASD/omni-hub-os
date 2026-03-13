@@ -49,6 +49,8 @@ const sourceIcons: Record<string, React.ReactNode> = {
   portal: <Users className="h-3 w-3" />,
   manual: <Ticket className="h-3 w-3" />,
   website: <Building2 className="h-3 w-3" />,
+  whatsapp: <MessageCircle className="h-3 w-3" />,
+  phone: <Phone className="h-3 w-3" />,
 };
 
 const DEPARTMENTS = [
