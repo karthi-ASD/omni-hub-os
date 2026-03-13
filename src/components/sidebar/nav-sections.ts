@@ -154,10 +154,16 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     title: "HR & Team",
     items: [
-      { label: "Team Members", icon: Users, to: "/hr/employees" },
+      { label: "HR Dashboard", icon: Gauge, to: "/hr/analytics", roles: ["super_admin", "business_admin", "hr_manager"] },
+      { label: "Employees", icon: Users, to: "/hr/employees" },
       { label: "Departments", icon: Building2, to: "/hr/departments" },
-      { label: "Leave", icon: Calendar, to: "/hr/leave" },
+      { label: "Org Chart", icon: Network, to: "/hr/org-chart" },
+      { label: "Leave Mgmt", icon: Calendar, to: "/hr/leave" },
+      { label: "Attendance", icon: CalendarCheck, to: "/hr/attendance", roles: ["super_admin", "business_admin", "hr_manager", "manager"] },
       { label: "Payroll", icon: DollarSign, to: "/hr/payroll", hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS] },
+      { label: "Performance", icon: Star, to: "/hr/performance", roles: ["super_admin", "business_admin", "hr_manager"] },
+      { label: "HR Tasks", icon: ListChecks, to: "/hr/tasks", roles: ["super_admin", "business_admin", "hr_manager"] },
+      { label: "Activity Logs", icon: Activity, to: "/audit-logs", roles: ["super_admin", "business_admin", "hr_manager"] },
     ],
   },
   {
