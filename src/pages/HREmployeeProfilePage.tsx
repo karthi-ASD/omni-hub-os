@@ -46,24 +46,32 @@ const HREmployeeProfilePage = () => {
   const fetchAll = useCallback(async () => {
     if (!employeeId) return;
     setLoading(true);
-    const [empR, eduR, bankR, insR, emgR, docR, attR, allEmpR] = await Promise.all([
-      supabase.from("hr_employees").select("*, departments(name)").eq("id", employeeId).maybeSingle(),
-      supabase.from("hr_employee_education").select("*").eq("employee_id", employeeId),
-      supabase.from("hr_employee_bank_details").select("*").eq("employee_id", employeeId).maybeSingle(),
-      supabase.from("hr_employee_insurance").select("*").eq("employee_id", employeeId),
-      supabase.from("hr_employee_emergency_contacts").select("*").eq("employee_id", employeeId),
-      supabase.from("hr_employee_documents").select("*").eq("employee_id", employeeId).order("uploaded_at", { ascending: false }),
-      supabase.from("hr_employee_attendance").select("*").eq("employee_id", employeeId).order("date", { ascending: false }).limit(50),
-      supabase.from("hr_employees").select("id, full_name").eq("employment_status", "active"),
-    ]);
-    setEmployee(empR.data);
-    setAllEmployees(allEmpR.data ?? []);
-    setEducation(eduR.data ?? []);
-    setBankDetails(bankR.data);
-    setInsurance(insR.data ?? []);
-    setEmergencyContacts(emgR.data ?? []);
-    setDocuments(docR.data ?? []);
-    setAttendance(attR.data ?? []);
+    try {
+      const [empR, eduR, bankR, insR, emgR, docR, attR, allEmpR] = await Promise.all([
+        supabase.from("hr_employees").select("*, departments(name)").eq("id", employeeId).maybeSingle(),
+        supabase.from("hr_employee_education").select("*").eq("employee_id", employeeId),
+        supabase.from("hr_employee_bank_details").select("*").eq("employee_id", employeeId).maybeSingle(),
+        supabase.from("hr_employee_insurance").select("*").eq("employee_id", employeeId),
+        supabase.from("hr_employee_emergency_contacts").select("*").eq("employee_id", employeeId),
+        supabase.from("hr_employee_documents").select("*").eq("employee_id", employeeId).order("uploaded_at", { ascending: false }),
+        supabase.from("hr_employee_attendance").select("*").eq("employee_id", employeeId).order("date", { ascending: false }).limit(50),
+        supabase.from("hr_employees").select("id, full_name").eq("employment_status", "active"),
+      ]);
+      if (empR.error) {
+        console.error("Failed to load employee:", empR.error);
+      }
+      setEmployee(empR.data);
+      setAllEmployees(allEmpR.data ?? []);
+      setEducation(eduR.data ?? []);
+      setBankDetails(bankR.data);
+      setInsurance(insR.data ?? []);
+      setEmergencyContacts(emgR.data ?? []);
+      setDocuments(docR.data ?? []);
+      setAttendance(attR.data ?? []);
+    } catch (err) {
+      console.error("Error fetching employee details:", err);
+      setEmployee(null);
+    }
     setLoading(false);
   }, [employeeId]);
 
