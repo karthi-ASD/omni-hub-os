@@ -263,6 +263,7 @@ const HREmployeeProfilePage = () => {
       <Tabs defaultValue="personal">
         <TabsList className="flex-wrap">
           <TabsTrigger value="personal"><User className="h-4 w-4 mr-1" /> Personal</TabsTrigger>
+          <TabsTrigger value="jobrole"><Briefcase className="h-4 w-4 mr-1" /> Job Role</TabsTrigger>
           <TabsTrigger value="education"><GraduationCap className="h-4 w-4 mr-1" /> Education</TabsTrigger>
           <TabsTrigger value="bank"><Landmark className="h-4 w-4 mr-1" /> Bank</TabsTrigger>
           <TabsTrigger value="emergency"><Shield className="h-4 w-4 mr-1" /> Emergency</TabsTrigger>
