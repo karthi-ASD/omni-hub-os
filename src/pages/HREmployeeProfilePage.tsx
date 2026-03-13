@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useHRDepartments } from "@/hooks/useHRDepartments";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, User, GraduationCap, Landmark, Shield, Heart, FileText, Clock, Plus, Upload } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, User, GraduationCap, Landmark, Shield, Heart, FileText, Clock, Plus, Upload, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -18,9 +20,11 @@ const HREmployeeProfilePage = () => {
   const { employeeId } = useParams();
   const navigate = useNavigate();
   const { profile, isSuperAdmin, isBusinessAdmin, isHRManager } = useAuth();
+  const { departments } = useHRDepartments();
   const canManage = isSuperAdmin || isBusinessAdmin || isHRManager;
 
   const [employee, setEmployee] = useState<any>(null);
+  const [allEmployees, setAllEmployees] = useState<any[]>([]);
   const [education, setEducation] = useState<any[]>([]);
   const [bankDetails, setBankDetails] = useState<any>(null);
   const [insurance, setInsurance] = useState<any[]>([]);
@@ -29,10 +33,20 @@ const HREmployeeProfilePage = () => {
   const [attendance, setAttendance] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Edit profile state
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [editProfileForm, setEditProfileForm] = useState({
+    full_name: "", email: "", mobile_number: "", date_of_birth: "", gender: "",
+    current_address: "", permanent_address: "", employee_code: "",
+    department_id: "", designation: "", reporting_manager_id: "",
+    joining_date: "", work_location: "", employment_type: "full_time",
+    employment_status: "active",
+  });
+
   const fetchAll = useCallback(async () => {
     if (!employeeId) return;
     setLoading(true);
-    const [empR, eduR, bankR, insR, emgR, docR, attR] = await Promise.all([
+    const [empR, eduR, bankR, insR, emgR, docR, attR, allEmpR] = await Promise.all([
       supabase.from("hr_employees").select("*, departments(name)").eq("id", employeeId).single(),
       supabase.from("hr_employee_education").select("*").eq("employee_id", employeeId),
       supabase.from("hr_employee_bank_details").select("*").eq("employee_id", employeeId).maybeSingle(),
@@ -40,8 +54,10 @@ const HREmployeeProfilePage = () => {
       supabase.from("hr_employee_emergency_contacts").select("*").eq("employee_id", employeeId),
       supabase.from("hr_employee_documents").select("*").eq("employee_id", employeeId).order("uploaded_at", { ascending: false }),
       supabase.from("hr_employee_attendance").select("*").eq("employee_id", employeeId).order("date", { ascending: false }).limit(50),
+      supabase.from("hr_employees").select("id, full_name").eq("employment_status", "active"),
     ]);
     setEmployee(empR.data);
+    setAllEmployees(allEmpR.data ?? []);
     setEducation(eduR.data ?? []);
     setBankDetails(bankR.data);
     setInsurance(insR.data ?? []);
@@ -52,6 +68,69 @@ const HREmployeeProfilePage = () => {
   }, [employeeId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  // Populate edit form when employee loads
+  useEffect(() => {
+    if (employee) {
+      setEditProfileForm({
+        full_name: employee.full_name || "",
+        email: employee.email || "",
+        mobile_number: employee.mobile_number || "",
+        date_of_birth: employee.date_of_birth || "",
+        gender: employee.gender || "",
+        current_address: employee.current_address || "",
+        permanent_address: employee.permanent_address || "",
+        employee_code: employee.employee_code || "",
+        department_id: employee.department_id || "",
+        designation: employee.designation || "",
+        reporting_manager_id: employee.reporting_manager_id || "",
+        joining_date: employee.joining_date || "",
+        work_location: employee.work_location || "",
+        employment_type: employee.employment_type || "full_time",
+        employment_status: employee.employment_status || "active",
+      });
+    }
+  }, [employee]);
+
+  const saveProfileEdit = async () => {
+    if (!employeeId || !editProfileForm.full_name.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+
+    const changes: Record<string, any> = {};
+    const oldValues: Record<string, any> = {};
+    for (const key of Object.keys(editProfileForm) as (keyof typeof editProfileForm)[]) {
+      if (editProfileForm[key] !== (employee?.[key] || "")) {
+        changes[key] = editProfileForm[key];
+        oldValues[key] = employee?.[key] || "";
+      }
+    }
+
+    if (Object.keys(changes).length === 0) {
+      toast.info("No changes made");
+      setEditProfileOpen(false);
+      return;
+    }
+
+    await supabase.from("hr_employees").update(changes as any).eq("id", employeeId);
+
+    if (profile?.business_id) {
+      await supabase.from("audit_logs").insert({
+        business_id: employee?.business_id || profile.business_id,
+        actor_user_id: profile.user_id,
+        action_type: "UPDATE_EMPLOYEE",
+        entity_type: "hr_employee",
+        entity_id: employeeId,
+        old_value_json: oldValues,
+        new_value_json: changes,
+      });
+    }
+
+    toast.success("Employee profile updated");
+    setEditProfileOpen(false);
+    fetchAll();
+  };
 
   // Education add
   const [eduForm, setEduForm] = useState({ qualification: "", college_name: "", year_of_passing: "", specialization: "" });
@@ -128,6 +207,7 @@ const HREmployeeProfilePage = () => {
   if (!employee) return <div className="text-center py-12 text-muted-foreground">Employee not found</div>;
 
   const docTypes = ["Aadhar Card", "PAN Card", "Passport Photo", "Bank Details", "Resume", "Certificates", "Agreement", "Insurance", "Offer Letter"];
+  const manager = employee.reporting_manager_id ? allEmployees.find(m => m.id === employee.reporting_manager_id) : null;
 
   return (
     <div className="space-y-6">
@@ -143,6 +223,7 @@ const HREmployeeProfilePage = () => {
             <div className="flex-1">
               <h1 className="text-2xl font-bold">{employee.full_name}</h1>
               <p className="text-muted-foreground">{employee.designation || "No designation"} · {employee.departments?.name || "No department"}</p>
+              {manager && <p className="text-xs text-muted-foreground">Reports to: {manager.full_name}</p>}
               <div className="flex gap-2 mt-1">
                 <Badge variant={employee.employment_status === "active" ? "default" : "destructive"}>{employee.employment_status}</Badge>
                 <Badge variant="outline">{employee.employee_code}</Badge>
@@ -155,6 +236,11 @@ const HREmployeeProfilePage = () => {
               <p>📍 {employee.work_location || "—"}</p>
               {employee.joining_date && <p>📅 Joined {format(new Date(employee.joining_date), "dd MMM yyyy")}</p>}
             </div>
+            {canManage && (
+              <Button onClick={() => setEditProfileOpen(true)} variant="outline">
+                <Pencil className="h-4 w-4 mr-1" /> Edit
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -388,6 +474,99 @@ const HREmployeeProfilePage = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={editProfileOpen} onOpenChange={setEditProfileOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Edit Employee Profile</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Employee Details</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Employee ID</Label><Input value={editProfileForm.employee_code} onChange={e => setEditProfileForm({ ...editProfileForm, employee_code: e.target.value })} /></div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select value={editProfileForm.employment_status} onValueChange={v => setEditProfileForm({ ...editProfileForm, employment_status: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="on_leave">On Leave</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                    <SelectItem value="resigned">Resigned</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Department</Label>
+                <Select value={editProfileForm.department_id} onValueChange={v => setEditProfileForm({ ...editProfileForm, department_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>{departments.filter(d => d.status === "active").map(d => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2"><Label>Designation</Label><Input value={editProfileForm.designation} onChange={e => setEditProfileForm({ ...editProfileForm, designation: e.target.value })} /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Reporting Manager</Label>
+                <Select value={editProfileForm.reporting_manager_id} onValueChange={v => setEditProfileForm({ ...editProfileForm, reporting_manager_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select manager" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {allEmployees.filter(m => m.id !== employeeId).map(m => (
+                      <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2"><Label>Joining Date</Label><Input type="date" value={editProfileForm.joining_date} onChange={e => setEditProfileForm({ ...editProfileForm, joining_date: e.target.value })} /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Work Location</Label><Input value={editProfileForm.work_location} onChange={e => setEditProfileForm({ ...editProfileForm, work_location: e.target.value })} /></div>
+              <div className="space-y-2">
+                <Label>Employment Type</Label>
+                <Select value={editProfileForm.employment_type} onValueChange={v => setEditProfileForm({ ...editProfileForm, employment_type: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="full_time">Full Time</SelectItem>
+                    <SelectItem value="part_time">Part Time</SelectItem>
+                    <SelectItem value="contract">Contract</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide pt-2">Personal Details</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Full Name *</Label><Input value={editProfileForm.full_name} onChange={e => setEditProfileForm({ ...editProfileForm, full_name: e.target.value })} /></div>
+              <div className="space-y-2"><Label>Email</Label><Input type="email" value={editProfileForm.email} onChange={e => setEditProfileForm({ ...editProfileForm, email: e.target.value })} /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Mobile Number</Label><Input value={editProfileForm.mobile_number} onChange={e => setEditProfileForm({ ...editProfileForm, mobile_number: e.target.value })} /></div>
+              <div className="space-y-2"><Label>Date of Birth</Label><Input type="date" value={editProfileForm.date_of_birth} onChange={e => setEditProfileForm({ ...editProfileForm, date_of_birth: e.target.value })} /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Gender</Label>
+                <Select value={editProfileForm.gender} onValueChange={v => setEditProfileForm({ ...editProfileForm, gender: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div />
+            </div>
+            <div className="space-y-2"><Label>Current Address</Label><Input value={editProfileForm.current_address} onChange={e => setEditProfileForm({ ...editProfileForm, current_address: e.target.value })} /></div>
+            <div className="space-y-2"><Label>Permanent Address</Label><Input value={editProfileForm.permanent_address} onChange={e => setEditProfileForm({ ...editProfileForm, permanent_address: e.target.value })} /></div>
+
+            <Button onClick={saveProfileEdit} className="w-full">Save Changes</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
