@@ -65,3 +65,12 @@ verify_jwt = false
 
 [functions.seo-competitor-fetch]
 verify_jwt = false
+
+[functions.ticket-email-processor]
+verify_jwt = false
+
+[functions.ticket-auto-reply]
+verify_jwt = false
+
+[functions.ticket-ai-classify]
+verify_jwt = false
