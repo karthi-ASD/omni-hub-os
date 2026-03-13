@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Ticket, Plus, Clock, AlertTriangle, CheckCircle, Inbox, LinkIcon,
-  Mail, Search, Filter, Users, Building2, Zap,
+  Mail, Search, Filter, Users, Building2, Zap, MessageCircle, Phone,
 } from "lucide-react";
 
 const statusColors: Record<string, string> = {
@@ -49,6 +49,8 @@ const sourceIcons: Record<string, React.ReactNode> = {
   portal: <Users className="h-3 w-3" />,
   manual: <Ticket className="h-3 w-3" />,
   website: <Building2 className="h-3 w-3" />,
+  whatsapp: <MessageCircle className="h-3 w-3" />,
+  phone: <Phone className="h-3 w-3" />,
 };
 
 const DEPARTMENTS = [
