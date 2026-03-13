@@ -41,14 +41,19 @@ const ClientsPage = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkSalesId, setBulkSalesId] = useState<string>("");
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
-  const { members: salesTeam } = useSalesTeam();
+  const { members: salesTeam, loading: salesLoading } = useSalesTeam();
   const { canCreate } = useCanCreateClient();
+  const { departmentName } = useEmployeeDepartment();
 
-  // Determine if user is a salesperson (employee role, not admin/super_admin)
+  // Determine if user is a salesperson (in Sales department AND not admin)
   const isSalesOnly = useMemo(() => {
     const adminRoles = ["super_admin", "business_admin", "hr_manager"];
-    return roles.length > 0 && !roles.some(r => adminRoles.includes(r));
-  }, [roles]);
+    const isAdmin = roles.some(r => adminRoles.includes(r));
+    if (isAdmin) return false;
+    // Only restrict to own clients if user is in the Sales department
+    const salesDeptNames = ["sales", "sales department", "business development"];
+    return departmentName ? salesDeptNames.some(s => departmentName.toLowerCase().includes(s)) : false;
+  }, [roles, departmentName]);
 
   // For salespeople, force filter to their own user_id
   const effectiveSalesFilter = isSalesOnly ? (profile?.user_id || "all") : salesFilter;
