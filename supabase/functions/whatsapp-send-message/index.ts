@@ -108,40 +108,53 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get WhatsApp provider credentials from communications_providers
-    const { data: provider } = await supabase
-      .from("communications_providers")
-      .select("credentials_json")
-      .eq("business_id", businessId)
-      .eq("channel", "whatsapp")
-      .eq("is_active", true)
-      .limit(1)
-      .single();
-
-    if (!provider?.credentials_json) {
-      return new Response(JSON.stringify({ error: "WhatsApp provider not configured for this business" }), {
-        status: 422,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Get WhatsApp credentials from environment secrets (primary) or DB fallback
+    const envAccessToken = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+    const envPhoneNumberId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
 
     let creds: { access_token: string; phone_number_id: string; waba_id?: string };
-    try {
-      creds = typeof provider.credentials_json === "string"
-        ? JSON.parse(provider.credentials_json)
-        : provider.credentials_json;
-    } catch {
-      return new Response(JSON.stringify({ error: "Invalid WhatsApp credentials format" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
-    if (!creds.access_token || !creds.phone_number_id) {
-      return new Response(JSON.stringify({ error: "Missing access_token or phone_number_id in credentials" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (envAccessToken && envPhoneNumberId) {
+      creds = {
+        access_token: envAccessToken,
+        phone_number_id: envPhoneNumberId,
+        waba_id: Deno.env.get("WHATSAPP_BUSINESS_ACCOUNT_ID") || undefined,
+      };
+    } else {
+      // Fallback: read from communications_providers table
+      const { data: provider } = await supabase
+        .from("communications_providers")
+        .select("credentials_json")
+        .eq("business_id", businessId)
+        .eq("channel", "whatsapp")
+        .eq("is_active", true)
+        .limit(1)
+        .single();
+
+      if (!provider?.credentials_json) {
+        return new Response(JSON.stringify({ error: "WhatsApp provider not configured" }), {
+          status: 422,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      try {
+        creds = typeof provider.credentials_json === "string"
+          ? JSON.parse(provider.credentials_json)
+          : provider.credentials_json;
+      } catch {
+        return new Response(JSON.stringify({ error: "Invalid WhatsApp credentials format" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!creds.access_token || !creds.phone_number_id) {
+        return new Response(JSON.stringify({ error: "Missing access_token or phone_number_id" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Build Meta WhatsApp Cloud API payload

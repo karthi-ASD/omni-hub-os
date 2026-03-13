@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
     const mode = url.searchParams.get("hub.mode");
     const token = url.searchParams.get("hub.verify_token");
     const challenge = url.searchParams.get("hub.challenge");
-    const verifyToken = Deno.env.get("WHATSAPP_VERIFY_TOKEN") || "nextweb_whatsapp_verify";
+    const verifyToken = Deno.env.get("WHATSAPP_VERIFY_TOKEN") || "whatsapp_webhook_token_123";
     if (mode === "subscribe" && token === verifyToken) {
       console.log("WhatsApp webhook verified");
       return new Response(challenge, { status: 200, headers: corsHeaders });
