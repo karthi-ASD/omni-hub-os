@@ -95,7 +95,7 @@ const RenewalsPage = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader heading="Renewals" text="Track and manage client contract renewals" />
+      <PageHeader title="Renewals" subtitle="Track and manage client contract renewals" />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
