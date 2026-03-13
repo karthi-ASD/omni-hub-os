@@ -17,13 +17,11 @@ import { supabase } from "@/integrations/supabase/client";
 const DEPARTMENTS = ["support", "seo", "accounts", "development", "hr", "sales", "general"];
 
 const MAILBOX_ROUTING: Record<string, string> = {
-  "support@nextweb.com.au": "Support",
-  "seo@nextweb.com.au": "SEO",
+  "karthi@nextweb.com.au": "Management / Admin",
+  "info@nextweb.com.au": "General Enquiries",
   "accounts@nextweb.com.au": "Accounts",
-  "sales@nextweb.com.au": "Sales",
-  "info@nextweb.com.au": "General",
-  "dev@nextweb.com.au": "Development",
-  "hr@nextweb.com.au": "HR",
+  "melvin@nextweb.com.au": "SEO / Operations",
+  "steve@nextweb.com.au": "Sales / Business Dev",
 };
 
 const EmailConfigPage = () => {
