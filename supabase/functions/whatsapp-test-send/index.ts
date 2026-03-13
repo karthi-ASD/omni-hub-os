@@ -19,20 +19,40 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     const to = body.to || "+919894806302";
+    const templateName = body.template_name || null;
     const message = body.message || "👋 Hello! This is a test message from NextWeb OS. If you received this, WhatsApp integration is working! ✅";
 
-    // Send directly via Meta Graph API
     const recipientPhone = to.replace(/[\s\-()]/g, "");
     const graphUrl = `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`;
 
-    const waPayload = {
-      messaging_product: "whatsapp",
-      to: recipientPhone,
-      type: "text",
-      text: { body: message },
-    };
+    // Use template for business-initiated conversations (required by Meta)
+    let waPayload: Record<string, unknown>;
+    
+    if (templateName) {
+      waPayload = {
+        messaging_product: "whatsapp",
+        to: recipientPhone,
+        type: "template",
+        template: {
+          name: templateName,
+          language: { code: body.template_language || "en_US" },
+        },
+      };
+    } else {
+      // Default to hello_world template for reliability
+      waPayload = {
+        messaging_product: "whatsapp",
+        to: recipientPhone,
+        type: "template",
+        template: {
+          name: "hello_world",
+          language: { code: "en_US" },
+        },
+      };
+    }
 
-    console.log(`Sending WhatsApp message to ${recipientPhone}...`);
+    console.log(`Sending WhatsApp template message to ${recipientPhone}...`);
+    console.log("Payload:", JSON.stringify(waPayload));
 
     const waRes = await fetch(graphUrl, {
       method: "POST",
