@@ -74,3 +74,6 @@ verify_jwt = false
 
 [functions.ticket-ai-classify]
 verify_jwt = false
+
+[functions.poll-email-inboxes]
+verify_jwt = false
