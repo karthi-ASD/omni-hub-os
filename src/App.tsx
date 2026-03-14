@@ -636,6 +636,9 @@ const App = () => (
               <Route path="/business-admin-management" element={
                 <ProtectedRoute requiredRoles={["super_admin"]}><SuperAdminBusinessManagementPage /></ProtectedRoute>
               } />
+              <Route path="/system-health" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><SystemHealthPage /></ProtectedRoute>
+              } />
               <Route path="/user/:userId" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><UserProfilePage /></ProtectedRoute>
               } />
