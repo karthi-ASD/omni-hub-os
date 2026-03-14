@@ -163,7 +163,14 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
         if (serviceDetails.app_features) details.app_features = serviceDetails.app_features;
       }
 
-      return { service_type: s, service_details_json: details };
+      const pricing = servicePricing[s] || {};
+      return {
+        service_type: s,
+        service_details_json: details,
+        price_amount: parseFloat(pricing.price) || 0,
+        billing_cycle: pricing.billing_cycle || "one_time",
+        renewal_date: pricing.renewal_date || undefined,
+      };
     });
 
     await onSubmit({
@@ -178,6 +185,7 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
       state: form.state || undefined,
       country: form.country || undefined,
       deal_id: form.deal_id,
+      payment_method: form.payment_method,
       services,
       notes: form.notes || undefined,
     });
