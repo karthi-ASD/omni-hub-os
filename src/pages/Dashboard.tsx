@@ -5,6 +5,8 @@ import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { UpcomingEvents } from "@/components/dashboard/UpcomingEvents";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { InsightPopupModal } from "@/components/insights/InsightPopupModal";
+import { TodayInsightWidget } from "@/components/insights/TodayInsightWidget";
 import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
 import {
   Users, Bell, Calendar, FolderKanban, Phone, Receipt, DollarSign, Building2,
