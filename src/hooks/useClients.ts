@@ -183,6 +183,11 @@ export function useClients(options?: UseClientsOptions) {
         service_type: s.service_type,
         service_subtype: s.service_subtype || null,
         service_details_json: s.service_details_json || {},
+        price_amount: s.price_amount || 0,
+        billing_cycle: s.billing_cycle || 'one_time',
+        payment_method: s.payment_method || input.payment_method || 'eft',
+        renewal_date: s.renewal_date || null,
+        reminder_days_before: s.reminder_days_before || 30,
       }));
       await supabase.from("client_services").insert(serviceRows as any);
     }
