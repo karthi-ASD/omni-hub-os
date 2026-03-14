@@ -144,7 +144,8 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Welcome Header */}
+      {/* Daily Insight Popup */}
+      <InsightPopupModal />
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
           Welcome back, {profile?.full_name?.split(" ")[0] || "User"} 👋
