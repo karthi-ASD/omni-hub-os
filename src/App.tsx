@@ -111,6 +111,7 @@ import ClientBillingPortalPage from "./pages/ClientBillingPortalPage";
 import ContentManagementPage from "./pages/ContentManagementPage";
 import WebsiteDevStagesPage from "./pages/WebsiteDevStagesPage";
 import ActivityTimelinePage from "./pages/ActivityTimelinePage";
+import SuperAdminBusinessManagementPage from "./pages/SuperAdminBusinessManagementPage";
 import GovernanceDashboardPage from "./pages/GovernanceDashboardPage";
 import TasksPage from "./pages/TasksPage";
 import TicketsPage from "./pages/TicketsPage";
@@ -630,6 +631,9 @@ const App = () => (
               />
               <Route path="/super-admin-tools" element={
                 <ProtectedRoute requiredRoles={["super_admin"]}><SuperAdminToolsPage /></ProtectedRoute>
+              } />
+              <Route path="/business-admin-management" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><SuperAdminBusinessManagementPage /></ProtectedRoute>
               } />
               <Route path="/user/:userId" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><UserProfilePage /></ProtectedRoute>
