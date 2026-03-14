@@ -115,6 +115,45 @@ export function InsightPopupModal() {
             </div>
           )}
 
+          {/* Poll inline */}
+          {polls.length > 0 && (() => {
+            const poll = polls[0];
+            const voted = myVote(poll.id);
+            const results = getResults(poll.id);
+            return (
+              <div className="bg-accent/30 p-4 rounded-lg border border-accent space-y-3">
+                <p className="text-sm font-semibold flex items-center gap-2"><Vote className="h-4 w-4 text-primary" /> {poll.question}</p>
+                {!voted ? (
+                  <>
+                    <RadioGroup value={selectedOption} onValueChange={setSelectedOption}>
+                      {results.map((opt: any) => (
+                        <div key={opt.id} className="flex items-center gap-2">
+                          <RadioGroupItem value={opt.id} id={`popup-${opt.id}`} />
+                          <Label htmlFor={`popup-${opt.id}`} className="cursor-pointer text-sm">{opt.option_text}</Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                    <Button size="sm" disabled={!selectedOption} onClick={() => { castVote(poll.id, selectedOption); setSelectedOption(""); }}>
+                      Submit Vote
+                    </Button>
+                  </>
+                ) : (
+                  <div className="space-y-2">
+                    {results.map((opt: any) => (
+                      <div key={opt.id} className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span>{opt.option_text}</span>
+                          <span className="text-muted-foreground">{opt.votes} ({opt.percentage}%)</span>
+                        </div>
+                        <Progress value={opt.percentage} className="h-1.5" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {/* Comments section */}
           {insight.allow_comments && (
             <div>
