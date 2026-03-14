@@ -170,6 +170,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "HR Tasks", icon: ListChecks, to: "/hr/tasks", roles: ["super_admin", "business_admin", "hr_manager"] },
       { label: "Activity Logs", icon: Activity, to: "/audit-logs", roles: ["super_admin", "business_admin", "hr_manager"] },
       { label: "Daily Insights", icon: Sparkles, to: "/daily-insights" },
+      { label: "Internal Broadcast", icon: Megaphone, to: "/internal-broadcast", roles: ["super_admin", "business_admin", "hr_manager"] },
     ],
   },
   {

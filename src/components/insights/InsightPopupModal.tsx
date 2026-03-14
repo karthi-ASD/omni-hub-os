@@ -3,8 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useTodayInsight, useInsightViews, useInsightComments } from "@/hooks/useDailyInsights";
-import { Play, CheckCircle, MessageSquare, X, Sparkles } from "lucide-react";
+import { useBroadcastPolls } from "@/hooks/useBroadcastPolls";
+import { Play, CheckCircle, MessageSquare, X, Sparkles, Vote } from "lucide-react";
 
 const priorityColors: Record<string, string> = {
   normal: "bg-info/10 text-info",
@@ -27,10 +31,12 @@ export function InsightPopupModal() {
   const { insight, loading } = useTodayInsight();
   const { myView, markViewed, acknowledge } = useInsightViews(insight?.id);
   const { comments, addComment } = useInsightComments(insight?.id);
+  const { polls, castVote, myVote, getResults } = useBroadcastPolls(insight?.id);
   const [open, setOpen] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [showComments, setShowComments] = useState(false);
+  const [selectedOption, setSelectedOption] = useState("");
 
   useEffect(() => {
     // Only show if there's an insight and user hasn't viewed it
@@ -108,6 +114,45 @@ export function InsightPopupModal() {
               <p className="text-sm">{insight.nextweb_application}</p>
             </div>
           )}
+
+          {/* Poll inline */}
+          {polls.length > 0 && (() => {
+            const poll = polls[0];
+            const voted = myVote(poll.id);
+            const results = getResults(poll.id);
+            return (
+              <div className="bg-accent/30 p-4 rounded-lg border border-accent space-y-3">
+                <p className="text-sm font-semibold flex items-center gap-2"><Vote className="h-4 w-4 text-primary" /> {poll.question}</p>
+                {!voted ? (
+                  <>
+                    <RadioGroup value={selectedOption} onValueChange={setSelectedOption}>
+                      {results.map((opt: any) => (
+                        <div key={opt.id} className="flex items-center gap-2">
+                          <RadioGroupItem value={opt.id} id={`popup-${opt.id}`} />
+                          <Label htmlFor={`popup-${opt.id}`} className="cursor-pointer text-sm">{opt.option_text}</Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                    <Button size="sm" disabled={!selectedOption} onClick={() => { castVote(poll.id, selectedOption); setSelectedOption(""); }}>
+                      Submit Vote
+                    </Button>
+                  </>
+                ) : (
+                  <div className="space-y-2">
+                    {results.map((opt: any) => (
+                      <div key={opt.id} className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span>{opt.option_text}</span>
+                          <span className="text-muted-foreground">{opt.votes} ({opt.percentage}%)</span>
+                        </div>
+                        <Progress value={opt.percentage} className="h-1.5" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Comments section */}
           {insight.allow_comments && (
