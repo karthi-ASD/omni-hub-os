@@ -50,7 +50,8 @@ export interface ReferralClick {
 }
 
 export function useAdvocacy() {
-  const { user, businessId } = useAuth();
+  const { user, profile } = useAuth();
+  const businessId = profile?.business_id;
   const [campaigns, setCampaigns] = useState<AdvocacyCampaign[]>([]);
   const [shares, setShares] = useState<AdvocacyShare[]>([]);
   const [leaderboard, setLeaderboard] = useState<(EmployeePoints & { full_name?: string })[]>([]);

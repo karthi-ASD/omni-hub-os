@@ -304,10 +304,10 @@ export default function AdvocacyEnginePage() {
         {/* My Stats Tab */}
         <TabsContent value="my-stats">
           <div className="grid gap-4 md:grid-cols-4">
-            <StatCard title="My Points" value={myPoints?.points_total || 0} icon={<Trophy className="h-5 w-5" />} />
-            <StatCard title="My Shares" value={myPoints?.shares_count || 0} icon={<Share2 className="h-5 w-5" />} />
-            <StatCard title="My Leads" value={myPoints?.leads_generated || 0} icon={<Target className="h-5 w-5" />} />
-            <StatCard title="My Sales" value={myPoints?.sales_generated || 0} icon={<TrendingUp className="h-5 w-5" />} />
+            <StatCard title="My Points" value={myPoints?.points_total || 0} icon={Trophy} />
+            <StatCard title="My Shares" value={myPoints?.shares_count || 0} icon={Share2} />
+            <StatCard title="My Leads" value={myPoints?.leads_generated || 0} icon={Target} />
+            <StatCard title="My Sales" value={myPoints?.sales_generated || 0} icon={TrendingUp} />
           </div>
         </TabsContent>
       </Tabs>
