@@ -167,6 +167,7 @@ export function useClients(options?: UseClientsOptions) {
         city: input.city,
         state: input.state,
         country: input.country,
+        payment_method: input.payment_method || 'eft',
       } as any)
       .select()
       .single();
