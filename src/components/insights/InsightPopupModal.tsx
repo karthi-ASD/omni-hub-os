@@ -3,8 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useTodayInsight, useInsightViews, useInsightComments } from "@/hooks/useDailyInsights";
-import { Play, CheckCircle, MessageSquare, X, Sparkles } from "lucide-react";
+import { useBroadcastPolls } from "@/hooks/useBroadcastPolls";
+import { Play, CheckCircle, MessageSquare, X, Sparkles, Vote } from "lucide-react";
 
 const priorityColors: Record<string, string> = {
   normal: "bg-info/10 text-info",
