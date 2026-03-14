@@ -50,6 +50,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Invoices", icon: Receipt, to: "/invoices" },
       { label: "Payments", icon: DollarSign, to: "/payments" },
       { label: "Renewals", icon: RefreshCw, to: "/renewals" },
+      { label: "Recurring Revenue", icon: TrendingUp, to: "/recurring-revenue" },
       { label: "Finance", icon: PieChart, to: "/finance" },
       { label: "Statewide Clients", icon: MapPin, to: "/statewide-clients" },
       { label: "Client Intelligence", icon: Brain, to: "/accounts/client-intelligence-dashboard" },

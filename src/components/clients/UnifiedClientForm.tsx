@@ -42,6 +42,7 @@ interface FormState {
   country: string;
   notes: string;
   deal_id?: string;
+  payment_method: string;
 }
 
 interface ServiceDetails {
@@ -59,6 +60,14 @@ interface ServiceDetails {
   app_features?: string;
 }
 
+interface ServicePricing {
+  [serviceType: string]: {
+    price: string;
+    billing_cycle: string;
+    renewal_date: string;
+  };
+}
+
 const EMPTY_FORM: FormState = {
   contact_name: "",
   company_name: "",
@@ -71,6 +80,7 @@ const EMPTY_FORM: FormState = {
   state: "",
   country: "",
   notes: "",
+  payment_method: "eft",
 };
 
 const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
@@ -96,6 +106,7 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
 
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [serviceDetails, setServiceDetails] = useState<ServiceDetails>({});
+  const [servicePricing, setServicePricing] = useState<ServicePricing>({});
   const [submitting, setSubmitting] = useState(false);
   const [tab, setTab] = useState("details");
 
@@ -111,10 +122,18 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
   const updateDetail = (key: keyof ServiceDetails, value: string) =>
     setServiceDetails((p) => ({ ...p, [key]: value }));
 
+  const updatePricing = (service: string, field: string, value: string) => {
+    setServicePricing((p) => ({
+      ...p,
+      [service]: { ...(p[service] || { price: "", billing_cycle: "one_time", renewal_date: "" }), [field]: value },
+    }));
+  };
+
   const reset = () => {
     setForm({ ...EMPTY_FORM, deal_id: defaultValues?.deal_id });
     setSelectedServices([]);
     setServiceDetails({});
+    setServicePricing({});
     setTab("details");
   };
 
@@ -144,7 +163,14 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
         if (serviceDetails.app_features) details.app_features = serviceDetails.app_features;
       }
 
-      return { service_type: s, service_details_json: details };
+      const pricing = servicePricing[s] || { price: "", billing_cycle: "one_time", renewal_date: "" };
+      return {
+        service_type: s,
+        service_details_json: details,
+        price_amount: parseFloat(pricing.price) || 0,
+        billing_cycle: pricing.billing_cycle || "one_time",
+        renewal_date: pricing.renewal_date || undefined,
+      };
     });
 
     await onSubmit({
@@ -159,6 +185,7 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
       state: form.state || undefined,
       country: form.country || undefined,
       deal_id: form.deal_id,
+      payment_method: form.payment_method,
       services,
       notes: form.notes || undefined,
     });
@@ -247,6 +274,18 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
                   <Input value={form.country} onChange={(e) => update("country", e.target.value)} placeholder="Australia" />
                 </div>
               </div>
+
+              {/* Payment Method */}
+              <div className="pt-2">
+                <Label>Default Payment Method</Label>
+                <Select value={form.payment_method} onValueChange={(v) => update("payment_method", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="eft">EFT (Bank Transfer)</SelectItem>
+                    <SelectItem value="credit_card">Credit Card</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </TabsContent>
 
             {/* ── Tab 2: Services Subscribed ── */}
@@ -274,6 +313,43 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
                   </div>
                 </div>
               ))}
+
+              {/* Per-service pricing inputs */}
+              {selectedServices.length > 0 && (
+                <div className="space-y-3 pt-4 border-t border-border">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Service Pricing</p>
+                  {selectedServices.map((svc) => {
+                    const p = servicePricing[svc] || { price: "", billing_cycle: "one_time", renewal_date: "" };
+                    return (
+                      <div key={svc} className="rounded-lg border border-border p-3 space-y-2">
+                        <p className="text-sm font-medium">{svc}</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <Label className="text-xs">Price ($)</Label>
+                            <Input type="number" placeholder="0.00" value={p.price} onChange={(e) => updatePricing(svc, "price", e.target.value)} />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Billing Cycle</Label>
+                            <Select value={p.billing_cycle} onValueChange={(v) => updatePricing(svc, "billing_cycle", v)}>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="one_time">One-time</SelectItem>
+                                <SelectItem value="monthly">Monthly</SelectItem>
+                                <SelectItem value="quarterly">Quarterly</SelectItem>
+                                <SelectItem value="yearly">Yearly</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label className="text-xs">Renewal Date</Label>
+                            <Input type="date" value={p.renewal_date} onChange={(e) => updatePricing(svc, "renewal_date", e.target.value)} />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </TabsContent>
 
             {/* ── Tab 3: Conditional Project Info ── */}

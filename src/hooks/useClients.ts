@@ -52,7 +52,8 @@ export interface CreateClientInput {
   city?: string;
   state?: string;
   country?: string;
-  services?: { service_type: string; service_subtype?: string; service_details_json?: Record<string, any> }[];
+  services?: { service_type: string; service_subtype?: string; service_details_json?: Record<string, any>; price_amount?: number; billing_cycle?: string; payment_method?: string; renewal_date?: string; reminder_days_before?: number }[];
+  payment_method?: string;
   notes?: string;
 }
 
@@ -166,6 +167,7 @@ export function useClients(options?: UseClientsOptions) {
         city: input.city,
         state: input.state,
         country: input.country,
+        payment_method: input.payment_method || 'eft',
       } as any)
       .select()
       .single();
@@ -181,6 +183,11 @@ export function useClients(options?: UseClientsOptions) {
         service_type: s.service_type,
         service_subtype: s.service_subtype || null,
         service_details_json: s.service_details_json || {},
+        price_amount: s.price_amount || 0,
+        billing_cycle: s.billing_cycle || 'one_time',
+        payment_method: s.payment_method || input.payment_method || 'eft',
+        renewal_date: s.renewal_date || null,
+        reminder_days_before: s.reminder_days_before || 30,
       }));
       await supabase.from("client_services").insert(serviceRows as any);
     }
