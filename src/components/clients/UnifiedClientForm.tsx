@@ -274,6 +274,18 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
                   <Input value={form.country} onChange={(e) => update("country", e.target.value)} placeholder="Australia" />
                 </div>
               </div>
+
+              {/* Payment Method */}
+              <div className="pt-2">
+                <Label>Default Payment Method</Label>
+                <Select value={form.payment_method} onValueChange={(v) => update("payment_method", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="eft">EFT (Bank Transfer)</SelectItem>
+                    <SelectItem value="credit_card">Credit Card</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </TabsContent>
 
             {/* ── Tab 2: Services Subscribed ── */}
@@ -301,6 +313,43 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
                   </div>
                 </div>
               ))}
+
+              {/* Per-service pricing inputs */}
+              {selectedServices.length > 0 && (
+                <div className="space-y-3 pt-4 border-t border-border">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Service Pricing</p>
+                  {selectedServices.map((svc) => {
+                    const p = servicePricing[svc] || { price: "", billing_cycle: "one_time", renewal_date: "" };
+                    return (
+                      <div key={svc} className="rounded-lg border border-border p-3 space-y-2">
+                        <p className="text-sm font-medium">{svc}</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <Label className="text-xs">Price ($)</Label>
+                            <Input type="number" placeholder="0.00" value={p.price} onChange={(e) => updatePricing(svc, "price", e.target.value)} />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Billing Cycle</Label>
+                            <Select value={p.billing_cycle} onValueChange={(v) => updatePricing(svc, "billing_cycle", v)}>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="one_time">One-time</SelectItem>
+                                <SelectItem value="monthly">Monthly</SelectItem>
+                                <SelectItem value="quarterly">Quarterly</SelectItem>
+                                <SelectItem value="yearly">Yearly</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label className="text-xs">Renewal Date</Label>
+                            <Input type="date" value={p.renewal_date} onChange={(e) => updatePricing(svc, "renewal_date", e.target.value)} />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </TabsContent>
 
             {/* ── Tab 3: Conditional Project Info ── */}
