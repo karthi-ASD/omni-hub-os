@@ -5,6 +5,8 @@ import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { UpcomingEvents } from "@/components/dashboard/UpcomingEvents";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { InsightPopupModal } from "@/components/insights/InsightPopupModal";
+import { TodayInsightWidget } from "@/components/insights/TodayInsightWidget";
 import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
 import {
   Users, Bell, Calendar, FolderKanban, Phone, Receipt, DollarSign, Building2,
@@ -142,7 +144,8 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Welcome Header */}
+      {/* Daily Insight Popup */}
+      <InsightPopupModal />
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
           Welcome back, {profile?.full_name?.split(" ")[0] || "User"} 👋
@@ -179,6 +182,9 @@ const Dashboard = () => {
           ))}
         </div>
       </div>
+
+      {/* Today's Insight Widget */}
+      <TodayInsightWidget />
 
       {/* Two-Column Layout for Activity + Upcoming */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

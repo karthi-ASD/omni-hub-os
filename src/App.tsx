@@ -187,6 +187,7 @@ import SLAMonitorPage from "./pages/SLAMonitorPage";
 import AccountTimelinePage from "./pages/AccountTimelinePage";
 import AdminOperationsDashboardPage from "./pages/AdminOperationsDashboardPage";
 import DailyWorkReportsPage from "./pages/DailyWorkReportsPage";
+import DailyInsightsPage from "./pages/DailyInsightsPage";
 import EmployeeActivityMonitorPage from "./pages/EmployeeActivityMonitorPage";
 import DepartmentPerformancePage from "./pages/DepartmentPerformancePage";
 import CEODashboardPage from "./pages/CEODashboardPage";
@@ -563,6 +564,7 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["super_admin"]}><CEODashboardPage /></ProtectedRoute>
               } />
               <Route path="/daily-work-reports" element={<DailyWorkReportsPage />} />
+              <Route path="/daily-insights" element={<DailyInsightsPage />} />
               <Route path="/employee-activity-monitor" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><EmployeeActivityMonitorPage /></ProtectedRoute>
               } />

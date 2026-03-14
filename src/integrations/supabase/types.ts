@@ -7179,6 +7179,68 @@ export type Database = {
           },
         ]
       }
+      daily_insights: {
+        Row: {
+          allow_comments: boolean | null
+          business_id: string
+          created_at: string | null
+          created_by: string | null
+          department_target: string[] | null
+          expiry_date: string | null
+          id: string
+          message: string | null
+          nextweb_application: string | null
+          priority_level: string
+          require_acknowledgement: boolean | null
+          start_date: string | null
+          status: string | null
+          title: string
+          video_url: string | null
+        }
+        Insert: {
+          allow_comments?: boolean | null
+          business_id: string
+          created_at?: string | null
+          created_by?: string | null
+          department_target?: string[] | null
+          expiry_date?: string | null
+          id?: string
+          message?: string | null
+          nextweb_application?: string | null
+          priority_level?: string
+          require_acknowledgement?: boolean | null
+          start_date?: string | null
+          status?: string | null
+          title: string
+          video_url?: string | null
+        }
+        Update: {
+          allow_comments?: boolean | null
+          business_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          department_target?: string[] | null
+          expiry_date?: string | null
+          id?: string
+          message?: string | null
+          nextweb_application?: string | null
+          priority_level?: string
+          require_acknowledgement?: boolean | null
+          start_date?: string | null
+          status?: string | null
+          title?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_insights_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_work_reports: {
         Row: {
           business_id: string
@@ -8454,6 +8516,51 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_insight_views: {
+        Row: {
+          acknowledged: boolean | null
+          business_id: string
+          employee_id: string
+          id: string
+          insight_id: string
+          view_status: string | null
+          view_time: string | null
+        }
+        Insert: {
+          acknowledged?: boolean | null
+          business_id: string
+          employee_id: string
+          id?: string
+          insight_id: string
+          view_status?: string | null
+          view_time?: string | null
+        }
+        Update: {
+          acknowledged?: boolean | null
+          business_id?: string
+          employee_id?: string
+          id?: string
+          insight_id?: string
+          view_status?: string | null
+          view_time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_insight_views_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_insight_views_insight_id_fkey"
+            columns: ["insight_id"]
+            isOneToOne: false
+            referencedRelation: "daily_insights"
             referencedColumns: ["id"]
           },
         ]
@@ -11158,6 +11265,48 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insight_comments: {
+        Row: {
+          business_id: string
+          comment: string
+          created_at: string | null
+          employee_id: string
+          id: string
+          insight_id: string
+        }
+        Insert: {
+          business_id: string
+          comment: string
+          created_at?: string | null
+          employee_id: string
+          id?: string
+          insight_id: string
+        }
+        Update: {
+          business_id?: string
+          comment?: string
+          created_at?: string | null
+          employee_id?: string
+          id?: string
+          insight_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insight_comments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insight_comments_insight_id_fkey"
+            columns: ["insight_id"]
+            isOneToOne: false
+            referencedRelation: "daily_insights"
             referencedColumns: ["id"]
           },
         ]
