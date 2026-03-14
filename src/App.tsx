@@ -282,6 +282,7 @@ const App = () => (
             >
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/sales-dashboard" element={<SalesDashboardPage />} />
+              <Route path="/sales-command-center" element={<SalesCommandCenterPage />} />
               <Route path="/cold-calling" element={<ColdCallingPage />} />
               <Route path="/sales-follow-ups" element={<SalesFollowUpsPage />} />
               <Route path="/sales-team-performance" element={<SalesTeamPerformancePage />} />

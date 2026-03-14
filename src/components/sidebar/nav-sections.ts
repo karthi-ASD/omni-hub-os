@@ -63,6 +63,7 @@ export const NAV_SECTIONS: NavSection[] = [
     departments: [...SALES_DEPTS],
     items: [
       { label: "Sales Dashboard", icon: BarChart3, to: "/sales-dashboard" },
+      { label: "Command Center", icon: Gauge, to: "/sales-command-center", roles: ["super_admin", "business_admin"] },
       { label: "Cold Calling", icon: PhoneCall, to: "/cold-calling" },
       { label: "AI Assistant", icon: Bot, to: "/ai-sales-assistant" },
       { label: "Prospect Finder", icon: Search, to: "/prospect-finder" },
