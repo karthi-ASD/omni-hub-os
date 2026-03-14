@@ -199,6 +199,7 @@ import FirstLoginSecurityPage from "./pages/FirstLoginSecurityPage";
 import SuperAdminToolsPage from "./pages/SuperAdminToolsPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import SalesDashboardPage from "./pages/SalesDashboardPage";
+import SalesCommandCenterPage from "./pages/SalesCommandCenterPage";
 import ColdCallingPage from "./pages/ColdCallingPage";
 import SalesFollowUpsPage from "./pages/SalesFollowUpsPage";
 import SalesTeamPerformancePage from "./pages/SalesTeamPerformancePage";
