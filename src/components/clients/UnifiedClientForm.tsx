@@ -106,6 +106,7 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
 
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [serviceDetails, setServiceDetails] = useState<ServiceDetails>({});
+  const [servicePricing, setServicePricing] = useState<ServicePricing>({});
   const [submitting, setSubmitting] = useState(false);
   const [tab, setTab] = useState("details");
 
@@ -121,10 +122,18 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
   const updateDetail = (key: keyof ServiceDetails, value: string) =>
     setServiceDetails((p) => ({ ...p, [key]: value }));
 
+  const updatePricing = (service: string, field: string, value: string) => {
+    setServicePricing((p) => ({
+      ...p,
+      [service]: { ...(p[service] || { price: "", billing_cycle: "one_time", renewal_date: "" }), [field]: value },
+    }));
+  };
+
   const reset = () => {
     setForm({ ...EMPTY_FORM, deal_id: defaultValues?.deal_id });
     setSelectedServices([]);
     setServiceDetails({});
+    setServicePricing({});
     setTab("details");
   };
 
