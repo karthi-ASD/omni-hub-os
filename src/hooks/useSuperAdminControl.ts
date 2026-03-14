@@ -14,7 +14,6 @@ export interface BusinessAdminRecord {
   admin_user_id: string;
   admin_name: string;
   admin_email: string;
-  // aggregated stats
   total_departments: number;
   total_employees: number;
   total_clients: number;
@@ -40,62 +39,55 @@ export function useSuperAdminControl() {
   const fetchData = useCallback(async () => {
     setLoading(true);
 
-    // 1. Fetch all businesses
     const { data: businesses } = await supabase
       .from("businesses")
       .select("id, name, status, created_at, crm_access_status, mobile_access_status, mobile_subscription_start, mobile_subscription_expiry, mobile_app_downloads")
-      .order("name");
+      .order("name") as { data: any[] | null };
 
     if (!businesses) { setLoading(false); return; }
 
-    // 2. Fetch business_admin role assignments
     const { data: adminRoles } = await supabase
       .from("user_roles")
       .select("user_id, business_id")
-      .eq("role", "business_admin");
+      .eq("role", "business_admin") as { data: any[] | null };
 
-    // 3. Fetch profiles for admin users
-    const adminUserIds = adminRoles?.map(r => r.user_id) ?? [];
+    const adminUserIds = adminRoles?.map((r: any) => r.user_id) ?? [];
     const { data: adminProfiles } = adminUserIds.length > 0
-      ? await supabase.from("profiles").select("user_id, full_name, email, business_id").in("user_id", adminUserIds)
+      ? await supabase.from("profiles").select("user_id, full_name, email, business_id").in("user_id", adminUserIds) as { data: any[] | null }
       : { data: [] as any[] };
 
-    // 4. Fetch department counts per business
     const { data: departments } = await supabase
-      .from("hr_departments")
-      .select("id, business_id, name");
+      .from("hr_departments" as any)
+      .select("id, business_id, name") as { data: any[] | null };
 
-    // 5. Fetch employee counts per business
     const { data: employees } = await supabase
-      .from("hr_employees")
-      .select("id, business_id, department_id");
+      .from("hr_employees" as any)
+      .select("id, business_id, department_id") as { data: any[] | null };
 
-    // 6. Fetch client counts per business
     const { data: clients } = await supabase
       .from("clients")
-      .select("id, business_id");
+      .select("id, business_id") as { data: any[] | null };
 
-    // Build records
-    const result: BusinessAdminRecord[] = businesses.map(biz => {
-      const admin = (adminProfiles ?? []).find(p => p.business_id === biz.id);
-      const bizDepts = (departments ?? []).filter(d => d.business_id === biz.id);
-      const bizEmps = (employees ?? []).filter(e => e.business_id === biz.id);
-      const bizClients = (clients ?? []).filter(c => c.business_id === biz.id);
+    const result: BusinessAdminRecord[] = businesses.map((biz: any) => {
+      const admin = (adminProfiles ?? []).find((p: any) => p.business_id === biz.id);
+      const bizDepts = (departments ?? []).filter((d: any) => d.business_id === biz.id);
+      const bizEmps = (employees ?? []).filter((e: any) => e.business_id === biz.id);
+      const bizClients = (clients ?? []).filter((c: any) => c.business_id === biz.id);
 
-      const deptBreakdown = bizDepts.map(dept => ({
+      const deptBreakdown = bizDepts.map((dept: any) => ({
         name: dept.name,
-        employee_count: bizEmps.filter(e => e.department_id === dept.id).length,
+        employee_count: bizEmps.filter((e: any) => e.department_id === dept.id).length,
       }));
 
       return {
         business_id: biz.id,
         business_name: biz.name,
         business_status: biz.status,
-        crm_access_status: (biz as any).crm_access_status ?? "active",
-        mobile_access_status: (biz as any).mobile_access_status ?? "active",
-        mobile_subscription_start: (biz as any).mobile_subscription_start,
-        mobile_subscription_expiry: (biz as any).mobile_subscription_expiry,
-        mobile_app_downloads: (biz as any).mobile_app_downloads ?? 0,
+        crm_access_status: biz.crm_access_status ?? "active",
+        mobile_access_status: biz.mobile_access_status ?? "active",
+        mobile_subscription_start: biz.mobile_subscription_start,
+        mobile_subscription_expiry: biz.mobile_subscription_expiry,
+        mobile_app_downloads: biz.mobile_app_downloads ?? 0,
         created_at: biz.created_at,
         admin_user_id: admin?.user_id ?? "",
         admin_name: admin?.full_name ?? "No admin",
@@ -112,8 +104,8 @@ export function useSuperAdminControl() {
       total_businesses: businesses.length,
       total_employees: (employees ?? []).length,
       total_clients: (clients ?? []).length,
-      total_mobile_downloads: businesses.reduce((s, b) => s + ((b as any).mobile_app_downloads ?? 0), 0),
-      total_crm_active: businesses.filter(b => (b as any).crm_access_status === "active").length,
+      total_mobile_downloads: businesses.reduce((s: number, b: any) => s + (b.mobile_app_downloads ?? 0), 0),
+      total_crm_active: businesses.filter((b: any) => b.crm_access_status === "active").length,
     });
     setLoading(false);
   }, []);
@@ -122,14 +114,14 @@ export function useSuperAdminControl() {
 
   const updateBusinessAccess = async (
     businessId: string,
-    updates: { crm_access_status?: string; mobile_access_status?: string; mobile_subscription_expiry?: string | null; mobile_subscription_start?: string | null; mobile_app_downloads?: number }
+    updates: Record<string, any>
   ) => {
     await supabase.from("businesses").update(updates as any).eq("id", businessId);
     await fetchData();
   };
 
   const updateBusinessStatus = async (businessId: string, status: string) => {
-    await supabase.from("businesses").update({ status }).eq("id", businessId);
+    await supabase.from("businesses").update({ status: status as any }).eq("id", businessId);
     await fetchData();
   };
 
