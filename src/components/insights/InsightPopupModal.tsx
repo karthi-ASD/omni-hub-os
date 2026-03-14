@@ -31,10 +31,12 @@ export function InsightPopupModal() {
   const { insight, loading } = useTodayInsight();
   const { myView, markViewed, acknowledge } = useInsightViews(insight?.id);
   const { comments, addComment } = useInsightComments(insight?.id);
+  const { polls, castVote, myVote, getResults } = useBroadcastPolls(insight?.id);
   const [open, setOpen] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [showComments, setShowComments] = useState(false);
+  const [selectedOption, setSelectedOption] = useState("");
 
   useEffect(() => {
     // Only show if there's an insight and user hasn't viewed it
