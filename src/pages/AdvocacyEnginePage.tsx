@@ -155,11 +155,11 @@ export default function AdvocacyEnginePage() {
 
       {/* Overview Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <StatCard title="Active Campaigns" value={campaigns.filter((c) => c.status === "active").length} icon={<Megaphone className="h-5 w-5" />} />
-        <StatCard title="Total Shares" value={totalShares} icon={<Share2 className="h-5 w-5" />} />
-        <StatCard title="Total Clicks" value={totalClicks} icon={<MousePointerClick className="h-5 w-5" />} />
-        <StatCard title="Leads Generated" value={totalLeads} icon={<Target className="h-5 w-5" />} />
-        <StatCard title="Est. Viral Reach" value={viralReach.toLocaleString()} icon={<TrendingUp className="h-5 w-5" />} />
+        <StatCard title="Active Campaigns" value={campaigns.filter((c) => c.status === "active").length} icon={Megaphone} />
+        <StatCard title="Total Shares" value={totalShares} icon={Share2} />
+        <StatCard title="Total Clicks" value={totalClicks} icon={MousePointerClick} />
+        <StatCard title="Leads Generated" value={totalLeads} icon={Target} />
+        <StatCard title="Est. Viral Reach" value={viralReach.toLocaleString()} icon={TrendingUp} />
       </div>
 
       <Tabs defaultValue="campaigns">
