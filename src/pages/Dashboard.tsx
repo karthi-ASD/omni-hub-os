@@ -183,10 +183,10 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Two-Column Layout for Activity + Upcoming + Insight Widget */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Today's Insight Widget */}
-        <TodayInsightWidget />
+      {/* Today's Insight Widget */}
+      <TodayInsightWidget />
+
+      {/* Two-Column Layout for Activity + Upcoming */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
           <div className="flex items-center justify-between mb-3">
