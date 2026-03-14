@@ -42,6 +42,7 @@ interface FormState {
   country: string;
   notes: string;
   deal_id?: string;
+  payment_method: string;
 }
 
 interface ServiceDetails {
