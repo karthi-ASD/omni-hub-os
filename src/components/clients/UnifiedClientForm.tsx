@@ -59,6 +59,14 @@ interface ServiceDetails {
   app_features?: string;
 }
 
+interface ServicePricing {
+  [serviceType: string]: {
+    price: string;
+    billing_cycle: string;
+    renewal_date: string;
+  };
+}
+
 const EMPTY_FORM: FormState = {
   contact_name: "",
   company_name: "",
@@ -71,6 +79,7 @@ const EMPTY_FORM: FormState = {
   state: "",
   country: "",
   notes: "",
+  payment_method: "eft",
 };
 
 const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
