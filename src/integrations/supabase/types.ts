@@ -4455,6 +4455,7 @@ export type Database = {
           competitors: string[] | null
           country: string | null
           created_at: string
+          crm_access_status: string
           deleted_at: string | null
           domain_name: string | null
           email: string | null
@@ -4462,6 +4463,10 @@ export type Database = {
           id: string
           industry: string | null
           logo_url: string | null
+          mobile_access_status: string
+          mobile_app_downloads: number
+          mobile_subscription_expiry: string | null
+          mobile_subscription_start: string | null
           name: string
           owner_name: string | null
           phone: string | null
@@ -4490,6 +4495,7 @@ export type Database = {
           competitors?: string[] | null
           country?: string | null
           created_at?: string
+          crm_access_status?: string
           deleted_at?: string | null
           domain_name?: string | null
           email?: string | null
@@ -4497,6 +4503,10 @@ export type Database = {
           id?: string
           industry?: string | null
           logo_url?: string | null
+          mobile_access_status?: string
+          mobile_app_downloads?: number
+          mobile_subscription_expiry?: string | null
+          mobile_subscription_start?: string | null
           name: string
           owner_name?: string | null
           phone?: string | null
@@ -4525,6 +4535,7 @@ export type Database = {
           competitors?: string[] | null
           country?: string | null
           created_at?: string
+          crm_access_status?: string
           deleted_at?: string | null
           domain_name?: string | null
           email?: string | null
@@ -4532,6 +4543,10 @@ export type Database = {
           id?: string
           industry?: string | null
           logo_url?: string | null
+          mobile_access_status?: string
+          mobile_app_downloads?: number
+          mobile_subscription_expiry?: string | null
+          mobile_subscription_start?: string | null
           name?: string
           owner_name?: string | null
           phone?: string | null
