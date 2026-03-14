@@ -210,6 +210,7 @@ import ClientIntelligenceDashboardPage from "./pages/ClientIntelligenceDashboard
 import AccountsDashboardPage from "./pages/AccountsDashboardPage";
 import StatewideClientsPage from "./pages/StatewideClientsPage";
 import RenewalsPage from "./pages/RenewalsPage";
+import RecurringRevenueDashboardPage from "./pages/RecurringRevenueDashboardPage";
 import ExecutiveDashboardPage from "./pages/ExecutiveDashboardPage";
 import UnifiedTicketsPage from "./pages/UnifiedTicketsPage";
 import UnifiedTicketDetailPage from "./pages/UnifiedTicketDetailPage";
