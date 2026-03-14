@@ -5438,10 +5438,15 @@ export type Database = {
       client_services: {
         Row: {
           assigned_department: string | null
+          billing_cycle: string | null
           business_id: string
           client_id: string
           created_at: string
           id: string
+          payment_method: string | null
+          price_amount: number | null
+          reminder_days_before: number | null
+          renewal_date: string | null
           service_category: string | null
           service_details_json: Json | null
           service_status: string
@@ -5450,10 +5455,15 @@ export type Database = {
         }
         Insert: {
           assigned_department?: string | null
+          billing_cycle?: string | null
           business_id: string
           client_id: string
           created_at?: string
           id?: string
+          payment_method?: string | null
+          price_amount?: number | null
+          reminder_days_before?: number | null
+          renewal_date?: string | null
           service_category?: string | null
           service_details_json?: Json | null
           service_status?: string
@@ -5462,10 +5472,15 @@ export type Database = {
         }
         Update: {
           assigned_department?: string | null
+          billing_cycle?: string | null
           business_id?: string
           client_id?: string
           created_at?: string
           id?: string
+          payment_method?: string | null
+          price_amount?: number | null
+          reminder_days_before?: number | null
+          renewal_date?: string | null
           service_category?: string | null
           service_details_json?: Json | null
           service_status?: string
@@ -5570,6 +5585,7 @@ export type Database = {
           last_payment_date: string | null
           mobile: string | null
           onboarding_status: Database["public"]["Enums"]["onboarding_status"]
+          payment_method: string | null
           payment_status: string | null
           phone: string | null
           renewal_date: string | null
@@ -5608,6 +5624,7 @@ export type Database = {
           last_payment_date?: string | null
           mobile?: string | null
           onboarding_status?: Database["public"]["Enums"]["onboarding_status"]
+          payment_method?: string | null
           payment_status?: string | null
           phone?: string | null
           renewal_date?: string | null
@@ -5646,6 +5663,7 @@ export type Database = {
           last_payment_date?: string | null
           mobile?: string | null
           onboarding_status?: Database["public"]["Enums"]["onboarding_status"]
+          payment_method?: string | null
           payment_status?: string | null
           phone?: string | null
           renewal_date?: string | null
