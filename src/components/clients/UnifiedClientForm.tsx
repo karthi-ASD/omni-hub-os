@@ -163,7 +163,7 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
         if (serviceDetails.app_features) details.app_features = serviceDetails.app_features;
       }
 
-      const pricing = servicePricing[s] || {};
+      const pricing = servicePricing[s] || { price: "", billing_cycle: "one_time", renewal_date: "" };
       return {
         service_type: s,
         service_details_json: details,
