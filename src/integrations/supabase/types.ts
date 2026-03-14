@@ -427,6 +427,113 @@ export type Database = {
           },
         ]
       }
+      advocacy_campaigns: {
+        Row: {
+          business_id: string
+          campaign_type: string
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          media_url: string | null
+          rewards_enabled: boolean
+          share_message_template: string | null
+          start_date: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          campaign_type?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          media_url?: string | null
+          rewards_enabled?: boolean
+          share_message_template?: string | null
+          start_date?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          campaign_type?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          media_url?: string | null
+          rewards_enabled?: boolean
+          share_message_template?: string | null
+          start_date?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advocacy_campaigns_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      advocacy_shares: {
+        Row: {
+          business_id: string
+          campaign_id: string
+          id: string
+          platform: string
+          referral_code: string
+          shared_at: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          campaign_id: string
+          id?: string
+          platform: string
+          referral_code: string
+          shared_at?: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          campaign_id?: string
+          id?: string
+          platform?: string
+          referral_code?: string
+          shared_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advocacy_shares_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "advocacy_shares_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "advocacy_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_expenses: {
         Row: {
           amount: number
@@ -8559,6 +8666,50 @@ export type Database = {
           },
         ]
       }
+      employee_advocacy_points: {
+        Row: {
+          business_id: string
+          clicks_count: number
+          id: string
+          leads_generated: number
+          points_total: number
+          sales_generated: number
+          shares_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          clicks_count?: number
+          id?: string
+          leads_generated?: number
+          points_total?: number
+          sales_generated?: number
+          shares_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          clicks_count?: number
+          id?: string
+          leads_generated?: number
+          points_total?: number
+          sales_generated?: number
+          shares_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_advocacy_points_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_capacity: {
         Row: {
           business_id: string
@@ -15017,6 +15168,66 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_tracking: {
+        Row: {
+          business_id: string
+          campaign_id: string
+          click_timestamp: string
+          created_at: string
+          id: string
+          lead_generated: boolean
+          lead_id: string | null
+          referrer_id: string
+          referrer_type: string
+          referrer_user_id: string | null
+          sale_generated: boolean
+          visitor_ip: string | null
+        }
+        Insert: {
+          business_id: string
+          campaign_id: string
+          click_timestamp?: string
+          created_at?: string
+          id?: string
+          lead_generated?: boolean
+          lead_id?: string | null
+          referrer_id: string
+          referrer_type?: string
+          referrer_user_id?: string | null
+          sale_generated?: boolean
+          visitor_ip?: string | null
+        }
+        Update: {
+          business_id?: string
+          campaign_id?: string
+          click_timestamp?: string
+          created_at?: string
+          id?: string
+          lead_generated?: boolean
+          lead_id?: string | null
+          referrer_id?: string
+          referrer_type?: string
+          referrer_user_id?: string | null
+          sale_generated?: boolean
+          visitor_ip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_tracking_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_tracking_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "advocacy_campaigns"
             referencedColumns: ["id"]
           },
         ]

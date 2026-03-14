@@ -128,6 +128,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "SEO Engine", icon: Search, to: "/seo" },
       { label: "SEO Projects", icon: FolderKanban, to: "/seo-ops" },
+      { label: "Advocacy Engine", icon: Heart, to: "/advocacy-engine" },
       { label: "Marketing", icon: Megaphone, to: "/marketing" },
       { label: "Ads", icon: BarChart3, to: "/analytics" },
       { label: "Communications", icon: Mail, to: "/communications" },

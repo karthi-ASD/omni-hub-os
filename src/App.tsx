@@ -113,6 +113,7 @@ import WebsiteDevStagesPage from "./pages/WebsiteDevStagesPage";
 import ActivityTimelinePage from "./pages/ActivityTimelinePage";
 import SuperAdminBusinessManagementPage from "./pages/SuperAdminBusinessManagementPage";
 import SystemHealthPage from "./pages/SystemHealthPage";
+import AdvocacyEnginePage from "./pages/AdvocacyEnginePage";
 import GovernanceDashboardPage from "./pages/GovernanceDashboardPage";
 import TasksPage from "./pages/TasksPage";
 import TicketsPage from "./pages/TicketsPage";
@@ -639,6 +640,7 @@ const App = () => (
               <Route path="/system-health" element={
                 <ProtectedRoute requiredRoles={["super_admin"]}><SystemHealthPage /></ProtectedRoute>
               } />
+              <Route path="/advocacy-engine" element={<AdvocacyEnginePage />} />
               <Route path="/user/:userId" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><UserProfilePage /></ProtectedRoute>
               } />
