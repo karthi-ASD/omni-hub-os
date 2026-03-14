@@ -52,7 +52,8 @@ export interface CreateClientInput {
   city?: string;
   state?: string;
   country?: string;
-  services?: { service_type: string; service_subtype?: string; service_details_json?: Record<string, any> }[];
+  services?: { service_type: string; service_subtype?: string; service_details_json?: Record<string, any>; price_amount?: number; billing_cycle?: string; payment_method?: string; renewal_date?: string; reminder_days_before?: number }[];
+  payment_method?: string;
   notes?: string;
 }
 
