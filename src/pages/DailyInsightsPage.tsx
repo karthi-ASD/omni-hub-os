@@ -89,7 +89,7 @@ export default function DailyInsightsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Daily Insights"
-        description="Internal learning, motivation and business improvement broadcasts."
+        subtitle="Internal learning, motivation and business improvement broadcasts."
         actions={
           canManage ? (
             <Dialog open={open} onOpenChange={setOpen}>
