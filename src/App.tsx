@@ -187,6 +187,7 @@ import SLAMonitorPage from "./pages/SLAMonitorPage";
 import AccountTimelinePage from "./pages/AccountTimelinePage";
 import AdminOperationsDashboardPage from "./pages/AdminOperationsDashboardPage";
 import DailyWorkReportsPage from "./pages/DailyWorkReportsPage";
+import DailyInsightsPage from "./pages/DailyInsightsPage";
 import EmployeeActivityMonitorPage from "./pages/EmployeeActivityMonitorPage";
 import DepartmentPerformancePage from "./pages/DepartmentPerformancePage";
 import CEODashboardPage from "./pages/CEODashboardPage";
