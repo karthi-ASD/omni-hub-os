@@ -4324,6 +4324,129 @@ export type Database = {
           },
         ]
       }
+      broadcast_poll_options: {
+        Row: {
+          created_at: string | null
+          id: string
+          option_text: string
+          poll_id: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          option_text: string
+          poll_id: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          option_text?: string
+          poll_id?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_poll_options_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broadcast_poll_votes: {
+        Row: {
+          business_id: string
+          employee_id: string
+          id: string
+          option_id: string
+          poll_id: string
+          voted_at: string | null
+        }
+        Insert: {
+          business_id: string
+          employee_id: string
+          id?: string
+          option_id: string
+          poll_id: string
+          voted_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          employee_id?: string
+          id?: string
+          option_id?: string
+          poll_id?: string
+          voted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_poll_votes_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcast_poll_votes_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_poll_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcast_poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broadcast_polls: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          id: string
+          insight_id: string
+          is_active: boolean | null
+          question: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          id?: string
+          insight_id: string
+          is_active?: boolean | null
+          question: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          insight_id?: string
+          is_active?: boolean | null
+          question?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_polls_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcast_polls_insight_id_fkey"
+            columns: ["insight_id"]
+            isOneToOne: false
+            referencedRelation: "daily_insights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       businesses: {
         Row: {
           address: string | null
