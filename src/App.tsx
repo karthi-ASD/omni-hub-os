@@ -199,6 +199,7 @@ import FirstLoginSecurityPage from "./pages/FirstLoginSecurityPage";
 import SuperAdminToolsPage from "./pages/SuperAdminToolsPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import SalesDashboardPage from "./pages/SalesDashboardPage";
+import SalesCommandCenterPage from "./pages/SalesCommandCenterPage";
 import ColdCallingPage from "./pages/ColdCallingPage";
 import SalesFollowUpsPage from "./pages/SalesFollowUpsPage";
 import SalesTeamPerformancePage from "./pages/SalesTeamPerformancePage";
@@ -281,6 +282,7 @@ const App = () => (
             >
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/sales-dashboard" element={<SalesDashboardPage />} />
+              <Route path="/sales-command-center" element={<SalesCommandCenterPage />} />
               <Route path="/cold-calling" element={<ColdCallingPage />} />
               <Route path="/sales-follow-ups" element={<SalesFollowUpsPage />} />
               <Route path="/sales-team-performance" element={<SalesTeamPerformancePage />} />
