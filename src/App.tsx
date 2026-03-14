@@ -188,6 +188,7 @@ import AccountTimelinePage from "./pages/AccountTimelinePage";
 import AdminOperationsDashboardPage from "./pages/AdminOperationsDashboardPage";
 import DailyWorkReportsPage from "./pages/DailyWorkReportsPage";
 import DailyInsightsPage from "./pages/DailyInsightsPage";
+import InternalBroadcastPage from "./pages/InternalBroadcastPage";
 import EmployeeActivityMonitorPage from "./pages/EmployeeActivityMonitorPage";
 import DepartmentPerformancePage from "./pages/DepartmentPerformancePage";
 import CEODashboardPage from "./pages/CEODashboardPage";
