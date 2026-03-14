@@ -427,10 +427,46 @@ export type Database = {
           },
         ]
       }
+      advocacy_badges: {
+        Row: {
+          badge_label: string
+          badge_type: string
+          business_id: string
+          earned_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          badge_label: string
+          badge_type: string
+          business_id: string
+          earned_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          badge_label?: string
+          badge_type?: string
+          business_id?: string
+          earned_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advocacy_badges_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       advocacy_campaigns: {
         Row: {
           business_id: string
           campaign_type: string
+          caption_template: string | null
           category: string
           created_at: string
           created_by: string | null
@@ -438,16 +474,25 @@ export type Database = {
           end_date: string | null
           id: string
           media_url: string | null
+          points_per_click: number
+          points_per_lead: number
+          points_per_sale: number
+          points_per_share: number
+          reward_trigger: string
+          reward_type: string
           rewards_enabled: boolean
           share_message_template: string | null
           start_date: string
           status: string
           title: string
           updated_at: string
+          visibility_targets: string[] | null
+          visibility_type: string
         }
         Insert: {
           business_id: string
           campaign_type?: string
+          caption_template?: string | null
           category?: string
           created_at?: string
           created_by?: string | null
@@ -455,16 +500,25 @@ export type Database = {
           end_date?: string | null
           id?: string
           media_url?: string | null
+          points_per_click?: number
+          points_per_lead?: number
+          points_per_sale?: number
+          points_per_share?: number
+          reward_trigger?: string
+          reward_type?: string
           rewards_enabled?: boolean
           share_message_template?: string | null
           start_date?: string
           status?: string
           title: string
           updated_at?: string
+          visibility_targets?: string[] | null
+          visibility_type?: string
         }
         Update: {
           business_id?: string
           campaign_type?: string
+          caption_template?: string | null
           category?: string
           created_at?: string
           created_by?: string | null
@@ -472,18 +526,73 @@ export type Database = {
           end_date?: string | null
           id?: string
           media_url?: string | null
+          points_per_click?: number
+          points_per_lead?: number
+          points_per_sale?: number
+          points_per_share?: number
+          reward_trigger?: string
+          reward_type?: string
           rewards_enabled?: boolean
           share_message_template?: string | null
           start_date?: string
           status?: string
           title?: string
           updated_at?: string
+          visibility_targets?: string[] | null
+          visibility_type?: string
         }
         Relationships: [
           {
             foreignKeyName: "advocacy_campaigns_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      advocacy_settings: {
+        Row: {
+          anti_fraud_cooldown_seconds: number
+          business_id: string
+          created_at: string
+          default_network_size: number
+          default_points_per_click: number
+          default_points_per_lead: number
+          default_points_per_sale: number
+          default_points_per_share: number
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          anti_fraud_cooldown_seconds?: number
+          business_id: string
+          created_at?: string
+          default_network_size?: number
+          default_points_per_click?: number
+          default_points_per_lead?: number
+          default_points_per_sale?: number
+          default_points_per_share?: number
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          anti_fraud_cooldown_seconds?: number
+          business_id?: string
+          created_at?: string
+          default_network_size?: number
+          default_points_per_click?: number
+          default_points_per_lead?: number
+          default_points_per_sale?: number
+          default_points_per_share?: number
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advocacy_settings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -15174,13 +15283,17 @@ export type Database = {
       }
       referral_tracking: {
         Row: {
+          browser: string | null
           business_id: string
           campaign_id: string
+          channel: string | null
           click_timestamp: string
           created_at: string
+          device: string | null
           id: string
           lead_generated: boolean
           lead_id: string | null
+          location: string | null
           referrer_id: string
           referrer_type: string
           referrer_user_id: string | null
@@ -15188,13 +15301,17 @@ export type Database = {
           visitor_ip: string | null
         }
         Insert: {
+          browser?: string | null
           business_id: string
           campaign_id: string
+          channel?: string | null
           click_timestamp?: string
           created_at?: string
+          device?: string | null
           id?: string
           lead_generated?: boolean
           lead_id?: string | null
+          location?: string | null
           referrer_id: string
           referrer_type?: string
           referrer_user_id?: string | null
@@ -15202,13 +15319,17 @@ export type Database = {
           visitor_ip?: string | null
         }
         Update: {
+          browser?: string | null
           business_id?: string
           campaign_id?: string
+          channel?: string | null
           click_timestamp?: string
           created_at?: string
+          device?: string | null
           id?: string
           lead_generated?: boolean
           lead_id?: string | null
+          location?: string | null
           referrer_id?: string
           referrer_type?: string
           referrer_user_id?: string | null
