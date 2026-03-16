@@ -242,7 +242,8 @@ export function useLeadConversions() {
     });
 
     toast.success("Conversion request rejected");
-    fetchRequests();
+    await fetchRequests();
+    notifySalesDataChanged(["leads", "dashboard", "pipeline"], "lead-conversion:reject");
   };
 
   const revertClientToLead = async (clientId: string, reason: string) => {
