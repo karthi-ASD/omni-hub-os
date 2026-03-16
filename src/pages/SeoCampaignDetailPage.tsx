@@ -29,7 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SeoProjectOverview } from "@/components/seo/SeoProjectOverview";
 import {
   ArrowLeft, Key, FileText, Link, Globe, BarChart3, MessageSquare,
-  MapPin, Wrench, Plus, LayoutDashboard, CheckSquare, Settings, Scan,
+  MapPin, Wrench, Plus, LayoutDashboard, CheckSquare, Settings, Scan, TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
 
