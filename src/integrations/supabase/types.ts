@@ -17742,6 +17742,7 @@ export type Database = {
           created_at: string
           follow_up_date: string | null
           id: string
+          seo_project_id: string | null
           summary: string | null
         }
         Insert: {
@@ -17753,6 +17754,7 @@ export type Database = {
           created_at?: string
           follow_up_date?: string | null
           id?: string
+          seo_project_id?: string | null
           summary?: string | null
         }
         Update: {
@@ -17764,6 +17766,7 @@ export type Database = {
           created_at?: string
           follow_up_date?: string | null
           id?: string
+          seo_project_id?: string | null
           summary?: string | null
         }
         Relationships: [
@@ -17779,6 +17782,13 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "seo_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_communication_logs_seo_project_id_fkey"
+            columns: ["seo_project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
             referencedColumns: ["id"]
           },
         ]
@@ -18330,6 +18340,7 @@ export type Database = {
           nap_consistency_check: boolean | null
           rating_avg: number | null
           reviews_count: number | null
+          seo_project_id: string | null
           status: string
           verification_status: string
         }
@@ -18346,6 +18357,7 @@ export type Database = {
           nap_consistency_check?: boolean | null
           rating_avg?: number | null
           reviews_count?: number | null
+          seo_project_id?: string | null
           status?: string
           verification_status?: string
         }
@@ -18362,6 +18374,7 @@ export type Database = {
           nap_consistency_check?: boolean | null
           rating_avg?: number | null
           reviews_count?: number | null
+          seo_project_id?: string | null
           status?: string
           verification_status?: string
         }
@@ -18378,6 +18391,13 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "seo_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_gbp_profiles_seo_project_id_fkey"
+            columns: ["seo_project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
             referencedColumns: ["id"]
           },
         ]
@@ -19505,6 +19525,7 @@ export type Database = {
           notes: string | null
           robots_txt_checked: boolean | null
           schema_added: boolean | null
+          seo_project_id: string | null
           sitemap_submitted: boolean | null
           ssl_active: boolean | null
           updated_at: string
@@ -19522,6 +19543,7 @@ export type Database = {
           notes?: string | null
           robots_txt_checked?: boolean | null
           schema_added?: boolean | null
+          seo_project_id?: string | null
           sitemap_submitted?: boolean | null
           ssl_active?: boolean | null
           updated_at?: string
@@ -19539,6 +19561,7 @@ export type Database = {
           notes?: string | null
           robots_txt_checked?: boolean | null
           schema_added?: boolean | null
+          seo_project_id?: string | null
           sitemap_submitted?: boolean | null
           ssl_active?: boolean | null
           updated_at?: string
@@ -19556,6 +19579,13 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "seo_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_technical_audits_seo_project_id_fkey"
+            columns: ["seo_project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
             referencedColumns: ["id"]
           },
         ]
