@@ -21,6 +21,7 @@ import {
   ClipboardCheck, CheckCircle2, MessageSquare, PhoneCall, CalendarCheck
 } from "lucide-react";
 import { useOnboardingChecklist } from "@/hooks/useOnboardingChecklist";
+import { ClientActivityTimeline } from "@/components/clients/ClientActivityTimeline";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useClientFinancials } from "@/hooks/useClientFinancials";
@@ -220,6 +221,7 @@ const ClientProfilePage = () => {
           <TabsTrigger value="billing" className="hidden lg:inline-flex">Billing</TabsTrigger>
           <TabsTrigger value="tickets" className="hidden lg:inline-flex">Tickets</TabsTrigger>
           <TabsTrigger value="timeline" className="hidden lg:inline-flex">Timeline</TabsTrigger>
+          <TabsTrigger value="activity" className="hidden lg:inline-flex"><Clock className="h-3.5 w-3.5 mr-1" />Activity</TabsTrigger>
         </TabsList>
 
         {/* ── Conversations / Notes ── */}
@@ -688,6 +690,20 @@ const ClientProfilePage = () => {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        {/* ── Client Activity Log (Internal) ── */}
+        <TabsContent value="activity">
+          <Card className="rounded-xl">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Clock className="h-4 w-4" /> Client Activity Log
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ClientActivityTimeline clientId={id} />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 

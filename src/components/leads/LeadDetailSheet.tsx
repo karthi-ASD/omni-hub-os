@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { CustomFieldRenderer } from "@/components/custom-fields/CustomFieldRenderer";
+import { LeadNotesTimeline } from "@/components/leads/LeadNotesTimeline";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -157,6 +158,11 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onUpdateStage, onArc
         )}
 
         <Separator className="mb-4" />
+
+        {/* Internal Conversation Notes */}
+        <LeadNotesTimeline leadId={lead.id} />
+
+        <Separator className="my-4" />
 
         {/* Activity Log */}
         <div>

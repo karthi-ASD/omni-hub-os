@@ -5198,6 +5198,54 @@ export type Database = {
           },
         ]
       }
+      client_activity_log: {
+        Row: {
+          activity_source: string
+          activity_type: string
+          business_id: string
+          client_id: string
+          created_at: string
+          created_by_user_id: string | null
+          description: string | null
+          id: string
+        }
+        Insert: {
+          activity_source?: string
+          activity_type: string
+          business_id: string
+          client_id: string
+          created_at?: string
+          created_by_user_id?: string | null
+          description?: string | null
+          id?: string
+        }
+        Update: {
+          activity_source?: string
+          activity_type?: string
+          business_id?: string
+          client_id?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          description?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_activity_log_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_activity_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_alternate_emails: {
         Row: {
           added_by_user_id: string | null
@@ -13335,32 +13383,44 @@ export type Database = {
       lead_notes: {
         Row: {
           business_id: string
+          contact_method: string
           created_at: string
           id: string
           internal_only: boolean | null
+          is_archived: boolean
           lead_id: string
+          next_followup_date: string | null
           note_content: string
           note_type: string | null
+          salesperson_id: string | null
           user_id: string | null
         }
         Insert: {
           business_id: string
+          contact_method?: string
           created_at?: string
           id?: string
           internal_only?: boolean | null
+          is_archived?: boolean
           lead_id: string
+          next_followup_date?: string | null
           note_content: string
           note_type?: string | null
+          salesperson_id?: string | null
           user_id?: string | null
         }
         Update: {
           business_id?: string
+          contact_method?: string
           created_at?: string
           id?: string
           internal_only?: boolean | null
+          is_archived?: boolean
           lead_id?: string
+          next_followup_date?: string | null
           note_content?: string
           note_type?: string | null
+          salesperson_id?: string | null
           user_id?: string | null
         }
         Relationships: [
