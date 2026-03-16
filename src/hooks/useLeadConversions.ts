@@ -207,7 +207,8 @@ export function useLeadConversions() {
     }
 
     toast.success("Lead approved and converted to client");
-    fetchRequests();
+    await fetchRequests();
+    notifySalesDataChanged(["leads", "clients", "dashboard", "pipeline"], "lead-conversion:approve");
   };
 
   const rejectConversion = async (requestId: string, decisionNotes: string) => {
