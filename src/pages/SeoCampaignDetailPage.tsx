@@ -61,7 +61,8 @@ const SeoCampaignDetailPage = () => {
   const navigate = useNavigate();
   const { projects } = useSeoProjects();
   const project = projects.find((p) => p.id === projectId);
-  const { keywords, loading: kwLoading, addKeyword, updateKeywordStatus } = useSeoKeywords(projectId);
+  const { keywords, loading: kwLoading, addKeyword, bulkImportKeywords, exportKeywordsCsv, updateKeywordStatus } = useSeoKeywords(projectId);
+  const [csvImportOpen, setCsvImportOpen] = useState(false);
   const { tasks, loading: taskLoading, addTask, updateTaskStatus } = useSeoOnpageTasks(projectId);
   const { items: offpageItems, loading: offLoading, addItem, updateItemStatus } = useSeoOffpageItems(projectId);
   const { content, loading: contentLoading, addContent, updateContentStatus } = useSeoContent(projectId);
