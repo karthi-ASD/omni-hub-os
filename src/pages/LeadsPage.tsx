@@ -132,9 +132,15 @@ const LeadsPage = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="font-semibold text-sm truncate">{lead.name}</p>
+                      {(lead as any).lead_temperature === "hot" && <span title="Hot Lead">🔥</span>}
+                      {(lead as any).lead_temperature === "warm" && <span title="Warm Lead">⚠️</span>}
+                      {(lead as any).lead_temperature === "cold" && (lead as any).lead_score > 0 && <span title="Cold Lead">❄️</span>}
                       <Badge className={`text-[10px] px-1.5 py-0 border-0 ${stageColors[lead.stage] || ""}`}>
                         {lead.stage.replace(/_/g, " ")}
                       </Badge>
+                      {(lead as any).lead_score > 0 && (
+                        <span className="text-[10px] font-medium text-muted-foreground">{(lead as any).lead_score}pts</span>
+                      )}
                     </div>
                     {lead.business_name && <p className="text-xs text-muted-foreground truncate">{lead.business_name}</p>}
                     <div className="flex items-center gap-3 mt-1">
