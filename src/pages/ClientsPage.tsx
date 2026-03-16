@@ -88,11 +88,7 @@ const ClientsPage = () => {
     finally { setSyncing(false); }
   };
 
-  const statusCounts = useMemo(() => ({
-    active: clients.filter(c => c.client_status === "active").length,
-    cancelled: clients.filter(c => c.client_status === "cancelled").length,
-    pending: clients.filter(c => c.client_status === "pending").length,
-  }), [clients]);
+  // statusCounts now come from server-side via useClients hook
 
   const handleSalesOwnerChange = async (clientId: string, userId: string) => {
     const member = salesTeam.find(m => m.user_id === userId);
