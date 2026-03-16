@@ -170,6 +170,11 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onUpdateStage, onArc
 
         <Separator className="mb-4" />
 
+        {/* Follow-Ups Section */}
+        <LeadFollowUpsSection leadId={lead.id} leadName={lead.name} />
+
+        <Separator className="my-4" />
+
         {/* Internal Conversation Notes */}
         <LeadNotesTimeline leadId={lead.id} />
 
