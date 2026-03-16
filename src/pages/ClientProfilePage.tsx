@@ -838,6 +838,15 @@ const ClientProfilePage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Service Dialog */}
+      <AddServiceDialog
+        open={serviceDialog}
+        onOpenChange={setServiceDialog}
+        onSubmit={async (data: ServiceFormData) => {
+          await addService(data);
+        }}
+      />
     </div>
   );
 };
