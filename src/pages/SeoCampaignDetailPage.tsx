@@ -173,6 +173,18 @@ const SeoCampaignDetailPage = () => {
           />
         </TabsContent>
 
+        {/* Rankings Tab */}
+        <TabsContent value="rankings">
+          <SeoRankingPanel
+            gscData={gscData}
+            keywords={keywords}
+            rankingHistory={rankingHistory}
+            gscLoading={gscLoading}
+            syncing={syncing}
+            onSync={syncRankings}
+          />
+        </TabsContent>
+
         {/* Keywords Tab */}
         <TabsContent value="keywords" className="space-y-4">
           <div className="flex justify-between items-center">
