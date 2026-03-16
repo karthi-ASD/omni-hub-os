@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { CustomFieldRenderer } from "@/components/custom-fields/CustomFieldRenderer";
 import { LeadNotesTimeline } from "@/components/leads/LeadNotesTimeline";
+import { RequestProposalDialog } from "@/components/deal-room/RequestProposalDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
