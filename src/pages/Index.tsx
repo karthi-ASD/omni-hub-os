@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import heroDashboard from "@/assets/hero-dashboard-mockup.jpg";
 import parallaxCity from "@/assets/parallax-cityscape.jpg";
+import NextWebExpansionFlow from "@/components/NextWebExpansionFlow";
 
 /* ─── Reusable scroll-reveal wrapper ─── */
 function Reveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
