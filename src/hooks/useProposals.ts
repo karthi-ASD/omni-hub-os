@@ -139,7 +139,7 @@ export function useProposals() {
     if (proposal?.deal_id) {
       const { data: deal } = await supabase
         .from("deals")
-        .select("lead_id, assigned_to")
+        .select("lead_id, owner_user_id")
         .eq("id", proposal.deal_id)
         .maybeSingle();
 
