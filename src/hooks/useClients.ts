@@ -300,7 +300,7 @@ export function useClients(options?: UseClientsOptions) {
   };
 
   return {
-    clients, loading, totalCount, page, hasMore,
+    clients, loading, totalCount, statusCounts, page, hasMore,
     createClient, updateOnboardingStatus, updateClientStatus, getClientServices,
     loadMore, setSearchTerm, bulkAssignSalesperson,
     refetch: () => fetchClients(0, search),

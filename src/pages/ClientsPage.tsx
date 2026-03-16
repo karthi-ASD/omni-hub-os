@@ -148,9 +148,9 @@ const ClientsPage = () => {
       {/* KPI strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <StatCard label="Total Clients" value={totalCount} icon={Users} gradient="from-primary to-accent" />
-        <StatCard label="Active" value={statusCounts.active} icon={CheckCircle} gradient="from-neon-green to-success" />
-        <StatCard label="Cancelled" value={statusCounts.cancelled} icon={XCircle} gradient="from-destructive to-neon-orange" />
-        <StatCard label="Pending" value={statusCounts.pending} icon={Clock} gradient="from-warning to-neon-orange" />
+        <StatCard label="Active" value={statusCounts.active || 0} icon={CheckCircle} gradient="from-neon-green to-success" />
+        <StatCard label="Cancelled" value={statusCounts.cancelled || 0} icon={XCircle} gradient="from-destructive to-neon-orange" />
+        <StatCard label="Pending" value={statusCounts.pending || 0} icon={Clock} gradient="from-warning to-neon-orange" />
       </div>
 
       {/* Search + Filter */}
