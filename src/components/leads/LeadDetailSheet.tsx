@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { CustomFieldRenderer } from "@/components/custom-fields/CustomFieldRenderer";
 import { LeadNotesTimeline } from "@/components/leads/LeadNotesTimeline";
+import { RequestProposalDialog } from "@/components/deal-room/RequestProposalDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Phone, Mail, Building2, Calendar, Clock, Edit2, Save, X, MessageSquare, User } from "lucide-react";
+import { Phone, Mail, Building2, Calendar, Clock, Edit2, Save, X, MessageSquare, User, FileText } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -45,6 +46,7 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onUpdateStage, onArc
   const [activities, setActivities] = useState<LeadActivity[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Lead>>({});
+  const [proposalDialogOpen, setProposalDialogOpen] = useState(false);
 
   useEffect(() => {
     if (lead && open) {
@@ -87,6 +89,7 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onUpdateStage, onArc
   );
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader className="pb-4">
@@ -122,6 +125,13 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onUpdateStage, onArc
           <span className="text-xs text-muted-foreground ml-auto">
             {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
           </span>
+        </div>
+
+        {/* Request Proposal Button */}
+        <div className="mb-4">
+          <Button variant="outline" size="sm" className="w-full" onClick={() => setProposalDialogOpen(true)}>
+            <FileText className="h-3.5 w-3.5 mr-1" /> Request Proposal
+          </Button>
         </div>
 
         <Separator className="mb-4" />
@@ -204,5 +214,14 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onUpdateStage, onArc
         )}
       </SheetContent>
     </Sheet>
+
+    <RequestProposalDialog
+      open={proposalDialogOpen}
+      onOpenChange={setProposalDialogOpen}
+      leadId={lead.id}
+      leadName={lead.name}
+      leadServices={lead.services_needed}
+    />
+    </>
   );
 }

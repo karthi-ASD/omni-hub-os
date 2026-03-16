@@ -140,6 +140,7 @@ import AgentFactoryPage from "./pages/AgentFactoryPage";
 import ProviderConnectionsPage from "./pages/ProviderConnectionsPage";
 import ConsentCompliancePage from "./pages/ConsentCompliancePage";
 import VoiceAgentPage from "./pages/VoiceAgentPage";
+import DealRoomPage from "./pages/DealRoomPage";
 import AutopilotSettingsPage from "./pages/AutopilotSettingsPage";
 import AutopilotSequencesPage from "./pages/AutopilotSequencesPage";
 import AutopilotInboxPage from "./pages/AutopilotInboxPage";
@@ -309,6 +310,7 @@ const App = () => (
               <Route path="/reminders" element={<RemindersPage />} />
               <Route path="/deals" element={<DealsPage />} />
               <Route path="/proposals" element={<ProposalsPage />} />
+              <Route path="/deal-room" element={<DealRoomPage />} />
               <Route path="/contracts" element={<ContractsPage />} />
               <Route path="/clients" element={<ClientsPage />} />
               <Route path="/clients/:id" element={<ClientProfilePage />} />

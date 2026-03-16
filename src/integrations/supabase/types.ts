@@ -8157,6 +8157,86 @@ export type Database = {
           },
         ]
       }
+      deal_room_proposals: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          created_at: string
+          expiry_date: string | null
+          id: string
+          is_latest: boolean
+          lead_id: string | null
+          pdf_file_path: string | null
+          proposal_request_id: string | null
+          proposal_status: string
+          proposal_title: string
+          proposal_version: number
+          updated_at: string
+          uploaded_by_user_id: string | null
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          is_latest?: boolean
+          lead_id?: string | null
+          pdf_file_path?: string | null
+          proposal_request_id?: string | null
+          proposal_status?: string
+          proposal_title: string
+          proposal_version?: number
+          updated_at?: string
+          uploaded_by_user_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          is_latest?: boolean
+          lead_id?: string | null
+          pdf_file_path?: string | null
+          proposal_request_id?: string | null
+          proposal_status?: string
+          proposal_title?: string
+          proposal_version?: number
+          updated_at?: string
+          uploaded_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_room_proposals_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_room_proposals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_room_proposals_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_room_proposals_proposal_request_id_fkey"
+            columns: ["proposal_request_id"]
+            isOneToOne: false
+            referencedRelation: "proposal_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deal_stage_history: {
         Row: {
           business_id: string
@@ -15302,6 +15382,57 @@ export type Database = {
           },
         ]
       }
+      proposal_activity: {
+        Row: {
+          activity_type: string
+          business_id: string
+          created_at: string
+          customer_user_id: string | null
+          device_type: string | null
+          duration_seconds: number | null
+          id: string
+          proposal_id: string
+          section_viewed: string | null
+        }
+        Insert: {
+          activity_type: string
+          business_id: string
+          created_at?: string
+          customer_user_id?: string | null
+          device_type?: string | null
+          duration_seconds?: number | null
+          id?: string
+          proposal_id: string
+          section_viewed?: string | null
+        }
+        Update: {
+          activity_type?: string
+          business_id?: string
+          created_at?: string
+          customer_user_id?: string | null
+          device_type?: string | null
+          duration_seconds?: number | null
+          id?: string
+          proposal_id?: string
+          section_viewed?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_activity_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposal_activity_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "deal_room_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposal_automations: {
         Row: {
           business_id: string
@@ -15396,6 +15527,73 @@ export type Database = {
             columns: ["proposal_id"]
             isOneToOne: false
             referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposal_requests: {
+        Row: {
+          budget_range: string | null
+          business_id: string
+          client_id: string | null
+          client_name: string
+          created_at: string
+          id: string
+          lead_id: string | null
+          notes: string | null
+          requested_by_sales_id: string
+          service_details: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          budget_range?: string | null
+          business_id: string
+          client_id?: string | null
+          client_name: string
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          requested_by_sales_id: string
+          service_details?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          budget_range?: string | null
+          business_id?: string
+          client_id?: string | null
+          client_name?: string
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          requested_by_sales_id?: string
+          service_details?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposal_requests_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposal_requests_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
         ]
