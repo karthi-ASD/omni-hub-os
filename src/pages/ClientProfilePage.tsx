@@ -4,6 +4,7 @@ import { useClientProfile } from "@/hooks/useClientProfile";
 import { useClientConversations } from "@/hooks/useClientConversations";
 import { useSalesCallbacks } from "@/hooks/useSalesCallbacks";
 import { useState, useMemo } from "react";
+import { EditClientDialog } from "@/components/clients/EditClientDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
