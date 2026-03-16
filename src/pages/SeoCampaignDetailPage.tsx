@@ -61,6 +61,7 @@ const SeoCampaignDetailPage = () => {
   const { audit, loading: techLoading, upsert: upsertTech } = useSeoTechnical(projectId);
   const { reports, loading: reportLoading, addReport } = useSeoReports(projectId);
   const { logs: commLogs, loading: commLoading, addLog: addComm } = useSeoComms(projectId);
+  const { audits: pageAudits, loading: auditLoading, crawling, crawlProgress, runFullAudit } = useSeoSiteAudit(projectId, project?.website_domain);
 
   // Form states
   const [kwOpen, setKwOpen] = useState(false);
