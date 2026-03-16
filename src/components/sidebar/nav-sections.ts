@@ -93,6 +93,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Inquiries", icon: Mail, to: "/inquiries" },
       { label: "Leads", icon: Target, to: "/leads" },
       { label: "Deals", icon: FolderKanban, to: "/deals" },
+      { label: "Deal Room", icon: FileText, to: "/deal-room" },
       { label: "Clients", icon: Users, to: "/clients" },
       { label: "Proposals", icon: FileText, to: "/proposals" },
       { label: "Contracts", icon: FileText, to: "/contracts" },
