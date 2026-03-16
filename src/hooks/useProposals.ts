@@ -156,7 +156,7 @@ export function useProposals() {
           await supabase.from("lead_conversion_requests").insert({
             business_id: profile.business_id,
             lead_id: deal.lead_id,
-            requested_by_user_id: deal.assigned_to || profile.user_id,
+            requested_by_user_id: deal.owner_user_id || profile.user_id,
             services: proposal.title,
             contract_value: proposal.total_amount || 0,
           } as any);
