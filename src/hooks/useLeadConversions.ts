@@ -296,7 +296,8 @@ export function useLeadConversions() {
     ]);
 
     toast.success("Client reverted to lead");
-    fetchRequests();
+    await fetchRequests();
+    notifySalesDataChanged(["leads", "clients", "dashboard", "pipeline"], "lead-conversion:revert-client");
   };
 
   const pendingRequests = requests.filter(r => r.request_status === "pending");

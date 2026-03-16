@@ -47,6 +47,7 @@ export function useSalesPerformanceDashboard() {
   }, [businessId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+  useSalesDataAutoRefresh(fetchAll, ["all", "dashboard", "leads", "clients", "deals", "proposals", "follow-ups", "pipeline"]);
 
   // Scope data by user role
   const myLeads = useMemo(() => isAdmin ? leads : leads.filter(l => l.assigned_to_user_id === userId), [leads, isAdmin, userId]);

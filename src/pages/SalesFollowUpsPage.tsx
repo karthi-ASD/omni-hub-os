@@ -48,6 +48,7 @@ const SalesFollowUpsPage = () => {
   }, [profile?.business_id, profile?.user_id, isAdmin]);
 
   useEffect(() => { fetchFollowUps(); }, [fetchFollowUps]);
+  useSalesDataAutoRefresh(fetchFollowUps, ["all", "follow-ups", "leads", "dashboard"]);
 
   const todayItems = followUps.filter(f => {
     if (!f.next_follow_up_at) return false;
