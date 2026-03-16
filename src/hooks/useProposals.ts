@@ -158,7 +158,8 @@ export function useProposals() {
       payload_json: { entity_type: "proposal", entity_id: proposalId, actor_user_id: profile.user_id, short_message: "Payment marked as paid" },
     });
     toast.success("Payment marked as paid");
-    fetchProposals();
+    await fetchProposals();
+    notifySalesDataChanged(["proposals", "dashboard"], "proposal:mark-paid");
   };
 
   return { proposals, loading, createProposal, sendProposal, acceptProposal, rejectProposal, markPaid, refetch: fetchProposals };

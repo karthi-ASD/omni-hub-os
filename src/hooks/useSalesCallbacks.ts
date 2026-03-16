@@ -79,6 +79,7 @@ export function useSalesCallbacks() {
       .update({ status: "missed", updated_at: new Date().toISOString() } as any)
       .eq("id", id);
     fetchCallbacks();
+    notifySalesDataChanged(["follow-ups", "dashboard"], "callback:missed");
   };
 
   return { callbacks, loading, createCallback, completeCallback, missCallback, refetch: fetchCallbacks };
