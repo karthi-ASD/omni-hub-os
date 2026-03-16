@@ -59,6 +59,7 @@ export function useSalesCallbacks() {
     if (error) { toast.error("Failed to schedule callback"); return null; }
     toast.success("Callback scheduled");
     fetchCallbacks();
+    notifySalesDataChanged(["follow-ups", "dashboard"], "callback:create");
     return data as any as SalesCallback;
   };
 
