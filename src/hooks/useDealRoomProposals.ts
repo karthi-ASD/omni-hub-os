@@ -120,7 +120,8 @@ export function useDealRoomProposals() {
     if (error) { toast.error("Upload failed"); return null; }
     await supabase.from("deal_room_proposals").update({ pdf_file_path: path } as any).eq("id", proposalId);
     toast.success("PDF uploaded");
-    fetchProposals();
+    await fetchProposals();
+    notifySalesDataChanged(["proposals", "dashboard"], "deal-room-proposal:upload-pdf");
     return path;
   };
 
