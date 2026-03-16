@@ -141,6 +141,7 @@ const SeoCampaignDetailPage = () => {
           <TabsList className="inline-flex h-10 w-auto">
             <TabsTrigger value="overview" className="gap-1.5 text-xs"><LayoutDashboard className="h-3 w-3" /> Overview</TabsTrigger>
             <TabsTrigger value="audit" className="gap-1.5 text-xs"><Scan className="h-3 w-3" /> Audit</TabsTrigger>
+            <TabsTrigger value="rankings" className="gap-1.5 text-xs"><TrendingUp className="h-3 w-3" /> Rankings</TabsTrigger>
             <TabsTrigger value="keywords" className="gap-1.5 text-xs"><Key className="h-3 w-3" /> Keywords</TabsTrigger>
             <TabsTrigger value="onpage" className="gap-1.5 text-xs"><FileText className="h-3 w-3" /> On-Page</TabsTrigger>
             <TabsTrigger value="offpage" className="gap-1.5 text-xs"><Link className="h-3 w-3" /> Off-Page</TabsTrigger>
