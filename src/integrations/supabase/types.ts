@@ -5300,6 +5300,57 @@ export type Database = {
           },
         ]
       }
+      client_conversations: {
+        Row: {
+          business_id: string
+          client_id: string
+          conversation_date: string
+          conversation_type: string
+          created_at: string
+          id: string
+          next_callback_date: string | null
+          notes: string | null
+          sales_user_id: string
+        }
+        Insert: {
+          business_id: string
+          client_id: string
+          conversation_date?: string
+          conversation_type?: string
+          created_at?: string
+          id?: string
+          next_callback_date?: string | null
+          notes?: string | null
+          sales_user_id: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string
+          conversation_date?: string
+          conversation_type?: string
+          created_at?: string
+          id?: string
+          next_callback_date?: string | null
+          notes?: string | null
+          sales_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_conversations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_conversations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_departments: {
         Row: {
           business_id: string
@@ -6074,6 +6125,7 @@ export type Database = {
           contract_value: number | null
           country: string | null
           created_at: string
+          created_by: string | null
           deal_id: string | null
           email: string
           health_score: string | null
@@ -6090,6 +6142,7 @@ export type Database = {
           salesperson_owner: string | null
           seo_payment_hold: boolean | null
           service_category: string | null
+          signup_source: string | null
           state: string | null
           tax_number: string | null
           updated_at: string
@@ -6113,6 +6166,7 @@ export type Database = {
           contract_value?: number | null
           country?: string | null
           created_at?: string
+          created_by?: string | null
           deal_id?: string | null
           email: string
           health_score?: string | null
@@ -6129,6 +6183,7 @@ export type Database = {
           salesperson_owner?: string | null
           seo_payment_hold?: boolean | null
           service_category?: string | null
+          signup_source?: string | null
           state?: string | null
           tax_number?: string | null
           updated_at?: string
@@ -6152,6 +6207,7 @@ export type Database = {
           contract_value?: number | null
           country?: string | null
           created_at?: string
+          created_by?: string | null
           deal_id?: string | null
           email?: string
           health_score?: string | null
@@ -6168,6 +6224,7 @@ export type Database = {
           salesperson_owner?: string | null
           seo_payment_hold?: boolean | null
           service_category?: string | null
+          signup_source?: string | null
           state?: string | null
           tax_number?: string | null
           updated_at?: string
@@ -16341,6 +16398,76 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_callbacks: {
+        Row: {
+          business_id: string
+          callback_date: string
+          callback_time: string | null
+          client_id: string | null
+          created_at: string
+          id: string
+          lead_id: string | null
+          next_step: string | null
+          notes: string | null
+          result: string | null
+          sales_user_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          callback_date: string
+          callback_time?: string | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          next_step?: string | null
+          notes?: string | null
+          result?: string | null
+          sales_user_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          callback_date?: string
+          callback_time?: string | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          next_step?: string | null
+          notes?: string | null
+          result?: string | null
+          sales_user_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_callbacks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_callbacks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_callbacks_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
         ]
