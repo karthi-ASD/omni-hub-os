@@ -85,6 +85,7 @@ const ClientsPage = () => {
       if (data?.error) throw new Error(data.error);
       toast.success(`Synced ${data.recordsSynced || 0} contacts`);
       refetch();
+      notifySalesDataChanged(["clients", "dashboard"], "client:sync");
     } catch (e: any) { toast.error(e.message || "Sync failed"); }
     finally { setSyncing(false); }
   };
