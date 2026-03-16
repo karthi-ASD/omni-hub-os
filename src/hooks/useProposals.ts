@@ -119,7 +119,8 @@ export function useProposals() {
       }),
     ]);
     toast.success("Proposal sent");
-    fetchProposals();
+    await fetchProposals();
+    notifySalesDataChanged(["proposals", "dashboard"], "proposal:send");
   };
 
   const acceptProposal = async (proposalId: string) => {
