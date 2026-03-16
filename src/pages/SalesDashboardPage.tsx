@@ -1,327 +1,231 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useSalesTeam } from "@/hooks/useSalesTeam";
-import { useSalesCallbacks } from "@/hooks/useSalesCallbacks";
+import { useSalesPerformanceDashboard } from "@/hooks/useSalesPerformanceDashboard";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Phone, Target, CalendarCheck, Handshake, TrendingDown, Users, BarChart3, DollarSign, UserCheck, XCircle, CheckCircle, Trophy, Plus, PhoneCall, Clock } from "lucide-react";
-import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, subMonths, isToday, isTomorrow, isPast, parseISO } from "date-fns";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import {
+  BarChart3, Users, Target, Flame, Snowflake, ThermometerSun,
+  Phone, Mail, MessageCircle, CalendarCheck, AlertTriangle, Clock,
+  DollarSign, TrendingUp, Trophy, FileText, Eye, CheckCircle,
+  XCircle, Timer, Zap, UserCheck, Send,
+} from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, FunnelChart, Funnel, LabelList } from "recharts";
+import { format, parseISO } from "date-fns";
 
-interface DailyMetrics {
-  callsToday: number;
-  leadsToday: number;
-  followUpsToday: number;
-  dealsWon: number;
-  dealsLost: number;
-  dealsInProgress: number;
-  totalActiveLeads: number;
-}
-
-interface ClientWithRevenue {
-  id: string;
-  contact_name: string;
-  company_name: string | null;
-  client_status: string;
-  sales_owner_id: string | null;
-  salesperson_owner: string | null;
-  totalRevenue: number;
-  outstanding: number;
-}
+const tempIcon = (t: string) => t === "hot" ? "🔥" : t === "warm" ? "⚠️" : "❄️";
+const tempColor = (t: string) => t === "hot" ? "destructive" : t === "warm" ? "secondary" : "outline";
 
 const SalesDashboardPage = () => {
-  const { profile, user, isSuperAdmin, isBusinessAdmin } = useAuth();
-  const { members: salesTeam } = useSalesTeam();
-  const { callbacks, createCallback, completeCallback } = useSalesCallbacks();
-  const isAdmin = isSuperAdmin || isBusinessAdmin;
+  usePageTitle("Sales Dashboard");
+  const {
+    loading, isAdmin, clientMetrics, leadMetrics, pipelineStages,
+    followUpMetrics, proposalMetrics, revenueMetrics, conversionRate,
+    hotLeadsPriority, dailyActivity, leaderboard, myAccountsTable, agingLeads,
+  } = useSalesPerformanceDashboard();
 
-  const [metrics, setMetrics] = useState<DailyMetrics>({
-    callsToday: 0, leadsToday: 0, followUpsToday: 0,
-    dealsWon: 0, dealsLost: 0, dealsInProgress: 0, totalActiveLeads: 0,
-  });
-  const [monthlyData, setMonthlyData] = useState<{ month: string; clients: number; lost: number }[]>([]);
-  const [clientsData, setClientsData] = useState<ClientWithRevenue[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [callbackDialog, setCallbackDialog] = useState(false);
-  const [completeDialog, setCompleteDialog] = useState<string | null>(null);
-  const [callbackForm, setCallbackForm] = useState({ callback_date: "", callback_time: "", notes: "" });
-  const [completeForm, setCompleteForm] = useState({ result: "", next_step: "" });
+  if (loading) return (
+    <div className="space-y-4 p-6">
+      {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-2xl" />)}
+    </div>
+  );
 
-  const currentUserId = user?.id;
-
-  // For non-admin sales users, filter to their own clients
-  const myClients = useMemo(() => {
-    if (isAdmin) return clientsData;
-    return clientsData.filter(c => c.sales_owner_id === currentUserId);
-  }, [clientsData, currentUserId, isAdmin]);
-
-  const clientMetrics = useMemo(() => {
-    const active = myClients.filter(c => c.client_status === "active").length;
-    const cancelled = myClients.filter(c => c.client_status === "cancelled").length;
-    const pending = myClients.filter(c => ["pending", "prospect"].includes(c.client_status)).length;
-    const totalRevenue = myClients.reduce((s, c) => s + c.totalRevenue, 0);
-    const outstanding = myClients.reduce((s, c) => s + c.outstanding, 0);
-    return { total: myClients.length, active, cancelled, pending, totalRevenue, outstanding };
-  }, [myClients]);
-
-  // Filter callbacks for current user (non-admin sees only own)
-  const myCallbacks = useMemo(() => {
-    if (isAdmin) return callbacks;
-    return callbacks.filter(cb => cb.sales_user_id === currentUserId);
-  }, [callbacks, currentUserId, isAdmin]);
-
-  const pendingCallbacks = myCallbacks.filter(cb => cb.status === "pending");
-  const todayCallbacks = pendingCallbacks.filter(cb => isToday(parseISO(cb.callback_date)));
-  const tomorrowCallbacks = pendingCallbacks.filter(cb => isTomorrow(parseISO(cb.callback_date)));
-  const overdueCallbacks = pendingCallbacks.filter(cb => isPast(parseISO(cb.callback_date)) && !isToday(parseISO(cb.callback_date)));
-  const upcomingCallbacks = pendingCallbacks.filter(cb => !isPast(parseISO(cb.callback_date)) && !isToday(parseISO(cb.callback_date)) && !isTomorrow(parseISO(cb.callback_date)));
-
-  // Salesperson leaderboard (admin only)
-  const leaderboard = useMemo(() => {
-    if (!isAdmin) return [];
-    const map: Record<string, { name: string; clients: number; active: number; cancelled: number; revenue: number }> = {};
-    clientsData.forEach(c => {
-      const key = c.sales_owner_id || "unassigned";
-      const name = c.salesperson_owner || "Unassigned";
-      if (!map[key]) map[key] = { name, clients: 0, active: 0, cancelled: 0, revenue: 0 };
-      map[key].clients++;
-      if (c.client_status === "active") map[key].active++;
-      if (c.client_status === "cancelled") map[key].cancelled++;
-      map[key].revenue += c.totalRevenue;
-    });
-    return Object.values(map).sort((a, b) => b.revenue - a.revenue);
-  }, [clientsData, isAdmin]);
-
-  const fetchAll = useCallback(async () => {
-    if (!profile?.business_id) return;
-    const today = new Date();
-    const dayStart = startOfDay(today).toISOString();
-    const dayEnd = endOfDay(today).toISOString();
-
-    const [callsRes, leadsRes, followUpsRes, dealsRes, activeLeadsRes, clientsRes, invoicesRes] = await Promise.all([
-      supabase.from("cold_calls").select("id", { count: "exact", head: true })
-        .eq("business_id", profile.business_id)
-        .gte("created_at", dayStart).lte("created_at", dayEnd),
-      supabase.from("leads").select("id", { count: "exact", head: true })
-        .eq("business_id", profile.business_id)
-        .gte("created_at", dayStart).lte("created_at", dayEnd),
-      supabase.from("cold_calls").select("id", { count: "exact", head: true })
-        .eq("business_id", profile.business_id)
-        .eq("follow_up_date", format(today, "yyyy-MM-dd")),
-      supabase.from("deals").select("stage")
-        .eq("business_id", profile.business_id),
-      supabase.from("leads").select("id", { count: "exact", head: true })
-        .eq("business_id", profile.business_id).eq("status", "active"),
-      supabase.from("clients").select("id, contact_name, company_name, client_status, sales_owner_id, salesperson_owner")
-        .eq("business_id", profile.business_id),
-      supabase.from("xero_invoices").select("client_id, total, amount_due, status")
-        .eq("business_id", profile.business_id),
-    ]);
-
-    const deals = dealsRes.data || [];
-    setMetrics({
-      callsToday: callsRes.count || 0,
-      leadsToday: leadsRes.count || 0,
-      followUpsToday: followUpsRes.count || 0,
-      dealsWon: deals.filter(d => d.stage === "won").length,
-      dealsLost: deals.filter(d => d.stage === "lost").length,
-      dealsInProgress: deals.filter(d => !["won", "lost"].includes(d.stage)).length,
-      totalActiveLeads: activeLeadsRes.count || 0,
-    });
-
-    // Build client revenue map
-    const invoices = (invoicesRes.data || []) as any[];
-    const revenueMap: Record<string, { total: number; outstanding: number }> = {};
-    invoices.forEach(inv => {
-      if (!inv.client_id) return;
-      if (!revenueMap[inv.client_id]) revenueMap[inv.client_id] = { total: 0, outstanding: 0 };
-      revenueMap[inv.client_id].total += Number(inv.total) || 0;
-      if (inv.status !== "PAID") revenueMap[inv.client_id].outstanding += Number(inv.amount_due) || 0;
-    });
-
-    const enriched: ClientWithRevenue[] = ((clientsRes.data || []) as any[]).map(c => ({
-      ...c,
-      totalRevenue: revenueMap[c.id]?.total || 0,
-      outstanding: revenueMap[c.id]?.outstanding || 0,
-    }));
-    setClientsData(enriched);
-
-    // Monthly data
-    const monthly: { month: string; clients: number; lost: number }[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const m = subMonths(today, i);
-      const mStart = startOfMonth(m).toISOString();
-      const mEnd = endOfMonth(m).toISOString();
-      const [newRes, lostRes] = await Promise.all([
-        supabase.from("clients").select("id", { count: "exact", head: true })
-          .eq("business_id", profile.business_id)
-          .gte("created_at", mStart).lte("created_at", mEnd),
-        supabase.from("deals").select("id", { count: "exact", head: true })
-          .eq("business_id", profile.business_id).eq("stage", "lost")
-          .gte("created_at", mStart).lte("created_at", mEnd),
-      ]);
-      monthly.push({ month: format(m, "MMM"), clients: newRes.count || 0, lost: lostRes.count || 0 });
-    }
-    setMonthlyData(monthly);
-    setLoading(false);
-  }, [profile?.business_id]);
-
-  useEffect(() => { fetchAll(); }, [fetchAll]);
-
-  const handleCreateCallback = async () => {
-    if (!callbackForm.callback_date) return;
-    await createCallback(callbackForm);
-    setCallbackForm({ callback_date: "", callback_time: "", notes: "" });
-    setCallbackDialog(false);
-  };
-
-  const handleCompleteCallback = async () => {
-    if (!completeDialog || !completeForm.result) return;
-    await completeCallback(completeDialog, completeForm.result, completeForm.next_step);
-    setCompleteForm({ result: "", next_step: "" });
-    setCompleteDialog(null);
-  };
-
-  if (loading) return <div className="space-y-4 p-6">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-2xl" />)}</div>;
-
-  const renderCallbackList = (items: typeof pendingCallbacks, label: string) => {
-    if (items.length === 0) return null;
-    return (
-      <div className="space-y-2">
-        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{label} ({items.length})</h4>
-        {items.map(cb => (
-          <div key={cb.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border">
-            <PhoneCall className="h-4 w-4 text-primary shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{cb.notes || "Scheduled callback"}</p>
-              <p className="text-xs text-muted-foreground">
-                {format(parseISO(cb.callback_date), "dd MMM")}
-                {cb.callback_time && ` · ${cb.callback_time}`}
-              </p>
-            </div>
-            <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => setCompleteDialog(cb.id)}>
-              Complete
-            </Button>
-          </div>
-        ))}
-      </div>
-    );
-  };
+  const monthTarget = 50000;
+  const monthProgress = Math.min((revenueMetrics.monthRevenue / monthTarget) * 100, 100);
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title="Sales Dashboard" subtitle={isAdmin ? "Team performance overview" : "Your performance overview"} icon={BarChart3} />
+      <PageHeader
+        title="Sales Dashboard"
+        subtitle={isAdmin ? "Company-wide sales performance" : "Your personal performance overview"}
+        icon={BarChart3}
+      />
 
-      {/* Daily Activity */}
+      {/* Section 1: Daily Activity */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Calls Today" value={metrics.callsToday} icon={Phone} gradient="from-primary to-accent" />
-        <StatCard label="New Leads" value={metrics.leadsToday} icon={Target} gradient="from-neon-blue to-info" />
-        <StatCard label="Follow-ups Today" value={metrics.followUpsToday} icon={CalendarCheck} gradient="from-warning to-neon-orange" />
-        <StatCard label="Active Leads" value={metrics.totalActiveLeads} icon={Users} gradient="from-neon-green to-success" />
+        <StatCard label="Calls Today" value={dailyActivity.calls} icon={Phone} gradient="from-primary to-accent" />
+        <StatCard label="Emails Today" value={dailyActivity.emails} icon={Mail} gradient="from-info to-primary" />
+        <StatCard label="WhatsApp Today" value={dailyActivity.whatsapp} icon={MessageCircle} gradient="from-success to-accent" />
+        <StatCard label="Conversion Rate" value={`${conversionRate}%`} icon={TrendingUp} gradient="from-warning to-primary" />
       </div>
 
-      {/* Client Ownership Stats */}
+      {/* Section 2: Client Metrics */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Active Clients" value={clientMetrics.active} icon={UserCheck} gradient="from-success to-accent" />
+        <StatCard label="Pending Clients" value={clientMetrics.pending} icon={Clock} gradient="from-warning to-primary" />
+        <StatCard label="Cancelled Clients" value={clientMetrics.cancelled} icon={XCircle} gradient="from-destructive to-warning" />
+        <StatCard label="Total Clients" value={clientMetrics.total} icon={Users} gradient="from-primary to-info" />
+      </div>
+
+      {/* Section 3: Leads & Prospects */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard label="My Clients" value={clientMetrics.total} icon={UserCheck} gradient="from-primary to-accent" />
-        <StatCard label="Active" value={clientMetrics.active} icon={CheckCircle} gradient="from-neon-green to-success" />
-        <StatCard label="Cancelled" value={clientMetrics.cancelled} icon={XCircle} gradient="from-destructive to-neon-orange" />
-        <StatCard label="Revenue" value={`$${(clientMetrics.totalRevenue / 1000).toFixed(0)}k`} icon={DollarSign} gradient="from-info to-neon-blue" />
-        <StatCard label="Outstanding" value={`$${(clientMetrics.outstanding / 1000).toFixed(0)}k`} icon={TrendingDown} gradient="from-warning to-neon-orange" />
+        <StatCard label="Total Leads" value={leadMetrics.total} icon={Target} gradient="from-primary to-accent" />
+        <StatCard label="New This Month" value={leadMetrics.newThisMonth} icon={Zap} gradient="from-info to-primary" />
+        <StatCard label="🔥 Hot Leads" value={leadMetrics.hot} icon={Flame} gradient="from-destructive to-warning" />
+        <StatCard label="⚠️ Warm Leads" value={leadMetrics.warm} icon={ThermometerSun} gradient="from-warning to-accent" />
+        <StatCard label="❄️ Cold Leads" value={leadMetrics.cold} icon={Snowflake} gradient="from-info to-primary" />
       </div>
 
-      {/* Deals */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <StatCard label="Deals Won" value={metrics.dealsWon} icon={Handshake} gradient="from-success to-neon-green" />
-        <StatCard label="In Progress" value={metrics.dealsInProgress} icon={BarChart3} gradient="from-info to-neon-blue" />
-        <StatCard label="Deals Lost" value={metrics.dealsLost} icon={TrendingDown} gradient="from-destructive to-neon-orange" />
+      {/* Section 4: Follow-ups & Proposals */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <StatCard label="Follow Ups Today" value={followUpMetrics.today} icon={CalendarCheck} gradient="from-primary to-accent" />
+        <StatCard label="Overdue Follow Ups" value={followUpMetrics.overdue} icon={AlertTriangle} gradient="from-destructive to-warning" alert={followUpMetrics.overdue > 0} />
+        <StatCard label="Upcoming Follow Ups" value={followUpMetrics.upcoming} icon={Timer} gradient="from-info to-primary" />
       </div>
 
-      {/* Callbacks Panel */}
+      {/* Section 5: Proposal Tracking */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <StatCard label="Proposals Sent" value={proposalMetrics.sent} icon={Send} gradient="from-primary to-accent" />
+        <StatCard label="Proposals Viewed" value={proposalMetrics.viewed} icon={Eye} gradient="from-info to-primary" />
+        <StatCard label="Accepted" value={proposalMetrics.accepted} icon={CheckCircle} gradient="from-success to-accent" />
+        <StatCard label="Pending" value={proposalMetrics.pending} icon={FileText} gradient="from-warning to-primary" />
+        <StatCard label="Expired" value={proposalMetrics.expired} icon={XCircle} gradient="from-destructive to-warning" />
+      </div>
+
+      {/* Section 6: Revenue + Target */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <StatCard label="Revenue This Month" value={`$${(revenueMetrics.monthRevenue / 1000).toFixed(1)}k`} icon={DollarSign} gradient="from-success to-accent" />
+          <StatCard label="Total Revenue" value={`$${(revenueMetrics.totalRevenue / 1000).toFixed(1)}k`} icon={DollarSign} gradient="from-primary to-info" />
+          <StatCard label="Avg Deal Size" value={`$${(revenueMetrics.avgDeal / 1000).toFixed(1)}k`} icon={TrendingUp} gradient="from-warning to-primary" />
+        </div>
+
+        {/* Sales Target Progress */}
+        <Card className="rounded-2xl border-0 shadow-elevated">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-warning" /> Monthly Sales Target
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Target: <span className="font-semibold text-foreground">${monthTarget.toLocaleString()}</span></span>
+              <span className="text-muted-foreground">Closed: <span className="font-semibold text-success">${revenueMetrics.monthRevenue.toLocaleString()}</span></span>
+            </div>
+            <Progress value={monthProgress} className="h-3" />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Remaining: ${(monthTarget - revenueMetrics.monthRevenue).toLocaleString()}</span>
+              <span className="font-bold text-foreground">{monthProgress.toFixed(0)}%</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Section 7: Pipeline Funnel */}
       <Card className="rounded-2xl border-0 shadow-elevated">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm flex items-center gap-2"><PhoneCall className="h-4 w-4" /> Callbacks</CardTitle>
-          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setCallbackDialog(true)}>
-            <Plus className="h-3 w-3 mr-1" /> Schedule
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {overdueCallbacks.length > 0 && renderCallbackList(overdueCallbacks, "⚠️ Overdue")}
-          {renderCallbackList(todayCallbacks, "Today")}
-          {renderCallbackList(tomorrowCallbacks, "Tomorrow")}
-          {renderCallbackList(upcomingCallbacks, "Upcoming")}
-          {pendingCallbacks.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">No pending callbacks</p>
-          )}
+        <CardHeader><CardTitle className="text-sm">Sales Pipeline</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+            {pipelineStages.map((s, i) => {
+              const maxCount = Math.max(...pipelineStages.map(x => x.count), 1);
+              const height = Math.max(20, (s.count / maxCount) * 100);
+              return (
+                <div key={s.stage} className="flex flex-col items-center gap-2">
+                  <div
+                    className="w-full rounded-xl bg-gradient-to-t from-primary/20 to-primary/5 relative flex items-end justify-center"
+                    style={{ height: 120 }}
+                  >
+                    <div
+                      className="w-full rounded-xl bg-gradient-to-t from-primary to-accent/80 flex items-center justify-center transition-all duration-500"
+                      style={{ height: `${height}%` }}
+                    >
+                      <span className="text-xs font-bold text-primary-foreground">{s.count}</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground text-center font-medium leading-tight">{s.label}</span>
+                  <span className="text-[10px] font-semibold text-foreground">${(s.value / 1000).toFixed(0)}k</span>
+                </div>
+              );
+            })}
+          </div>
         </CardContent>
       </Card>
 
-      {/* Charts + Leaderboard */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="rounded-2xl border-0 shadow-elevated">
-          <CardHeader><CardTitle className="text-sm">Monthly New Clients</CardTitle></CardHeader>
+      {/* Section 8: Hot Leads Priority + Cold Leads Aging */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="rounded-2xl border-0 shadow-elevated lg:col-span-2">
+          <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Flame className="h-4 w-4 text-destructive" /> Hot Leads Priority</CardTitle></CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="month" className="text-xs fill-muted-foreground" />
-                <YAxis className="text-xs fill-muted-foreground" />
-                <Tooltip />
-                <Bar dataKey="clients" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {hotLeadsPriority.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No leads to display</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Lead</TableHead>
+                    <TableHead>Score</TableHead>
+                    <TableHead>Temp</TableHead>
+                    <TableHead>Last Contact</TableHead>
+                    <TableHead>Next Follow Up</TableHead>
+                    <TableHead>AI Prediction</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {hotLeadsPriority.map(l => (
+                    <TableRow key={l.id}>
+                      <TableCell className="font-medium">{l.name}</TableCell>
+                      <TableCell>
+                        <Badge variant={l.score > 70 ? "destructive" : l.score > 30 ? "secondary" : "outline"}>
+                          {l.score}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{tempIcon(l.temperature)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {l.lastContact ? format(parseISO(l.lastContact), "dd MMM") : "—"}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {l.nextFollowUp ? format(parseISO(l.nextFollowUp), "dd MMM") : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {l.prediction && (
+                          <Badge variant={l.prediction === "likely_to_convert" ? "default" : "secondary"} className="text-[10px]">
+                            {l.prediction.replace(/_/g, " ")}
+                          </Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border-0 shadow-elevated">
-          <CardHeader><CardTitle className="text-sm">Monthly Lost Deals</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="month" className="text-xs fill-muted-foreground" />
-                <YAxis className="text-xs fill-muted-foreground" />
-                <Tooltip />
-                <Line type="monotone" dataKey="lost" stroke="hsl(var(--destructive))" strokeWidth={2} dot={{ r: 4 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <StatCard label="Cold Leads (14+ days)" value={agingLeads} icon={Snowflake} gradient="from-info to-primary" alert={agingLeads > 5} />
+          <StatCard label="Deals Won" value={revenueMetrics.dealsWon} icon={Trophy} gradient="from-success to-accent" />
+        </div>
       </div>
 
-      {/* Admin: Sales Leaderboard */}
+      {/* Section 9: Leaderboard (Admin only) */}
       {isAdmin && leaderboard.length > 0 && (
         <Card className="rounded-2xl border-0 shadow-elevated">
           <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2"><Trophy className="h-4 w-4" /> Sales Leaderboard</CardTitle>
+            <CardTitle className="text-sm flex items-center gap-2"><Trophy className="h-4 w-4 text-warning" /> Sales Leaderboard</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>#</TableHead>
                   <TableHead>Salesperson</TableHead>
-                  <TableHead className="text-right">Clients</TableHead>
-                  <TableHead className="text-right">Active</TableHead>
-                  <TableHead className="text-right">Cancelled</TableHead>
+                  <TableHead className="text-right">Leads</TableHead>
+                  <TableHead className="text-right">Deals Won</TableHead>
                   <TableHead className="text-right">Revenue</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {leaderboard.map((sp, i) => (
                   <TableRow key={i}>
+                    <TableCell className="font-bold">
+                      {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`}
+                    </TableCell>
                     <TableCell className="font-medium">{sp.name}</TableCell>
-                    <TableCell className="text-right">{sp.clients}</TableCell>
-                    <TableCell className="text-right">{sp.active}</TableCell>
-                    <TableCell className="text-right">{sp.cancelled}</TableCell>
+                    <TableCell className="text-right">{sp.leads}</TableCell>
+                    <TableCell className="text-right">{sp.dealsWon}</TableCell>
                     <TableCell className="text-right font-semibold">${sp.revenue.toLocaleString()}</TableCell>
                   </TableRow>
                 ))}
@@ -331,27 +235,33 @@ const SalesDashboardPage = () => {
         </Card>
       )}
 
-      {/* Top Clients */}
-      {myClients.length > 0 && (
+      {/* Section 10: My Accounts */}
+      {myAccountsTable.length > 0 && (
         <Card className="rounded-2xl border-0 shadow-elevated">
-          <CardHeader><CardTitle className="text-sm">Top Clients by Revenue</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Users className="h-4 w-4" /> My Accounts</CardTitle></CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Client</TableHead>
+                  <TableHead>Service</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Monthly Value</TableHead>
                   <TableHead className="text-right">Revenue</TableHead>
-                  <TableHead className="text-right">Outstanding</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {myClients.sort((a, b) => b.totalRevenue - a.totalRevenue).slice(0, 10).map(c => (
+                {myAccountsTable.slice(0, 15).map(c => (
                   <TableRow key={c.id}>
-                    <TableCell className="font-medium">{c.contact_name}</TableCell>
-                    <TableCell><Badge variant={c.client_status === "active" ? "default" : "secondary"}>{c.client_status}</Badge></TableCell>
-                    <TableCell className="text-right">${c.totalRevenue.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">${c.outstanding.toLocaleString()}</TableCell>
+                    <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell className="text-xs">{c.service}</TableCell>
+                    <TableCell>
+                      <Badge variant={c.status === "active" ? "default" : c.status === "cancelled" ? "destructive" : "secondary"}>
+                        {c.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">${c.monthlyValue.toLocaleString()}</TableCell>
+                    <TableCell className="text-right font-semibold">${c.revenue.toLocaleString()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -359,37 +269,6 @@ const SalesDashboardPage = () => {
           </CardContent>
         </Card>
       )}
-
-      {/* Schedule Callback Dialog */}
-      <Dialog open={callbackDialog} onOpenChange={setCallbackDialog}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Schedule Callback</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div><Label>Date *</Label><Input type="date" value={callbackForm.callback_date} onChange={e => setCallbackForm(p => ({ ...p, callback_date: e.target.value }))} /></div>
-            <div><Label>Time</Label><Input type="time" value={callbackForm.callback_time} onChange={e => setCallbackForm(p => ({ ...p, callback_time: e.target.value }))} /></div>
-            <div><Label>Notes</Label><Textarea value={callbackForm.notes} onChange={e => setCallbackForm(p => ({ ...p, notes: e.target.value }))} placeholder="Callback details..." /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCallbackDialog(false)}>Cancel</Button>
-            <Button onClick={handleCreateCallback} disabled={!callbackForm.callback_date}>Schedule</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Complete Callback Dialog */}
-      <Dialog open={!!completeDialog} onOpenChange={() => setCompleteDialog(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Complete Callback</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div><Label>Result *</Label><Textarea value={completeForm.result} onChange={e => setCompleteForm(p => ({ ...p, result: e.target.value }))} placeholder="What was the outcome?" /></div>
-            <div><Label>Next Step</Label><Input value={completeForm.next_step} onChange={e => setCompleteForm(p => ({ ...p, next_step: e.target.value }))} placeholder="e.g. Send proposal, Follow up next week" /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCompleteDialog(null)}>Cancel</Button>
-            <Button onClick={handleCompleteCallback} disabled={!completeForm.result}>Complete</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
