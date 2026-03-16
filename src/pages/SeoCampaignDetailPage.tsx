@@ -67,6 +67,35 @@ const SeoCampaignDetailPage = () => {
   const { reports, loading: reportLoading, addReport } = useSeoReports(projectId);
   const { logs: commLogs, loading: commLoading, addLog: addComm } = useSeoComms(projectId);
   const { audits: pageAudits, loading: auditLoading, crawling, crawlProgress, runFullAudit } = useSeoSiteAudit(projectId, project?.website_domain);
+  const { data: gscData, loading: gscLoading, refetch: refetchGsc } = useGscData(projectId);
+  const { profile } = useAuth();
+  const keywordIds = useMemo(() => keywords.map(k => k.id), [keywords]);
+  const { history: rankingHistory, refetch: refetchHistory } = useKeywordRankingHistory(keywordIds);
+  const [syncing, setSyncing] = useState(false);
+
+  const syncRankings = useCallback(async () => {
+    if (!profile?.business_id || !projectId || !project?.website_domain) return;
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("seo-gsc-sync", {
+        body: {
+          business_id: profile.business_id,
+          seo_project_id: projectId,
+          domain: project.website_domain,
+          client_id: project.client_id,
+          days: 28,
+        },
+      });
+      if (error) throw error;
+      toast.success(data?.message || `Rankings synced: ${data?.rows || 0} data points`);
+      refetchGsc();
+      refetchHistory();
+    } catch (e: any) {
+      toast.error("Sync failed: " + (e.message || "Unknown error"));
+    } finally {
+      setSyncing(false);
+    }
+  }, [profile, projectId, project, refetchGsc, refetchHistory]);
 
   // Form states
   const [kwOpen, setKwOpen] = useState(false);
