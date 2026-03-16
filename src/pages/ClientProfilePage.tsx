@@ -21,6 +21,7 @@ import {
   ClipboardCheck, CheckCircle2, MessageSquare, PhoneCall, CalendarCheck
 } from "lucide-react";
 import { useOnboardingChecklist } from "@/hooks/useOnboardingChecklist";
+import { ClientActivityTimeline } from "@/components/clients/ClientActivityTimeline";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useClientFinancials } from "@/hooks/useClientFinancials";
