@@ -690,6 +690,20 @@ const ClientProfilePage = () => {
             </div>
           )}
         </TabsContent>
+
+        {/* ── Client Activity Log (Internal) ── */}
+        <TabsContent value="activity">
+          <Card className="rounded-xl">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Clock className="h-4 w-4" /> Client Activity Log
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ClientActivityTimeline clientId={id} />
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Add Website Dialog */}

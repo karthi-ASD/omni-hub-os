@@ -159,6 +159,11 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onUpdateStage, onArc
 
         <Separator className="mb-4" />
 
+        {/* Internal Conversation Notes */}
+        <LeadNotesTimeline leadId={lead.id} />
+
+        <Separator className="my-4" />
+
         {/* Activity Log */}
         <div>
           <h3 className="text-sm font-semibold mb-3">Activity Log</h3>
