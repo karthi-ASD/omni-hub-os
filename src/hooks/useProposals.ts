@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { notifySalesDataChanged, useSalesDataAutoRefresh } from "@/lib/salesDataSync";
 
 export type ProposalStatus = "draft" | "sent" | "viewed" | "accepted" | "rejected" | "expired";
 
@@ -51,6 +52,7 @@ export function useProposals() {
   }, []);
 
   useEffect(() => { fetchProposals(); }, [fetchProposals]);
+  useSalesDataAutoRefresh(fetchProposals, ["all", "proposals", "dashboard"]);
 
   const createProposal = async (input: {
     deal_id: string;
@@ -97,7 +99,8 @@ export function useProposals() {
     ]);
 
     toast.success("Proposal created");
-    fetchProposals();
+    await fetchProposals();
+    notifySalesDataChanged(["proposals", "dashboard"], "proposal:create");
     return data as any as Proposal;
   };
 
@@ -116,7 +119,8 @@ export function useProposals() {
       }),
     ]);
     toast.success("Proposal sent");
-    fetchProposals();
+    await fetchProposals();
+    notifySalesDataChanged(["proposals", "dashboard"], "proposal:send");
   };
 
   const acceptProposal = async (proposalId: string) => {
@@ -128,7 +132,8 @@ export function useProposals() {
       payload_json: { entity_type: "proposal", entity_id: proposalId, actor_user_id: profile.user_id, short_message: "Proposal accepted" },
     });
     toast.success("Proposal accepted");
-    fetchProposals();
+    await fetchProposals();
+    notifySalesDataChanged(["proposals", "dashboard"], "proposal:accept");
   };
 
   const rejectProposal = async (proposalId: string) => {
@@ -140,7 +145,8 @@ export function useProposals() {
       payload_json: { entity_type: "proposal", entity_id: proposalId, actor_user_id: profile.user_id, short_message: "Proposal rejected" },
     });
     toast.success("Proposal rejected");
-    fetchProposals();
+    await fetchProposals();
+    notifySalesDataChanged(["proposals", "dashboard"], "proposal:reject");
   };
 
   const markPaid = async (proposalId: string) => {
@@ -152,7 +158,8 @@ export function useProposals() {
       payload_json: { entity_type: "proposal", entity_id: proposalId, actor_user_id: profile.user_id, short_message: "Payment marked as paid" },
     });
     toast.success("Payment marked as paid");
-    fetchProposals();
+    await fetchProposals();
+    notifySalesDataChanged(["proposals", "dashboard"], "proposal:mark-paid");
   };
 
   return { proposals, loading, createProposal, sendProposal, acceptProposal, rejectProposal, markPaid, refetch: fetchProposals };

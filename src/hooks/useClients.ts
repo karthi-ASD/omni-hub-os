@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { notifySalesDataChanged, useSalesDataAutoRefresh } from "@/lib/salesDataSync";
 
 export type OnboardingStatus = "pending" | "in_progress" | "completed";
 export type ClientStatus = "active" | "cancelled" | "pending" | "prospect" | "suspended";
@@ -157,6 +158,8 @@ export function useClients(options?: UseClientsOptions) {
     fetchClients(0, search);
   }, [fetchClients, search]);
 
+  useSalesDataAutoRefresh(() => fetchClients(0, search), ["all", "clients", "dashboard"]);
+
   const loadMore = () => {
     if (hasMore && !loading) {
       fetchClients(page + 1, search, true);
@@ -235,6 +238,7 @@ export function useClients(options?: UseClientsOptions) {
 
     toast.success("Client created");
     fetchClients(0, search);
+    notifySalesDataChanged(["clients", "dashboard"], "client:create");
     return data as any as Client;
   };
 
@@ -257,6 +261,7 @@ export function useClients(options?: UseClientsOptions) {
     });
     toast.success("Onboarding status updated");
     fetchClients(page, search);
+    notifySalesDataChanged(["clients", "dashboard"], "client:update-onboarding");
   };
 
   const updateClientStatus = async (clientId: string, status: ClientStatus) => {
@@ -276,6 +281,7 @@ export function useClients(options?: UseClientsOptions) {
     });
     toast.success("Client status updated");
     fetchClients(page, search);
+    notifySalesDataChanged(["clients", "dashboard"], "client:update-status");
   };
 
   const bulkAssignSalesperson = async (clientIds: string[], userId: string, userName: string) => {
@@ -297,6 +303,7 @@ export function useClients(options?: UseClientsOptions) {
 
     toast.success(`Assigned ${clientIds.length} clients to ${userName}`);
     fetchClients(0, search);
+    notifySalesDataChanged(["clients", "dashboard"], "client:bulk-assign");
   };
 
   return {

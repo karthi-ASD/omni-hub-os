@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { notifySalesDataChanged, useSalesDataAutoRefresh } from "@/lib/salesDataSync";
 
 export interface DealRoomProposal {
   id: string;
@@ -55,6 +56,7 @@ export function useDealRoomProposals() {
   }, []);
 
   useEffect(() => { fetchProposals(); }, [fetchProposals]);
+  useSalesDataAutoRefresh(fetchProposals, ["all", "proposals", "dashboard"]);
 
   const createProposal = async (input: {
     proposal_title: string;
@@ -100,13 +102,15 @@ export function useDealRoomProposals() {
     } as any);
     if (error) { toast.error("Failed to create proposal"); return; }
     toast.success(`Proposal v${version} created`);
-    fetchProposals();
+    await fetchProposals();
+    notifySalesDataChanged(["proposals", "dashboard"], "deal-room-proposal:create");
   };
 
   const updateStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("deal_room_proposals").update({ proposal_status: status } as any).eq("id", id);
     if (error) { toast.error("Failed to update"); return; }
-    fetchProposals();
+    await fetchProposals();
+    notifySalesDataChanged(["proposals", "dashboard"], "deal-room-proposal:update-status");
   };
 
   const uploadPdf = async (file: File, proposalId: string) => {
@@ -116,7 +120,8 @@ export function useDealRoomProposals() {
     if (error) { toast.error("Upload failed"); return null; }
     await supabase.from("deal_room_proposals").update({ pdf_file_path: path } as any).eq("id", proposalId);
     toast.success("PDF uploaded");
-    fetchProposals();
+    await fetchProposals();
+    notifySalesDataChanged(["proposals", "dashboard"], "deal-room-proposal:upload-pdf");
     return path;
   };
 

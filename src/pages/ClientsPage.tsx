@@ -19,6 +19,7 @@ import { Users, Plus, Mail, Phone, Building2, Search, Upload, RefreshCw, Chevron
 import CSVImportDialog from "@/components/clients/CSVImportDialog";
 import UnifiedClientForm from "@/components/clients/UnifiedClientForm";
 import { toast } from "sonner";
+import { notifySalesDataChanged, forceRefreshSalesData } from "@/lib/salesDataSync";
 
 const statusColors: Record<string, string> = {
   active: "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]",
@@ -84,6 +85,7 @@ const ClientsPage = () => {
       if (data?.error) throw new Error(data.error);
       toast.success(`Synced ${data.recordsSynced || 0} contacts`);
       refetch();
+      notifySalesDataChanged(["clients", "dashboard"], "client:sync");
     } catch (e: any) { toast.error(e.message || "Sync failed"); }
     finally { setSyncing(false); }
   };
@@ -98,6 +100,7 @@ const ClientsPage = () => {
     } as any).eq("id", clientId);
     toast.success("Sales owner updated");
     refetch();
+    notifySalesDataChanged(["clients", "dashboard"], "client:update-owner");
   };
 
   const toggleSelect = (id: string) => {
@@ -133,6 +136,9 @@ const ClientsPage = () => {
             <RefreshCw className={`h-4 w-4 mr-1 ${syncing ? "animate-spin" : ""}`} /> {syncing ? "Syncing..." : "Sync"}
           </Button>
         )}
+        <Button size="sm" variant="outline" onClick={forceRefreshSalesData}>
+          <RefreshCw className="h-4 w-4 mr-1" /> Refresh Data
+        </Button>
         {canCreate && (
           <>
             <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>

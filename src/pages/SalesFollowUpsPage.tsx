@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
+import { useSalesDataAutoRefresh } from "@/lib/salesDataSync";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +48,7 @@ const SalesFollowUpsPage = () => {
   }, [profile?.business_id, profile?.user_id, isAdmin]);
 
   useEffect(() => { fetchFollowUps(); }, [fetchFollowUps]);
+  useSalesDataAutoRefresh(fetchFollowUps, ["all", "follow-ups", "leads", "dashboard"]);
 
   const todayItems = followUps.filter(f => {
     if (!f.next_follow_up_at) return false;

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { notifySalesDataChanged, useSalesDataAutoRefresh } from "@/lib/salesDataSync";
 
 export interface ConversionRequest {
   id: string;
@@ -82,6 +83,7 @@ export function useLeadConversions() {
   }, [profile?.business_id]);
 
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
+  useSalesDataAutoRefresh(fetchRequests, ["all", "leads", "clients", "dashboard", "pipeline"]);
 
   const requestConversion = async (leadId: string, services?: string, contractValue?: number) => {
     if (!profile?.business_id) { toast.error("Select a tenant first"); return null; }
@@ -129,7 +131,8 @@ export function useLeadConversions() {
     }
 
     toast.success("Conversion request submitted for approval");
-    fetchRequests();
+    await fetchRequests();
+    notifySalesDataChanged(["leads", "dashboard", "pipeline"], "lead-conversion:request");
     return data;
   };
 
@@ -204,7 +207,8 @@ export function useLeadConversions() {
     }
 
     toast.success("Lead approved and converted to client");
-    fetchRequests();
+    await fetchRequests();
+    notifySalesDataChanged(["leads", "clients", "dashboard", "pipeline"], "lead-conversion:approve");
   };
 
   const rejectConversion = async (requestId: string, decisionNotes: string) => {
@@ -238,7 +242,8 @@ export function useLeadConversions() {
     });
 
     toast.success("Conversion request rejected");
-    fetchRequests();
+    await fetchRequests();
+    notifySalesDataChanged(["leads", "dashboard", "pipeline"], "lead-conversion:reject");
   };
 
   const revertClientToLead = async (clientId: string, reason: string) => {
@@ -291,7 +296,8 @@ export function useLeadConversions() {
     ]);
 
     toast.success("Client reverted to lead");
-    fetchRequests();
+    await fetchRequests();
+    notifySalesDataChanged(["leads", "clients", "dashboard", "pipeline"], "lead-conversion:revert-client");
   };
 
   const pendingRequests = requests.filter(r => r.request_status === "pending");

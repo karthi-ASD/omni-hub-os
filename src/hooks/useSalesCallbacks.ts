@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { notifySalesDataChanged, useSalesDataAutoRefresh } from "@/lib/salesDataSync";
 
 export interface SalesCallback {
   id: string;
@@ -36,6 +37,7 @@ export function useSalesCallbacks() {
   }, [profile?.business_id]);
 
   useEffect(() => { fetchCallbacks(); }, [fetchCallbacks]);
+  useSalesDataAutoRefresh(fetchCallbacks, ["all", "follow-ups", "dashboard"]);
 
   const createCallback = async (input: {
     client_id?: string;
@@ -57,6 +59,7 @@ export function useSalesCallbacks() {
     if (error) { toast.error("Failed to schedule callback"); return null; }
     toast.success("Callback scheduled");
     fetchCallbacks();
+    notifySalesDataChanged(["follow-ups", "dashboard"], "callback:create");
     return data as any as SalesCallback;
   };
 
@@ -68,6 +71,7 @@ export function useSalesCallbacks() {
     if (error) { toast.error("Failed to update callback"); return; }
     toast.success("Callback completed");
     fetchCallbacks();
+    notifySalesDataChanged(["follow-ups", "dashboard"], "callback:complete");
   };
 
   const missCallback = async (id: string) => {
@@ -75,6 +79,7 @@ export function useSalesCallbacks() {
       .update({ status: "missed", updated_at: new Date().toISOString() } as any)
       .eq("id", id);
     fetchCallbacks();
+    notifySalesDataChanged(["follow-ups", "dashboard"], "callback:missed");
   };
 
   return { callbacks, loading, createCallback, completeCallback, missCallback, refetch: fetchCallbacks };

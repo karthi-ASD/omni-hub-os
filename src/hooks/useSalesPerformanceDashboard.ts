@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, isToday, isPast, parseISO, differenceInDays } from "date-fns";
+import { useSalesDataAutoRefresh } from "@/lib/salesDataSync";
 
 export function useSalesPerformanceDashboard() {
   const { profile, user, isSuperAdmin, isBusinessAdmin } = useAuth();
@@ -46,6 +47,7 @@ export function useSalesPerformanceDashboard() {
   }, [businessId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+  useSalesDataAutoRefresh(fetchAll, ["all", "dashboard", "leads", "clients", "deals", "proposals", "follow-ups", "pipeline"]);
 
   // Scope data by user role
   const myLeads = useMemo(() => isAdmin ? leads : leads.filter(l => l.assigned_to_user_id === userId), [leads, isAdmin, userId]);
