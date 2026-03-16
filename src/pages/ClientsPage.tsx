@@ -43,6 +43,7 @@ const ClientsPage = () => {
   const [syncing, setSyncing] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkSalesId, setBulkSalesId] = useState<string>("");
+  const [revertClient, setRevertClient] = useState<Client | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const { members: salesTeam, loading: salesLoading } = useSalesTeam();
   const { canCreate } = useCanCreateClient();
