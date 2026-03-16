@@ -14,6 +14,7 @@ interface DashboardStats {
   todayCalls: number;
   openInvoices: number;
   revenueThisMonth: number;
+  totalLeads: number;
 }
 
 export function useDashboardStats() {
@@ -30,6 +31,7 @@ export function useDashboardStats() {
     todayCalls: 0,
     openInvoices: 0,
     revenueThisMonth: 0,
+    totalLeads: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -44,6 +46,13 @@ export function useDashboardStats() {
         .from("profiles")
         .select("id", { count: "exact", head: true });
       result.totalUsers = usersCount ?? 0;
+
+      // Leads count
+      const { count: leadsCount } = await supabase
+        .from("leads")
+        .select("id", { count: "exact", head: true })
+        .eq("is_deleted", false);
+      result.totalLeads = leadsCount ?? 0;
 
       // Businesses count (super admin)
       if (isSuperAdmin) {

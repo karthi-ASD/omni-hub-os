@@ -227,6 +227,12 @@ import AppModuleSettingsPage from "./pages/AppModuleSettingsPage";
 import DepartmentConfigPage from "./pages/DepartmentConfigPage";
 import LeadConversionApprovalsPage from "./pages/LeadConversionApprovalsPage";
 import LeadIntelligencePage from "./pages/LeadIntelligencePage";
+import SalesProspectsPage from "./pages/SalesProspectsPage";
+import SalesPipelinePage from "./pages/SalesPipelinePage";
+import SalesClientsPage from "./pages/SalesClientsPage";
+import SalesProposalsPage from "./pages/SalesProposalsPage";
+import SalesActivitiesPage from "./pages/SalesActivitiesPage";
+import SalesToolsPage from "./pages/SalesToolsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -301,6 +307,12 @@ const App = () => (
               <Route path="/sales-knowledge" element={<SalesKnowledgeBasePage />} />
               <Route path="/prospect-finder" element={<ProspectFinderPage />} />
               <Route path="/sales-opportunities" element={<SalesOpportunitiesPage />} />
+              <Route path="/sales/prospects" element={<SalesProspectsPage />} />
+              <Route path="/sales/pipeline" element={<SalesPipelinePage />} />
+              <Route path="/sales/clients" element={<SalesClientsPage />} />
+              <Route path="/sales/proposals" element={<SalesProposalsPage />} />
+              <Route path="/sales/activities" element={<SalesActivitiesPage />} />
+              <Route path="/sales/tools" element={<SalesToolsPage />} />
               <Route path="/more" element={<MorePage />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/inquiries" element={<InquiriesPage />} />
