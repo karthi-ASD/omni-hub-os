@@ -36,6 +36,7 @@ const stageColors: Record<string, string> = {
 const LeadsPage = () => {
   const { leads, loading, createLead, updateStage, logActivity, archiveLead, getActivities, updateLead } = useLeads();
   const { createDeal } = useDeals();
+  const { requestConversion } = useLeadConversions();
   const { profile } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
