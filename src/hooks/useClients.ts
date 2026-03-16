@@ -107,7 +107,7 @@ export function useClients(options?: UseClientsOptions) {
     setTotalCount(count || 0);
 
     // Get server-side status counts (unaffected by status filter)
-    const statusValues = ["active", "cancelled", "pending", "prospect", "suspended"];
+    const statusValues = ["active", "cancelled", "pending", "prospect", "suspended", "reverted"];
     const statusCountResults: Record<string, number> = {};
     await Promise.all(statusValues.map(async (s) => {
       let sq = supabase.from("clients").select("id", { count: "exact", head: true }).eq("client_status", s);
