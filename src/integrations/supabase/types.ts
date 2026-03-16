@@ -18646,7 +18646,7 @@ export type Database = {
       seo_keywords: {
         Row: {
           business_id: string
-          campaign_id: string
+          campaign_id: string | null
           created_at: string
           current_ranking: number | null
           difficulty: number | null
@@ -18664,7 +18664,7 @@ export type Database = {
         }
         Insert: {
           business_id: string
-          campaign_id: string
+          campaign_id?: string | null
           created_at?: string
           current_ranking?: number | null
           difficulty?: number | null
@@ -18682,7 +18682,7 @@ export type Database = {
         }
         Update: {
           business_id?: string
-          campaign_id?: string
+          campaign_id?: string | null
           created_at?: string
           current_ranking?: number | null
           difficulty?: number | null
