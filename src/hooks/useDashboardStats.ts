@@ -14,6 +14,7 @@ interface DashboardStats {
   todayCalls: number;
   openInvoices: number;
   revenueThisMonth: number;
+  totalLeads: number;
 }
 
 export function useDashboardStats() {
