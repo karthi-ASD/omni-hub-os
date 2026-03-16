@@ -696,6 +696,18 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route path="/business-onboarding" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><BusinessOnboardingWizardPage /></ProtectedRoute>
+              } />
+              <Route path="/customization-requests" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><CustomizationRequestsPage /></ProtectedRoute>
+              } />
+              <Route path="/app-module-settings" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AppModuleSettingsPage /></ProtectedRoute>
+              } />
+              <Route path="/department-config" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><DepartmentConfigPage /></ProtectedRoute>
+              } />
             </Route>
 
             <Route path="*" element={<NotFound />} />
