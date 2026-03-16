@@ -56,10 +56,10 @@ export default function SalesPipelinePage() {
     filteredLeads.forEach(l => {
       result.push({
         id: l.id,
-        name: l.name || l.company_name || "Unnamed Lead",
-        company: l.company_name || undefined,
+        name: l.name || l.business_name || "Unnamed Lead",
+        company: l.business_name || undefined,
         type: "lead",
-        value: l.estimated_value ? Number(l.estimated_value) : undefined,
+        value: l.estimated_budget ? Number(l.estimated_budget) : undefined,
         stage: stageMap[l.status?.toLowerCase() || "new"] || "new",
       });
     });
@@ -67,10 +67,10 @@ export default function SalesPipelinePage() {
     filteredDeals.forEach(d => {
       result.push({
         id: d.id,
-        name: d.title || "Unnamed Deal",
-        company: d.company_name || undefined,
+        name: d.deal_name || "Unnamed Deal",
+        company: d.business_name || undefined,
         type: "deal",
-        value: d.value ? Number(d.value) : undefined,
+        value: d.estimated_value ? Number(d.estimated_value) : undefined,
         stage: stageMap[d.status?.toLowerCase() || "new"] || "new",
       });
     });
