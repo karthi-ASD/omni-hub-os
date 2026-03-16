@@ -6131,6 +6131,7 @@ export type Database = {
           health_score: string | null
           id: string
           last_payment_date: string | null
+          lead_id: string | null
           mobile: string | null
           onboarding_status: Database["public"]["Enums"]["onboarding_status"]
           payment_method: string | null
@@ -6172,6 +6173,7 @@ export type Database = {
           health_score?: string | null
           id?: string
           last_payment_date?: string | null
+          lead_id?: string | null
           mobile?: string | null
           onboarding_status?: Database["public"]["Enums"]["onboarding_status"]
           payment_method?: string | null
@@ -6213,6 +6215,7 @@ export type Database = {
           health_score?: string | null
           id?: string
           last_payment_date?: string | null
+          lead_id?: string | null
           mobile?: string | null
           onboarding_status?: Database["public"]["Enums"]["onboarding_status"]
           payment_method?: string | null
@@ -6245,6 +6248,13 @@ export type Database = {
             columns: ["deal_id"]
             isOneToOne: false
             referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
         ]
@@ -13258,6 +13268,66 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_conversion_requests: {
+        Row: {
+          accounts_user_id: string | null
+          approved_at: string | null
+          business_id: string
+          contract_value: number | null
+          created_at: string
+          decision_notes: string | null
+          id: string
+          lead_id: string
+          request_status: string
+          requested_by_user_id: string
+          services: string | null
+          updated_at: string
+        }
+        Insert: {
+          accounts_user_id?: string | null
+          approved_at?: string | null
+          business_id: string
+          contract_value?: number | null
+          created_at?: string
+          decision_notes?: string | null
+          id?: string
+          lead_id: string
+          request_status?: string
+          requested_by_user_id: string
+          services?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accounts_user_id?: string | null
+          approved_at?: string | null
+          business_id?: string
+          contract_value?: number | null
+          created_at?: string
+          decision_notes?: string | null
+          id?: string
+          lead_id?: string
+          request_status?: string
+          requested_by_user_id?: string
+          services?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_conversion_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_conversion_requests_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
         ]
@@ -22520,6 +22590,7 @@ export type Database = {
         | "meeting_booked"
         | "proposal_requested"
         | "negotiation"
+        | "conversion_requested"
         | "won"
         | "lost"
       lead_status: "active" | "archived"
@@ -22775,6 +22846,7 @@ export const Constants = {
         "meeting_booked",
         "proposal_requested",
         "negotiation",
+        "conversion_requested",
         "won",
         "lost",
       ],
