@@ -55,42 +55,7 @@ export function LeadNotesTimeline({ leadId }: LeadNotesTimelineProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Conversation History</h3>
-        <Button size="sm" variant="outline" onClick={() => setShowForm(!showForm)}>
-          <Plus className="h-3.5 w-3.5 mr-1" /> Add Note
-        </Button>
       </div>
-
-      {showForm && (
-        <div className="space-y-3 p-4 rounded-lg border border-border bg-muted/30">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">Contact Method</Label>
-              <Select value={contactMethod} onValueChange={setContactMethod}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="call">📞 Call</SelectItem>
-                  <SelectItem value="email">📧 Email</SelectItem>
-                  <SelectItem value="whatsapp">💬 WhatsApp</SelectItem>
-                  <SelectItem value="meeting">🤝 Meeting</SelectItem>
-                  <SelectItem value="other">📝 Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs">Next Follow-up</Label>
-              <Input type="date" className="h-8 text-xs" value={followupDate} onChange={e => setFollowupDate(e.target.value)} />
-            </div>
-          </div>
-          <div>
-            <Label className="text-xs">Conversation Notes</Label>
-            <Textarea placeholder="What was discussed…" value={noteText} onChange={e => setNoteText(e.target.value)} className="min-h-[80px] text-sm" />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
-            <Button size="sm" onClick={handleAdd} disabled={!noteText.trim()}>Save Note</Button>
-          </div>
-        </div>
-      )}
 
       <Separator />
 
