@@ -6,6 +6,9 @@ import { useSeoGbp } from "@/hooks/useSeoGbp";
 import { useSeoTechnical } from "@/hooks/useSeoTechnical";
 import { useSeoReports } from "@/hooks/useSeoReports";
 import { useSeoComms } from "@/hooks/useSeoComms";
+import { useSeoSiteAudit } from "@/hooks/useSeoSiteAudit";
+import { SeoAuditPanel } from "@/components/seo/SeoAuditPanel";
+import { SeoTechnicalPanel } from "@/components/seo/SeoTechnicalPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SeoProjectOverview } from "@/components/seo/SeoProjectOverview";
 import {
   ArrowLeft, Key, FileText, Link, Globe, BarChart3, MessageSquare,
-  MapPin, Wrench, Plus, LayoutDashboard, CheckSquare, Settings,
+  MapPin, Wrench, Plus, LayoutDashboard, CheckSquare, Settings, Scan,
 } from "lucide-react";
 
 const statusBadge = (status: string) => {
@@ -58,6 +61,7 @@ const SeoCampaignDetailPage = () => {
   const { audit, loading: techLoading, upsert: upsertTech } = useSeoTechnical(projectId);
   const { reports, loading: reportLoading, addReport } = useSeoReports(projectId);
   const { logs: commLogs, loading: commLoading, addLog: addComm } = useSeoComms(projectId);
+  const { audits: pageAudits, loading: auditLoading, crawling, crawlProgress, runFullAudit } = useSeoSiteAudit(projectId, project?.website_domain);
 
   // Form states
   const [kwOpen, setKwOpen] = useState(false);
@@ -74,8 +78,6 @@ const SeoCampaignDetailPage = () => {
   const [commForm, setCommForm] = useState({ communication_type: "email", summary: "", follow_up_date: "" });
   const [gbpForm, setGbpForm] = useState({ existing_listing: false, listing_url: "", verification_status: "not_started", nap_consistency_check: false, reviews_count: 0, rating_avg: 0, gmb_posts_count: 0 });
   const [gbpEditing, setGbpEditing] = useState(false);
-  const [techForm, setTechForm] = useState({ desktop_speed: 0, mobile_speed: 0, ssl_active: false, sitemap_submitted: false, robots_txt_checked: false, schema_added: false, broken_links_count: 0, notes: "" });
-  const [techEditing, setTechEditing] = useState(false);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -103,6 +105,7 @@ const SeoCampaignDetailPage = () => {
         <div className="overflow-x-auto -mx-1 px-1">
           <TabsList className="inline-flex h-10 w-auto">
             <TabsTrigger value="overview" className="gap-1.5 text-xs"><LayoutDashboard className="h-3 w-3" /> Overview</TabsTrigger>
+            <TabsTrigger value="audit" className="gap-1.5 text-xs"><Scan className="h-3 w-3" /> Audit</TabsTrigger>
             <TabsTrigger value="keywords" className="gap-1.5 text-xs"><Key className="h-3 w-3" /> Keywords</TabsTrigger>
             <TabsTrigger value="onpage" className="gap-1.5 text-xs"><FileText className="h-3 w-3" /> On-Page</TabsTrigger>
             <TabsTrigger value="offpage" className="gap-1.5 text-xs"><Link className="h-3 w-3" /> Off-Page</TabsTrigger>
@@ -121,6 +124,17 @@ const SeoCampaignDetailPage = () => {
           ) : (
             <Skeleton className="h-48 w-full" />
           )}
+        </TabsContent>
+
+        {/* Audit Tab */}
+        <TabsContent value="audit">
+          <SeoAuditPanel
+            audits={pageAudits}
+            loading={auditLoading}
+            crawling={crawling}
+            crawlProgress={crawlProgress}
+            onRunAudit={runFullAudit}
+          />
         </TabsContent>
 
         {/* Keywords Tab */}
@@ -399,49 +413,12 @@ const SeoCampaignDetailPage = () => {
         </TabsContent>
 
         {/* Technical SEO Tab */}
-        <TabsContent value="technical" className="space-y-4">
-          <h2 className="text-lg font-semibold">Technical SEO Audit</h2>
-          {techLoading ? <Skeleton className="h-48 w-full" /> : (
-            <Card className="rounded-2xl border-0 shadow-elevated">
-              <CardContent className="pt-6 space-y-4">
-                {!techEditing && audit ? (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div><Label className="text-muted-foreground text-xs">Desktop Speed</Label><p>{audit.desktop_speed ?? "—"}</p></div>
-                      <div><Label className="text-muted-foreground text-xs">Mobile Speed</Label><p>{audit.mobile_speed ?? "—"}</p></div>
-                      <div><Label className="text-muted-foreground text-xs">SSL</Label><p>{audit.ssl_active ? "✅" : "❌"}</p></div>
-                      <div><Label className="text-muted-foreground text-xs">Sitemap</Label><p>{audit.sitemap_submitted ? "✅" : "❌"}</p></div>
-                      <div><Label className="text-muted-foreground text-xs">Robots.txt</Label><p>{audit.robots_txt_checked ? "✅" : "❌"}</p></div>
-                      <div><Label className="text-muted-foreground text-xs">Schema</Label><p>{audit.schema_added ? "✅" : "❌"}</p></div>
-                      <div><Label className="text-muted-foreground text-xs">Broken Links</Label><p>{audit.broken_links_count}</p></div>
-                      <div><Label className="text-muted-foreground text-xs">Last Audit</Label><p>{audit.last_audit_date || "—"}</p></div>
-                    </div>
-                    {audit.notes && <p className="text-sm text-muted-foreground">{audit.notes}</p>}
-                    <Button variant="outline" size="sm" onClick={() => { setTechForm({ desktop_speed: audit.desktop_speed ?? 0, mobile_speed: audit.mobile_speed ?? 0, ssl_active: audit.ssl_active, sitemap_submitted: audit.sitemap_submitted, robots_txt_checked: audit.robots_txt_checked, schema_added: audit.schema_added, broken_links_count: audit.broken_links_count, notes: audit.notes || "" }); setTechEditing(true); }}>Edit</Button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div><Label>Desktop Speed</Label><Input type="number" value={techForm.desktop_speed} onChange={(e) => setTechForm({ ...techForm, desktop_speed: Number(e.target.value) })} /></div>
-                      <div><Label>Mobile Speed</Label><Input type="number" value={techForm.mobile_speed} onChange={(e) => setTechForm({ ...techForm, mobile_speed: Number(e.target.value) })} /></div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="flex items-center gap-2"><Switch checked={techForm.ssl_active} onCheckedChange={(v) => setTechForm({ ...techForm, ssl_active: v })} /><Label>SSL Active</Label></div>
-                      <div className="flex items-center gap-2"><Switch checked={techForm.sitemap_submitted} onCheckedChange={(v) => setTechForm({ ...techForm, sitemap_submitted: v })} /><Label>Sitemap Submitted</Label></div>
-                      <div className="flex items-center gap-2"><Switch checked={techForm.robots_txt_checked} onCheckedChange={(v) => setTechForm({ ...techForm, robots_txt_checked: v })} /><Label>Robots.txt Checked</Label></div>
-                      <div className="flex items-center gap-2"><Switch checked={techForm.schema_added} onCheckedChange={(v) => setTechForm({ ...techForm, schema_added: v })} /><Label>Schema Added</Label></div>
-                    </div>
-                    <div><Label>Broken Links Count</Label><Input type="number" value={techForm.broken_links_count} onChange={(e) => setTechForm({ ...techForm, broken_links_count: Number(e.target.value) })} /></div>
-                    <div><Label>Notes</Label><Textarea value={techForm.notes} onChange={(e) => setTechForm({ ...techForm, notes: e.target.value })} /></div>
-                    <div className="flex gap-2">
-                      <Button onClick={async () => { await upsertTech({ ...techForm, last_audit_date: new Date().toISOString().split("T")[0] } as any); setTechEditing(false); }}>Save Audit</Button>
-                      {audit && <Button variant="outline" onClick={() => setTechEditing(false)}>Cancel</Button>}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+        <TabsContent value="technical">
+          <SeoTechnicalPanel
+            audit={audit}
+            loading={techLoading}
+            onSave={upsertTech}
+          />
         </TabsContent>
 
         {/* Reports Tab */}
