@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 export interface SeoCommunicationLog {
   id: string;
-  campaign_id: string;
+  seo_project_id: string | null;
   communication_type: string;
   summary: string | null;
   follow_up_date: string | null;
@@ -14,32 +14,35 @@ export interface SeoCommunicationLog {
   created_at: string;
 }
 
-export function useSeoComms(campaignId?: string) {
+export function useSeoComms(projectId?: string) {
   const { profile } = useAuth();
   const [logs, setLogs] = useState<SeoCommunicationLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetch = useCallback(async () => {
-    if (!campaignId) { setLogs([]); setLoading(false); return; }
+    if (!projectId) { setLogs([]); setLoading(false); return; }
     setLoading(true);
-    const { data } = await supabase
-      .from("seo_communication_logs")
+    const { data } = await (supabase.from("seo_communication_logs") as any)
       .select("*")
-      .eq("campaign_id", campaignId)
+      .eq("seo_project_id", projectId)
       .order("created_at", { ascending: false });
-    setLogs((data as any as SeoCommunicationLog[]) || []);
+    setLogs((data as SeoCommunicationLog[]) || []);
     setLoading(false);
-  }, [campaignId]);
+  }, [projectId]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  const addLog = async (input: { communication_type: string; summary?: string; follow_up_date?: string }) => {
-    if (!profile?.business_id || !campaignId) return;
-    await supabase.from("seo_communication_logs").insert({
+  const addLog = async (input: {
+    communication_type: string;
+    summary?: string;
+    follow_up_date?: string;
+  }) => {
+    if (!profile?.business_id || !projectId) return;
+    await (supabase.from("seo_communication_logs") as any).insert({
       business_id: profile.business_id,
-      campaign_id: campaignId,
+      seo_project_id: projectId,
       ...input,
-    } as any);
+    });
     toast.success("Communication logged");
     fetch();
   };
