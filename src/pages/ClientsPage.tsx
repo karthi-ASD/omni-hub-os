@@ -19,6 +19,7 @@ import { Users, Plus, Mail, Phone, Building2, Search, Upload, RefreshCw, Chevron
 import CSVImportDialog from "@/components/clients/CSVImportDialog";
 import UnifiedClientForm from "@/components/clients/UnifiedClientForm";
 import { toast } from "sonner";
+import { notifySalesDataChanged, forceRefreshSalesData } from "@/lib/salesDataSync";
 
 const statusColors: Record<string, string> = {
   active: "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]",
