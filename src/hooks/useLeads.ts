@@ -122,6 +122,10 @@ export function useLeads() {
     };
     const { error } = await supabase.from("lead_activities").insert([row]);
     if (error) { toast.error("Failed to log activity"); return; }
+    // Update last_activity_at and increment counters for lead intelligence
+    const counterField = type === "call" ? "total_calls" : type === "email" ? "total_emails" : type === "whatsapp" ? "total_whatsapp" : null;
+    const updates: Record<string, unknown> = { last_activity_at: new Date().toISOString(), last_contact_method: type };
+    await supabase.from("leads").update(updates).eq("id", leadId);
     toast.success("Activity logged");
   };
 
