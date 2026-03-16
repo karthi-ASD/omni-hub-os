@@ -69,6 +69,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "AI Assistant", icon: Bot, to: "/ai-sales-assistant" },
       { label: "Prospect Finder", icon: Search, to: "/prospect-finder" },
       { label: "Leads", icon: Target, to: "/leads" },
+      { label: "Lead Intelligence", icon: Brain, to: "/lead-intelligence" },
       { label: "Follow-Ups", icon: CalendarCheck, to: "/sales-follow-ups" },
       { label: "Conversion Requests", icon: Handshake, to: "/lead-conversion-approvals" },
       { label: "Deals", icon: FolderKanban, to: "/deals" },
