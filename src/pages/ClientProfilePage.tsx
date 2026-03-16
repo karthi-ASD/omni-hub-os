@@ -385,6 +385,14 @@ const ClientProfilePage = () => {
         {/* ── Financial Portfolio ── */}
         <TabsContent value="finance">
           <div className="space-y-4">
+            {/* Xero-only Banner + Create in Xero */}
+            <div className="flex items-center justify-between rounded-xl bg-muted/40 border border-border/50 px-4 py-2">
+              <span className="text-xs text-muted-foreground flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Invoices are managed in Xero. CRM is read-only.</span>
+              <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => window.open("https://go.xero.com/AccountsReceivable/Edit.aspx", "_blank")}>
+                <ExternalLink className="h-3 w-3 mr-1" /> Create Invoice in Xero
+              </Button>
+            </div>
+
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {[
                 { label: "Lifetime Revenue", value: `$${financials.totalRevenue.toLocaleString("en-AU", { minimumFractionDigits: 2 })}`, icon: DollarSign, color: "text-[hsl(152,60%,42%)]" },
