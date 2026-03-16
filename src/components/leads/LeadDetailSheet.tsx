@@ -46,6 +46,7 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onUpdateStage, onArc
   const [activities, setActivities] = useState<LeadActivity[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Lead>>({});
+  const [proposalDialogOpen, setProposalDialogOpen] = useState(false);
 
   useEffect(() => {
     if (lead && open) {
