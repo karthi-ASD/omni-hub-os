@@ -132,7 +132,8 @@ export function useProposals() {
       payload_json: { entity_type: "proposal", entity_id: proposalId, actor_user_id: profile.user_id, short_message: "Proposal accepted" },
     });
     toast.success("Proposal accepted");
-    fetchProposals();
+    await fetchProposals();
+    notifySalesDataChanged(["proposals", "dashboard"], "proposal:accept");
   };
 
   const rejectProposal = async (proposalId: string) => {
