@@ -102,7 +102,8 @@ export function useDealRoomProposals() {
     } as any);
     if (error) { toast.error("Failed to create proposal"); return; }
     toast.success(`Proposal v${version} created`);
-    fetchProposals();
+    await fetchProposals();
+    notifySalesDataChanged(["proposals", "dashboard"], "deal-room-proposal:create");
   };
 
   const updateStatus = async (id: string, status: string) => {
