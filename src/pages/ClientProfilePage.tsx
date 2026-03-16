@@ -61,7 +61,7 @@ const convTypeIcon: Record<string, React.ElementType> = {
 const ClientProfilePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { clients, loading: clientsLoading, updateClientStatus } = useClients();
+  const { clients, loading: clientsLoading, updateClientStatus, refetch: fetchClients } = useClients();
   const client = clients.find((c) => c.id === id);
   const {
     services, websites, apps, seoProjects, invoices, contracts, tickets, timeline,
