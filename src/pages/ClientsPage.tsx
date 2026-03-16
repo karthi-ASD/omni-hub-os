@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSalesTeam } from "@/hooks/useSalesTeam";
 import { useCanCreateClient } from "@/hooks/useCanCreateClient";
 import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
+import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,9 +16,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
-import { Users, Plus, Mail, Phone, Building2, Search, Upload, RefreshCw, ChevronDown, UserCheck, Clock, CheckCircle, XCircle, Filter } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Users, Plus, Mail, Phone, Building2, Search, Upload, RefreshCw, ChevronDown, UserCheck, Clock, CheckCircle, XCircle, Filter, MoreVertical, Undo2 } from "lucide-react";
 import CSVImportDialog from "@/components/clients/CSVImportDialog";
 import UnifiedClientForm from "@/components/clients/UnifiedClientForm";
+import RevertToLeadDialog from "@/components/clients/RevertToLeadDialog";
 import { toast } from "sonner";
 import { notifySalesDataChanged, forceRefreshSalesData } from "@/lib/salesDataSync";
 
