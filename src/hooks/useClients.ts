@@ -281,6 +281,7 @@ export function useClients(options?: UseClientsOptions) {
     });
     toast.success("Client status updated");
     fetchClients(page, search);
+    notifySalesDataChanged(["clients", "dashboard"], "client:update-status");
   };
 
   const bulkAssignSalesperson = async (clientIds: string[], userId: string, userName: string) => {
