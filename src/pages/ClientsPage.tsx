@@ -58,7 +58,7 @@ const ClientsPage = () => {
   const effectiveSalesFilter = isSalesOnly ? (profile?.user_id || "all") : salesFilter;
 
   const {
-    clients, loading, totalCount, hasMore,
+    clients, loading, totalCount, statusCounts, hasMore,
     createClient, updateClientStatus, loadMore, setSearchTerm, refetch,
     bulkAssignSalesperson,
   } = useClients({
