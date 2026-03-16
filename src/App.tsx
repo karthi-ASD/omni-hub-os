@@ -227,6 +227,12 @@ import AppModuleSettingsPage from "./pages/AppModuleSettingsPage";
 import DepartmentConfigPage from "./pages/DepartmentConfigPage";
 import LeadConversionApprovalsPage from "./pages/LeadConversionApprovalsPage";
 import LeadIntelligencePage from "./pages/LeadIntelligencePage";
+import SalesProspectsPage from "./pages/SalesProspectsPage";
+import SalesPipelinePage from "./pages/SalesPipelinePage";
+import SalesClientsPage from "./pages/SalesClientsPage";
+import SalesProposalsPage from "./pages/SalesProposalsPage";
+import SalesActivitiesPage from "./pages/SalesActivitiesPage";
+import SalesToolsPage from "./pages/SalesToolsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
