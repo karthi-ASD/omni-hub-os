@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { SeoAuditPanel } from "@/components/seo/SeoAuditPanel";
 import { SeoTechnicalPanel } from "@/components/seo/SeoTechnicalPanel";
+import { KeywordCsvImportDialog } from "@/components/seo/KeywordCsvImportDialog";
 import { SeoRankingPanel } from "@/components/seo/SeoRankingPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ import { SeoProjectOverview } from "@/components/seo/SeoProjectOverview";
 import {
   ArrowLeft, Key, FileText, Link, Globe, BarChart3, MessageSquare,
   MapPin, Wrench, Plus, LayoutDashboard, CheckSquare, Settings, Scan, TrendingUp,
+  Upload, Download,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -59,7 +61,8 @@ const SeoCampaignDetailPage = () => {
   const navigate = useNavigate();
   const { projects } = useSeoProjects();
   const project = projects.find((p) => p.id === projectId);
-  const { keywords, loading: kwLoading, addKeyword, updateKeywordStatus } = useSeoKeywords(projectId);
+  const { keywords, loading: kwLoading, addKeyword, bulkImportKeywords, exportKeywordsCsv, updateKeywordStatus } = useSeoKeywords(projectId);
+  const [csvImportOpen, setCsvImportOpen] = useState(false);
   const { tasks, loading: taskLoading, addTask, updateTaskStatus } = useSeoOnpageTasks(projectId);
   const { items: offpageItems, loading: offLoading, addItem, updateItemStatus } = useSeoOffpageItems(projectId);
   const { content, loading: contentLoading, addContent, updateContentStatus } = useSeoContent(projectId);
@@ -187,33 +190,48 @@ const SeoCampaignDetailPage = () => {
 
         {/* Keywords Tab */}
         <TabsContent value="keywords" className="space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center flex-wrap gap-2">
             <h2 className="text-lg font-semibold">Keywords ({keywords.length})</h2>
-            <Dialog open={kwOpen} onOpenChange={setKwOpen}>
-              <DialogTrigger asChild><Button size="sm"><Plus className="h-3 w-3 mr-1" /> Add</Button></DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Add Keyword</DialogTitle></DialogHeader>
-                <div className="space-y-3">
-                  <div><Label>Keyword</Label><Input value={kwForm.keyword} onChange={(e) => setKwForm({ ...kwForm, keyword: e.target.value })} /></div>
-                  <div><Label>Type</Label>
-                    <Select value={kwForm.keyword_type} onValueChange={(v) => setKwForm({ ...kwForm, keyword_type: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{["primary", "secondary", "service", "location", "blog"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                    </Select>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => setCsvImportOpen(true)}>
+                <Upload className="h-3 w-3 mr-1" /> Import CSV
+              </Button>
+              <Button size="sm" variant="outline" onClick={exportKeywordsCsv} disabled={keywords.length === 0}>
+                <Download className="h-3 w-3 mr-1" /> Export CSV
+              </Button>
+              <Dialog open={kwOpen} onOpenChange={setKwOpen}>
+                <DialogTrigger asChild><Button size="sm"><Plus className="h-3 w-3 mr-1" /> Add Keyword</Button></DialogTrigger>
+                <DialogContent>
+                  <DialogHeader><DialogTitle>Add Keyword</DialogTitle></DialogHeader>
+                  <div className="space-y-3">
+                    <div><Label>Keyword</Label><Input value={kwForm.keyword} onChange={(e) => setKwForm({ ...kwForm, keyword: e.target.value })} /></div>
+                    <div><Label>Type</Label>
+                      <Select value={kwForm.keyword_type} onValueChange={(v) => setKwForm({ ...kwForm, keyword_type: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>{["primary", "secondary", "service", "location", "blog"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div><Label>Location</Label><Input value={kwForm.location} onChange={(e) => setKwForm({ ...kwForm, location: e.target.value })} placeholder="e.g. Sydney" /></div>
+                    <div><Label>Priority</Label>
+                      <Select value={kwForm.priority} onValueChange={(v) => setKwForm({ ...kwForm, priority: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>{["low", "medium", "high"].map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div><Label>Target URL</Label><Input value={kwForm.target_url} onChange={(e) => setKwForm({ ...kwForm, target_url: e.target.value })} /></div>
+                    <Button className="w-full" onClick={async () => { await addKeyword(kwForm as any); setKwOpen(false); setKwForm({ keyword: "", keyword_type: "primary", priority: "medium", target_url: "", location: "" }); }}>Add Keyword</Button>
                   </div>
-                  <div><Label>Location</Label><Input value={kwForm.location} onChange={(e) => setKwForm({ ...kwForm, location: e.target.value })} placeholder="e.g. Sydney" /></div>
-                  <div><Label>Priority</Label>
-                    <Select value={kwForm.priority} onValueChange={(v) => setKwForm({ ...kwForm, priority: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{["low", "medium", "high"].map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div><Label>Target URL</Label><Input value={kwForm.target_url} onChange={(e) => setKwForm({ ...kwForm, target_url: e.target.value })} /></div>
-                  <Button className="w-full" onClick={async () => { await addKeyword(kwForm as any); setKwOpen(false); setKwForm({ keyword: "", keyword_type: "primary", priority: "medium", target_url: "", location: "" }); }}>Add Keyword</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
+
+          <KeywordCsvImportDialog
+            open={csvImportOpen}
+            onOpenChange={setCsvImportOpen}
+            existingKeywords={keywords.map((k) => k.keyword)}
+            onImport={bulkImportKeywords}
+          />
           {kwLoading ? <Skeleton className="h-24 w-full" /> : keywords.length === 0 ? (
             <Card className="rounded-2xl border-0 shadow-elevated"><CardContent className="py-8 text-center text-muted-foreground">No keywords yet</CardContent></Card>
           ) : (

@@ -73,12 +73,54 @@ export function useSeoKeywords(projectId?: string) {
     await fetch();
   };
 
+  const bulkImportKeywords = async (rows: { keyword: string; location: string; target_url: string; priority: string }[]) => {
+    if (!profile?.business_id || !projectId || rows.length === 0) return;
+    const records = rows.map((r) => ({
+      business_id: profile.business_id,
+      seo_project_id: projectId,
+      keyword: r.keyword,
+      keyword_type: "primary",
+      priority: r.priority || "medium",
+      target_url: r.target_url || null,
+      location: r.location || null,
+      search_volume: 0,
+      difficulty: 0,
+      target_rank: null,
+    }));
+    const { error } = await (supabase.from("seo_keywords") as any).insert(records);
+    if (error) {
+      console.error("Bulk import error:", error);
+      throw new Error(error.message);
+    }
+    await fetch();
+  };
+
+  const exportKeywordsCsv = () => {
+    if (keywords.length === 0) {
+      toast.error("No keywords to export");
+      return;
+    }
+    const header = "keyword,location,target_url,priority,status,current_ranking";
+    const rows = keywords.map((k) =>
+      [k.keyword, k.location || "", k.target_url || "", k.priority, k.status, k.current_ranking ?? ""].join(",")
+    );
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `keywords-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${keywords.length} keywords`);
+  };
+
   const updateKeywordStatus = async (id: string, status: string) => {
     await (supabase.from("seo_keywords") as any).update({ status }).eq("id", id);
     fetch();
   };
 
-  return { keywords, loading, addKeyword, updateKeywordStatus, refetch: fetch };
+  return { keywords, loading, addKeyword, bulkImportKeywords, exportKeywordsCsv, updateKeywordStatus, refetch: fetch };
 }
 
 // ── On-Page Tasks (now linked to seo_projects) ──
