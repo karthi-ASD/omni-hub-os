@@ -225,6 +225,7 @@ import CustomizationRequestsPage from "./pages/CustomizationRequestsPage";
 import AppModuleSettingsPage from "./pages/AppModuleSettingsPage";
 import DepartmentConfigPage from "./pages/DepartmentConfigPage";
 import LeadConversionApprovalsPage from "./pages/LeadConversionApprovalsPage";
+import LeadIntelligencePage from "./pages/LeadIntelligencePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
