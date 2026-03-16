@@ -104,6 +104,22 @@ export function useClients(options?: UseClientsOptions) {
     const { count } = await countQuery;
     setTotalCount(count || 0);
 
+    // Get server-side status counts (unaffected by status filter)
+    const statusValues = ["active", "cancelled", "pending", "prospect", "suspended"];
+    const statusCountResults: Record<string, number> = {};
+    await Promise.all(statusValues.map(async (s) => {
+      let sq = supabase.from("clients").select("id", { count: "exact", head: true }).eq("client_status", s);
+      if (searchTerm) {
+        sq = sq.or(`contact_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,company_name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
+      }
+      if (salesOwnerId && salesOwnerId !== "all") {
+        sq = sq.eq("sales_owner_id", salesOwnerId);
+      }
+      const { count: sc } = await sq;
+      statusCountResults[s] = sc || 0;
+    }));
+    setStatusCounts(statusCountResults);
+
     // Get page of data
     let dataQuery = supabase
       .from("clients")
