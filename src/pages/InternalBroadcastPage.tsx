@@ -233,7 +233,7 @@ export default function InternalBroadcastPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {ins.message && <p className="text-sm text-muted-foreground line-clamp-2">{ins.message}</p>}
+                    {ins.message && <p className="text-sm text-muted-foreground line-clamp-3 whitespace-pre-wrap">{ins.message}</p>}
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {getViewCount(ins.id)}</span>
                       {ins.require_acknowledgement && <span className="flex items-center gap-1"><CheckCircle className="h-3 w-3" /> {getAckCount(ins.id)}</span>}

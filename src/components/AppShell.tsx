@@ -10,6 +10,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { BroadcastPopup } from "@/components/notifications/BroadcastPopup";
 
 const AppShell = () => {
   const { profile } = useAuth();
@@ -25,6 +26,7 @@ const AppShell = () => {
         </main>
         <FloatingActionButton />
         <BottomNav />
+        <BroadcastPopup />
         {businessId && (
           <ChatWidget
             businessId={businessId}
@@ -58,6 +60,7 @@ const AppShell = () => {
             </div>
           </main>
         </div>
+        <BroadcastPopup />
         {businessId && (
           <ChatWidget
             businessId={businessId}
