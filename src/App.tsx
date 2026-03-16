@@ -307,6 +307,12 @@ const App = () => (
               <Route path="/sales-knowledge" element={<SalesKnowledgeBasePage />} />
               <Route path="/prospect-finder" element={<ProspectFinderPage />} />
               <Route path="/sales-opportunities" element={<SalesOpportunitiesPage />} />
+              <Route path="/sales/prospects" element={<SalesProspectsPage />} />
+              <Route path="/sales/pipeline" element={<SalesPipelinePage />} />
+              <Route path="/sales/clients" element={<SalesClientsPage />} />
+              <Route path="/sales/proposals" element={<SalesProposalsPage />} />
+              <Route path="/sales/activities" element={<SalesActivitiesPage />} />
+              <Route path="/sales/tools" element={<SalesToolsPage />} />
               <Route path="/more" element={<MorePage />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/inquiries" element={<InquiriesPage />} />

@@ -93,7 +93,7 @@ const Dashboard = () => {
     return [
       ...(isSuperAdmin ? [{ label: "Businesses", value: stats.totalBusinesses, icon: Building2, gradient: "from-neon-purple to-primary" } as StatCard] : []),
       { label: "Deals", value: stats.openDeals, icon: FolderKanban, gradient: "from-primary to-accent" },
-      { label: "Leads", value: stats.totalUsers, icon: Target, gradient: "from-neon-green to-success", trend: 10 },
+      { label: "Leads", value: stats.recentEventsCount, icon: Target, gradient: "from-neon-green to-success", trend: 10 },
       { label: "Invoices", value: stats.openInvoices, icon: Receipt, gradient: "from-neon-orange to-warning" },
       { label: "Revenue", value: `$${stats.revenueThisMonth.toFixed(0)}`, icon: DollarSign, gradient: "from-accent to-neon-blue", trend: 12 },
       { label: "Calls", value: stats.todayCalls, icon: Phone, gradient: "from-neon-blue to-info" },
