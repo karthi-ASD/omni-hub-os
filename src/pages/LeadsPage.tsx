@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLeads } from "@/hooks/useLeads";
 import { useDeals } from "@/hooks/useDeals";
+import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
