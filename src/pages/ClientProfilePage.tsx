@@ -364,6 +364,12 @@ const ClientProfilePage = () => {
         {/* ── Details ── */}
         <TabsContent value="details">
           <Card className="rounded-xl">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base">Client Details</CardTitle>
+              <Button size="sm" variant="outline" onClick={() => setEditClientDialog(true)}>
+                <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+              </Button>
+            </CardHeader>
             <CardContent className="p-4 space-y-3">
               {[
                 ["Client Status", client.client_status?.charAt(0).toUpperCase() + client.client_status?.slice(1)],
@@ -390,6 +396,15 @@ const ClientProfilePage = () => {
                 ))}
             </CardContent>
           </Card>
+
+          <EditClientDialog
+            open={editClientDialog}
+            onOpenChange={setEditClientDialog}
+            client={client}
+            onSuccess={() => {
+              fetchClients();
+            }}
+          />
         </TabsContent>
 
         {/* ── Financial Portfolio ── */}
