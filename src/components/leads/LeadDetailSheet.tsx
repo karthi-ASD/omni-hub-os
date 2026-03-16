@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Phone, Mail, Building2, Calendar, Clock, Edit2, Save, X, MessageSquare, User } from "lucide-react";
+import { Phone, Mail, Building2, Calendar, Clock, Edit2, Save, X, MessageSquare, User, FileText } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 
