@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, isToday, isPast, parseISO, differenceInDays } from "date-fns";
+import { useSalesDataAutoRefresh } from "@/lib/salesDataSync";
 
 export function useSalesPerformanceDashboard() {
   const { profile, user, isSuperAdmin, isBusinessAdmin } = useAuth();
