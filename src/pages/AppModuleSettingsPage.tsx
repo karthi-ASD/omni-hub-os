@@ -41,7 +41,7 @@ export default function AppModuleSettingsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Mobile App Settings"
-        description="Control which modules your customers can see and access in the mobile app"
+        subtitle="Control which modules your customers can see and access in the mobile app"
       />
 
       <Card>

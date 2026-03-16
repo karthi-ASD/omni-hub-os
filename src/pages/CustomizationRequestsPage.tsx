@@ -44,7 +44,7 @@ export default function CustomizationRequestsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <PageHeader title="Customization Requests" description="Request system modifications, new features, or process changes" />
+        <PageHeader title="Customization Requests" subtitle="Request system modifications, new features, or process changes" />
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button><Plus className="h-4 w-4 mr-2" /> New Request</Button>

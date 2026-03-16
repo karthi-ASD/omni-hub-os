@@ -21,7 +21,7 @@ export default function DepartmentConfigPage() {
     <div className="space-y-6">
       <PageHeader
         title="Department Configuration"
-        description="Enable or disable departments for your business. Each department comes with pre-configured fields and workflows."
+        subtitle="Enable or disable departments for your business. Each department comes with pre-configured fields and workflows."
       />
 
       <Card>

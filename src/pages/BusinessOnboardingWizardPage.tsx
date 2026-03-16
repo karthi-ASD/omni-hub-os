@@ -130,7 +130,7 @@ export default function BusinessOnboardingWizardPage() {
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4 space-y-6">
-      <PageHeader title="Business Setup Wizard" description="Configure your workspace in a few simple steps" />
+      <PageHeader title="Business Setup Wizard" subtitle="Configure your workspace in a few simple steps" />
 
       {/* Progress */}
       <div className="space-y-2">
