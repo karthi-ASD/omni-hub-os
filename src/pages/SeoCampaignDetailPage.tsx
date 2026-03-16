@@ -17,8 +17,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, ArrowLeft, Key, FileText, Link, Globe, Settings, BarChart3, MessageSquare, MapPin, Wrench } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SeoProjectOverview } from "@/components/seo/SeoProjectOverview";
+import {
+  ArrowLeft, Key, FileText, Link, Globe, BarChart3, MessageSquare,
+  MapPin, Wrench, Plus, LayoutDashboard, CheckSquare, Settings,
+} from "lucide-react";
+
+const statusBadge = (status: string) => {
+  const colors: Record<string, string> = {
+    planned: "bg-muted text-muted-foreground",
+    active: "bg-success/10 text-success",
+    dropped: "bg-destructive/10 text-destructive",
+    todo: "bg-muted text-muted-foreground",
+    in_progress: "bg-info/10 text-info",
+    done: "bg-success/10 text-success",
+    needs_client_approval: "bg-warning/10 text-warning",
+    submitted: "bg-info/10 text-info",
+    live: "bg-success/10 text-success",
+    rejected: "bg-destructive/10 text-destructive",
+    briefed: "bg-muted text-muted-foreground",
+    writing: "bg-info/10 text-info",
+    review: "bg-warning/10 text-warning",
+    client_approval: "bg-warning/10 text-warning",
+    published: "bg-success/10 text-success",
+  };
+  return <Badge className={colors[status] || ""} variant="secondary">{status.replace(/_/g, " ")}</Badge>;
+};
 
 const SeoCampaignDetailPage = () => {
   const { campaignId: projectId } = useParams<{ campaignId: string }>();
@@ -47,63 +72,56 @@ const SeoCampaignDetailPage = () => {
   const [reportForm, setReportForm] = useState({ report_month: "", traffic_current: 0, traffic_previous: 0, keywords_improved: 0, keywords_dropped: 0, backlinks_built: 0, tasks_completed: 0, conversions: 0 });
   const [commOpen, setCommOpen] = useState(false);
   const [commForm, setCommForm] = useState({ communication_type: "email", summary: "", follow_up_date: "" });
-
-  // GBP form
-  const [gbpForm, setGbpForm] = useState({
-    existing_listing: false, listing_url: "", verification_status: "not_started",
-    nap_consistency_check: false, reviews_count: 0, rating_avg: 0, gmb_posts_count: 0,
-  });
+  const [gbpForm, setGbpForm] = useState({ existing_listing: false, listing_url: "", verification_status: "not_started", nap_consistency_check: false, reviews_count: 0, rating_avg: 0, gmb_posts_count: 0 });
   const [gbpEditing, setGbpEditing] = useState(false);
-
-  // Technical form
-  const [techForm, setTechForm] = useState({
-    desktop_speed: 0, mobile_speed: 0, ssl_active: false, sitemap_submitted: false,
-    robots_txt_checked: false, schema_added: false, broken_links_count: 0, notes: "",
-  });
+  const [techForm, setTechForm] = useState({ desktop_speed: 0, mobile_speed: 0, ssl_active: false, sitemap_submitted: false, robots_txt_checked: false, schema_added: false, broken_links_count: 0, notes: "" });
   const [techEditing, setTechEditing] = useState(false);
-
-  const statusBadge = (status: string) => {
-    const colors: Record<string, string> = {
-      planned: "bg-muted text-muted-foreground", active: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-      dropped: "bg-destructive/10 text-destructive", todo: "bg-muted text-muted-foreground",
-      in_progress: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-      done: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-      needs_client_approval: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-      submitted: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-      live: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-      rejected: "bg-destructive/10 text-destructive",
-      briefed: "bg-muted text-muted-foreground", writing: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-      review: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-      client_approval: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-      published: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-    };
-    return <Badge className={colors[status] || ""} variant="secondary">{status.replace(/_/g, " ")}</Badge>;
-  };
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Header */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/seo")}><ArrowLeft className="h-4 w-4" /></Button>
-        <div>
-          <h1 className="text-2xl font-bold">{project?.website_domain || project?.project_name || "Project Detail"}</h1>
-          <p className="text-muted-foreground text-sm">
-            {project?.service_package && <Badge variant="outline" className="mr-2 capitalize">{project.service_package}</Badge>}
-            {project?.project_status && <Badge variant="secondary" className="capitalize">{project.project_status}</Badge>}
-          </p>
+        <Button variant="ghost" size="icon" onClick={() => navigate("/seo")} className="shrink-0">
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold truncate">{project?.project_name || "Project Detail"}</h1>
+          <div className="flex items-center gap-2 mt-0.5">
+            {project?.website_domain && (
+              <span className="text-sm text-muted-foreground flex items-center gap-1">
+                <Globe className="h-3 w-3" /> {project.website_domain}
+              </span>
+            )}
+            {project?.service_package && <Badge variant="outline" className="capitalize text-xs">{project.service_package}</Badge>}
+            {project?.project_status && <Badge variant="secondary" className="capitalize text-xs">{project.project_status}</Badge>}
+          </div>
         </div>
       </div>
 
-      <Tabs defaultValue="keywords">
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="keywords"><Key className="h-3 w-3 mr-1" /> Keywords</TabsTrigger>
-          <TabsTrigger value="onpage"><FileText className="h-3 w-3 mr-1" /> On-Page</TabsTrigger>
-          <TabsTrigger value="offpage"><Link className="h-3 w-3 mr-1" /> Off-Page</TabsTrigger>
-          <TabsTrigger value="content"><Globe className="h-3 w-3 mr-1" /> Content</TabsTrigger>
-          <TabsTrigger value="gbp"><MapPin className="h-3 w-3 mr-1" /> GBP</TabsTrigger>
-          <TabsTrigger value="technical"><Wrench className="h-3 w-3 mr-1" /> Technical</TabsTrigger>
-          <TabsTrigger value="reports"><BarChart3 className="h-3 w-3 mr-1" /> Reports</TabsTrigger>
-          <TabsTrigger value="comms"><MessageSquare className="h-3 w-3 mr-1" /> Comms</TabsTrigger>
-        </TabsList>
+      {/* Workspace Tabs */}
+      <Tabs defaultValue="overview" className="space-y-6">
+        <div className="overflow-x-auto -mx-1 px-1">
+          <TabsList className="inline-flex h-10 w-auto">
+            <TabsTrigger value="overview" className="gap-1.5 text-xs"><LayoutDashboard className="h-3 w-3" /> Overview</TabsTrigger>
+            <TabsTrigger value="keywords" className="gap-1.5 text-xs"><Key className="h-3 w-3" /> Keywords</TabsTrigger>
+            <TabsTrigger value="onpage" className="gap-1.5 text-xs"><FileText className="h-3 w-3" /> On-Page</TabsTrigger>
+            <TabsTrigger value="offpage" className="gap-1.5 text-xs"><Link className="h-3 w-3" /> Off-Page</TabsTrigger>
+            <TabsTrigger value="content" className="gap-1.5 text-xs"><Globe className="h-3 w-3" /> Content</TabsTrigger>
+            <TabsTrigger value="gbp" className="gap-1.5 text-xs"><MapPin className="h-3 w-3" /> Local SEO</TabsTrigger>
+            <TabsTrigger value="technical" className="gap-1.5 text-xs"><Wrench className="h-3 w-3" /> Technical</TabsTrigger>
+            <TabsTrigger value="reports" className="gap-1.5 text-xs"><BarChart3 className="h-3 w-3" /> Reports</TabsTrigger>
+            <TabsTrigger value="comms" className="gap-1.5 text-xs"><MessageSquare className="h-3 w-3" /> Comms</TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview">
+          {project ? (
+            <SeoProjectOverview project={project} keywords={keywords} tasks={tasks} />
+          ) : (
+            <Skeleton className="h-48 w-full" />
+          )}
+        </TabsContent>
 
         {/* Keywords Tab */}
         <TabsContent value="keywords" className="space-y-4">
@@ -135,9 +153,9 @@ const SeoCampaignDetailPage = () => {
             </Dialog>
           </div>
           {kwLoading ? <Skeleton className="h-24 w-full" /> : keywords.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">No keywords yet</CardContent></Card>
+            <Card className="rounded-2xl border-0 shadow-elevated"><CardContent className="py-8 text-center text-muted-foreground">No keywords yet</CardContent></Card>
           ) : (
-            <Card><Table><TableHeader><TableRow>
+            <Card className="rounded-2xl border-0 shadow-elevated overflow-hidden"><Table><TableHeader><TableRow>
               <TableHead>Keyword</TableHead><TableHead>Type</TableHead><TableHead>Location</TableHead><TableHead>Ranking</TableHead><TableHead>Priority</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead>
             </TableRow></TableHeader><TableBody>
               {keywords.map((kw: any) => (
@@ -150,7 +168,7 @@ const SeoCampaignDetailPage = () => {
                       <span className="font-mono">
                         #{kw.current_ranking}
                         {kw.previous_ranking != null && (
-                          <span className={kw.current_ranking < kw.previous_ranking ? "text-green-600 ml-1" : kw.current_ranking > kw.previous_ranking ? "text-destructive ml-1" : "text-muted-foreground ml-1"}>
+                          <span className={kw.current_ranking < kw.previous_ranking ? "text-success ml-1" : kw.current_ranking > kw.previous_ranking ? "text-destructive ml-1" : "text-muted-foreground ml-1"}>
                             ({kw.current_ranking < kw.previous_ranking ? "↑" : kw.current_ranking > kw.previous_ranking ? "↓" : "="}{Math.abs(kw.current_ranking - kw.previous_ranking)})
                           </span>
                         )}
@@ -195,9 +213,9 @@ const SeoCampaignDetailPage = () => {
             </Dialog>
           </div>
           {taskLoading ? <Skeleton className="h-24 w-full" /> : tasks.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">No on-page tasks yet</CardContent></Card>
+            <Card className="rounded-2xl border-0 shadow-elevated"><CardContent className="py-8 text-center text-muted-foreground">No on-page tasks yet</CardContent></Card>
           ) : (
-            <Card><Table><TableHeader><TableRow>
+            <Card className="rounded-2xl border-0 shadow-elevated overflow-hidden"><Table><TableHeader><TableRow>
               <TableHead>Item</TableHead><TableHead>Page</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead>
             </TableRow></TableHeader><TableBody>
               {tasks.map((t) => (
@@ -255,9 +273,9 @@ const SeoCampaignDetailPage = () => {
             </Dialog>
           </div>
           {offLoading ? <Skeleton className="h-24 w-full" /> : offpageItems.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">No off-page items yet</CardContent></Card>
+            <Card className="rounded-2xl border-0 shadow-elevated"><CardContent className="py-8 text-center text-muted-foreground">No off-page items yet</CardContent></Card>
           ) : (
-            <Card><Table><TableHeader><TableRow>
+            <Card className="rounded-2xl border-0 shadow-elevated overflow-hidden"><Table><TableHeader><TableRow>
               <TableHead>Type</TableHead><TableHead>Website</TableHead><TableHead>DA</TableHead><TableHead>Anchor</TableHead><TableHead>Follow</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead>
             </TableRow></TableHeader><TableBody>
               {offpageItems.map((item: any) => (
@@ -311,9 +329,9 @@ const SeoCampaignDetailPage = () => {
             </Dialog>
           </div>
           {contentLoading ? <Skeleton className="h-24 w-full" /> : content.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">No content items yet</CardContent></Card>
+            <Card className="rounded-2xl border-0 shadow-elevated"><CardContent className="py-8 text-center text-muted-foreground">No content items yet</CardContent></Card>
           ) : (
-            <Card><Table><TableHeader><TableRow>
+            <Card className="rounded-2xl border-0 shadow-elevated overflow-hidden"><Table><TableHeader><TableRow>
               <TableHead>Title</TableHead><TableHead>Type</TableHead><TableHead>Keyword</TableHead><TableHead>Words</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead>
             </TableRow></TableHeader><TableBody>
               {content.map((c: any) => (
@@ -335,11 +353,11 @@ const SeoCampaignDetailPage = () => {
           )}
         </TabsContent>
 
-        {/* GBP Tab */}
+        {/* GBP / Local SEO Tab */}
         <TabsContent value="gbp" className="space-y-4">
-          <h2 className="text-lg font-semibold">Google Business Profile</h2>
+          <h2 className="text-lg font-semibold">Google Business Profile / Local SEO</h2>
           {gbpLoading ? <Skeleton className="h-48 w-full" /> : (
-            <Card>
+            <Card className="rounded-2xl border-0 shadow-elevated">
               <CardContent className="pt-6 space-y-4">
                 {!gbpEditing && gbp ? (
                   <div className="space-y-3">
@@ -384,7 +402,7 @@ const SeoCampaignDetailPage = () => {
         <TabsContent value="technical" className="space-y-4">
           <h2 className="text-lg font-semibold">Technical SEO Audit</h2>
           {techLoading ? <Skeleton className="h-48 w-full" /> : (
-            <Card>
+            <Card className="rounded-2xl border-0 shadow-elevated">
               <CardContent className="pt-6 space-y-4">
                 {!techEditing && audit ? (
                   <div className="space-y-3">
@@ -456,16 +474,16 @@ const SeoCampaignDetailPage = () => {
             </Dialog>
           </div>
           {reportLoading ? <Skeleton className="h-24 w-full" /> : reports.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">No reports yet</CardContent></Card>
+            <Card className="rounded-2xl border-0 shadow-elevated"><CardContent className="py-8 text-center text-muted-foreground">No reports yet</CardContent></Card>
           ) : (
-            <Card><Table><TableHeader><TableRow>
+            <Card className="rounded-2xl border-0 shadow-elevated overflow-hidden"><Table><TableHeader><TableRow>
               <TableHead>Month</TableHead><TableHead>Traffic</TableHead><TableHead>KW ↑</TableHead><TableHead>KW ↓</TableHead><TableHead>Backlinks</TableHead><TableHead>Tasks</TableHead><TableHead>Conversions</TableHead>
             </TableRow></TableHeader><TableBody>
               {reports.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell className="font-medium">{r.report_month}</TableCell>
                   <TableCell>{r.traffic_current} <span className="text-xs text-muted-foreground">(prev: {r.traffic_previous})</span></TableCell>
-                  <TableCell className="text-green-600">{r.keywords_improved}</TableCell>
+                  <TableCell className="text-success">{r.keywords_improved}</TableCell>
                   <TableCell className="text-destructive">{r.keywords_dropped}</TableCell>
                   <TableCell>{r.backlinks_built}</TableCell>
                   <TableCell>{r.tasks_completed}</TableCell>
@@ -503,9 +521,9 @@ const SeoCampaignDetailPage = () => {
             </Dialog>
           </div>
           {commLoading ? <Skeleton className="h-24 w-full" /> : commLogs.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">No communication logs yet</CardContent></Card>
+            <Card className="rounded-2xl border-0 shadow-elevated"><CardContent className="py-8 text-center text-muted-foreground">No communication logs yet</CardContent></Card>
           ) : (
-            <Card><Table><TableHeader><TableRow>
+            <Card className="rounded-2xl border-0 shadow-elevated overflow-hidden"><Table><TableHeader><TableRow>
               <TableHead>Type</TableHead><TableHead>Summary</TableHead><TableHead>Follow-up</TableHead><TableHead>Date</TableHead>
             </TableRow></TableHeader><TableBody>
               {commLogs.map((log) => (
