@@ -80,3 +80,12 @@ verify_jwt = false
 
 [functions.whatsapp-test-send]
 verify_jwt = false
+
+[functions.create-client-auth]
+verify_jwt = false
+
+[functions.client-self-register]
+verify_jwt = false
+
+[functions.login-as-client]
+verify_jwt = false
