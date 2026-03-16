@@ -52,6 +52,7 @@ export function useProposals() {
   }, []);
 
   useEffect(() => { fetchProposals(); }, [fetchProposals]);
+  useSalesDataAutoRefresh(fetchProposals, ["all", "proposals", "dashboard"]);
 
   const createProposal = async (input: {
     deal_id: string;
