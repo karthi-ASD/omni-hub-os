@@ -158,6 +158,8 @@ export function useClients(options?: UseClientsOptions) {
     fetchClients(0, search);
   }, [fetchClients, search]);
 
+  useSalesDataAutoRefresh(() => fetchClients(0, search), ["all", "clients", "dashboard"]);
+
   const loadMore = () => {
     if (hasMore && !loading) {
       fetchClients(page + 1, search, true);
