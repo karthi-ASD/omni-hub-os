@@ -369,6 +369,17 @@ const ClientsPage = () => {
 
       <UnifiedClientForm open={createOpen} onOpenChange={setCreateOpen} onSubmit={createClient} />
       <CSVImportDialog open={importOpen} onOpenChange={setImportOpen} onComplete={refetch} />
+      <RevertToLeadDialog
+        open={!!revertClient}
+        onOpenChange={(open) => { if (!open) setRevertClient(null); }}
+        clientName={revertClient?.contact_name || ""}
+        onConfirm={async (reason) => {
+          if (revertClient) {
+            await revertClientToLead(revertClient.id, reason);
+            refetch();
+          }
+        }}
+      />
     </div>
   );
 };
