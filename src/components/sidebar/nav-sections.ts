@@ -73,6 +73,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Follow-Ups", icon: CalendarCheck, to: "/sales-follow-ups" },
       { label: "Conversion Requests", icon: Handshake, to: "/lead-conversion-approvals" },
       { label: "Deals", icon: FolderKanban, to: "/deals" },
+      { label: "Deal Room", icon: FileText, to: "/deal-room" },
       { label: "Opportunities", icon: TrendingUp, to: "/sales-opportunities" },
       { label: "My Clients", icon: Users, to: "/clients" },
       { label: "Renewal Alerts", icon: RefreshCw, to: "/renewals" },
