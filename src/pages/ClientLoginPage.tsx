@@ -108,6 +108,11 @@ const ClientLoginPage: React.FC = () => {
               )}
             </Button>
           </form>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Don't have an account?{" "}
+            <Link to="/client/register" className="text-primary font-medium hover:underline">Register here</Link>
+          </p>
         </div>
       </div>
     </div>

@@ -200,6 +200,7 @@ import CompanyLoginPage from "./pages/CompanyLoginPage";
 import CompanySignupPage from "./pages/CompanySignupPage";
 import DepartmentSignupPage from "./pages/DepartmentSignupPage";
 import ClientLoginPage from "./pages/ClientLoginPage";
+import ClientRegisterPage from "./pages/ClientRegisterPage";
 import FirstLoginSecurityPage from "./pages/FirstLoginSecurityPage";
 import SuperAdminToolsPage from "./pages/SuperAdminToolsPage";
 import UserProfilePage from "./pages/UserProfilePage";
@@ -295,6 +296,7 @@ const App = () => (
             <Route path="/company/:slug/signup" element={<CompanySignupPage />} />
             <Route path="/company/:slug/:department" element={<DepartmentSignupPage />} />
             <Route path="/client/login" element={<ClientLoginPage />} />
+            <Route path="/client/register" element={<ClientRegisterPage />} />
             <Route path="/security-setup" element={<FirstLoginSecurityPage />} />
             <Route path="/login-v2" element={<LoginV2 />} />
 
