@@ -168,6 +168,9 @@ export function useClients(options?: UseClientsOptions) {
         state: input.state,
         country: input.country,
         payment_method: input.payment_method || 'eft',
+        created_by: profile.user_id,
+        sales_owner_id: profile.user_id,
+        signup_source: 'sales',
       } as any)
       .select()
       .single();
