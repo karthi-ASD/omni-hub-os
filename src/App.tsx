@@ -303,6 +303,7 @@ const App = () => (
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/inquiries" element={<InquiriesPage />} />
               <Route path="/leads" element={<LeadsPage />} />
+              <Route path="/lead-conversion-approvals" element={<LeadConversionApprovalsPage />} />
               <Route path="/reminders" element={<RemindersPage />} />
               <Route path="/deals" element={<DealsPage />} />
               <Route path="/proposals" element={<ProposalsPage />} />

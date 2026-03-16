@@ -46,6 +46,7 @@ export const NAV_SECTIONS: NavSection[] = [
     departments: [...FINANCE_DEPTS],
     items: [
       { label: "Accounts Dashboard", icon: PieChart, to: "/accounts-dashboard" },
+      { label: "Client Approvals", icon: Handshake, to: "/lead-conversion-approvals" },
       { label: "Clients", icon: Users, to: "/clients" },
       { label: "Invoices", icon: Receipt, to: "/invoices" },
       { label: "Payments", icon: DollarSign, to: "/payments" },
