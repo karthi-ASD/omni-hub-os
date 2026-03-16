@@ -186,7 +186,7 @@ export function useProposals() {
           const recipientIds = new Set<string>(
             (notifyUsers || []).map((u: any) => u.user_id)
           );
-          if (deal.assigned_to) recipientIds.add(deal.assigned_to);
+          if (deal.owner_user_id) recipientIds.add(deal.owner_user_id);
 
           if (recipientIds.size > 0) {
             await supabase.from("notifications").insert(
