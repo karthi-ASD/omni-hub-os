@@ -52,13 +52,25 @@ export function useSeoKeywords(projectId?: string) {
     target_rank?: number;
   }) => {
     if (!profile?.business_id || !projectId) return;
-    await (supabase.from("seo_keywords") as any).insert({
+    const { error } = await (supabase.from("seo_keywords") as any).insert({
       business_id: profile.business_id,
       seo_project_id: projectId,
-      ...input,
+      keyword: input.keyword,
+      keyword_type: input.keyword_type || 'primary',
+      priority: input.priority || 'medium',
+      target_url: input.target_url || null,
+      location: input.location || null,
+      search_volume: input.search_volume || 0,
+      difficulty: input.difficulty || 0,
+      target_rank: input.target_rank || null,
     });
+    if (error) {
+      console.error("Keyword insert error:", error);
+      toast.error("Failed to add keyword: " + error.message);
+      return;
+    }
     toast.success("Keyword added");
-    fetch();
+    await fetch();
   };
 
   const updateKeywordStatus = async (id: string, status: string) => {
