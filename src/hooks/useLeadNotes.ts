@@ -73,6 +73,23 @@ export function useLeadNotes(leadId: string | undefined) {
       internal_only: true,
     } as any);
     if (error) { toast.error("Failed to add note"); return; }
+
+    // Also create a followup record if a follow-up date was set
+    if (input.next_followup_date) {
+      await supabase.from("followups").insert({
+        business_id: profile.business_id,
+        lead_id: leadId,
+        assigned_agent_id: profile.user_id,
+        created_by: profile.user_id,
+        followup_date: input.next_followup_date,
+        followup_type: input.contact_method,
+        subject: `Follow up: ${input.note_text.substring(0, 80)}`,
+        notes: input.note_text,
+        status: "pending",
+        priority: "medium",
+      });
+    }
+
     toast.success("Note added");
     fetchNotes();
   };

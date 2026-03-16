@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { CustomFieldRenderer } from "@/components/custom-fields/CustomFieldRenderer";
 import { LeadNotesTimeline } from "@/components/leads/LeadNotesTimeline";
+import { LeadFollowUpsSection } from "@/components/followups/LeadFollowUpsSection";
 import { RequestProposalDialog } from "@/components/deal-room/RequestProposalDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -168,6 +169,11 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onUpdateStage, onArc
         )}
 
         <Separator className="mb-4" />
+
+        {/* Follow-Ups Section */}
+        <LeadFollowUpsSection leadId={lead.id} leadName={lead.name} />
+
+        <Separator className="my-4" />
 
         {/* Internal Conversation Notes */}
         <LeadNotesTimeline leadId={lead.id} />
