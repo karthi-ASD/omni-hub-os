@@ -1,77 +1,83 @@
 import { useState } from "react";
-import { useInvoices, type Invoice, type InvoiceItem } from "@/hooks/useInvoices";
+import { useInvoices, type Invoice } from "@/hooks/useInvoices";
 import { useClients } from "@/hooks/useClients";
-import { useDeals } from "@/hooks/useDeals";
+import { useAuth } from "@/contexts/AuthContext";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Send, CheckCircle, XCircle, FileText, ChevronDown } from "lucide-react";
+import { FileText, ChevronDown, ExternalLink, AlertTriangle, Clock, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const statusColors: Record<string, string> = {
+  PAID: "bg-green-500/10 text-green-600",
+  AUTHORISED: "bg-primary/10 text-primary",
+  SUBMITTED: "bg-primary/10 text-primary",
+  OVERDUE: "bg-destructive/10 text-destructive",
+  VOIDED: "bg-muted text-muted-foreground",
+  DRAFT: "bg-muted text-muted-foreground",
+  DELETED: "bg-muted text-muted-foreground line-through",
+  // Legacy CRM statuses
   draft: "bg-muted text-muted-foreground",
   open: "bg-primary/10 text-primary",
-  paid: "bg-success/10 text-success",
+  paid: "bg-green-500/10 text-green-600",
   overdue: "bg-destructive/10 text-destructive",
   void: "bg-muted text-muted-foreground line-through",
-  canceled: "bg-muted text-muted-foreground",
 };
 
 const InvoicesPage = () => {
-  const {
-    invoices, loading, totalCount, hasMore,
-    createInvoice, createFromDeal, sendInvoice, markPaid, voidInvoice,
-    loadMore, setFilter, statusFilter,
-  } = useInvoices();
+  const { profile } = useAuth();
+  const [xeroInvoices, setXeroInvoices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [lastSynced, setLastSynced] = useState<string | null>(null);
   const { clients } = useClients();
-  const { deals } = useDeals();
-  const [open, setOpen] = useState(false);
-  const [fromDealOpen, setFromDealOpen] = useState(false);
-  const [selectedDealId, setSelectedDealId] = useState("");
 
-  const [form, setForm] = useState({
-    client_id: "",
-    due_date: "",
-    items: [{ description: "", quantity: 1, unit_amount: 0, amount: 0 }] as InvoiceItem[],
-    tax: 0,
-    discount: 0,
-  });
+  // Load Xero invoices
+  const fetchXeroInvoices = async () => {
+    if (!profile?.business_id) return;
+    setLoading(true);
+    const { data } = await supabase
+      .from("xero_invoices")
+      .select("*")
+      .eq("business_id", profile.business_id)
+      .order("invoice_date", { ascending: false })
+      .limit(500);
+    setXeroInvoices(data || []);
 
-  const updateItem = (idx: number, field: string, value: any) => {
-    const items = [...form.items];
-    (items[idx] as any)[field] = value;
-    if (field === "quantity" || field === "unit_amount") {
-      items[idx].amount = items[idx].quantity * items[idx].unit_amount;
+    // Get last sync time
+    const { data: logs } = await supabase
+      .from("xero_sync_logs")
+      .select("synced_at")
+      .eq("business_id", profile.business_id)
+      .order("synced_at", { ascending: false })
+      .limit(1);
+    if (logs && logs.length > 0) {
+      setLastSynced((logs[0] as any).synced_at);
     }
-    setForm({ ...form, items });
+    setLoading(false);
   };
 
-  const addItem = () => setForm({ ...form, items: [...form.items, { description: "", quantity: 1, unit_amount: 0, amount: 0 }] });
+  useState(() => { fetchXeroInvoices(); });
 
-  const handleCreate = async () => {
-    if (form.items.some((i) => !i.description)) return;
-    await createInvoice({
-      client_id: form.client_id || undefined,
-      items: form.items,
-      tax: form.tax,
-      discount: form.discount,
-      due_date: form.due_date || undefined,
-    });
-    setOpen(false);
-    setForm({ client_id: "", due_date: "", items: [{ description: "", quantity: 1, unit_amount: 0, amount: 0 }], tax: 0, discount: 0 });
-  };
-
-  const handleCreateFromDeal = async () => {
-    if (!selectedDealId) return;
-    await createFromDeal(selectedDealId);
-    setFromDealOpen(false);
-    setSelectedDealId("");
+  const handleSync = async () => {
+    if (!profile?.business_id) return;
+    setSyncing(true);
+    try {
+      const { error } = await supabase.functions.invoke("xero-sync", {
+        body: { action: "sync", business_id: profile.business_id },
+      });
+      if (error) throw error;
+      toast.success("Xero sync started");
+      setTimeout(() => { fetchXeroInvoices(); setSyncing(false); }, 5000);
+    } catch {
+      toast.error("Sync failed");
+      setSyncing(false);
+    }
   };
 
   const getClientName = (clientId: string | null) => {
@@ -80,163 +86,127 @@ const InvoicesPage = () => {
     return c?.contact_name || "Unknown";
   };
 
+  const openXeroInvoice = (xeroInvoiceId?: string) => {
+    if (xeroInvoiceId) {
+      window.open(`https://go.xero.com/AccountsReceivable/View.aspx?invoiceID=${xeroInvoiceId}`, "_blank");
+    } else {
+      window.open("https://go.xero.com/AccountsReceivable/Edit.aspx", "_blank");
+    }
+  };
+
+  const totalRevenue = xeroInvoices.filter(i => i.status === "PAID").reduce((s, i) => s + Number(i.total_amount || 0), 0);
+  const totalOutstanding = xeroInvoices.filter(i => ["AUTHORISED", "SUBMITTED"].includes(i.status)).reduce((s, i) => s + Number(i.amount_due || 0), 0);
+  const overdueCount = xeroInvoices.filter(i => i.status === "OVERDUE" || (["AUTHORISED", "SUBMITTED"].includes(i.status) && i.due_date && new Date(i.due_date) < new Date())).length;
+
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Invoices"
-        subtitle={`${totalCount} total records`}
+        subtitle={`${xeroInvoices.length} invoices synced from Xero`}
         icon={FileText}
       >
-        <Dialog open={fromDealOpen} onOpenChange={setFromDealOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm"><FileText className="mr-2 h-4 w-4" /> From Deal</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Create Invoice from Deal</DialogTitle></DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Select Deal</Label>
-                <Select value={selectedDealId} onValueChange={setSelectedDealId}>
-                  <SelectTrigger><SelectValue placeholder="Choose a deal" /></SelectTrigger>
-                  <SelectContent>
-                    {deals.filter((d) => d.status === "won").map((d) => (
-                      <SelectItem key={d.id} value={d.id}>{d.deal_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={handleCreateFromDeal} disabled={!selectedDealId} className="w-full">Generate Invoice</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm"><Plus className="mr-2 h-4 w-4" /> New Invoice</Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>Create Invoice</DialogTitle></DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Client</Label>
-                  <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
-                    <SelectContent>
-                      {clients.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>{c.contact_name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Due Date</Label>
-                  <Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
-                </div>
-              </div>
-
-              <div>
-                <Label>Line Items</Label>
-                {form.items.map((item, idx) => (
-                  <div key={idx} className="grid grid-cols-4 gap-2 mt-2">
-                    <Input placeholder="Description" className="col-span-1" value={item.description} onChange={(e) => updateItem(idx, "description", e.target.value)} />
-                    <Input type="number" placeholder="Qty" value={item.quantity} onChange={(e) => updateItem(idx, "quantity", Number(e.target.value))} />
-                    <Input type="number" placeholder="Price" value={item.unit_amount} onChange={(e) => updateItem(idx, "unit_amount", Number(e.target.value))} />
-                    <Input type="number" placeholder="Total" value={item.amount} readOnly className="bg-muted" />
-                  </div>
-                ))}
-                <Button variant="ghost" size="sm" onClick={addItem} className="mt-2"><Plus className="h-3 w-3 mr-1" /> Add Item</Button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div><Label>Tax</Label><Input type="number" value={form.tax} onChange={(e) => setForm({ ...form, tax: Number(e.target.value) })} /></div>
-                <div><Label>Discount</Label><Input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })} /></div>
-              </div>
-
-              <div className="text-right text-lg font-bold">
-                Total: ${(form.items.reduce((s, i) => s + i.amount, 0) + form.tax - form.discount).toFixed(2)}
-              </div>
-
-              <Button onClick={handleCreate} className="w-full">Create Invoice</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Button variant="outline" size="sm" onClick={handleSync} disabled={syncing}>
+          <RefreshCw className={`h-4 w-4 mr-1 ${syncing ? "animate-spin" : ""}`} /> Sync Xero
+        </Button>
+        <Button size="sm" onClick={() => openXeroInvoice()}>
+          <ExternalLink className="h-4 w-4 mr-1" /> Create Invoice in Xero
+        </Button>
       </PageHeader>
 
-      {/* Filters */}
-      <div className="flex gap-2 flex-wrap">
-        {["all", "draft", "open", "paid", "overdue", "void"].map((s) => (
-          <Button key={s} variant={statusFilter === s ? "default" : "outline"} size="sm" onClick={() => setFilter(s)} className="capitalize">
-            {s}
-          </Button>
-        ))}
+      {/* Sync Status Banner */}
+      <Card className="rounded-2xl border-border/50 bg-muted/30">
+        <CardContent className="py-3 px-4 flex items-center justify-between text-sm">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Clock className="h-4 w-4" />
+            {lastSynced
+              ? `Last synced: ${format(new Date(lastSynced), "dd MMM yyyy, HH:mm")}`
+              : "No sync data available"}
+          </div>
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <AlertTriangle className="h-3 w-3" />
+            All invoices are managed in Xero. CRM is read-only.
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Summary Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="rounded-xl">
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Total Invoices</p>
+            <p className="text-2xl font-bold">{xeroInvoices.length}</p>
+          </CardContent>
+        </Card>
+        <Card className="rounded-xl">
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Total Revenue</p>
+            <p className="text-2xl font-bold">${totalRevenue.toLocaleString("en-AU", { minimumFractionDigits: 2 })}</p>
+          </CardContent>
+        </Card>
+        <Card className="rounded-xl">
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Outstanding</p>
+            <p className="text-2xl font-bold text-primary">${totalOutstanding.toLocaleString("en-AU", { minimumFractionDigits: 2 })}</p>
+          </CardContent>
+        </Card>
+        <Card className="rounded-xl">
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Overdue</p>
+            <p className="text-2xl font-bold text-destructive">{overdueCount}</p>
+          </CardContent>
+        </Card>
       </div>
 
-      {loading && invoices.length === 0 ? (
+      {loading ? (
         <div className="space-y-2">
           {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
         </div>
-      ) : invoices.length === 0 ? (
-        <Card className="rounded-2xl"><CardContent className="py-12 text-center text-muted-foreground">No invoices found</CardContent></Card>
+      ) : xeroInvoices.length === 0 ? (
+        <Card className="rounded-2xl">
+          <CardContent className="py-12 text-center text-muted-foreground">
+            <p>No invoices synced from Xero yet.</p>
+            <p className="text-sm mt-1">Create invoices in Xero and sync to view them here.</p>
+          </CardContent>
+        </Card>
       ) : (
-        <>
-          <Card className="rounded-2xl border-0 shadow-elevated">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>#</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Due</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
+        <Card className="rounded-2xl border-0 shadow-elevated">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Invoice #</TableHead>
+                <TableHead>Client</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Due</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+                <TableHead className="text-right">Due</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {xeroInvoices.map((inv: any) => (
+                <TableRow key={inv.id}>
+                  <TableCell className="font-mono text-sm">{inv.invoice_number || "—"}</TableCell>
+                  <TableCell>{getClientName(inv.client_id)}</TableCell>
+                  <TableCell className="text-sm">{inv.invoice_date ? format(new Date(inv.invoice_date), "dd MMM yyyy") : "—"}</TableCell>
+                  <TableCell className="text-sm">{inv.due_date ? format(new Date(inv.due_date), "dd MMM yyyy") : "—"}</TableCell>
+                  <TableCell className="text-right font-medium">${Number(inv.total_amount || 0).toLocaleString("en-AU", { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell className="text-right">${Number(inv.amount_due || 0).toLocaleString("en-AU", { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell>
+                    <Badge className={statusColors[inv.status] || "bg-muted text-muted-foreground"} variant="secondary">
+                      {inv.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button size="sm" variant="ghost" onClick={() => openXeroInvoice(inv.xero_invoice_id)}>
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoices.map((inv) => (
-                  <TableRow key={inv.id}>
-                    <TableCell className="font-mono text-sm">INV-{inv.invoice_number}</TableCell>
-                    <TableCell>{getClientName(inv.client_id)}</TableCell>
-                    <TableCell className="capitalize">{inv.invoice_type.replace("_", " ")}</TableCell>
-                    <TableCell className="font-medium">${Number(inv.total).toFixed(2)}</TableCell>
-                    <TableCell>{inv.due_date ? new Date(inv.due_date).toLocaleDateString() : "—"}</TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[inv.status] || ""} variant="secondary">{inv.status}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        {inv.status === "draft" && (
-                          <Button size="sm" variant="outline" onClick={() => sendInvoice(inv.id)}>
-                            <Send className="h-3 w-3 mr-1" /> Send
-                          </Button>
-                        )}
-                        {(inv.status === "open" || inv.status === "overdue") && (
-                          <Button size="sm" variant="outline" onClick={() => markPaid(inv.id)}>
-                            <CheckCircle className="h-3 w-3 mr-1" /> Paid
-                          </Button>
-                        )}
-                        {inv.status === "draft" && (
-                          <Button size="sm" variant="ghost" onClick={() => voidInvoice(inv.id)}>
-                            <XCircle className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
-
-          {hasMore && (
-            <div className="flex justify-center pt-2">
-              <Button variant="outline" onClick={loadMore} disabled={loading}>
-                <ChevronDown className="h-4 w-4 mr-1" />
-                {loading ? "Loading..." : `Load more (${invoices.length} of ${totalCount})`}
-              </Button>
-            </div>
-          )}
-        </>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
       )}
     </div>
   );
