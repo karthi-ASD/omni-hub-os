@@ -47,6 +47,13 @@ export function useDashboardStats() {
         .select("id", { count: "exact", head: true });
       result.totalUsers = usersCount ?? 0;
 
+      // Leads count
+      const { count: leadsCount } = await supabase
+        .from("leads")
+        .select("id", { count: "exact", head: true })
+        .eq("is_deleted", false);
+      result.totalLeads = leadsCount ?? 0;
+
       // Businesses count (super admin)
       if (isSuperAdmin) {
         const { data: bizData } = await supabase
