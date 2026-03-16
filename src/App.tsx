@@ -200,6 +200,7 @@ import CompanyLoginPage from "./pages/CompanyLoginPage";
 import CompanySignupPage from "./pages/CompanySignupPage";
 import DepartmentSignupPage from "./pages/DepartmentSignupPage";
 import ClientLoginPage from "./pages/ClientLoginPage";
+import ClientRegisterPage from "./pages/ClientRegisterPage";
 import FirstLoginSecurityPage from "./pages/FirstLoginSecurityPage";
 import SuperAdminToolsPage from "./pages/SuperAdminToolsPage";
 import UserProfilePage from "./pages/UserProfilePage";
