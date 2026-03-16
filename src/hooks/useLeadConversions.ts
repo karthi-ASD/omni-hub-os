@@ -271,8 +271,9 @@ export function useLeadConversions() {
         email: c.email,
         phone: c.phone,
         business_name: c.company_name,
-        stage: "negotiation",
-        assigned_to_user_id: c.sales_owner_id,
+        stage: "new",
+        status: "active",
+        assigned_to_user_id: c.sales_owner_id || c.created_by,
       });
     }
 
