@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useSeoKeywords, useSeoOnpageTasks, useSeoOffpageItems, useSeoContent, useSeoCampaigns } from "@/hooks/useSeo";
+import { useSeoKeywords, useSeoOnpageTasks, useSeoOffpageItems, useSeoContent } from "@/hooks/useSeo";
+import { useSeoProjects } from "@/hooks/useSeoProjects";
 import { useSeoGbp } from "@/hooks/useSeoGbp";
 import { useSeoTechnical } from "@/hooks/useSeoTechnical";
 import { useSeoReports } from "@/hooks/useSeoReports";
@@ -20,18 +21,18 @@ import { Plus, ArrowLeft, Key, FileText, Link, Globe, Settings, BarChart3, Messa
 import { Skeleton } from "@/components/ui/skeleton";
 
 const SeoCampaignDetailPage = () => {
-  const { campaignId } = useParams<{ campaignId: string }>();
+  const { campaignId: projectId } = useParams<{ campaignId: string }>();
   const navigate = useNavigate();
-  const { campaigns } = useSeoCampaigns();
-  const campaign = campaigns.find((c) => c.id === campaignId);
-  const { keywords, loading: kwLoading, addKeyword, updateKeywordStatus } = useSeoKeywords(campaignId);
-  const { tasks, loading: taskLoading, addTask, updateTaskStatus } = useSeoOnpageTasks(campaignId);
-  const { items: offpageItems, loading: offLoading, addItem, updateItemStatus } = useSeoOffpageItems(campaignId);
-  const { content, loading: contentLoading, addContent, updateContentStatus } = useSeoContent(campaignId);
-  const { gbp, loading: gbpLoading, upsert: upsertGbp } = useSeoGbp(campaignId);
-  const { audit, loading: techLoading, upsert: upsertTech } = useSeoTechnical(campaignId);
-  const { reports, loading: reportLoading, addReport } = useSeoReports(campaignId);
-  const { logs: commLogs, loading: commLoading, addLog: addComm } = useSeoComms(campaignId);
+  const { projects } = useSeoProjects();
+  const project = projects.find((p) => p.id === projectId);
+  const { keywords, loading: kwLoading, addKeyword, updateKeywordStatus } = useSeoKeywords(projectId);
+  const { tasks, loading: taskLoading, addTask, updateTaskStatus } = useSeoOnpageTasks(projectId);
+  const { items: offpageItems, loading: offLoading, addItem, updateItemStatus } = useSeoOffpageItems(projectId);
+  const { content, loading: contentLoading, addContent, updateContentStatus } = useSeoContent(projectId);
+  const { gbp, loading: gbpLoading, upsert: upsertGbp } = useSeoGbp(projectId);
+  const { audit, loading: techLoading, upsert: upsertTech } = useSeoTechnical(projectId);
+  const { reports, loading: reportLoading, addReport } = useSeoReports(projectId);
+  const { logs: commLogs, loading: commLoading, addLog: addComm } = useSeoComms(projectId);
 
   // Form states
   const [kwOpen, setKwOpen] = useState(false);
