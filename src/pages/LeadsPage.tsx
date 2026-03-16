@@ -159,17 +159,18 @@ const LeadsPage = () => {
                   <button onClick={() => { setActivityDialog(lead.id); setActivityType("call"); }} className="flex items-center gap-1 text-xs text-primary font-medium hover:underline">
                     <MessageSquare className="h-3.5 w-3.5" /> Log
                   </button>
-                  <button onClick={async () => {
-                    await createDeal({
-                      deal_name: `${lead.name} – ${lead.services_needed || "New Deal"}`,
-                      contact_name: lead.name, email: lead.email, phone: lead.phone,
-                      business_name: lead.business_name, service_interest: lead.services_needed,
-                      estimated_budget: lead.estimated_budget, lead_id: lead.id,
-                    } as any);
-                    navigate("/deals");
-                  }} className="flex items-center gap-1 text-xs text-accent font-medium ml-auto hover:underline">
-                    <FolderKanban className="h-3.5 w-3.5" /> Convert
-                  </button>
+                  {lead.stage !== "conversion_requested" && lead.stage !== "won" && (
+                    <button onClick={async () => {
+                      await requestConversion(lead.id, lead.services_needed || undefined);
+                    }} className="flex items-center gap-1 text-xs text-accent font-medium ml-auto hover:underline">
+                      <ShieldCheck className="h-3.5 w-3.5" /> Request Conversion
+                    </button>
+                  )}
+                  {lead.stage === "conversion_requested" && (
+                    <span className="text-xs text-info font-medium ml-auto flex items-center gap-1">
+                      <ShieldCheck className="h-3.5 w-3.5" /> Awaiting Approval
+                    </span>
+                  )}
                 </div>
               </CardContent>
             </Card>
