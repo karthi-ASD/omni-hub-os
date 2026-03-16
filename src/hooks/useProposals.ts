@@ -145,7 +145,8 @@ export function useProposals() {
       payload_json: { entity_type: "proposal", entity_id: proposalId, actor_user_id: profile.user_id, short_message: "Proposal rejected" },
     });
     toast.success("Proposal rejected");
-    fetchProposals();
+    await fetchProposals();
+    notifySalesDataChanged(["proposals", "dashboard"], "proposal:reject");
   };
 
   const markPaid = async (proposalId: string) => {
