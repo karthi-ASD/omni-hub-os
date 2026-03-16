@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useSeoKeywords, useSeoOnpageTasks, useSeoOffpageItems, useSeoContent, useSeoCampaigns } from "@/hooks/useSeo";
+import { useSeoKeywords, useSeoOnpageTasks, useSeoOffpageItems, useSeoContent } from "@/hooks/useSeo";
+import { useSeoProjects } from "@/hooks/useSeoProjects";
 import { useSeoGbp } from "@/hooks/useSeoGbp";
 import { useSeoTechnical } from "@/hooks/useSeoTechnical";
 import { useSeoReports } from "@/hooks/useSeoReports";
@@ -20,18 +21,18 @@ import { Plus, ArrowLeft, Key, FileText, Link, Globe, Settings, BarChart3, Messa
 import { Skeleton } from "@/components/ui/skeleton";
 
 const SeoCampaignDetailPage = () => {
-  const { campaignId } = useParams<{ campaignId: string }>();
+  const { campaignId: projectId } = useParams<{ campaignId: string }>();
   const navigate = useNavigate();
-  const { campaigns } = useSeoCampaigns();
-  const campaign = campaigns.find((c) => c.id === campaignId);
-  const { keywords, loading: kwLoading, addKeyword, updateKeywordStatus } = useSeoKeywords(campaignId);
-  const { tasks, loading: taskLoading, addTask, updateTaskStatus } = useSeoOnpageTasks(campaignId);
-  const { items: offpageItems, loading: offLoading, addItem, updateItemStatus } = useSeoOffpageItems(campaignId);
-  const { content, loading: contentLoading, addContent, updateContentStatus } = useSeoContent(campaignId);
-  const { gbp, loading: gbpLoading, upsert: upsertGbp } = useSeoGbp(campaignId);
-  const { audit, loading: techLoading, upsert: upsertTech } = useSeoTechnical(campaignId);
-  const { reports, loading: reportLoading, addReport } = useSeoReports(campaignId);
-  const { logs: commLogs, loading: commLoading, addLog: addComm } = useSeoComms(campaignId);
+  const { projects } = useSeoProjects();
+  const project = projects.find((p) => p.id === projectId);
+  const { keywords, loading: kwLoading, addKeyword, updateKeywordStatus } = useSeoKeywords(projectId);
+  const { tasks, loading: taskLoading, addTask, updateTaskStatus } = useSeoOnpageTasks(projectId);
+  const { items: offpageItems, loading: offLoading, addItem, updateItemStatus } = useSeoOffpageItems(projectId);
+  const { content, loading: contentLoading, addContent, updateContentStatus } = useSeoContent(projectId);
+  const { gbp, loading: gbpLoading, upsert: upsertGbp } = useSeoGbp(projectId);
+  const { audit, loading: techLoading, upsert: upsertTech } = useSeoTechnical(projectId);
+  const { reports, loading: reportLoading, addReport } = useSeoReports(projectId);
+  const { logs: commLogs, loading: commLoading, addLog: addComm } = useSeoComms(projectId);
 
   // Form states
   const [kwOpen, setKwOpen] = useState(false);
@@ -84,10 +85,10 @@ const SeoCampaignDetailPage = () => {
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate("/seo")}><ArrowLeft className="h-4 w-4" /></Button>
         <div>
-          <h1 className="text-2xl font-bold">{(campaign as any)?.primary_domain || "Campaign Detail"}</h1>
+          <h1 className="text-2xl font-bold">{project?.website_domain || project?.project_name || "Project Detail"}</h1>
           <p className="text-muted-foreground text-sm">
-            {(campaign as any)?.package_type && <Badge variant="outline" className="mr-2 capitalize">{(campaign as any).package_type}</Badge>}
-            {(campaign as any)?.payment_status && <Badge variant="secondary" className="capitalize">{(campaign as any).payment_status}</Badge>}
+            {project?.service_package && <Badge variant="outline" className="mr-2 capitalize">{project.service_package}</Badge>}
+            {project?.project_status && <Badge variant="secondary" className="capitalize">{project.project_status}</Badge>}
           </p>
         </div>
       </div>

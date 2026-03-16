@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 export interface SeoReport {
   id: string;
-  campaign_id: string;
+  seo_project_id: string | null;
   report_month: string;
   traffic_current: number;
   traffic_previous: number;
@@ -20,32 +20,40 @@ export interface SeoReport {
   created_at: string;
 }
 
-export function useSeoReports(campaignId?: string) {
+export function useSeoReports(projectId?: string) {
   const { profile } = useAuth();
   const [reports, setReports] = useState<SeoReport[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetch = useCallback(async () => {
-    if (!campaignId) { setReports([]); setLoading(false); return; }
+    if (!projectId) { setReports([]); setLoading(false); return; }
     setLoading(true);
-    const { data } = await supabase
-      .from("seo_reports")
+    const { data } = await (supabase.from("seo_reports") as any)
       .select("*")
-      .eq("campaign_id", campaignId)
-      .order("created_at", { ascending: false });
-    setReports((data as any as SeoReport[]) || []);
+      .eq("seo_project_id", projectId)
+      .order("report_month", { ascending: false });
+    setReports((data as SeoReport[]) || []);
     setLoading(false);
-  }, [campaignId]);
+  }, [projectId]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  const addReport = async (input: Omit<SeoReport, "id" | "campaign_id" | "created_at">) => {
-    if (!profile?.business_id || !campaignId) return;
-    await supabase.from("seo_reports").insert({
+  const addReport = async (input: {
+    report_month: string;
+    traffic_current?: number;
+    traffic_previous?: number;
+    keywords_improved?: number;
+    keywords_dropped?: number;
+    backlinks_built?: number;
+    tasks_completed?: number;
+    conversions?: number;
+  }) => {
+    if (!profile?.business_id || !projectId) return;
+    await (supabase.from("seo_reports") as any).insert({
       business_id: profile.business_id,
-      campaign_id: campaignId,
+      seo_project_id: projectId,
       ...input,
-    } as any);
+    });
     toast.success("Report added");
     fetch();
   };

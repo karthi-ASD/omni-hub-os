@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 export interface SeoTechnicalAudit {
   id: string;
-  campaign_id: string;
+  seo_project_id: string | null;
   desktop_speed: number | null;
   mobile_speed: number | null;
   ssl_active: boolean;
@@ -19,36 +19,37 @@ export interface SeoTechnicalAudit {
   created_at: string;
 }
 
-export function useSeoTechnical(campaignId?: string) {
+export function useSeoTechnical(projectId?: string) {
   const { profile } = useAuth();
   const [audit, setAudit] = useState<SeoTechnicalAudit | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetch = useCallback(async () => {
-    if (!campaignId) { setAudit(null); setLoading(false); return; }
+    if (!projectId) { setAudit(null); setLoading(false); return; }
     setLoading(true);
-    const { data } = await supabase
-      .from("seo_technical_audits")
+    const { data } = await (supabase.from("seo_technical_audits") as any)
       .select("*")
-      .eq("campaign_id", campaignId)
+      .eq("seo_project_id", projectId)
       .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
-    setAudit(data as any);
+    setAudit(data || null);
     setLoading(false);
-  }, [campaignId]);
+  }, [projectId]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
   const upsert = async (input: Partial<SeoTechnicalAudit>) => {
-    if (!profile?.business_id || !campaignId) return;
+    if (!profile?.business_id || !projectId) return;
     if (audit) {
-      await supabase.from("seo_technical_audits").update(input as any).eq("id", audit.id);
+      await (supabase.from("seo_technical_audits") as any).update({ ...input, last_audit_date: new Date().toISOString() }).eq("id", audit.id);
     } else {
-      await supabase.from("seo_technical_audits").insert({
+      await (supabase.from("seo_technical_audits") as any).insert({
         business_id: profile.business_id,
-        campaign_id: campaignId,
+        seo_project_id: projectId,
+        last_audit_date: new Date().toISOString(),
         ...input,
-      } as any);
+      });
     }
     toast.success("Technical audit updated");
     fetch();

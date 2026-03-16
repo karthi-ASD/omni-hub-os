@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 export interface SeoGbpProfile {
   id: string;
-  campaign_id: string;
+  seo_project_id: string | null;
   existing_listing: boolean;
   listing_url: string | null;
   verification_status: string;
@@ -18,35 +18,34 @@ export interface SeoGbpProfile {
   status: string;
 }
 
-export function useSeoGbp(campaignId?: string) {
+export function useSeoGbp(projectId?: string) {
   const { profile } = useAuth();
   const [gbp, setGbp] = useState<SeoGbpProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetch = useCallback(async () => {
-    if (!campaignId) { setGbp(null); setLoading(false); return; }
+    if (!projectId) { setGbp(null); setLoading(false); return; }
     setLoading(true);
-    const { data } = await supabase
-      .from("seo_gbp_profiles")
+    const { data } = await (supabase.from("seo_gbp_profiles") as any)
       .select("*")
-      .eq("campaign_id", campaignId)
+      .eq("seo_project_id", projectId)
       .maybeSingle();
-    setGbp(data as any);
+    setGbp(data || null);
     setLoading(false);
-  }, [campaignId]);
+  }, [projectId]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
   const upsert = async (input: Partial<SeoGbpProfile>) => {
-    if (!profile?.business_id || !campaignId) return;
+    if (!profile?.business_id || !projectId) return;
     if (gbp) {
-      await supabase.from("seo_gbp_profiles").update(input as any).eq("id", gbp.id);
+      await (supabase.from("seo_gbp_profiles") as any).update(input).eq("id", gbp.id);
     } else {
-      await supabase.from("seo_gbp_profiles").insert({
+      await (supabase.from("seo_gbp_profiles") as any).insert({
         business_id: profile.business_id,
-        campaign_id: campaignId,
+        seo_project_id: projectId,
         ...input,
-      } as any);
+      });
     }
     toast.success("GBP profile updated");
     fetch();

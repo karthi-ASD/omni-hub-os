@@ -41,7 +41,7 @@ export function useAnalytics() {
       supabase.from("leads").select("id", { count: "exact", head: true }),
       supabase.from("deals").select("id, stage, estimated_value"),
       supabase.from("invoices").select("id, status, total"),
-      supabase.from("seo_campaigns").select("id", { count: "exact", head: true }).eq("status", "active"),
+      supabase.from("seo_projects").select("id", { count: "exact", head: true }).eq("project_status", "active"),
     ]);
 
     setEvents((eventsRes.data as any) || []);
