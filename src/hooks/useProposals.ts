@@ -99,7 +99,8 @@ export function useProposals() {
     ]);
 
     toast.success("Proposal created");
-    fetchProposals();
+    await fetchProposals();
+    notifySalesDataChanged(["proposals", "dashboard"], "proposal:create");
     return data as any as Proposal;
   };
 
