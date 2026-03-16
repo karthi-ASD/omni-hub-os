@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
-import { Plus, Search, Target, Phone, Mail, FolderKanban, MessageSquare, ChevronRight, Flame, UserCheck, Zap } from "lucide-react";
+import { Plus, Search, Target, Phone, Mail, FolderKanban, MessageSquare, ChevronRight, Flame, UserCheck, Zap, ShieldCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 import { useNavigate } from "react-router-dom";
