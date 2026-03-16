@@ -58,7 +58,7 @@ const ClientsPage = () => {
   const effectiveSalesFilter = isSalesOnly ? (profile?.user_id || "all") : salesFilter;
 
   const {
-    clients, loading, totalCount, hasMore,
+    clients, loading, totalCount, statusCounts, hasMore,
     createClient, updateClientStatus, loadMore, setSearchTerm, refetch,
     bulkAssignSalesperson,
   } = useClients({
@@ -88,11 +88,7 @@ const ClientsPage = () => {
     finally { setSyncing(false); }
   };
 
-  const statusCounts = useMemo(() => ({
-    active: clients.filter(c => c.client_status === "active").length,
-    cancelled: clients.filter(c => c.client_status === "cancelled").length,
-    pending: clients.filter(c => c.client_status === "pending").length,
-  }), [clients]);
+  // statusCounts now come from server-side via useClients hook
 
   const handleSalesOwnerChange = async (clientId: string, userId: string) => {
     const member = salesTeam.find(m => m.user_id === userId);
@@ -152,9 +148,9 @@ const ClientsPage = () => {
       {/* KPI strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <StatCard label="Total Clients" value={totalCount} icon={Users} gradient="from-primary to-accent" />
-        <StatCard label="Active" value={statusCounts.active} icon={CheckCircle} gradient="from-neon-green to-success" />
-        <StatCard label="Cancelled" value={statusCounts.cancelled} icon={XCircle} gradient="from-destructive to-neon-orange" />
-        <StatCard label="Pending" value={statusCounts.pending} icon={Clock} gradient="from-warning to-neon-orange" />
+        <StatCard label="Active" value={statusCounts.active || 0} icon={CheckCircle} gradient="from-neon-green to-success" />
+        <StatCard label="Cancelled" value={statusCounts.cancelled || 0} icon={XCircle} gradient="from-destructive to-neon-orange" />
+        <StatCard label="Pending" value={statusCounts.pending || 0} icon={Clock} gradient="from-warning to-neon-orange" />
       </div>
 
       {/* Search + Filter */}
