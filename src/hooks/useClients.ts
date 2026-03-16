@@ -126,6 +126,7 @@ export function useClients(options?: UseClientsOptions) {
     let dataQuery = supabase
       .from("clients")
       .select("*")
+      .neq("client_status", "reverted")
       .order("created_at", { ascending: false })
       .range(from, to);
 
