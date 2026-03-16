@@ -1,7 +1,9 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useClients, Client, ClientStatus } from "@/hooks/useClients";
 import { useClientProfile } from "@/hooks/useClientProfile";
-import { useState } from "react";
+import { useClientConversations } from "@/hooks/useClientConversations";
+import { useSalesCallbacks } from "@/hooks/useSalesCallbacks";
+import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,13 +11,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
   ArrowLeft, Globe, Smartphone, Search, FileText, Ticket, Clock,
   Mail, Phone, Building2, MapPin, Plus, ExternalLink, DollarSign, CreditCard, TrendingUp, AlertTriangle,
-  ClipboardCheck, CheckCircle2
+  ClipboardCheck, CheckCircle2, MessageSquare, PhoneCall, CalendarCheck
 } from "lucide-react";
 import { useOnboardingChecklist } from "@/hooks/useOnboardingChecklist";
 import { Progress } from "@/components/ui/progress";
@@ -23,7 +26,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useClientFinancials } from "@/hooks/useClientFinancials";
 import { useSalesTeam } from "@/hooks/useSalesTeam";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { format } from "date-fns";
+import { format, parseISO, isToday, isTomorrow, isPast } from "date-fns";
 import { toast } from "sonner";
 
 const statusColor = (s: string) => {
@@ -44,6 +47,13 @@ const statusColor = (s: string) => {
   return m[s] || "bg-muted text-muted-foreground";
 };
 
+const convTypeIcon: Record<string, React.ElementType> = {
+  call: Phone,
+  meeting: Building2,
+  whatsapp: MessageSquare,
+  email: Mail,
+};
+
 const ClientProfilePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -56,6 +66,12 @@ const ClientProfilePage = () => {
   const financials = useClientFinancials(id);
   const onboarding = useOnboardingChecklist(id);
   const { members: salesTeam } = useSalesTeam();
+  const { conversations, addConversation } = useClientConversations(id);
+  const { callbacks } = useSalesCallbacks();
+
+  const clientCallbacks = useMemo(() => {
+    return callbacks.filter(cb => cb.client_id === id).sort((a, b) => b.callback_date.localeCompare(a.callback_date));
+  }, [callbacks, id]);
 
   const handleSalesOwnerChange = async (userId: string) => {
     if (!client) return;
@@ -69,8 +85,10 @@ const ClientProfilePage = () => {
 
   const [websiteDialog, setWebsiteDialog] = useState(false);
   const [appDialog, setAppDialog] = useState(false);
+  const [convDialog, setConvDialog] = useState(false);
   const [webForm, setWebForm] = useState({ website_url: "", cms_type: "", hosting_provider: "", domain_provider: "" });
   const [appForm, setAppForm] = useState({ app_name: "", platform: "Android", app_category: "" });
+  const [convForm, setConvForm] = useState({ conversation_type: "call", notes: "", next_callback_date: "" });
 
   if (clientsLoading || loading) {
     return (
@@ -103,6 +121,13 @@ const ClientProfilePage = () => {
     await addApp(appForm);
     setAppForm({ app_name: "", platform: "Android", app_category: "" });
     setAppDialog(false);
+  };
+
+  const handleAddConversation = async () => {
+    if (!convForm.notes) return;
+    await addConversation(convForm);
+    setConvForm({ conversation_type: "call", notes: "", next_callback_date: "" });
+    setConvDialog(false);
   };
 
   return (
@@ -182,8 +207,10 @@ const ClientProfilePage = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="details" className="space-y-4">
-        <TabsList className="grid grid-cols-4 lg:grid-cols-10">
+        <TabsList className="grid grid-cols-4 lg:grid-cols-12">
           <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsTrigger value="conversations"><MessageSquare className="h-3.5 w-3.5 mr-1" />Notes</TabsTrigger>
+          <TabsTrigger value="callbacks"><PhoneCall className="h-3.5 w-3.5 mr-1" />Callbacks</TabsTrigger>
           <TabsTrigger value="onboarding"><ClipboardCheck className="h-3.5 w-3.5 mr-1" />Onboarding</TabsTrigger>
           <TabsTrigger value="finance"><DollarSign className="h-3.5 w-3.5 mr-1" />Finance</TabsTrigger>
           <TabsTrigger value="services">Services</TabsTrigger>
@@ -194,6 +221,89 @@ const ClientProfilePage = () => {
           <TabsTrigger value="tickets" className="hidden lg:inline-flex">Tickets</TabsTrigger>
           <TabsTrigger value="timeline" className="hidden lg:inline-flex">Timeline</TabsTrigger>
         </TabsList>
+
+        {/* ── Conversations / Notes ── */}
+        <TabsContent value="conversations">
+          <Card className="rounded-xl">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" /> Conversation History
+              </CardTitle>
+              <Button size="sm" onClick={() => setConvDialog(true)}>
+                <Plus className="h-4 w-4 mr-1" /> Add Note
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {conversations.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-6 text-center">No conversations recorded yet</p>
+              ) : (
+                <div className="relative pl-6 space-y-4">
+                  <div className="absolute left-2 top-2 bottom-2 w-0.5 bg-border" />
+                  {conversations.map(conv => {
+                    const Icon = convTypeIcon[conv.conversation_type] || Phone;
+                    return (
+                      <div key={conv.id} className="relative">
+                        <div className="absolute -left-[18px] top-1 h-3 w-3 rounded-full bg-primary border-2 border-background" />
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                            <Badge variant="outline" className="text-[10px]">{conv.conversation_type}</Badge>
+                            <span className="text-[10px] text-muted-foreground">
+                              {format(new Date(conv.conversation_date), "dd MMM yyyy")}
+                            </span>
+                          </div>
+                          <p className="text-sm whitespace-pre-wrap">{conv.notes}</p>
+                          {conv.next_callback_date && (
+                            <p className="text-xs text-primary flex items-center gap-1">
+                              <CalendarCheck className="h-3 w-3" />
+                              Follow-up: {format(parseISO(conv.next_callback_date), "dd MMM yyyy")}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ── Callbacks ── */}
+        <TabsContent value="callbacks">
+          <Card className="rounded-xl">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <PhoneCall className="h-4 w-4" /> Callback Schedule
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {clientCallbacks.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-6 text-center">No callbacks scheduled for this client</p>
+              ) : (
+                <div className="space-y-2">
+                  {clientCallbacks.map(cb => (
+                    <div key={cb.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border">
+                      <PhoneCall className="h-4 w-4 text-primary shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">{cb.notes || "Callback"}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(parseISO(cb.callback_date), "dd MMM yyyy")}
+                          {cb.callback_time && ` · ${cb.callback_time}`}
+                        </p>
+                        {cb.result && <p className="text-xs text-foreground mt-1">Result: {cb.result}</p>}
+                        {cb.next_step && <p className="text-xs text-primary">Next: {cb.next_step}</p>}
+                      </div>
+                      <Badge variant={cb.status === "completed" ? "default" : cb.status === "missed" ? "destructive" : "secondary"} className="text-xs">
+                        {cb.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* ── Onboarding Checklist ── */}
         <TabsContent value="onboarding">
@@ -258,6 +368,7 @@ const ClientProfilePage = () => {
                 ["City", client.city],
                 ["State", client.state],
                 ["Country", client.country],
+                ["Sales Owner", client.salesperson_owner || "Unassigned"],
                 ["Created", format(new Date(client.created_at), "dd MMM yyyy")],
               ]
                 .filter(([, v]) => v)
@@ -623,6 +734,33 @@ const ClientProfilePage = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setAppDialog(false)}>Cancel</Button>
             <Button onClick={handleAddApp} disabled={!appForm.app_name}>Add</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Conversation Dialog */}
+      <Dialog open={convDialog} onOpenChange={setConvDialog}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Log Conversation</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Type</Label>
+              <Select value={convForm.conversation_type} onValueChange={v => setConvForm(p => ({ ...p, conversation_type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="call">Call</SelectItem>
+                  <SelectItem value="meeting">Meeting</SelectItem>
+                  <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                  <SelectItem value="email">Email</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Notes *</Label><Textarea value={convForm.notes} onChange={e => setConvForm(p => ({ ...p, notes: e.target.value }))} placeholder="What was discussed..." rows={4} /></div>
+            <div><Label>Next Follow-up Date</Label><Input type="date" value={convForm.next_callback_date} onChange={e => setConvForm(p => ({ ...p, next_callback_date: e.target.value }))} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConvDialog(false)}>Cancel</Button>
+            <Button onClick={handleAddConversation} disabled={!convForm.notes}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

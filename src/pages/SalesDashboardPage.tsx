@@ -2,14 +2,20 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSalesTeam } from "@/hooks/useSalesTeam";
+import { useSalesCallbacks } from "@/hooks/useSalesCallbacks";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Phone, Target, CalendarCheck, Handshake, TrendingDown, Users, BarChart3, DollarSign, UserCheck, XCircle, CheckCircle, Trophy } from "lucide-react";
-import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { Phone, Target, CalendarCheck, Handshake, TrendingDown, Users, BarChart3, DollarSign, UserCheck, XCircle, CheckCircle, Trophy, Plus, PhoneCall, Clock } from "lucide-react";
+import { format, startOfDay, endOfDay, startOfMonth, endOfMonth, subMonths, isToday, isTomorrow, isPast, parseISO } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 
 interface DailyMetrics {
@@ -36,6 +42,7 @@ interface ClientWithRevenue {
 const SalesDashboardPage = () => {
   const { profile, user, isSuperAdmin, isBusinessAdmin } = useAuth();
   const { members: salesTeam } = useSalesTeam();
+  const { callbacks, createCallback, completeCallback } = useSalesCallbacks();
   const isAdmin = isSuperAdmin || isBusinessAdmin;
 
   const [metrics, setMetrics] = useState<DailyMetrics>({
@@ -45,6 +52,10 @@ const SalesDashboardPage = () => {
   const [monthlyData, setMonthlyData] = useState<{ month: string; clients: number; lost: number }[]>([]);
   const [clientsData, setClientsData] = useState<ClientWithRevenue[]>([]);
   const [loading, setLoading] = useState(true);
+  const [callbackDialog, setCallbackDialog] = useState(false);
+  const [completeDialog, setCompleteDialog] = useState<string | null>(null);
+  const [callbackForm, setCallbackForm] = useState({ callback_date: "", callback_time: "", notes: "" });
+  const [completeForm, setCompleteForm] = useState({ result: "", next_step: "" });
 
   const currentUserId = user?.id;
 
@@ -57,10 +68,23 @@ const SalesDashboardPage = () => {
   const clientMetrics = useMemo(() => {
     const active = myClients.filter(c => c.client_status === "active").length;
     const cancelled = myClients.filter(c => c.client_status === "cancelled").length;
+    const pending = myClients.filter(c => ["pending", "prospect"].includes(c.client_status)).length;
     const totalRevenue = myClients.reduce((s, c) => s + c.totalRevenue, 0);
     const outstanding = myClients.reduce((s, c) => s + c.outstanding, 0);
-    return { total: myClients.length, active, cancelled, totalRevenue, outstanding };
+    return { total: myClients.length, active, cancelled, pending, totalRevenue, outstanding };
   }, [myClients]);
+
+  // Filter callbacks for current user (non-admin sees only own)
+  const myCallbacks = useMemo(() => {
+    if (isAdmin) return callbacks;
+    return callbacks.filter(cb => cb.sales_user_id === currentUserId);
+  }, [callbacks, currentUserId, isAdmin]);
+
+  const pendingCallbacks = myCallbacks.filter(cb => cb.status === "pending");
+  const todayCallbacks = pendingCallbacks.filter(cb => isToday(parseISO(cb.callback_date)));
+  const tomorrowCallbacks = pendingCallbacks.filter(cb => isTomorrow(parseISO(cb.callback_date)));
+  const overdueCallbacks = pendingCallbacks.filter(cb => isPast(parseISO(cb.callback_date)) && !isToday(parseISO(cb.callback_date)));
+  const upcomingCallbacks = pendingCallbacks.filter(cb => !isPast(parseISO(cb.callback_date)) && !isToday(parseISO(cb.callback_date)) && !isTomorrow(parseISO(cb.callback_date)));
 
   // Salesperson leaderboard (admin only)
   const leaderboard = useMemo(() => {
@@ -154,7 +178,45 @@ const SalesDashboardPage = () => {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  const handleCreateCallback = async () => {
+    if (!callbackForm.callback_date) return;
+    await createCallback(callbackForm);
+    setCallbackForm({ callback_date: "", callback_time: "", notes: "" });
+    setCallbackDialog(false);
+  };
+
+  const handleCompleteCallback = async () => {
+    if (!completeDialog || !completeForm.result) return;
+    await completeCallback(completeDialog, completeForm.result, completeForm.next_step);
+    setCompleteForm({ result: "", next_step: "" });
+    setCompleteDialog(null);
+  };
+
   if (loading) return <div className="space-y-4 p-6">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-2xl" />)}</div>;
+
+  const renderCallbackList = (items: typeof pendingCallbacks, label: string) => {
+    if (items.length === 0) return null;
+    return (
+      <div className="space-y-2">
+        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{label} ({items.length})</h4>
+        {items.map(cb => (
+          <div key={cb.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border">
+            <PhoneCall className="h-4 w-4 text-primary shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{cb.notes || "Scheduled callback"}</p>
+              <p className="text-xs text-muted-foreground">
+                {format(parseISO(cb.callback_date), "dd MMM")}
+                {cb.callback_time && ` · ${cb.callback_time}`}
+              </p>
+            </div>
+            <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => setCompleteDialog(cb.id)}>
+              Complete
+            </Button>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -183,6 +245,25 @@ const SalesDashboardPage = () => {
         <StatCard label="In Progress" value={metrics.dealsInProgress} icon={BarChart3} gradient="from-info to-neon-blue" />
         <StatCard label="Deals Lost" value={metrics.dealsLost} icon={TrendingDown} gradient="from-destructive to-neon-orange" />
       </div>
+
+      {/* Callbacks Panel */}
+      <Card className="rounded-2xl border-0 shadow-elevated">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm flex items-center gap-2"><PhoneCall className="h-4 w-4" /> Callbacks</CardTitle>
+          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setCallbackDialog(true)}>
+            <Plus className="h-3 w-3 mr-1" /> Schedule
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {overdueCallbacks.length > 0 && renderCallbackList(overdueCallbacks, "⚠️ Overdue")}
+          {renderCallbackList(todayCallbacks, "Today")}
+          {renderCallbackList(tomorrowCallbacks, "Tomorrow")}
+          {renderCallbackList(upcomingCallbacks, "Upcoming")}
+          {pendingCallbacks.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">No pending callbacks</p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Charts + Leaderboard */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -278,6 +359,37 @@ const SalesDashboardPage = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Schedule Callback Dialog */}
+      <Dialog open={callbackDialog} onOpenChange={setCallbackDialog}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Schedule Callback</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div><Label>Date *</Label><Input type="date" value={callbackForm.callback_date} onChange={e => setCallbackForm(p => ({ ...p, callback_date: e.target.value }))} /></div>
+            <div><Label>Time</Label><Input type="time" value={callbackForm.callback_time} onChange={e => setCallbackForm(p => ({ ...p, callback_time: e.target.value }))} /></div>
+            <div><Label>Notes</Label><Textarea value={callbackForm.notes} onChange={e => setCallbackForm(p => ({ ...p, notes: e.target.value }))} placeholder="Callback details..." /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCallbackDialog(false)}>Cancel</Button>
+            <Button onClick={handleCreateCallback} disabled={!callbackForm.callback_date}>Schedule</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Complete Callback Dialog */}
+      <Dialog open={!!completeDialog} onOpenChange={() => setCompleteDialog(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Complete Callback</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div><Label>Result *</Label><Textarea value={completeForm.result} onChange={e => setCompleteForm(p => ({ ...p, result: e.target.value }))} placeholder="What was the outcome?" /></div>
+            <div><Label>Next Step</Label><Input value={completeForm.next_step} onChange={e => setCompleteForm(p => ({ ...p, next_step: e.target.value }))} placeholder="e.g. Send proposal, Follow up next week" /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCompleteDialog(null)}>Cancel</Button>
+            <Button onClick={handleCompleteCallback} disabled={!completeForm.result}>Complete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
