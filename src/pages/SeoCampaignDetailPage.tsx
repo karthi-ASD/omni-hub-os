@@ -128,6 +128,17 @@ const SeoCampaignDetailPage = () => {
           )}
         </TabsContent>
 
+        {/* Audit Tab */}
+        <TabsContent value="audit">
+          <SeoAuditPanel
+            audits={pageAudits}
+            loading={auditLoading}
+            crawling={crawling}
+            crawlProgress={crawlProgress}
+            onRunAudit={runFullAudit}
+          />
+        </TabsContent>
+
         {/* Keywords Tab */}
         <TabsContent value="keywords" className="space-y-4">
           <div className="flex justify-between items-center">
