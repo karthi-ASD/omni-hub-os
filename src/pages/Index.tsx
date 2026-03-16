@@ -294,6 +294,9 @@ const Index = () => {
         </div>
       </section>
 
+      {/* ═══════ EXPANSION FLOW ═══════ */}
+      <NextWebExpansionFlow />
+
       {/* ═══════ PLATFORM OVERVIEW — Light cards ═══════ */}
       <section className="py-20 md:py-28 bg-gradient-to-b from-[hsl(230,20%,94%)] to-[hsl(220,25%,97%)] relative">
         <SoftOrbs />
