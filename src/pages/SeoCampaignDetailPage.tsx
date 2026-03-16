@@ -85,10 +85,10 @@ const SeoCampaignDetailPage = () => {
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate("/seo")}><ArrowLeft className="h-4 w-4" /></Button>
         <div>
-          <h1 className="text-2xl font-bold">{(campaign as any)?.primary_domain || "Campaign Detail"}</h1>
+          <h1 className="text-2xl font-bold">{project?.website_domain || project?.project_name || "Project Detail"}</h1>
           <p className="text-muted-foreground text-sm">
-            {(campaign as any)?.package_type && <Badge variant="outline" className="mr-2 capitalize">{(campaign as any).package_type}</Badge>}
-            {(campaign as any)?.payment_status && <Badge variant="secondary" className="capitalize">{(campaign as any).payment_status}</Badge>}
+            {project?.service_package && <Badge variant="outline" className="mr-2 capitalize">{project.service_package}</Badge>}
+            {project?.project_status && <Badge variant="secondary" className="capitalize">{project.project_status}</Badge>}
           </p>
         </div>
       </div>
