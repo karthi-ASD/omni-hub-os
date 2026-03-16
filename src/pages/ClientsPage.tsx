@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSalesTeam } from "@/hooks/useSalesTeam";
 import { useCanCreateClient } from "@/hooks/useCanCreateClient";
 import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
+import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,9 +16,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
-import { Users, Plus, Mail, Phone, Building2, Search, Upload, RefreshCw, ChevronDown, UserCheck, Clock, CheckCircle, XCircle, Filter } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Users, Plus, Mail, Phone, Building2, Search, Upload, RefreshCw, ChevronDown, UserCheck, Clock, CheckCircle, XCircle, Filter, MoreVertical, Undo2 } from "lucide-react";
 import CSVImportDialog from "@/components/clients/CSVImportDialog";
 import UnifiedClientForm from "@/components/clients/UnifiedClientForm";
+import RevertToLeadDialog from "@/components/clients/RevertToLeadDialog";
 import { toast } from "sonner";
 import { notifySalesDataChanged, forceRefreshSalesData } from "@/lib/salesDataSync";
 
@@ -40,10 +43,18 @@ const ClientsPage = () => {
   const [syncing, setSyncing] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkSalesId, setBulkSalesId] = useState<string>("");
+  const [revertClient, setRevertClient] = useState<Client | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const { members: salesTeam, loading: salesLoading } = useSalesTeam();
   const { canCreate } = useCanCreateClient();
   const { departmentName } = useEmployeeDepartment();
+  const { revertClientToLead } = useLeadConversions();
+
+  // Admin/accounts can revert clients
+  const isAdmin = useMemo(() => {
+    const adminRoles = ["super_admin", "business_admin", "manager"];
+    return roles.some(r => adminRoles.includes(r));
+  }, [roles]);
 
   // Determine if user is a salesperson (in Sales department AND not admin)
   const isSalesOnly = useMemo(() => {
@@ -304,6 +315,20 @@ const ClientsPage = () => {
                           </SelectContent>
                         </Select>
                       )}
+                      {isAdmin && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={e => e.stopPropagation()}>
+                              <MoreVertical className="h-3.5 w-3.5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setRevertClient(c); }} className="text-destructive">
+                              <Undo2 className="h-3.5 w-3.5 mr-2" /> Revert to Lead
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </div>
                   </div>
 
@@ -344,6 +369,17 @@ const ClientsPage = () => {
 
       <UnifiedClientForm open={createOpen} onOpenChange={setCreateOpen} onSubmit={createClient} />
       <CSVImportDialog open={importOpen} onOpenChange={setImportOpen} onComplete={refetch} />
+      <RevertToLeadDialog
+        open={!!revertClient}
+        onOpenChange={(open) => { if (!open) setRevertClient(null); }}
+        clientName={revertClient?.contact_name || ""}
+        onConfirm={async (reason) => {
+          if (revertClient) {
+            await revertClientToLead(revertClient.id, reason);
+            refetch();
+          }
+        }}
+      />
     </div>
   );
 };
