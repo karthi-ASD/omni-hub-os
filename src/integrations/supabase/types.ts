@@ -13423,6 +13423,7 @@ export type Database = {
       }
       leads: {
         Row: {
+          ai_prediction: string | null
           ai_priority: string | null
           ai_recommended_action: string | null
           ai_score: number | null
@@ -13433,6 +13434,7 @@ export type Database = {
           business_name: string | null
           created_at: string
           email: string
+          engagement_score: number | null
           estimated_budget: number | null
           fbclid: string | null
           gclid: string | null
@@ -13440,19 +13442,28 @@ export type Database = {
           inquiry_id: string | null
           is_deleted: boolean
           landing_page_url: string | null
+          last_activity_at: string | null
+          last_contact_method: string | null
           last_contacted_at: string | null
+          lead_score: number | null
+          lead_temperature: string | null
           locked_fields: Json | null
           name: string
           next_follow_up_at: string | null
           notes: string | null
           phone: string | null
+          proposal_sent: boolean | null
           referrer_url: string | null
+          response_speed_hours: number | null
           service_detected: string | null
           services_needed: string | null
           source: Database["public"]["Enums"]["lead_source"]
           stage: Database["public"]["Enums"]["lead_stage"]
           status: Database["public"]["Enums"]["lead_status"]
           suburb: string | null
+          total_calls: number | null
+          total_emails: number | null
+          total_whatsapp: number | null
           updated_at: string
           utm_campaign: string | null
           utm_content: string | null
@@ -13460,8 +13471,10 @@ export type Database = {
           utm_source: string | null
           utm_term: string | null
           website_id: string | null
+          website_visits: number | null
         }
         Insert: {
+          ai_prediction?: string | null
           ai_priority?: string | null
           ai_recommended_action?: string | null
           ai_score?: number | null
@@ -13472,6 +13485,7 @@ export type Database = {
           business_name?: string | null
           created_at?: string
           email: string
+          engagement_score?: number | null
           estimated_budget?: number | null
           fbclid?: string | null
           gclid?: string | null
@@ -13479,19 +13493,28 @@ export type Database = {
           inquiry_id?: string | null
           is_deleted?: boolean
           landing_page_url?: string | null
+          last_activity_at?: string | null
+          last_contact_method?: string | null
           last_contacted_at?: string | null
+          lead_score?: number | null
+          lead_temperature?: string | null
           locked_fields?: Json | null
           name: string
           next_follow_up_at?: string | null
           notes?: string | null
           phone?: string | null
+          proposal_sent?: boolean | null
           referrer_url?: string | null
+          response_speed_hours?: number | null
           service_detected?: string | null
           services_needed?: string | null
           source?: Database["public"]["Enums"]["lead_source"]
           stage?: Database["public"]["Enums"]["lead_stage"]
           status?: Database["public"]["Enums"]["lead_status"]
           suburb?: string | null
+          total_calls?: number | null
+          total_emails?: number | null
+          total_whatsapp?: number | null
           updated_at?: string
           utm_campaign?: string | null
           utm_content?: string | null
@@ -13499,8 +13522,10 @@ export type Database = {
           utm_source?: string | null
           utm_term?: string | null
           website_id?: string | null
+          website_visits?: number | null
         }
         Update: {
+          ai_prediction?: string | null
           ai_priority?: string | null
           ai_recommended_action?: string | null
           ai_score?: number | null
@@ -13511,6 +13536,7 @@ export type Database = {
           business_name?: string | null
           created_at?: string
           email?: string
+          engagement_score?: number | null
           estimated_budget?: number | null
           fbclid?: string | null
           gclid?: string | null
@@ -13518,19 +13544,28 @@ export type Database = {
           inquiry_id?: string | null
           is_deleted?: boolean
           landing_page_url?: string | null
+          last_activity_at?: string | null
+          last_contact_method?: string | null
           last_contacted_at?: string | null
+          lead_score?: number | null
+          lead_temperature?: string | null
           locked_fields?: Json | null
           name?: string
           next_follow_up_at?: string | null
           notes?: string | null
           phone?: string | null
+          proposal_sent?: boolean | null
           referrer_url?: string | null
+          response_speed_hours?: number | null
           service_detected?: string | null
           services_needed?: string | null
           source?: Database["public"]["Enums"]["lead_source"]
           stage?: Database["public"]["Enums"]["lead_stage"]
           status?: Database["public"]["Enums"]["lead_status"]
           suburb?: string | null
+          total_calls?: number | null
+          total_emails?: number | null
+          total_whatsapp?: number | null
           updated_at?: string
           utm_campaign?: string | null
           utm_content?: string | null
@@ -13538,6 +13573,7 @@ export type Database = {
           utm_source?: string | null
           utm_term?: string | null
           website_id?: string | null
+          website_visits?: number | null
         }
         Relationships: [
           {
