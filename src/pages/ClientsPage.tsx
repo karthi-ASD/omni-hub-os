@@ -100,6 +100,7 @@ const ClientsPage = () => {
     } as any).eq("id", clientId);
     toast.success("Sales owner updated");
     refetch();
+    notifySalesDataChanged(["clients", "dashboard"], "client:update-owner");
   };
 
   const toggleSelect = (id: string) => {
