@@ -94,7 +94,7 @@ const ClientProfilePage = () => {
   const [convForm, setConvForm] = useState({ conversation_type: "call", notes: "", next_callback_date: "" });
   
   const { hasRole } = useAuth();
-  const canEditBilling = hasRole("super_admin") || hasRole("business_admin") || hasRole("accounts") || hasRole("finance");
+  const canEditBilling = hasRole("super_admin") || hasRole("business_admin") || hasRole("manager");
 
   if (clientsLoading || loading) {
     return (
