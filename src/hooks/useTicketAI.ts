@@ -109,7 +109,7 @@ export function useTicketAI() {
     ticket: any;
     client?: any;
     projects?: any[];
-    seo_campaigns?: any[];
+    seo_projects?: any[];
     recent_communications?: any[];
     conversation_history?: any[];
   }) => {
