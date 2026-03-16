@@ -37,6 +37,7 @@ export function useSalesCallbacks() {
   }, [profile?.business_id]);
 
   useEffect(() => { fetchCallbacks(); }, [fetchCallbacks]);
+  useSalesDataAutoRefresh(fetchCallbacks, ["all", "follow-ups", "dashboard"]);
 
   const createCallback = async (input: {
     client_id?: string;
