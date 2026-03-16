@@ -6117,6 +6117,44 @@ export type Database = {
           },
         ]
       }
+      client_users: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          invited_by: string | null
+          is_primary: boolean
+          role: Database["public"]["Enums"]["client_user_role"]
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          is_primary?: boolean
+          role?: Database["public"]["Enums"]["client_user_role"]
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          is_primary?: boolean
+          role?: Database["public"]["Enums"]["client_user_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_users_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_websites: {
         Row: {
           business_id: string
@@ -6176,8 +6214,11 @@ export type Database = {
       }
       clients: {
         Row: {
+          activation_token: string | null
+          activation_token_expires_at: string | null
           address: string | null
           assigned_seo_manager_id: string | null
+          auth_user_id: string | null
           billing_address: string | null
           business_id: string
           churn_risk: string | null
@@ -6198,6 +6239,7 @@ export type Database = {
           id: string
           last_payment_date: string | null
           lead_id: string | null
+          login_status: string
           mobile: string | null
           onboarding_status: Database["public"]["Enums"]["onboarding_status"]
           payment_method: string | null
@@ -6218,8 +6260,11 @@ export type Database = {
           xero_contact_id: string | null
         }
         Insert: {
+          activation_token?: string | null
+          activation_token_expires_at?: string | null
           address?: string | null
           assigned_seo_manager_id?: string | null
+          auth_user_id?: string | null
           billing_address?: string | null
           business_id: string
           churn_risk?: string | null
@@ -6240,6 +6285,7 @@ export type Database = {
           id?: string
           last_payment_date?: string | null
           lead_id?: string | null
+          login_status?: string
           mobile?: string | null
           onboarding_status?: Database["public"]["Enums"]["onboarding_status"]
           payment_method?: string | null
@@ -6260,8 +6306,11 @@ export type Database = {
           xero_contact_id?: string | null
         }
         Update: {
+          activation_token?: string | null
+          activation_token_expires_at?: string | null
           address?: string | null
           assigned_seo_manager_id?: string | null
+          auth_user_id?: string | null
           billing_address?: string | null
           business_id?: string
           churn_risk?: string | null
@@ -6282,6 +6331,7 @@ export type Database = {
           id?: string
           last_payment_date?: string | null
           lead_id?: string | null
+          login_status?: string
           mobile?: string | null
           onboarding_status?: Database["public"]["Enums"]["onboarding_status"]
           payment_method?: string | null
@@ -22848,6 +22898,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      find_client_by_email: {
+        Args: { _business_id: string; _email: string }
+        Returns: string
+      }
+      get_system_mode: { Args: { _business_id: string }; Returns: string }
       get_user_business_id: { Args: { _user_id: string }; Returns: string }
       handle_business_registration: {
         Args: {
@@ -22962,6 +23017,7 @@ export type Database = {
         | "not_interested"
         | "qualified"
       call_type: "outbound" | "inbound"
+      client_user_role: "owner" | "marketing_manager" | "viewer"
       contract_status: "draft" | "sent" | "signed" | "rejected"
       deal_stage:
         | "new"
@@ -23217,6 +23273,7 @@ export const Constants = {
         "qualified",
       ],
       call_type: ["outbound", "inbound"],
+      client_user_role: ["owner", "marketing_manager", "viewer"],
       contract_status: ["draft", "sent", "signed", "rejected"],
       deal_stage: [
         "new",
