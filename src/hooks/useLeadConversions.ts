@@ -131,7 +131,8 @@ export function useLeadConversions() {
     }
 
     toast.success("Conversion request submitted for approval");
-    fetchRequests();
+    await fetchRequests();
+    notifySalesDataChanged(["leads", "dashboard", "pipeline"], "lead-conversion:request");
     return data;
   };
 
