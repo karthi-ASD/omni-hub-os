@@ -48,6 +48,13 @@ const ClientsPage = () => {
   const { members: salesTeam, loading: salesLoading } = useSalesTeam();
   const { canCreate } = useCanCreateClient();
   const { departmentName } = useEmployeeDepartment();
+  const { revertClientToLead } = useLeadConversions();
+
+  // Admin/accounts can revert clients
+  const isAdmin = useMemo(() => {
+    const adminRoles = ["super_admin", "business_admin", "manager"];
+    return roles.some(r => adminRoles.includes(r));
+  }, [roles]);
 
   // Determine if user is a salesperson (in Sales department AND not admin)
   const isSalesOnly = useMemo(() => {
