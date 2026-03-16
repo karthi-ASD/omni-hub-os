@@ -83,6 +83,7 @@ export function useLeadConversions() {
   }, [profile?.business_id]);
 
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
+  useSalesDataAutoRefresh(fetchRequests, ["all", "leads", "clients", "dashboard", "pipeline"]);
 
   const requestConversion = async (leadId: string, services?: string, contractValue?: number) => {
     if (!profile?.business_id) { toast.error("Select a tenant first"); return null; }
