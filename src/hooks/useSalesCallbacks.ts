@@ -71,6 +71,7 @@ export function useSalesCallbacks() {
     if (error) { toast.error("Failed to update callback"); return; }
     toast.success("Callback completed");
     fetchCallbacks();
+    notifySalesDataChanged(["follow-ups", "dashboard"], "callback:complete");
   };
 
   const missCallback = async (id: string) => {
