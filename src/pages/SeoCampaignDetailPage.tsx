@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSeoKeywords, useSeoOnpageTasks, useSeoOffpageItems, useSeoContent } from "@/hooks/useSeo";
 import { useSeoProjects } from "@/hooks/useSeoProjects";
@@ -7,8 +7,13 @@ import { useSeoTechnical } from "@/hooks/useSeoTechnical";
 import { useSeoReports } from "@/hooks/useSeoReports";
 import { useSeoComms } from "@/hooks/useSeoComms";
 import { useSeoSiteAudit } from "@/hooks/useSeoSiteAudit";
+import { useGscData } from "@/hooks/useGscData";
+import { useKeywordRankingHistory } from "@/hooks/useKeywordRankingHistory";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { SeoAuditPanel } from "@/components/seo/SeoAuditPanel";
 import { SeoTechnicalPanel } from "@/components/seo/SeoTechnicalPanel";
+import { SeoRankingPanel } from "@/components/seo/SeoRankingPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,8 +29,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SeoProjectOverview } from "@/components/seo/SeoProjectOverview";
 import {
   ArrowLeft, Key, FileText, Link, Globe, BarChart3, MessageSquare,
-  MapPin, Wrench, Plus, LayoutDashboard, CheckSquare, Settings, Scan,
+  MapPin, Wrench, Plus, LayoutDashboard, CheckSquare, Settings, Scan, TrendingUp,
 } from "lucide-react";
+import { toast } from "sonner";
 
 const statusBadge = (status: string) => {
   const colors: Record<string, string> = {
@@ -62,6 +68,35 @@ const SeoCampaignDetailPage = () => {
   const { reports, loading: reportLoading, addReport } = useSeoReports(projectId);
   const { logs: commLogs, loading: commLoading, addLog: addComm } = useSeoComms(projectId);
   const { audits: pageAudits, loading: auditLoading, crawling, crawlProgress, runFullAudit } = useSeoSiteAudit(projectId, project?.website_domain);
+  const { data: gscData, loading: gscLoading, refetch: refetchGsc } = useGscData(projectId);
+  const { profile } = useAuth();
+  const keywordIds = useMemo(() => keywords.map(k => k.id), [keywords]);
+  const { history: rankingHistory, refetch: refetchHistory } = useKeywordRankingHistory(keywordIds);
+  const [syncing, setSyncing] = useState(false);
+
+  const syncRankings = useCallback(async () => {
+    if (!profile?.business_id || !projectId || !project?.website_domain) return;
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("seo-gsc-sync", {
+        body: {
+          business_id: profile.business_id,
+          seo_project_id: projectId,
+          domain: project.website_domain,
+          client_id: project.client_id,
+          days: 28,
+        },
+      });
+      if (error) throw error;
+      toast.success(data?.message || `Rankings synced: ${data?.rows || 0} data points`);
+      refetchGsc();
+      refetchHistory();
+    } catch (e: any) {
+      toast.error("Sync failed: " + (e.message || "Unknown error"));
+    } finally {
+      setSyncing(false);
+    }
+  }, [profile, projectId, project, refetchGsc, refetchHistory]);
 
   // Form states
   const [kwOpen, setKwOpen] = useState(false);
@@ -106,6 +141,7 @@ const SeoCampaignDetailPage = () => {
           <TabsList className="inline-flex h-10 w-auto">
             <TabsTrigger value="overview" className="gap-1.5 text-xs"><LayoutDashboard className="h-3 w-3" /> Overview</TabsTrigger>
             <TabsTrigger value="audit" className="gap-1.5 text-xs"><Scan className="h-3 w-3" /> Audit</TabsTrigger>
+            <TabsTrigger value="rankings" className="gap-1.5 text-xs"><TrendingUp className="h-3 w-3" /> Rankings</TabsTrigger>
             <TabsTrigger value="keywords" className="gap-1.5 text-xs"><Key className="h-3 w-3" /> Keywords</TabsTrigger>
             <TabsTrigger value="onpage" className="gap-1.5 text-xs"><FileText className="h-3 w-3" /> On-Page</TabsTrigger>
             <TabsTrigger value="offpage" className="gap-1.5 text-xs"><Link className="h-3 w-3" /> Off-Page</TabsTrigger>
@@ -134,6 +170,18 @@ const SeoCampaignDetailPage = () => {
             crawling={crawling}
             crawlProgress={crawlProgress}
             onRunAudit={runFullAudit}
+          />
+        </TabsContent>
+
+        {/* Rankings Tab */}
+        <TabsContent value="rankings">
+          <SeoRankingPanel
+            gscData={gscData}
+            keywords={keywords}
+            rankingHistory={rankingHistory}
+            gscLoading={gscLoading}
+            syncing={syncing}
+            onSync={syncRankings}
           />
         </TabsContent>
 
