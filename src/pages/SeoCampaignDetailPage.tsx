@@ -78,8 +78,6 @@ const SeoCampaignDetailPage = () => {
   const [commForm, setCommForm] = useState({ communication_type: "email", summary: "", follow_up_date: "" });
   const [gbpForm, setGbpForm] = useState({ existing_listing: false, listing_url: "", verification_status: "not_started", nap_consistency_check: false, reviews_count: 0, rating_avg: 0, gmb_posts_count: 0 });
   const [gbpEditing, setGbpEditing] = useState(false);
-  const [techForm, setTechForm] = useState({ desktop_speed: 0, mobile_speed: 0, ssl_active: false, sitemap_submitted: false, robots_txt_checked: false, schema_added: false, broken_links_count: 0, notes: "" });
-  const [techEditing, setTechEditing] = useState(false);
 
   return (
     <div className="space-y-6 animate-fade-in">
