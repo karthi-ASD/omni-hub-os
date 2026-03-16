@@ -136,6 +136,9 @@ const ClientsPage = () => {
             <RefreshCw className={`h-4 w-4 mr-1 ${syncing ? "animate-spin" : ""}`} /> {syncing ? "Syncing..." : "Sync"}
           </Button>
         )}
+        <Button size="sm" variant="outline" onClick={forceRefreshSalesData}>
+          <RefreshCw className="h-4 w-4 mr-1" /> Refresh Data
+        </Button>
         {canCreate && (
           <>
             <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
