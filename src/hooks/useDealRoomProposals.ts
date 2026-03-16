@@ -56,6 +56,7 @@ export function useDealRoomProposals() {
   }, []);
 
   useEffect(() => { fetchProposals(); }, [fetchProposals]);
+  useSalesDataAutoRefresh(fetchProposals, ["all", "proposals", "dashboard"]);
 
   const createProposal = async (input: {
     proposal_title: string;
