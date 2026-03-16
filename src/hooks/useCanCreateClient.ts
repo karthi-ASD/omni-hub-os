@@ -1,7 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
 
-const ALLOWED_DEPARTMENTS = ["sales", "accounts", "finance", "account"];
+const ALLOWED_DEPARTMENTS = ["accounts", "finance", "account"];
 
 export function useCanCreateClient(): { canCreate: boolean; loading: boolean } {
   const { isSuperAdmin, isBusinessAdmin } = useAuth();

@@ -109,6 +109,81 @@ export function useDealRoomProposals() {
   const updateStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("deal_room_proposals").update({ proposal_status: status } as any).eq("id", id);
     if (error) { toast.error("Failed to update"); return; }
+
+    // Auto-create lead conversion request when deal room proposal is accepted
+    if (status === "accepted") {
+      const proposal = proposals.find(p => p.id === id);
+      const leadId = proposal?.lead_id;
+
+      if (leadId) {
+        // Check no pending request exists
+        const { data: existing } = await supabase
+          .from("lead_conversion_requests")
+          .select("id")
+          .eq("lead_id", leadId)
+          .eq("request_status", "pending")
+          .maybeSingle();
+
+        if (!existing && profile?.business_id) {
+          await supabase.from("lead_conversion_requests").insert({
+            business_id: profile.business_id,
+            lead_id: leadId,
+            requested_by_user_id: proposal?.uploaded_by_user_id || profile.user_id,
+            services: proposal?.proposal_title || "",
+            contract_value: 0,
+          } as any);
+
+          await supabase.from("leads").update({ stage: "conversion_requested" as any }).eq("id", leadId);
+
+          await supabase.from("system_events").insert({
+            business_id: profile.business_id,
+            event_type: "CONVERSION_REQUEST_CREATED",
+            payload_json: {
+              entity_type: "lead",
+              entity_id: leadId,
+              proposal_id: id,
+              short_message: "Auto conversion request from accepted deal room proposal",
+            },
+          });
+
+          // Notify accounts/admin + assigned salesperson
+          const { data: notifyUsers } = await supabase
+            .from("user_roles")
+            .select("user_id")
+            .eq("business_id", profile.business_id)
+            .in("role", ["business_admin", "super_admin"] as any[]);
+
+          const recipientIds = new Set<string>(
+            (notifyUsers || []).map((u: any) => u.user_id)
+          );
+          if (proposal?.uploaded_by_user_id) recipientIds.add(proposal.uploaded_by_user_id);
+
+          if (recipientIds.size > 0) {
+            await supabase.from("notifications").insert(
+              [...recipientIds].map(uid => ({
+                business_id: profile.business_id,
+                user_id: uid,
+                type: "info" as const,
+                title: "Proposal Accepted — Conversion Required",
+                message: `Deal Room proposal "${proposal?.proposal_title}" accepted. Conversion approval required.`,
+              }))
+            );
+          }
+
+          notifySalesDataChanged(["leads", "pipeline"], "deal-room-proposal:auto-conversion");
+        }
+      }
+
+      // Log acceptance event
+      if (profile?.business_id) {
+        await supabase.from("system_events").insert({
+          business_id: profile.business_id,
+          event_type: "PROPOSAL_ACCEPTED",
+          payload_json: { entity_type: "deal_room_proposal", entity_id: id, short_message: "Deal room proposal accepted" },
+        });
+      }
+    }
+
     await fetchProposals();
     notifySalesDataChanged(["proposals", "dashboard"], "deal-room-proposal:update-status");
   };

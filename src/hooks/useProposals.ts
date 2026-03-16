@@ -126,11 +126,85 @@ export function useProposals() {
   const acceptProposal = async (proposalId: string) => {
     if (!profile) return;
     await supabase.from("proposals").update({ status: "accepted" } as any).eq("id", proposalId);
+
+    // Log PROPOSAL_ACCEPTED event
     await supabase.from("system_events").insert({
       business_id: profile.business_id,
       event_type: "PROPOSAL_ACCEPTED",
       payload_json: { entity_type: "proposal", entity_id: proposalId, actor_user_id: profile.user_id, short_message: "Proposal accepted" },
     });
+
+    // Auto-create lead conversion request from the proposal's deal → lead link
+    const proposal = proposals.find(p => p.id === proposalId);
+    if (proposal?.deal_id) {
+      const { data: deal } = await supabase
+        .from("deals")
+        .select("lead_id, owner_user_id")
+        .eq("id", proposal.deal_id)
+        .maybeSingle();
+
+      if (deal?.lead_id) {
+        // Check no pending conversion request already exists for this lead
+        const { data: existing } = await supabase
+          .from("lead_conversion_requests")
+          .select("id")
+          .eq("lead_id", deal.lead_id)
+          .eq("request_status", "pending")
+          .maybeSingle();
+
+        if (!existing) {
+          await supabase.from("lead_conversion_requests").insert({
+            business_id: profile.business_id,
+            lead_id: deal.lead_id,
+            requested_by_user_id: deal.owner_user_id || profile.user_id,
+            services: proposal.title,
+            contract_value: proposal.total_amount || 0,
+          } as any);
+
+          // Update lead stage
+          await supabase.from("leads").update({ stage: "conversion_requested" as any }).eq("id", deal.lead_id);
+
+          // Log conversion request event
+          await supabase.from("system_events").insert({
+            business_id: profile.business_id,
+            event_type: "CONVERSION_REQUEST_CREATED",
+            payload_json: {
+              entity_type: "lead",
+              entity_id: deal.lead_id,
+              proposal_id: proposalId,
+              short_message: "Auto conversion request from accepted proposal",
+            },
+          });
+
+          // Notify accounts team + assigned salesperson
+          const { data: notifyUsers } = await supabase
+            .from("user_roles")
+            .select("user_id")
+            .eq("business_id", profile.business_id)
+            .in("role", ["business_admin", "super_admin"] as any[]);
+
+          const recipientIds = new Set<string>(
+            (notifyUsers || []).map((u: any) => u.user_id)
+          );
+          if (deal.owner_user_id) recipientIds.add(deal.owner_user_id);
+
+          if (recipientIds.size > 0) {
+            await supabase.from("notifications").insert(
+              [...recipientIds].map(uid => ({
+                business_id: profile.business_id,
+                user_id: uid,
+                type: "info" as const,
+                title: "Proposal Accepted — Conversion Required",
+                message: `Proposal "${proposal.title}" accepted by client. Conversion approval required.`,
+              }))
+            );
+          }
+
+          notifySalesDataChanged(["leads", "pipeline"], "proposal:auto-conversion");
+        }
+      }
+    }
+
     toast.success("Proposal accepted");
     await fetchProposals();
     notifySalesDataChanged(["proposals", "dashboard"], "proposal:accept");
