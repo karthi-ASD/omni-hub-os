@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import heroDashboard from "@/assets/hero-dashboard-mockup.jpg";
 import parallaxCity from "@/assets/parallax-cityscape.jpg";
+import NextWebExpansionFlow from "@/components/NextWebExpansionFlow";
 
 /* ─── Reusable scroll-reveal wrapper ─── */
 function Reveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
@@ -292,6 +293,9 @@ const Index = () => {
           </Reveal>
         </div>
       </section>
+
+      {/* ═══════ EXPANSION FLOW ═══════ */}
+      <NextWebExpansionFlow />
 
       {/* ═══════ PLATFORM OVERVIEW — Light cards ═══════ */}
       <section className="py-20 md:py-28 bg-gradient-to-b from-[hsl(230,20%,94%)] to-[hsl(220,25%,97%)] relative">
