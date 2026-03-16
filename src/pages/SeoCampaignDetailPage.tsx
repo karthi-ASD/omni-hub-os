@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { SeoAuditPanel } from "@/components/seo/SeoAuditPanel";
 import { SeoTechnicalPanel } from "@/components/seo/SeoTechnicalPanel";
+import { KeywordCsvImportDialog } from "@/components/seo/KeywordCsvImportDialog";
 import { SeoRankingPanel } from "@/components/seo/SeoRankingPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
