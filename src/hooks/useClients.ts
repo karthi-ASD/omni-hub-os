@@ -238,6 +238,7 @@ export function useClients(options?: UseClientsOptions) {
 
     toast.success("Client created");
     fetchClients(0, search);
+    notifySalesDataChanged(["clients", "dashboard"], "client:create");
     return data as any as Client;
   };
 
