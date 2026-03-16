@@ -3549,6 +3549,47 @@ export type Database = {
           },
         ]
       }
+      app_module_settings: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          display_order: number | null
+          enabled: boolean | null
+          id: string
+          module_name: string
+          updated_at: string | null
+          visible_to_customer: boolean | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          display_order?: number | null
+          enabled?: boolean | null
+          id?: string
+          module_name: string
+          updated_at?: string | null
+          visible_to_customer?: boolean | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          display_order?: number | null
+          enabled?: boolean | null
+          id?: string
+          module_name?: string
+          updated_at?: string | null
+          visible_to_customer?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_module_settings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       approval_requests: {
         Row: {
           approver_user_id: string | null
@@ -4663,9 +4704,58 @@ export type Database = {
           },
         ]
       }
+      business_department_config: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          custom_fields: Json | null
+          department_template_id: string
+          field_overrides: Json | null
+          id: string
+          is_enabled: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          custom_fields?: Json | null
+          department_template_id: string
+          field_overrides?: Json | null
+          id?: string
+          is_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          custom_fields?: Json | null
+          department_template_id?: string
+          field_overrides?: Json | null
+          id?: string
+          is_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_department_config_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_department_config_department_template_id_fkey"
+            columns: ["department_template_id"]
+            isOneToOne: false
+            referencedRelation: "department_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       businesses: {
         Row: {
           address: string | null
+          business_model: string | null
           city: string | null
           cms_platform: string | null
           competitors: string[] | null
@@ -4684,6 +4774,7 @@ export type Database = {
           mobile_subscription_expiry: string | null
           mobile_subscription_start: string | null
           name: string
+          onboarding_completed: boolean | null
           owner_name: string | null
           phone: string | null
           postcode: string | null
@@ -4706,6 +4797,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          business_model?: string | null
           city?: string | null
           cms_platform?: string | null
           competitors?: string[] | null
@@ -4724,6 +4816,7 @@ export type Database = {
           mobile_subscription_expiry?: string | null
           mobile_subscription_start?: string | null
           name: string
+          onboarding_completed?: boolean | null
           owner_name?: string | null
           phone?: string | null
           postcode?: string | null
@@ -4746,6 +4839,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          business_model?: string | null
           city?: string | null
           cms_platform?: string | null
           competitors?: string[] | null
@@ -4764,6 +4858,7 @@ export type Database = {
           mobile_subscription_expiry?: string | null
           mobile_subscription_start?: string | null
           name?: string
+          onboarding_completed?: boolean | null
           owner_name?: string | null
           phone?: string | null
           postcode?: string | null
@@ -4835,6 +4930,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "calendar_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_click_events: {
+        Row: {
+          business_id: string
+          campaign_source: string | null
+          created_at: string | null
+          device_type: string | null
+          id: string
+          page_url: string | null
+          phone_number: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          business_id: string
+          campaign_source?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          id?: string
+          page_url?: string | null
+          phone_number?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          business_id?: string
+          campaign_source?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          id?: string
+          page_url?: string | null
+          phone_number?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_click_events_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -7551,6 +7693,62 @@ export type Database = {
           },
         ]
       }
+      customization_requests: {
+        Row: {
+          assigned_to: string | null
+          business_id: string
+          created_at: string | null
+          created_by: string | null
+          department: string | null
+          description: string | null
+          id: string
+          priority: string | null
+          request_type: string | null
+          resolved_at: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          business_id: string
+          created_at?: string | null
+          created_by?: string | null
+          department?: string | null
+          description?: string | null
+          id?: string
+          priority?: string | null
+          request_type?: string | null
+          resolved_at?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          business_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          department?: string | null
+          description?: string | null
+          id?: string
+          priority?: string | null
+          request_type?: string | null
+          resolved_at?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customization_requests_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_insights: {
         Row: {
           allow_comments: boolean | null
@@ -8198,6 +8396,53 @@ export type Database = {
           },
         ]
       }
+      department_field_templates: {
+        Row: {
+          created_at: string | null
+          department_template_id: string
+          display_order: number | null
+          field_key: string
+          field_label: string
+          field_type: string | null
+          id: string
+          is_default_enabled: boolean | null
+          is_required: boolean | null
+          options: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          department_template_id: string
+          display_order?: number | null
+          field_key: string
+          field_label: string
+          field_type?: string | null
+          id?: string
+          is_default_enabled?: boolean | null
+          is_required?: boolean | null
+          options?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          department_template_id?: string
+          display_order?: number | null
+          field_key?: string
+          field_label?: string
+          field_type?: string | null
+          id?: string
+          is_default_enabled?: boolean | null
+          is_required?: boolean | null
+          options?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_field_templates_department_template_id_fkey"
+            columns: ["department_template_id"]
+            isOneToOne: false
+            referencedRelation: "department_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       department_handoffs: {
         Row: {
           account_id: string | null
@@ -8271,6 +8516,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      department_templates: {
+        Row: {
+          created_at: string | null
+          default_fields: Json | null
+          default_permissions: Json | null
+          default_reports: Json | null
+          default_status_options: Json | null
+          description: string | null
+          display_order: number | null
+          icon: string | null
+          id: string
+          is_system: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          default_fields?: Json | null
+          default_permissions?: Json | null
+          default_reports?: Json | null
+          default_status_options?: Json | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_system?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          default_fields?: Json | null
+          default_permissions?: Json | null
+          default_reports?: Json | null
+          default_status_options?: Json | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_system?: boolean | null
+          name?: string
+        }
+        Relationships: []
       }
       departments: {
         Row: {
@@ -20579,6 +20866,44 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      usage_activity_logs: {
+        Row: {
+          activity_type: string
+          business_id: string
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          module: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          business_id: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          module?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          module?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_activity_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       usage_events: {
         Row: {
