@@ -18,83 +18,83 @@ serve(async (req) => {
 
     const results: Record<string, any> = {};
 
-    // 1. Access Reminder: Campaigns onboarding for 5+ days without complete access
+    // 1. Access Reminder: Projects onboarding for 5+ days without complete access
     const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
     const { data: staleOnboarding } = await supabase
-      .from("seo_campaigns")
-      .select("id, business_id, primary_domain, assigned_seo_manager_user_id")
-      .eq("onboarding_status", "pending_access")
+      .from("seo_projects")
+      .select("id, business_id, website_domain, seo_manager_id")
+      .eq("onboarding_status", "pending")
       .lt("created_at", fiveDaysAgo);
 
     if (staleOnboarding?.length) {
-      for (const campaign of staleOnboarding) {
-        if (campaign.assigned_seo_manager_user_id) {
+      for (const project of staleOnboarding) {
+        if (project.seo_manager_id) {
           await supabase.from("notifications").insert({
-            business_id: campaign.business_id,
-            user_id: campaign.assigned_seo_manager_user_id,
+            business_id: project.business_id,
+            user_id: project.seo_manager_id,
             type: "warning",
             title: "Onboarding Access Overdue",
-            message: `Campaign "${campaign.primary_domain}" has pending access for 5+ days.`,
+            message: `SEO project "${project.website_domain}" has pending access for 5+ days.`,
           });
         }
         await supabase.from("system_events").insert({
-          business_id: campaign.business_id,
+          business_id: project.business_id,
           event_type: "SEO_ACCESS_REMINDER",
-          payload_json: { campaign_id: campaign.id, domain: campaign.primary_domain },
+          payload_json: { seo_project_id: project.id, domain: project.website_domain },
         });
       }
       results.access_reminders = staleOnboarding.length;
     }
 
-    // 2. Billing Alert: Campaigns with overdue payment for 7+ days
-    const { data: overdueCampaigns } = await supabase
-      .from("seo_campaigns")
-      .select("id, business_id, primary_domain, assigned_seo_manager_user_id")
+    // 2. Billing Alert: Projects with overdue payment
+    const { data: overdueProjects } = await supabase
+      .from("seo_projects")
+      .select("id, business_id, website_domain, seo_manager_id")
       .eq("payment_status", "overdue")
-      .eq("status", "active");
+      .eq("project_status", "active");
 
-    if (overdueCampaigns?.length) {
-      for (const campaign of overdueCampaigns) {
-        if (campaign.assigned_seo_manager_user_id) {
+    if (overdueProjects?.length) {
+      for (const project of overdueProjects) {
+        if (project.seo_manager_id) {
           await supabase.from("notifications").insert({
-            business_id: campaign.business_id,
-            user_id: campaign.assigned_seo_manager_user_id,
+            business_id: project.business_id,
+            user_id: project.seo_manager_id,
             type: "warning",
             title: "Billing Overdue Alert",
-            message: `SEO campaign "${campaign.primary_domain}" has overdue payment.`,
+            message: `SEO project "${project.website_domain}" has overdue payment.`,
           });
         }
       }
-      results.billing_alerts = overdueCampaigns.length;
+      results.billing_alerts = overdueProjects.length;
     }
 
-    // 3. Monthly Report Reminder: Active campaigns with no report for current month
-    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-    const { data: activeCampaigns } = await supabase
-      .from("seo_campaigns")
-      .select("id, business_id, primary_domain, assigned_seo_executive_user_id")
-      .eq("status", "active");
+    // 3. Monthly Report Reminder: Active projects with no report for current month
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const { data: activeProjects } = await supabase
+      .from("seo_projects")
+      .select("id, business_id, website_domain, seo_specialist_id")
+      .eq("project_status", "active");
 
-    if (activeCampaigns?.length) {
-      for (const campaign of activeCampaigns) {
+    if (activeProjects?.length) {
+      for (const project of activeProjects) {
         const { data: existingReport } = await supabase
           .from("seo_reports")
           .select("id")
-          .eq("campaign_id", campaign.id)
-          .eq("report_month", currentMonth)
+          .eq("seo_project_id", project.id)
+          .gte("report_month", currentMonth + "-01")
           .maybeSingle();
 
-        if (!existingReport && campaign.assigned_seo_executive_user_id) {
+        if (!existingReport && project.seo_specialist_id) {
           await supabase.from("notifications").insert({
-            business_id: campaign.business_id,
-            user_id: campaign.assigned_seo_executive_user_id,
+            business_id: project.business_id,
+            user_id: project.seo_specialist_id,
             type: "info",
             title: "Monthly Report Due",
-            message: `Generate the ${currentMonth} report for "${campaign.primary_domain}".`,
+            message: `Generate the ${currentMonth} report for "${project.website_domain}".`,
           });
         }
       }
-      results.report_reminders = activeCampaigns.length;
+      results.report_reminders = activeProjects.length;
     }
 
     return new Response(JSON.stringify({ success: true, results }), {
