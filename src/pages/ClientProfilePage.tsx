@@ -91,6 +91,7 @@ const ClientProfilePage = () => {
   const [appDialog, setAppDialog] = useState(false);
   const [convDialog, setConvDialog] = useState(false);
   const [serviceDialog, setServiceDialog] = useState(false);
+  const [editClientDialog, setEditClientDialog] = useState(false);
   const [webForm, setWebForm] = useState({ website_url: "", cms_type: "", hosting_provider: "", domain_provider: "" });
   const [appForm, setAppForm] = useState({ app_name: "", platform: "Android", app_category: "" });
   const [convForm, setConvForm] = useState({ conversation_type: "call", notes: "", next_callback_date: "" });
