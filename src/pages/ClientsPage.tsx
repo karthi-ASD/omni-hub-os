@@ -315,6 +315,20 @@ const ClientsPage = () => {
                           </SelectContent>
                         </Select>
                       )}
+                      {isAdmin && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={e => e.stopPropagation()}>
+                              <MoreVertical className="h-3.5 w-3.5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setRevertClient(c); }} className="text-destructive">
+                              <Undo2 className="h-3.5 w-3.5 mr-2" /> Revert to Lead
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </div>
                   </div>
 
