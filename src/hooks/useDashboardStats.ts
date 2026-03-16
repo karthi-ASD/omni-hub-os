@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSalesDataAutoRefresh } from "@/lib/salesDataSync";
 
 interface DashboardStats {
   totalUsers: number;
