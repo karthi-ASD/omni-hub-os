@@ -63,7 +63,7 @@ const ClientProfilePage = () => {
   const client = clients.find((c) => c.id === id);
   const {
     services, websites, apps, seoProjects, invoices, contracts, tickets, timeline,
-    loading, addWebsite, addApp,
+    loading, addWebsite, addApp, addService, updateServiceStatus,
   } = useClientProfile(id);
   const financials = useClientFinancials(id);
   const onboarding = useOnboardingChecklist(id);
