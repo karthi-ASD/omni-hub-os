@@ -140,6 +140,7 @@ import AgentFactoryPage from "./pages/AgentFactoryPage";
 import ProviderConnectionsPage from "./pages/ProviderConnectionsPage";
 import ConsentCompliancePage from "./pages/ConsentCompliancePage";
 import VoiceAgentPage from "./pages/VoiceAgentPage";
+import DealRoomPage from "./pages/DealRoomPage";
 import AutopilotSettingsPage from "./pages/AutopilotSettingsPage";
 import AutopilotSequencesPage from "./pages/AutopilotSequencesPage";
 import AutopilotInboxPage from "./pages/AutopilotInboxPage";
