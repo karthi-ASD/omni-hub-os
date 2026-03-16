@@ -31,6 +31,7 @@ export function useDashboardStats() {
     todayCalls: 0,
     openInvoices: 0,
     revenueThisMonth: 0,
+    totalLeads: 0,
   });
   const [loading, setLoading] = useState(true);
 
