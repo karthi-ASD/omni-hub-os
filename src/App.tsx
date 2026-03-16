@@ -220,6 +220,10 @@ import ExecutiveDashboardPage from "./pages/ExecutiveDashboardPage";
 import UnifiedTicketsPage from "./pages/UnifiedTicketsPage";
 import UnifiedTicketDetailPage from "./pages/UnifiedTicketDetailPage";
 import EmailConfigPage from "./pages/EmailConfigPage";
+import BusinessOnboardingWizardPage from "./pages/BusinessOnboardingWizardPage";
+import CustomizationRequestsPage from "./pages/CustomizationRequestsPage";
+import AppModuleSettingsPage from "./pages/AppModuleSettingsPage";
+import DepartmentConfigPage from "./pages/DepartmentConfigPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
