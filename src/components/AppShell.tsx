@@ -26,6 +26,7 @@ const AppShell = () => {
         </main>
         <FloatingActionButton />
         <BottomNav />
+        <BroadcastPopup />
         {businessId && (
           <ChatWidget
             businessId={businessId}
