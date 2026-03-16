@@ -4,6 +4,7 @@ import { useClientProfile } from "@/hooks/useClientProfile";
 import { useClientConversations } from "@/hooks/useClientConversations";
 import { useSalesCallbacks } from "@/hooks/useSalesCallbacks";
 import { useState, useMemo } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +23,7 @@ import {
 } from "lucide-react";
 import { useOnboardingChecklist } from "@/hooks/useOnboardingChecklist";
 import { ClientActivityTimeline } from "@/components/clients/ClientActivityTimeline";
+import { AddServiceDialog, ServiceFormData } from "@/components/clients/AddServiceDialog";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useClientFinancials } from "@/hooks/useClientFinancials";
@@ -62,7 +64,7 @@ const ClientProfilePage = () => {
   const client = clients.find((c) => c.id === id);
   const {
     services, websites, apps, seoProjects, invoices, contracts, tickets, timeline,
-    loading, addWebsite, addApp,
+    loading, addWebsite, addApp, addService, updateServiceStatus,
   } = useClientProfile(id);
   const financials = useClientFinancials(id);
   const onboarding = useOnboardingChecklist(id);
@@ -87,9 +89,13 @@ const ClientProfilePage = () => {
   const [websiteDialog, setWebsiteDialog] = useState(false);
   const [appDialog, setAppDialog] = useState(false);
   const [convDialog, setConvDialog] = useState(false);
+  const [serviceDialog, setServiceDialog] = useState(false);
   const [webForm, setWebForm] = useState({ website_url: "", cms_type: "", hosting_provider: "", domain_provider: "" });
   const [appForm, setAppForm] = useState({ app_name: "", platform: "Android", app_category: "" });
   const [convForm, setConvForm] = useState({ conversation_type: "call", notes: "", next_callback_date: "" });
+  
+  const { hasRole } = useAuth();
+  const canEditBilling = hasRole("super_admin") || hasRole("business_admin") || hasRole("manager");
 
   if (clientsLoading || loading) {
     return (
@@ -479,28 +485,72 @@ const ClientProfilePage = () => {
           </div>
         </TabsContent>
 
-        {/* ── Services ── */}
+        {/* ── Recurring Services ── */}
         <TabsContent value="services">
-          {services.length === 0 ? (
-            <p className="text-center text-sm text-muted-foreground py-8">No services subscribed yet</p>
-          ) : (
-            <div className="space-y-2">
-              {services.map((s) => (
-                <Card key={s.id} className="rounded-xl">
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-sm">{s.service_type}</p>
-                      {s.service_category && <p className="text-xs text-muted-foreground">{s.service_category}</p>}
-                      {s.assigned_department && (
-                        <Badge variant="outline" className="mt-1 text-[10px]">{s.assigned_department}</Badge>
-                      )}
-                    </div>
-                    <Badge className={statusColor(s.service_status)}>{s.service_status}</Badge>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          <Card className="rounded-xl">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" /> Recurring Services
+              </CardTitle>
+              {canEditBilling && (
+                <Button size="sm" onClick={() => setServiceDialog(true)}>
+                  <Plus className="h-4 w-4 mr-1" /> Add Service
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent>
+              {services.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-6 text-center">No recurring services added yet</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Service</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead>Frequency</TableHead>
+                        <TableHead>Payment Method</TableHead>
+                        <TableHead>Billing Date</TableHead>
+                        <TableHead>Next Billing</TableHead>
+                        <TableHead>Status</TableHead>
+                        {canEditBilling && <TableHead>Actions</TableHead>}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {services.map((s: any) => (
+                        <TableRow key={s.id}>
+                          <TableCell>
+                            <p className="font-medium text-sm">{s.service_type}</p>
+                            {s.service_name && <p className="text-xs text-muted-foreground">{s.service_name}</p>}
+                          </TableCell>
+                          <TableCell className="text-right font-medium">${Number(s.price_amount || 0).toLocaleString("en-AU", { minimumFractionDigits: 2 })}</TableCell>
+                          <TableCell className="capitalize text-sm">{(s.billing_cycle || "—").replace("_", " ")}</TableCell>
+                          <TableCell className="capitalize text-sm">{(s.payment_method || "—").replace("_", " ")}</TableCell>
+                          <TableCell className="text-sm">{s.billing_date ? `${s.billing_date}${s.billing_date === 1 ? "st" : s.billing_date === 2 ? "nd" : s.billing_date === 3 ? "rd" : "th"}` : "—"}</TableCell>
+                          <TableCell className="text-sm">{s.next_billing_date ? format(new Date(s.next_billing_date), "dd MMM yyyy") : "—"}</TableCell>
+                          <TableCell>
+                            <Badge className={statusColor(s.payment_status || s.service_status)}>{s.payment_status || s.service_status}</Badge>
+                          </TableCell>
+                          {canEditBilling && (
+                            <TableCell>
+                              <Button
+                                size="sm"
+                                variant={s.service_status === "active" ? "destructive" : "default"}
+                                className="text-xs h-7"
+                                onClick={() => updateServiceStatus(s.id, s.service_status === "active" ? "disabled" : "active")}
+                              >
+                                {s.service_status === "active" ? "Disable" : "Enable"}
+                              </Button>
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* ── Websites ── */}
@@ -788,6 +838,15 @@ const ClientProfilePage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Service Dialog */}
+      <AddServiceDialog
+        open={serviceDialog}
+        onOpenChange={setServiceDialog}
+        onSubmit={async (data: ServiceFormData) => {
+          await addService(data);
+        }}
+      />
     </div>
   );
 };

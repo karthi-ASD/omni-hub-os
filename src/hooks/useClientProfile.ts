@@ -116,5 +116,41 @@ export function useClientProfile(clientId: string | undefined) {
     fetchAll();
   };
 
-  return { ...data, loading, refetch: fetchAll, addWebsite, addApp };
+  const addService = async (input: {
+    service_type: string;
+    service_name?: string;
+    price_amount?: number;
+    billing_cycle?: string;
+    payment_method?: string;
+    billing_date?: number;
+    next_billing_date?: string;
+    payment_status?: string;
+  }) => {
+    if (!profile?.business_id || !clientId) return;
+    const { error } = await supabase.from("client_services").insert({
+      client_id: clientId,
+      business_id: profile.business_id,
+      service_type: input.service_type,
+      service_name: input.service_name || null,
+      price_amount: input.price_amount || 0,
+      billing_cycle: input.billing_cycle || "monthly",
+      payment_method: input.payment_method || "eft",
+      billing_date: input.billing_date || 1,
+      next_billing_date: input.next_billing_date || null,
+      payment_status: input.payment_status || "pending",
+      service_status: "active",
+    });
+    if (error) { toast.error("Failed to add service"); return; }
+    toast.success("Service added");
+    fetchAll();
+  };
+
+  const updateServiceStatus = async (serviceId: string, status: string) => {
+    const { error } = await supabase.from("client_services").update({ service_status: status } as any).eq("id", serviceId);
+    if (error) { toast.error("Failed to update service"); return; }
+    toast.success("Service updated");
+    fetchAll();
+  };
+
+  return { ...data, loading, refetch: fetchAll, addWebsite, addApp, addService, updateServiceStatus };
 }
