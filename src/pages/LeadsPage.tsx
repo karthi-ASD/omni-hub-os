@@ -58,12 +58,19 @@ const LeadsPage = () => {
       return matchesSearch && matchesStage;
     });
 
+  const sanitize = (val: string) =>
+    val?.replace(/[\u200B\u200C\u200D\uFEFF\u00A0]/g, "")?.replace(/\r\n/g, "\n")?.trim() || "";
+
   const handleCreate = async () => {
-    if (!form.name || !form.email) return;
+    const name = sanitize(form.name);
+    const email = sanitize(form.email);
+    if (!name || !email) return;
     await createLead({
-      name: form.name, email: form.email, phone: form.phone || null,
-      business_name: form.business_name || null, services_needed: form.services_needed || null,
-      notes: form.notes || null, assigned_to_user_id: profile?.user_id || null,
+      name, email, phone: sanitize(form.phone) || null,
+      business_name: sanitize(form.business_name) || null,
+      services_needed: sanitize(form.services_needed) || null,
+      notes: form.notes?.replace(/[\u200B\u200C\u200D\uFEFF]/g, "")?.trim() || null,
+      assigned_to_user_id: profile?.user_id || null,
     });
     setForm({ name: "", email: "", phone: "", business_name: "", services_needed: "", notes: "" });
     setCreateOpen(false);

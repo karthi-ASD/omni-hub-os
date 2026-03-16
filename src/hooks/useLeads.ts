@@ -52,7 +52,8 @@ export function useLeads() {
       .single();
 
     if (error) {
-      toast.error("Failed to create lead");
+      console.error("Lead creation error:", error);
+      toast.error(error.message || "Failed to create lead");
       return null;
     }
 
