@@ -72,7 +72,7 @@ export function useClients(options?: UseClientsOptions) {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
-  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({ active: 0, cancelled: 0, pending: 0, prospect: 0, suspended: 0 });
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({ active: 0, cancelled: 0, pending: 0, prospect: 0, suspended: 0, reverted: 0 });
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [hasMore, setHasMore] = useState(true);
