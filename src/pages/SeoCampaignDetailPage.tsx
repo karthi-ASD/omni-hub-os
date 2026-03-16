@@ -31,6 +31,7 @@ import {
   ArrowLeft, Key, FileText, Link, Globe, BarChart3, MessageSquare,
   MapPin, Wrench, Plus, LayoutDashboard, CheckSquare, Settings, Scan,
 } from "lucide-react";
+import { toast } from "sonner";
 
 const statusBadge = (status: string) => {
   const colors: Record<string, string> = {
