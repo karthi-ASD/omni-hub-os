@@ -4,6 +4,7 @@ import { useClientProfile } from "@/hooks/useClientProfile";
 import { useClientConversations } from "@/hooks/useClientConversations";
 import { useSalesCallbacks } from "@/hooks/useSalesCallbacks";
 import { useState, useMemo } from "react";
+import { EditClientDialog } from "@/components/clients/EditClientDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import {
   ArrowLeft, Globe, Smartphone, Search, FileText, Ticket, Clock,
   Mail, Phone, Building2, MapPin, Plus, ExternalLink, DollarSign, CreditCard, TrendingUp, AlertTriangle,
-  ClipboardCheck, CheckCircle2, MessageSquare, PhoneCall, CalendarCheck
+  ClipboardCheck, CheckCircle2, MessageSquare, PhoneCall, CalendarCheck, Pencil
 } from "lucide-react";
 import { useOnboardingChecklist } from "@/hooks/useOnboardingChecklist";
 import { ClientActivityTimeline } from "@/components/clients/ClientActivityTimeline";
@@ -60,7 +61,7 @@ const convTypeIcon: Record<string, React.ElementType> = {
 const ClientProfilePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { clients, loading: clientsLoading, updateClientStatus } = useClients();
+  const { clients, loading: clientsLoading, updateClientStatus, refetch: fetchClients } = useClients();
   const client = clients.find((c) => c.id === id);
   const {
     services, websites, apps, seoProjects, invoices, contracts, tickets, timeline,
@@ -90,6 +91,7 @@ const ClientProfilePage = () => {
   const [appDialog, setAppDialog] = useState(false);
   const [convDialog, setConvDialog] = useState(false);
   const [serviceDialog, setServiceDialog] = useState(false);
+  const [editClientDialog, setEditClientDialog] = useState(false);
   const [webForm, setWebForm] = useState({ website_url: "", cms_type: "", hosting_provider: "", domain_provider: "" });
   const [appForm, setAppForm] = useState({ app_name: "", platform: "Android", app_category: "" });
   const [convForm, setConvForm] = useState({ conversation_type: "call", notes: "", next_callback_date: "" });
@@ -362,6 +364,12 @@ const ClientProfilePage = () => {
         {/* ── Details ── */}
         <TabsContent value="details">
           <Card className="rounded-xl">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base">Client Details</CardTitle>
+              <Button size="sm" variant="outline" onClick={() => setEditClientDialog(true)}>
+                <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+              </Button>
+            </CardHeader>
             <CardContent className="p-4 space-y-3">
               {[
                 ["Client Status", client.client_status?.charAt(0).toUpperCase() + client.client_status?.slice(1)],
@@ -388,6 +396,15 @@ const ClientProfilePage = () => {
                 ))}
             </CardContent>
           </Card>
+
+          <EditClientDialog
+            open={editClientDialog}
+            onOpenChange={setEditClientDialog}
+            client={client}
+            onSuccess={() => {
+              fetchClients();
+            }}
+          />
         </TabsContent>
 
         {/* ── Financial Portfolio ── */}
