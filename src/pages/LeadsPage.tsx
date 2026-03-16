@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLeads } from "@/hooks/useLeads";
 import { useDeals } from "@/hooks/useDeals";
+import { useLeadConversions } from "@/hooks/useLeadConversions";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
-import { Plus, Search, Target, Phone, Mail, FolderKanban, MessageSquare, ChevronRight, Flame, UserCheck, Zap } from "lucide-react";
+import { Plus, Search, Target, Phone, Mail, FolderKanban, MessageSquare, ChevronRight, Flame, UserCheck, Zap, ShieldCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 import { useNavigate } from "react-router-dom";
@@ -28,6 +29,7 @@ const stageColors: Record<string, string> = {
   meeting_booked: "bg-info/10 text-info",
   proposal_requested: "bg-warning/10 text-warning",
   negotiation: "bg-neon-orange/10 text-neon-orange",
+  conversion_requested: "bg-info/10 text-info",
   won: "bg-success/10 text-success",
   lost: "bg-destructive/10 text-destructive",
 };
@@ -35,6 +37,7 @@ const stageColors: Record<string, string> = {
 const LeadsPage = () => {
   const { leads, loading, createLead, updateStage, logActivity, archiveLead, getActivities, updateLead } = useLeads();
   const { createDeal } = useDeals();
+  const { requestConversion } = useLeadConversions();
   const { profile } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
@@ -156,17 +159,18 @@ const LeadsPage = () => {
                   <button onClick={() => { setActivityDialog(lead.id); setActivityType("call"); }} className="flex items-center gap-1 text-xs text-primary font-medium hover:underline">
                     <MessageSquare className="h-3.5 w-3.5" /> Log
                   </button>
-                  <button onClick={async () => {
-                    await createDeal({
-                      deal_name: `${lead.name} – ${lead.services_needed || "New Deal"}`,
-                      contact_name: lead.name, email: lead.email, phone: lead.phone,
-                      business_name: lead.business_name, service_interest: lead.services_needed,
-                      estimated_budget: lead.estimated_budget, lead_id: lead.id,
-                    } as any);
-                    navigate("/deals");
-                  }} className="flex items-center gap-1 text-xs text-accent font-medium ml-auto hover:underline">
-                    <FolderKanban className="h-3.5 w-3.5" /> Convert
-                  </button>
+                  {lead.stage !== "conversion_requested" && lead.stage !== "won" && (
+                    <button onClick={async () => {
+                      await requestConversion(lead.id, lead.services_needed || undefined);
+                    }} className="flex items-center gap-1 text-xs text-accent font-medium ml-auto hover:underline">
+                      <ShieldCheck className="h-3.5 w-3.5" /> Request Conversion
+                    </button>
+                  )}
+                  {lead.stage === "conversion_requested" && (
+                    <span className="text-xs text-info font-medium ml-auto flex items-center gap-1">
+                      <ShieldCheck className="h-3.5 w-3.5" /> Awaiting Approval
+                    </span>
+                  )}
                 </div>
               </CardContent>
             </Card>
