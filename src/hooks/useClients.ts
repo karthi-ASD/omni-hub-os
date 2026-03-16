@@ -261,6 +261,7 @@ export function useClients(options?: UseClientsOptions) {
     });
     toast.success("Onboarding status updated");
     fetchClients(page, search);
+    notifySalesDataChanged(["clients", "dashboard"], "client:update-onboarding");
   };
 
   const updateClientStatus = async (clientId: string, status: ClientStatus) => {
