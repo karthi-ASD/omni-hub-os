@@ -6033,54 +6033,72 @@ export type Database = {
       client_services: {
         Row: {
           assigned_department: string | null
+          assigned_salesperson_id: string | null
           billing_cycle: string | null
+          billing_date: number | null
           business_id: string
           client_id: string
           created_at: string
           id: string
+          next_billing_date: string | null
           payment_method: string | null
+          payment_status: string
           price_amount: number | null
           reminder_days_before: number | null
           renewal_date: string | null
           service_category: string | null
           service_details_json: Json | null
+          service_name: string | null
           service_status: string
           service_subtype: string | null
           service_type: string
+          updated_at: string
         }
         Insert: {
           assigned_department?: string | null
+          assigned_salesperson_id?: string | null
           billing_cycle?: string | null
+          billing_date?: number | null
           business_id: string
           client_id: string
           created_at?: string
           id?: string
+          next_billing_date?: string | null
           payment_method?: string | null
+          payment_status?: string
           price_amount?: number | null
           reminder_days_before?: number | null
           renewal_date?: string | null
           service_category?: string | null
           service_details_json?: Json | null
+          service_name?: string | null
           service_status?: string
           service_subtype?: string | null
           service_type: string
+          updated_at?: string
         }
         Update: {
           assigned_department?: string | null
+          assigned_salesperson_id?: string | null
           billing_cycle?: string | null
+          billing_date?: number | null
           business_id?: string
           client_id?: string
           created_at?: string
           id?: string
+          next_billing_date?: string | null
           payment_method?: string | null
+          payment_status?: string
           price_amount?: number | null
           reminder_days_before?: number | null
           renewal_date?: string | null
           service_category?: string | null
           service_details_json?: Json | null
+          service_name?: string | null
           service_status?: string
           service_subtype?: string | null
           service_type?: string
+          updated_at?: string
         }
         Relationships: [
           {

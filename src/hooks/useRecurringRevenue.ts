@@ -6,15 +6,20 @@ export interface ServiceWithClient {
   id: string;
   client_id: string;
   service_type: string;
+  service_name: string | null;
   price_amount: number;
   billing_cycle: string;
   payment_method: string;
+  payment_status: string;
+  billing_date: number | null;
+  next_billing_date: string | null;
   renewal_date: string | null;
   service_status: string;
   client_name: string;
   client_email: string;
   sales_owner_id: string | null;
   salesperson_owner: string | null;
+  assigned_salesperson_id: string | null;
 }
 
 export function useRecurringRevenue() {
@@ -50,15 +55,20 @@ export function useRecurringRevenue() {
         id: s.id,
         client_id: s.client_id,
         service_type: s.service_type,
+        service_name: s.service_name || null,
         price_amount: Number(s.price_amount || 0),
         billing_cycle: s.billing_cycle || "one_time",
         payment_method: s.payment_method || "eft",
+        payment_status: s.payment_status || "pending",
+        billing_date: s.billing_date || null,
+        next_billing_date: s.next_billing_date || null,
         renewal_date: s.renewal_date,
         service_status: s.service_status || "active",
         client_name: client?.contact_name || "Unknown",
         client_email: client?.email || "",
         sales_owner_id: client?.sales_owner_id,
         salesperson_owner: client?.salesperson_owner,
+        assigned_salesperson_id: s.assigned_salesperson_id || null,
       };
     });
 
@@ -69,19 +79,89 @@ export function useRecurringRevenue() {
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const recurringServices = useMemo(
-    () => services.filter((s) => s.billing_cycle === "monthly" || s.billing_cycle === "quarterly" || s.billing_cycle === "yearly"),
+    () => services.filter((s) =>
+      ["weekly", "fortnightly", "monthly", "quarterly", "half_yearly", "yearly"].includes(s.billing_cycle)
+    ),
     [services]
   );
 
+  const toMonthly = (amount: number, cycle: string) => {
+    switch (cycle) {
+      case "weekly": return amount * 4.33;
+      case "fortnightly": return amount * 2.17;
+      case "monthly": return amount;
+      case "quarterly": return amount / 3;
+      case "half_yearly": return amount / 6;
+      case "yearly": return amount / 12;
+      default: return 0;
+    }
+  };
+
   const monthlyRevenue = useMemo(() => {
-    return recurringServices.reduce((sum, s) => {
-      if (s.service_status !== "active") return sum;
-      if (s.billing_cycle === "monthly") return sum + s.price_amount;
-      if (s.billing_cycle === "quarterly") return sum + s.price_amount / 3;
-      if (s.billing_cycle === "yearly") return sum + s.price_amount / 12;
-      return sum;
-    }, 0);
+    return recurringServices
+      .filter((s) => s.service_status === "active")
+      .reduce((sum, s) => sum + toMonthly(s.price_amount, s.billing_cycle), 0);
   }, [recurringServices]);
+
+  const yearlyRevenue = useMemo(() => monthlyRevenue * 12, [monthlyRevenue]);
+
+  // Payments due today
+  const today = useMemo(() => new Date().toISOString().split("T")[0], []);
+
+  const paymentsDueToday = useMemo(
+    () => services.filter((s) => s.next_billing_date === today && s.service_status === "active"),
+    [services, today]
+  );
+
+  // Pending payments this month
+  const pendingThisMonth = useMemo(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    return services.filter((s) => {
+      if (s.service_status !== "active" || s.payment_status === "paid") return false;
+      if (!s.next_billing_date) return false;
+      const d = new Date(s.next_billing_date);
+      return d.getFullYear() === year && d.getMonth() === month;
+    });
+  }, [services]);
+
+  // Overdue payments
+  const overduePayments = useMemo(
+    () => services.filter((s) =>
+      s.service_status === "active" &&
+      s.payment_status === "overdue"
+    ),
+    [services]
+  );
+
+  // Renewal tracking
+  const renewalsToday = useMemo(
+    () => services.filter((s) => s.renewal_date === today),
+    [services, today]
+  );
+
+  const renewalsThisWeek = useMemo(() => {
+    const now = new Date();
+    const weekEnd = new Date(now);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    return services.filter((s) => {
+      if (!s.renewal_date) return false;
+      const d = new Date(s.renewal_date);
+      return d >= now && d <= weekEnd;
+    });
+  }, [services]);
+
+  const renewalsThisMonth = useMemo(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    return services.filter((s) => {
+      if (!s.renewal_date) return false;
+      const d = new Date(s.renewal_date);
+      return d.getFullYear() === year && d.getMonth() === month && d >= now;
+    });
+  }, [services]);
 
   const mrrByPaymentMethod = useMemo(() => {
     const map: Record<string, { customers: Set<string>; revenue: number }> = {};
@@ -89,9 +169,7 @@ export function useRecurringRevenue() {
       const method = s.payment_method || "eft";
       if (!map[method]) map[method] = { customers: new Set(), revenue: 0 };
       map[method].customers.add(s.client_id);
-      if (s.billing_cycle === "monthly") map[method].revenue += s.price_amount;
-      else if (s.billing_cycle === "quarterly") map[method].revenue += s.price_amount / 3;
-      else if (s.billing_cycle === "yearly") map[method].revenue += s.price_amount / 12;
+      map[method].revenue += toMonthly(s.price_amount, s.billing_cycle);
     });
     return Object.entries(map).map(([method, data]) => ({
       method,
@@ -122,9 +200,7 @@ export function useRecurringRevenue() {
       if (!map[agentId]) map[agentId] = { name: agentName, clients: new Set(), recurringRevenue: 0, services: new Set() };
       map[agentId].clients.add(s.client_id);
       map[agentId].services.add(s.service_type);
-      if (s.billing_cycle === "monthly") map[agentId].recurringRevenue += s.price_amount;
-      else if (s.billing_cycle === "quarterly") map[agentId].recurringRevenue += s.price_amount / 3;
-      else if (s.billing_cycle === "yearly") map[agentId].recurringRevenue += s.price_amount / 12;
+      map[agentId].recurringRevenue += toMonthly(s.price_amount, s.billing_cycle);
     });
     return Object.entries(map).map(([id, data]) => ({
       agentId: id,
@@ -137,7 +213,10 @@ export function useRecurringRevenue() {
 
   return {
     services, recurringServices, loading,
-    monthlyRevenue, mrrByPaymentMethod, revenueByService, agentPerformance,
+    monthlyRevenue, yearlyRevenue,
+    mrrByPaymentMethod, revenueByService, agentPerformance,
+    paymentsDueToday, pendingThisMonth, overduePayments,
+    renewalsToday, renewalsThisWeek, renewalsThisMonth,
     refetch: fetchAll,
   };
 }
