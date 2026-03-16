@@ -29,6 +29,7 @@ const stageColors: Record<string, string> = {
   meeting_booked: "bg-info/10 text-info",
   proposal_requested: "bg-warning/10 text-warning",
   negotiation: "bg-neon-orange/10 text-neon-orange",
+  conversion_requested: "bg-info/10 text-info",
   won: "bg-success/10 text-success",
   lost: "bg-destructive/10 text-destructive",
 };
