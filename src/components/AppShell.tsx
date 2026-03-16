@@ -60,6 +60,7 @@ const AppShell = () => {
             </div>
           </main>
         </div>
+        <BroadcastPopup />
         {businessId && (
           <ChatWidget
             businessId={businessId}
