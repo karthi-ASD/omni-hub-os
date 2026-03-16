@@ -213,5 +213,14 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onUpdateStage, onArc
         )}
       </SheetContent>
     </Sheet>
+
+    <RequestProposalDialog
+      open={proposalDialogOpen}
+      onOpenChange={setProposalDialogOpen}
+      leadId={lead.id}
+      leadName={lead.name}
+      leadServices={lead.services_needed}
+    />
+    </>
   );
 }
