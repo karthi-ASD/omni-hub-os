@@ -220,6 +220,7 @@ const ClientProfilePage = () => {
           <TabsTrigger value="billing" className="hidden lg:inline-flex">Billing</TabsTrigger>
           <TabsTrigger value="tickets" className="hidden lg:inline-flex">Tickets</TabsTrigger>
           <TabsTrigger value="timeline" className="hidden lg:inline-flex">Timeline</TabsTrigger>
+          <TabsTrigger value="activity" className="hidden lg:inline-flex"><Clock className="h-3.5 w-3.5 mr-1" />Activity</TabsTrigger>
         </TabsList>
 
         {/* ── Conversations / Notes ── */}
