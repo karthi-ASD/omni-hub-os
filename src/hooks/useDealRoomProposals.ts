@@ -109,7 +109,8 @@ export function useDealRoomProposals() {
   const updateStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("deal_room_proposals").update({ proposal_status: status } as any).eq("id", id);
     if (error) { toast.error("Failed to update"); return; }
-    fetchProposals();
+    await fetchProposals();
+    notifySalesDataChanged(["proposals", "dashboard"], "deal-room-proposal:update-status");
   };
 
   const uploadPdf = async (file: File, proposalId: string) => {
