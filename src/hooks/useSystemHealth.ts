@@ -54,7 +54,7 @@ export function useSystemHealth() {
     ] = await Promise.all([
       supabase.from("businesses").select("id, status, created_at, crm_access_status, mobile_access_status, mobile_subscription_expiry, mobile_app_downloads").order("created_at") as any,
       supabase.from("hr_employees" as any).select("id, business_id, department_id, created_at") as any,
-      supabase.from("clients").select("id, business_id, created_at") as any,
+      supabase.from("clients").select("id, business_id, created_at").neq("client_status", "reverted") as any,
       supabase.from("hr_departments" as any).select("id, business_id, name") as any,
       supabase.from("profiles").select("id, user_id, created_at") as any,
     ]);

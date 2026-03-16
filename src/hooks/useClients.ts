@@ -72,7 +72,7 @@ export function useClients(options?: UseClientsOptions) {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
-  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({ active: 0, cancelled: 0, pending: 0, prospect: 0, suspended: 0 });
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({ active: 0, cancelled: 0, pending: 0, prospect: 0, suspended: 0, reverted: 0 });
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [hasMore, setHasMore] = useState(true);
@@ -88,7 +88,8 @@ export function useClients(options?: UseClientsOptions) {
     // Get count first
     let countQuery = supabase
       .from("clients")
-      .select("id", { count: "exact", head: true });
+      .select("id", { count: "exact", head: true })
+      .neq("client_status", "reverted");
 
     if (searchTerm) {
       countQuery = countQuery.or(
@@ -106,7 +107,7 @@ export function useClients(options?: UseClientsOptions) {
     setTotalCount(count || 0);
 
     // Get server-side status counts (unaffected by status filter)
-    const statusValues = ["active", "cancelled", "pending", "prospect", "suspended"];
+    const statusValues = ["active", "cancelled", "pending", "prospect", "suspended", "reverted"];
     const statusCountResults: Record<string, number> = {};
     await Promise.all(statusValues.map(async (s) => {
       let sq = supabase.from("clients").select("id", { count: "exact", head: true }).eq("client_status", s);
@@ -125,6 +126,7 @@ export function useClients(options?: UseClientsOptions) {
     let dataQuery = supabase
       .from("clients")
       .select("*")
+      .neq("client_status", "reverted")
       .order("created_at", { ascending: false })
       .range(from, to);
 
