@@ -126,6 +126,13 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onUpdateStage, onArc
           </span>
         </div>
 
+        {/* Request Proposal Button */}
+        <div className="mb-4">
+          <Button variant="outline" size="sm" className="w-full" onClick={() => setProposalDialogOpen(true)}>
+            <FileText className="h-3.5 w-3.5 mr-1" /> Request Proposal
+          </Button>
+        </div>
+
         <Separator className="mb-4" />
 
         {/* Details */}
