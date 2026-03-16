@@ -351,11 +351,11 @@ const App = () => (
               <Route path="/executive-dashboard" element={<ExecutiveDashboardPage />} />
               <Route path="/seo" element={<SeoDashboardPage />} />
               <Route path="/seo/:campaignId" element={<SeoCampaignDetailPage />} />
-              <Route path="/seo-ops" element={<SeoDashboardPage />} />
+              <Route path="/seo-ops" element={<Navigate to="/seo" replace />} />
               <Route path="/seo-ops/:projectId" element={<SeoProjectDetailPage />} />
               <Route path="/seo-team" element={<SeoTeamDashboardPage />} />
               <Route path="/seo-intel/:projectId" element={<SeoIntelligencePage />} />
-              <Route path="/seo-exec/:projectId" element={<SeoCampaignDetailPage />} />
+              <Route path="/seo-exec/:projectId" element={<Navigate to="/seo" replace />} />
               <Route path="/sales-seo-intel" element={<SalesSeoPitchPage />} />
               <Route path="/seo-client-reports" element={<SeoClientReportsPage />} />
               <Route path="/communications" element={<CommunicationsPage />} />
