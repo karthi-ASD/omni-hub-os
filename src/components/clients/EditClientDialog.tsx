@@ -105,6 +105,7 @@ export const EditClientDialog: React.FC<EditClientDialogProps> = ({
       if (updateError) throw updateError;
 
       toast.success("Client updated successfully");
+      clearDraft();
       onSuccess();
       onOpenChange(false);
     } catch (err: any) {
