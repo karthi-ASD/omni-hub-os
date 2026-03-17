@@ -6223,6 +6223,7 @@ export type Database = {
           business_id: string
           churn_risk: string | null
           city: string | null
+          client_business_id: string | null
           client_since: string | null
           client_start_date: string | null
           client_status: string
@@ -6273,6 +6274,7 @@ export type Database = {
           business_id: string
           churn_risk?: string | null
           city?: string | null
+          client_business_id?: string | null
           client_since?: string | null
           client_start_date?: string | null
           client_status?: string
@@ -6323,6 +6325,7 @@ export type Database = {
           business_id?: string
           churn_risk?: string | null
           city?: string | null
+          client_business_id?: string | null
           client_since?: string | null
           client_start_date?: string | null
           client_status?: string
@@ -6367,6 +6370,13 @@ export type Database = {
           {
             foreignKeyName: "clients_business_id_fkey"
             columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_client_business_id_fkey"
+            columns: ["client_business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
             referencedColumns: ["id"]
@@ -22921,6 +22931,7 @@ export type Database = {
         Args: { _business_id: string; _email: string }
         Returns: string
       }
+      get_client_id_for_user: { Args: { _user_id: string }; Returns: string }
       get_system_mode: { Args: { _business_id: string }; Returns: string }
       get_user_business_id: { Args: { _user_id: string }; Returns: string }
       handle_business_registration: {
@@ -23004,6 +23015,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_client_user: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       agent_action_status: "PLANNED" | "EXECUTED" | "SKIPPED" | "FAILED"

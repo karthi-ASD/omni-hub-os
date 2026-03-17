@@ -31,6 +31,10 @@ interface AuthContextType {
   isSuperAdmin: boolean;
   isBusinessAdmin: boolean;
   isHRManager: boolean;
+  /** True when the logged-in user is a client portal user */
+  isClientUser: boolean;
+  /** The client_id this user is linked to (from client_users) */
+  clientId: string | null;
   /** All businesses — only populated for super_admin */
   allBusinesses: TenantBusiness[];
   /** Selected tenant for super_admin context switching */
@@ -48,6 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [allBusinesses, setAllBusinesses] = useState<TenantBusiness[]>([]);
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
+  const [clientUserId, setClientUserId] = useState<string | null>(null);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -119,6 +124,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           fetchRoles(nextSession.user.id),
         ]);
 
+        // Check if user is a client user
+        const { data: clientLink } = await supabase
+          .from("client_users")
+          .select("client_id")
+          .eq("user_id", nextSession.user.id)
+          .eq("is_primary", true)
+          .maybeSingle();
+        setClientUserId(clientLink?.client_id || null);
+
         if (userRoles.includes("super_admin")) {
           const biz = await fetchBusinesses();
           if (biz.length > 0) {
@@ -149,6 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setRoles([]);
           setAllBusinesses([]);
           setSelectedTenantId(null);
+          setClientUserId(null);
           finalizeLoading();
         }
       }
@@ -182,12 +197,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setRoles([]);
     setAllBusinesses([]);
     setSelectedTenantId(null);
+    setClientUserId(null);
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
   const isSuperAdmin = hasRole("super_admin");
   const isBusinessAdmin = hasRole("business_admin");
   const isHRManager = hasRole("hr_manager");
+  const isClientUser = !!clientUserId && !isSuperAdmin;
+  const clientId = clientUserId;
 
   // KEY FIX: For super_admin, override profile.business_id with selected tenant
   // This makes ALL hooks that use profile.business_id work automatically
@@ -204,6 +222,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider value={{
       session, user, profile, roles, loading, signOut,
       hasRole, isSuperAdmin, isBusinessAdmin, isHRManager,
+      isClientUser, clientId,
       allBusinesses, selectedTenantId, selectTenant: setSelectedTenantId,
     }}>
       {children}

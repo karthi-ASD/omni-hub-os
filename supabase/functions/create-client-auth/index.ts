@@ -55,10 +55,71 @@ Deno.serve(async (req) => {
   }
 });
 
+/**
+ * Ensure the client has its own dedicated business (tenant).
+ * If client_business_id is already set, reuse it. Otherwise create one.
+ */
+async function ensureClientBusiness(
+  supabaseAdmin: any,
+  clientRecord: any
+): Promise<string> {
+  // If client already has a dedicated business, return it
+  if (clientRecord.client_business_id) {
+    return clientRecord.client_business_id;
+  }
+
+  const clientName = clientRecord.contact_name || clientRecord.company_name || clientRecord.email || "Client Business";
+
+  // Create a new business for this client
+  const { data: newBiz, error: bizError } = await supabaseAdmin
+    .from("businesses")
+    .insert({
+      name: clientName,
+      email: clientRecord.email,
+      status: "active",
+      owner_name: clientName,
+      registration_method: "client_portal",
+    })
+    .select("id")
+    .single();
+
+  if (bizError) throw new Error(`Failed to create client business: ${bizError.message}`);
+
+  const clientBusinessId = newBiz.id;
+
+  // Link the client_business_id on the client record
+  await supabaseAdmin
+    .from("clients")
+    .update({ client_business_id: clientBusinessId })
+    .eq("id", clientRecord.id);
+
+  // Insert default settings for the client's business
+  await supabaseAdmin.from("settings").insert([
+    { business_id: clientBusinessId, key: "timezone", value: "Australia/Sydney" },
+    { business_id: clientBusinessId, key: "currency", value: "AUD" },
+    { business_id: clientBusinessId, key: "date_format", value: "DD/MM/YYYY" },
+    { business_id: clientBusinessId, key: "theme", value: "system" },
+  ]);
+
+  return clientBusinessId;
+}
+
 async function createSingleClientAuth(
   supabaseAdmin: any,
   { client_id, email, full_name, business_id }: { client_id: string; email: string; full_name?: string; business_id: string }
 ) {
+  // Fetch the full client record
+  const { data: clientRecord, error: clientErr } = await supabaseAdmin
+    .from("clients")
+    .select("id, contact_name, company_name, email, client_business_id, auth_user_id")
+    .eq("id", client_id)
+    .single();
+
+  if (clientErr || !clientRecord) throw new Error("Client not found");
+
+  // Step 1: Ensure client has its own dedicated business (tenant)
+  const clientBusinessId = await ensureClientBusiness(supabaseAdmin, clientRecord);
+
   // Check if client_users already exists
   const { data: existingLink } = await supabaseAdmin
     .from("client_users")
@@ -68,26 +129,22 @@ async function createSingleClientAuth(
     .maybeSingle();
 
   if (existingLink?.user_id) {
-    // Also check clients.auth_user_id is set
+    // Ensure profile is mapped to client's own business (fix existing bad mappings)
+    await supabaseAdmin.from("profiles").update({ business_id: clientBusinessId }).eq("user_id", existingLink.user_id);
     await supabaseAdmin.from("clients").update({ auth_user_id: existingLink.user_id, login_status: "active" }).eq("id", client_id);
-    return { success: true, user_id: existingLink.user_id, already_exists: true };
+    return { success: true, user_id: existingLink.user_id, already_exists: true, client_business_id: clientBusinessId };
   }
 
-  // Check clients.auth_user_id fallback
-  const { data: clientRecord } = await supabaseAdmin
-    .from("clients")
-    .select("auth_user_id")
-    .eq("id", client_id)
-    .single();
-
-  if (clientRecord?.auth_user_id) {
-    // Ensure client_users link exists
+  // Fallback: check clients.auth_user_id
+  if (clientRecord.auth_user_id) {
     await supabaseAdmin.from("client_users").upsert(
       { user_id: clientRecord.auth_user_id, client_id, role: "owner", is_primary: true },
       { onConflict: "user_id,client_id" }
     );
+    // Fix profile business_id to client's own business
+    await supabaseAdmin.from("profiles").update({ business_id: clientBusinessId }).eq("user_id", clientRecord.auth_user_id);
     await supabaseAdmin.from("clients").update({ login_status: "active" }).eq("id", client_id);
-    return { success: true, user_id: clientRecord.auth_user_id, already_exists: true };
+    return { success: true, user_id: clientRecord.auth_user_id, already_exists: true, client_business_id: clientBusinessId };
   }
 
   // Check system_mode for password
@@ -112,7 +169,7 @@ async function createSingleClientAuth(
   if (existingUser) {
     userId = existingUser.id;
   } else {
-    // Create auth user
+    // Step 2: Create auth user
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email: email.toLowerCase(),
       password,
@@ -122,27 +179,27 @@ async function createSingleClientAuth(
 
     if (createError) throw createError;
     userId = newUser.user.id;
-
-    // Update profile
-    await supabaseAdmin
-      .from("profiles")
-      .update({ business_id, full_name: full_name || email })
-      .eq("user_id", userId);
   }
 
-  // Assign client role (business_admin as requested)
+  // Step 3: Set profile business_id to client's OWN business (NOT service provider's)
+  await supabaseAdmin
+    .from("profiles")
+    .update({ business_id: clientBusinessId, full_name: full_name || email })
+    .eq("user_id", userId);
+
+  // Step 4: Assign business_admin role with the CLIENT's business_id
   await supabaseAdmin.from("user_roles").upsert(
-    { user_id: userId, role: "business_admin", business_id },
+    { user_id: userId, role: "business_admin", business_id: clientBusinessId },
     { onConflict: "user_id,role" }
   );
 
-  // Link auth user to client
+  // Step 5: Link auth user to client
   await supabaseAdmin
     .from("clients")
     .update({ auth_user_id: userId, login_status: "active" })
     .eq("id", client_id);
 
-  // Create client_users entry
+  // Step 6: Create client_users entry
   await supabaseAdmin.from("client_users").upsert(
     { user_id: userId, client_id, role: "owner", is_primary: true },
     { onConflict: "user_id,client_id" }
@@ -150,15 +207,22 @@ async function createSingleClientAuth(
 
   // Log event
   await supabaseAdmin.from("system_events").insert({
-    business_id,
+    business_id: business_id, // log under service provider's business
     event_type: "CLIENT_AUTH_CREATED",
-    payload_json: { client_id, email, system_mode: systemMode },
+    payload_json: {
+      client_id,
+      email,
+      system_mode: systemMode,
+      client_business_id: clientBusinessId,
+      service_provider_business_id: business_id,
+    },
   });
 
   return {
     success: true,
     user_id: userId,
     login_status: "active",
+    client_business_id: clientBusinessId,
     password_info: systemMode === "testing" ? "Testing password: nextweb123" : "Random password set - activation required",
   };
 }
