@@ -538,6 +538,11 @@ const SeoProjectDetailPage = () => {
           <PerformanceDashboard clientId={project?.client_id} projectId={projectId} />
         </TabsContent>
 
+        {/* MAPS PERFORMANCE TAB */}
+        <TabsContent value="maps" className="space-y-4">
+          {projectId && <MapsPerformancePanel projectId={projectId} />}
+        </TabsContent>
+
         {/* INTEGRATIONS TAB */}
         <TabsContent value="integrations" className="space-y-4">
           {projectId && project?.business_id && (
