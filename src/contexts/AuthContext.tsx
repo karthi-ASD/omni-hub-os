@@ -185,6 +185,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
+    sessionRef.current = session;
+    userIdRef.current = user?.id ?? null;
+  }, [session, user?.id]);
+
+  useEffect(() => {
     let isMounted = true;
     const forceStopTimer = window.setTimeout(() => {
       if (isMounted) setLoading(false);
@@ -196,12 +201,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     };
 
-    const hydrateUserState = async (nextSession: Session) => {
+    const hydrateUserState = async (nextSession: Session, source: "initial" | "sign_in") => {
       if (isHydratingRef.current) {
-        console.log("[Auth] Hydration already in progress — skipping");
+        console.log("[Auth] hydrate skipped — already in progress", { source, userId: nextSession.user.id });
         return;
       }
+
       isHydratingRef.current = true;
+      console.log("[Auth] hydrate start", { source, userId: nextSession.user.id });
 
       try {
         setTenantValidationError(null);
@@ -227,73 +234,71 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         hasHydratedRef.current = true;
       } finally {
         isHydratingRef.current = false;
+        console.log("[Auth] hydrate end", { source, userId: nextSession.user.id });
         finalizeLoading();
       }
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, nextSession) => {
-        console.log("[Auth Event]", event);
+    const queueHydration = (nextSession: Session, source: "initial" | "sign_in") => {
+      window.setTimeout(() => {
+        if (isMounted) void hydrateUserState(nextSession, source);
+      }, 0);
+    };
 
-        switch (event) {
-          case "TOKEN_REFRESHED":
-            // Silent update — NEVER reset state or re-hydrate
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      console.log("[Auth Event]", event);
+
+      switch (event) {
+        case "TOKEN_REFRESHED":
+          hasInitializedRef.current = true;
+          console.log("[Auth] TOKEN_REFRESHED — silent update only");
+          if (!sessionRef.current && nextSession) {
             setSession(nextSession);
-            setUser(nextSession?.user ?? null);
-            break;
+            setUser(nextSession.user);
+          }
+          break;
 
-          case "INITIAL_SESSION":
-            if (hasHydratedRef.current) {
-              console.log("[Auth] INITIAL_SESSION skipped — already hydrated");
-              break;
-            }
-            setSession(nextSession);
-            setUser(nextSession?.user ?? null);
-            if (nextSession?.user) {
-              setLoading(true);
-              setTimeout(() => {
-                if (isMounted) void hydrateUserState(nextSession);
-              }, 0);
-            } else {
-              finalizeLoading();
-            }
-            break;
+        case "INITIAL_SESSION":
+          console.log("[Auth] INITIAL_SESSION ignored — getSession is authoritative");
+          break;
 
-          case "SIGNED_IN":
-            setSession(nextSession);
-            setUser(nextSession?.user ?? null);
-            if (nextSession?.user) {
-              clearAllUserState();
-              setLoading(true);
-              setTimeout(() => {
-                if (isMounted) void hydrateUserState(nextSession);
-              }, 0);
-            }
-            break;
-
-          case "SIGNED_OUT":
-            setSession(null);
-            setUser(null);
+        case "SIGNED_IN":
+          hasInitializedRef.current = true;
+          setSession(nextSession);
+          setUser(nextSession?.user ?? null);
+          if (nextSession?.user) {
             clearAllUserState();
+            setLoading(true);
+            queueHydration(nextSession, "sign_in");
+          } else {
             finalizeLoading();
-            break;
+          }
+          break;
 
-          default:
-            // Unknown event — do nothing
-            break;
-        }
+        case "SIGNED_OUT":
+          hasInitializedRef.current = true;
+          setSession(null);
+          setUser(null);
+          clearAllUserState();
+          finalizeLoading();
+          break;
+
+        default:
+          break;
       }
-    );
+    });
 
     supabase.auth.getSession()
       .then(({ data: { session: currentSession } }) => {
-        if (hasHydratedRef.current) return;
+        if (hasInitializedRef.current) return;
+
+        hasInitializedRef.current = true;
         setLoading(true);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
 
         if (currentSession?.user) {
-          void hydrateUserState(currentSession);
+          queueHydration(currentSession, "initial");
         } else {
           setTenantValidationError(null);
           finalizeLoading();
@@ -306,7 +311,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       window.clearTimeout(forceStopTimer);
       subscription.unsubscribe();
     };
-  }, []);
+  }, [clearAllUserState, session, user?.id]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
