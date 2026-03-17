@@ -21,7 +21,11 @@ export function useWebsiteTrees(projectId: string | undefined, clientId?: string
   const [generating, setGenerating] = useState(false);
 
   const fetchTrees = useCallback(async () => {
-    if (!projectId && !clientId) return;
+    if (!projectId && !clientId) {
+      setLoading(false);
+      setTrees([]);
+      return;
+    }
     setLoading(true);
     try {
       let query = supabase
@@ -37,10 +41,13 @@ export function useWebsiteTrees(projectId: string | undefined, clientId?: string
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching website trees:", error);
+      }
       setTrees((data as any[]) ?? []);
     } catch (err: any) {
       console.error("Error fetching website trees:", err);
+      setTrees([]);
     } finally {
       setLoading(false);
     }
