@@ -123,11 +123,13 @@ export function useClientDashboardData() {
 
     // ── Invoices: fetch from xero_invoices by client_id (NextWeb's invoices FOR this client) ──
     if (clientId) {
-      const [invoicesOpen, invoicesPaid] = await Promise.all([
+      const [invoicesAll, invoicesOpen, invoicesPaid] = await Promise.all([
+        supabase.from("xero_invoices").select("id", { count: "exact", head: true }).eq("client_id", clientId),
         supabase.from("xero_invoices").select("id, total_amount, amount_due, status").eq("client_id", clientId).in("status", ["AUTHORISED", "SUBMITTED", "OVERDUE"]),
         supabase.from("xero_invoices").select("id, total_amount").eq("client_id", clientId).eq("status", "PAID"),
       ]);
 
+      result.totalInvoices = invoicesAll.count ?? 0;
       result.openInvoices = invoicesOpen.data?.length ?? 0;
       result.outstandingAmount = invoicesOpen.data?.reduce((s, i) => s + Number((i as any).amount_due || (i as any).total_amount || 0), 0) ?? 0;
       result.totalPaid = invoicesPaid.data?.reduce((s, i) => s + Number((i as any).total_amount || 0), 0) ?? 0;
