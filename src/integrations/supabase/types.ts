@@ -3391,12 +3391,14 @@ export type Database = {
           account_name: string | null
           auth_type: string
           business_id: string
+          business_name: string | null
           created_at: string
           credentials_encrypted: string | null
           external_account_id: string | null
           id: string
           is_active: boolean
           last_error: string | null
+          location_id: string | null
           measurement_id: string | null
           project_id: string | null
           property_id: string | null
@@ -3411,12 +3413,14 @@ export type Database = {
           account_name?: string | null
           auth_type?: string
           business_id: string
+          business_name?: string | null
           created_at?: string
           credentials_encrypted?: string | null
           external_account_id?: string | null
           id?: string
           is_active?: boolean
           last_error?: string | null
+          location_id?: string | null
           measurement_id?: string | null
           project_id?: string | null
           property_id?: string | null
@@ -3431,12 +3435,14 @@ export type Database = {
           account_name?: string | null
           auth_type?: string
           business_id?: string
+          business_name?: string | null
           created_at?: string
           credentials_encrypted?: string | null
           external_account_id?: string | null
           id?: string
           is_active?: boolean
           last_error?: string | null
+          location_id?: string | null
           measurement_id?: string | null
           project_id?: string | null
           property_id?: string | null
@@ -11705,6 +11711,82 @@ export type Database = {
           },
           {
             foreignKeyName: "google_analytics_daily_stats_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_maps_daily_stats: {
+        Row: {
+          average_rating: number
+          business_id: string
+          client_id: string | null
+          created_at: string
+          direction_requests: number
+          id: string
+          messages: number
+          phone_calls: number
+          project_id: string | null
+          reviews_count: number
+          snapshot_date: string
+          views_maps: number
+          views_search: number
+          views_total: number
+          website_clicks: number
+        }
+        Insert: {
+          average_rating?: number
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          direction_requests?: number
+          id?: string
+          messages?: number
+          phone_calls?: number
+          project_id?: string | null
+          reviews_count?: number
+          snapshot_date?: string
+          views_maps?: number
+          views_search?: number
+          views_total?: number
+          website_clicks?: number
+        }
+        Update: {
+          average_rating?: number
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          direction_requests?: number
+          id?: string
+          messages?: number
+          phone_calls?: number
+          project_id?: string | null
+          reviews_count?: number
+          snapshot_date?: string
+          views_maps?: number
+          views_search?: number
+          views_total?: number
+          website_clicks?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_maps_daily_stats_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "google_maps_daily_stats_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "google_maps_daily_stats_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "seo_projects"

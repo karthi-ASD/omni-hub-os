@@ -15,6 +15,7 @@ import { useSeoAiRecommendations } from "@/hooks/useSeoAiRecommendations";
 import { useSeoKeywords } from "@/hooks/useSeo";
 import { PerformanceDashboard } from "@/components/clients/access-hub/PerformanceDashboard";
 import { ProjectIntegrationsTab } from "@/components/seo/ProjectIntegrationsTab";
+import { MapsPerformancePanel } from "@/components/seo/MapsPerformancePanel";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -129,6 +130,7 @@ const SeoProjectDetailPage = () => {
           <TabsTrigger value="messages"><MessageSquare className="h-3 w-3 mr-1" /> Messages</TabsTrigger>
           <TabsTrigger value="reports"><BarChart3 className="h-3 w-3 mr-1" /> Reports</TabsTrigger>
           <TabsTrigger value="performance"><BarChart3 className="h-3 w-3 mr-1" /> Performance</TabsTrigger>
+          <TabsTrigger value="maps"><MapPin className="h-3 w-3 mr-1" /> Maps Performance</TabsTrigger>
           <TabsTrigger value="integrations"><Plug className="h-3 w-3 mr-1" /> Integrations</TabsTrigger>
           <TabsTrigger value="ai"><Brain className="h-3 w-3 mr-1" /> AI Advisor</TabsTrigger>
         </TabsList>
@@ -534,6 +536,11 @@ const SeoProjectDetailPage = () => {
         {/* PERFORMANCE TAB */}
         <TabsContent value="performance" className="space-y-4">
           <PerformanceDashboard clientId={project?.client_id} projectId={projectId} />
+        </TabsContent>
+
+        {/* MAPS PERFORMANCE TAB */}
+        <TabsContent value="maps" className="space-y-4">
+          {projectId && <MapsPerformancePanel projectId={projectId} />}
         </TabsContent>
 
         {/* INTEGRATIONS TAB */}
