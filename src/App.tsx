@@ -114,6 +114,7 @@ import ActivityTimelinePage from "./pages/ActivityTimelinePage";
 import SuperAdminBusinessManagementPage from "./pages/SuperAdminBusinessManagementPage";
 import SuperAdminClientManagementPage from "./pages/SuperAdminClientManagementPage";
 import SystemHealthPage from "./pages/SystemHealthPage";
+import FeatureRegistryPage from "./pages/FeatureRegistryPage";
 import AdvocacyEnginePage from "./pages/AdvocacyEnginePage";
 import GovernanceDashboardPage from "./pages/GovernanceDashboardPage";
 import TasksPage from "./pages/TasksPage";
