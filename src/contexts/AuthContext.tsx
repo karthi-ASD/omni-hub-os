@@ -260,12 +260,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("[Auth Event]", event);
 
       switch (event) {
-        case "TOKEN_REFRESHED":
+        case "TOKEN_REFRESHED": {
           hasInitializedRef.current = true;
           console.log("[Auth] TOKEN_REFRESHED — silent update only");
-          setSession(nextSession);
-          setUser(nextSession?.user ?? null);
+          const previousSession = sessionRef.current;
+          sessionRef.current = nextSession;
+          const previousUserId = previousSession?.user.id ?? null;
+          const nextUserId = nextSession?.user.id ?? null;
+
+          if (!previousSession || !nextSession || previousUserId !== nextUserId) {
+            setSession(nextSession);
+            setUser(nextSession?.user ?? null);
+          }
           break;
+        }
 
         case "INITIAL_SESSION":
           console.log("[Auth] INITIAL_SESSION ignored — getSession is authoritative");
