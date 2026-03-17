@@ -288,7 +288,7 @@ const ClientDashboardPage = () => {
             <CardTitle className="text-sm font-bold flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-success" /> Work Done This Month
             </CardTitle>
-            <button onClick={() => navigate("/seo")} className="text-xs text-primary font-semibold flex items-center gap-1 hover:underline">
+            <button onClick={() => navigate("/client-seo-projects")} className="text-xs text-primary font-semibold flex items-center gap-1 hover:underline">
               View Full Report <ArrowRight className="h-3 w-3" />
             </button>
           </CardHeader>
