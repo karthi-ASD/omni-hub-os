@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useClientAccessHub, AccessCredential, ProjectIntegration } from "@/hooks/useClientAccessHub";
+import { useAuth } from "@/contexts/AuthContext";
 import { CredentialCard } from "./CredentialCard";
 import { IntegrationCard } from "./IntegrationCard";
 import { CredentialFormDialog } from "./CredentialFormDialog";
@@ -7,12 +8,12 @@ import { IntegrationFormDialog } from "./IntegrationFormDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   Plus, Server, Globe, Layout, BarChart3, Shield, Clock,
-  AlertTriangle, CheckCircle, Key, Plug,
+  AlertTriangle, Key, Plug,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -23,6 +24,38 @@ interface Props {
 
 type FilterType = "all" | "credentials" | "integrations" | "expiring" | "expired" | "active" | "client_visible";
 
+/**
+ * Determine permissions based on user role:
+ * - super_admin / business_admin: Full access
+ * - accounts: View renewals/billing, add renewal notes, no edit sensitive
+ * - seo_team / seo_manager: Manage integrations, view credentials
+ * - developer: View technical credentials/hosting API
+ * - client: View-only, client-visible items only, no secrets
+ */
+function useAccessPermissions(isClientView?: boolean) {
+  const { hasRole, isSuperAdmin, isBusinessAdmin } = useAuth();
+
+  const isAdmin = isSuperAdmin || isBusinessAdmin;
+  const isAccounts = hasRole("accounts");
+  const isSeo = hasRole("seo_manager") || hasRole("seo_team");
+  const isDev = hasRole("developer");
+  const isManager = hasRole("manager");
+
+  return {
+    canAddCredential: isAdmin || isSeo || isDev || isManager,
+    canAddIntegration: isAdmin || isSeo || isManager,
+    canEditCredential: isAdmin || isSeo || isDev || isManager,
+    canEditIntegration: isAdmin || isSeo || isManager,
+    canArchive: isAdmin,
+    canRevealPassword: isAdmin || isSeo || isDev || isManager,
+    canViewAuditLog: isAdmin,
+    canViewCredentials: !isClientView, // all staff can view
+    canViewIntegrations: !isClientView,
+    canViewRenewals: isAdmin || isAccounts || isSeo || isManager,
+    isClientView: !!isClientView,
+  };
+}
+
 export function ClientAccessHubTab({ clientId, isClientView }: Props) {
   const {
     credentials, integrations, auditLogs, loading,
@@ -31,45 +64,59 @@ export function ClientAccessHubTab({ clientId, isClientView }: Props) {
     logRevealPassword, logCopyAction,
   } = useClientAccessHub(clientId);
 
+  const perms = useAccessPermissions(isClientView);
+
   const [credDialogOpen, setCredDialogOpen] = useState(false);
   const [intDialogOpen, setIntDialogOpen] = useState(false);
   const [editingCred, setEditingCred] = useState<AccessCredential | null>(null);
   const [editingInt, setEditingInt] = useState<ProjectIntegration | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
 
+  // For client view, only show client-visible items
+  const visibleCredentials = isClientView
+    ? credentials.filter(c => c.is_client_visible)
+    : credentials;
+  const visibleIntegrations = isClientView
+    ? integrations.filter(i => i.is_client_visible)
+    : integrations;
+
   // Stats
-  const expiringCreds = credentials.filter(c => c.status === "expiring_soon").length;
-  const expiredCreds = credentials.filter(c => c.status === "expired").length;
-  const activeIntegrations = integrations.filter(i => i.is_enabled && i.status === "connected").length;
+  const expiringCreds = visibleCredentials.filter(c => c.status === "expiring_soon").length;
+  const expiredCreds = visibleCredentials.filter(c => c.status === "expired").length;
+  const activeIntegrations = visibleIntegrations.filter(i => i.is_enabled && i.status === "connected").length;
 
   // Filter
-  const hostingCreds = credentials.filter(c => c.credential_type === "hosting");
-  const domainCreds = credentials.filter(c => c.credential_type === "domain");
-  const websiteCreds = credentials.filter(c => c.credential_type === "website");
-
   const filteredCreds = useMemo(() => {
     switch (filter) {
-      case "credentials": return credentials;
-      case "expiring": return credentials.filter(c => c.status === "expiring_soon");
-      case "expired": return credentials.filter(c => c.status === "expired");
-      case "active": return credentials.filter(c => c.status === "active");
-      case "client_visible": return credentials.filter(c => c.is_client_visible);
+      case "credentials": return visibleCredentials;
+      case "expiring": return visibleCredentials.filter(c => c.status === "expiring_soon");
+      case "expired": return visibleCredentials.filter(c => c.status === "expired");
+      case "active": return visibleCredentials.filter(c => c.status === "active");
+      case "client_visible": return visibleCredentials.filter(c => c.is_client_visible);
       case "integrations": return [];
-      default: return credentials;
+      default: return visibleCredentials;
     }
-  }, [credentials, filter]);
+  }, [visibleCredentials, filter]);
 
   const filteredInts = useMemo(() => {
     switch (filter) {
-      case "integrations": return integrations;
-      case "client_visible": return integrations.filter(i => i.is_client_visible);
+      case "integrations": return visibleIntegrations;
+      case "client_visible": return visibleIntegrations.filter(i => i.is_client_visible);
       case "credentials": case "expiring": case "expired": return [];
-      default: return integrations;
+      default: return visibleIntegrations;
     }
-  }, [integrations, filter]);
+  }, [visibleIntegrations, filter]);
 
-  const handleEditCred = (c: AccessCredential) => { setEditingCred(c); setCredDialogOpen(true); };
-  const handleEditInt = (i: ProjectIntegration) => { setEditingInt(i); setIntDialogOpen(true); };
+  const handleEditCred = (c: AccessCredential) => {
+    if (!perms.canEditCredential) return;
+    setEditingCred(c);
+    setCredDialogOpen(true);
+  };
+  const handleEditInt = (i: ProjectIntegration) => {
+    if (!perms.canEditIntegration) return;
+    setEditingInt(i);
+    setIntDialogOpen(true);
+  };
 
   const handleSaveCred = async (data: Partial<AccessCredential>) => {
     if (editingCred) {
@@ -90,6 +137,7 @@ export function ClientAccessHubTab({ clientId, isClientView }: Props) {
   };
 
   const handleToggleInt = async (id: string, enabled: boolean) => {
+    if (!perms.canEditIntegration) return;
     await updateIntegration(id, { is_enabled: enabled, status: enabled ? "pending" : "disabled" });
   };
 
@@ -109,11 +157,11 @@ export function ClientAccessHubTab({ clientId, isClientView }: Props) {
         {/* Stats Strip */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {[
-            { label: "Credentials", value: credentials.length, icon: Key, color: "text-primary" },
+            { label: "Credentials", value: visibleCredentials.length, icon: Key, color: "text-primary" },
             { label: "Integrations", value: activeIntegrations, icon: Plug, color: "text-info" },
             { label: "Expiring Soon", value: expiringCreds, icon: AlertTriangle, color: "text-warning" },
             { label: "Expired", value: expiredCreds, icon: AlertTriangle, color: "text-destructive" },
-            { label: "Client Visible", value: credentials.filter(c => c.is_client_visible).length + integrations.filter(i => i.is_client_visible).length, icon: Shield, color: "text-success" },
+            { label: "Client Visible", value: visibleCredentials.filter(c => c.is_client_visible).length + visibleIntegrations.filter(i => i.is_client_visible).length, icon: Shield, color: "text-success" },
           ].map(s => (
             <Card key={s.label} className="rounded-xl border-0 shadow-sm">
               <CardContent className="p-3 flex items-center gap-2.5">
@@ -142,15 +190,19 @@ export function ClientAccessHubTab({ clientId, isClientView }: Props) {
           ))}
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons - role-gated */}
         {!isClientView && (
           <div className="flex gap-2">
-            <Button size="sm" className="gap-1.5" onClick={() => { setEditingCred(null); setCredDialogOpen(true); }}>
-              <Plus className="h-3.5 w-3.5" /> Add Credential
-            </Button>
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => { setEditingInt(null); setIntDialogOpen(true); }}>
-              <Plus className="h-3.5 w-3.5" /> Add Integration
-            </Button>
+            {perms.canAddCredential && (
+              <Button size="sm" className="gap-1.5" onClick={() => { setEditingCred(null); setCredDialogOpen(true); }}>
+                <Plus className="h-3.5 w-3.5" /> Add Credential
+              </Button>
+            )}
+            {perms.canAddIntegration && (
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => { setEditingInt(null); setIntDialogOpen(true); }}>
+                <Plus className="h-3.5 w-3.5" /> Add Integration
+              </Button>
+            )}
           </div>
         )}
 
@@ -162,23 +214,41 @@ export function ClientAccessHubTab({ clientId, isClientView }: Props) {
             <TabsTrigger value="website"><Layout className="h-3.5 w-3.5 mr-1" />Website</TabsTrigger>
             <TabsTrigger value="marketing"><BarChart3 className="h-3.5 w-3.5 mr-1" />Marketing</TabsTrigger>
             <TabsTrigger value="renewals"><Clock className="h-3.5 w-3.5 mr-1" />Renewals</TabsTrigger>
-            {!isClientView && <TabsTrigger value="audit"><Shield className="h-3.5 w-3.5 mr-1" />Audit</TabsTrigger>}
+            {perms.canViewAuditLog && <TabsTrigger value="audit"><Shield className="h-3.5 w-3.5 mr-1" />Audit</TabsTrigger>}
           </TabsList>
 
           {/* All tab */}
           <TabsContent value="all" className="space-y-4">
             {filteredCreds.length === 0 && filteredInts.length === 0 && (
-              <EmptyState message="No credentials or integrations added yet." />
+              <EmptyState message={isClientView ? "No access information shared with you yet." : "No credentials or integrations added yet."} />
             )}
             {filteredCreds.map(c => (
-              <CredentialCard key={c.id} credential={c} onEdit={handleEditCred} onArchive={archiveCredential} onRevealPassword={logRevealPassword} onCopy={logCopyAction} isClientView={isClientView} />
+              <CredentialCard
+                key={c.id}
+                credential={c}
+                onEdit={handleEditCred}
+                onArchive={archiveCredential}
+                onRevealPassword={logRevealPassword}
+                onCopy={logCopyAction}
+                isClientView={isClientView}
+                canEdit={perms.canEditCredential}
+                canArchive={perms.canArchive}
+                canRevealPassword={perms.canRevealPassword}
+              />
             ))}
             {filteredInts.length > 0 && (
               <>
                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mt-6">Integrations</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {filteredInts.map(i => (
-                    <IntegrationCard key={i.id} integration={i} onEdit={handleEditInt} onToggle={handleToggleInt} isClientView={isClientView} />
+                    <IntegrationCard
+                      key={i.id}
+                      integration={i}
+                      onEdit={handleEditInt}
+                      onToggle={handleToggleInt}
+                      isClientView={isClientView}
+                      canEdit={perms.canEditIntegration}
+                    />
                   ))}
                 </div>
               </>
@@ -188,11 +258,22 @@ export function ClientAccessHubTab({ clientId, isClientView }: Props) {
           {/* Type-specific tabs */}
           {(["hosting", "domain", "website"] as const).map(type => (
             <TabsContent key={type} value={type} className="space-y-4">
-              {credentials.filter(c => c.credential_type === type).length === 0 ? (
-                <EmptyState message={`No ${type} credentials added yet.`} />
+              {visibleCredentials.filter(c => c.credential_type === type).length === 0 ? (
+                <EmptyState message={`No ${type} credentials ${isClientView ? "shared with you" : "added"} yet.`} />
               ) : (
-                credentials.filter(c => c.credential_type === type).map(c => (
-                  <CredentialCard key={c.id} credential={c} onEdit={handleEditCred} onArchive={archiveCredential} onRevealPassword={logRevealPassword} onCopy={logCopyAction} isClientView={isClientView} />
+                visibleCredentials.filter(c => c.credential_type === type).map(c => (
+                  <CredentialCard
+                    key={c.id}
+                    credential={c}
+                    onEdit={handleEditCred}
+                    onArchive={archiveCredential}
+                    onRevealPassword={logRevealPassword}
+                    onCopy={logCopyAction}
+                    isClientView={isClientView}
+                    canEdit={perms.canEditCredential}
+                    canArchive={perms.canArchive}
+                    canRevealPassword={perms.canRevealPassword}
+                  />
                 ))
               )}
             </TabsContent>
@@ -200,12 +281,19 @@ export function ClientAccessHubTab({ clientId, isClientView }: Props) {
 
           {/* Marketing Integrations */}
           <TabsContent value="marketing" className="space-y-4">
-            {integrations.length === 0 ? (
-              <EmptyState message="No marketing integrations configured yet." />
+            {visibleIntegrations.length === 0 ? (
+              <EmptyState message={isClientView ? "No integrations shared with you yet." : "No marketing integrations configured yet."} />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {integrations.map(i => (
-                  <IntegrationCard key={i.id} integration={i} onEdit={handleEditInt} onToggle={handleToggleInt} isClientView={isClientView} />
+                {visibleIntegrations.map(i => (
+                  <IntegrationCard
+                    key={i.id}
+                    integration={i}
+                    onEdit={handleEditInt}
+                    onToggle={handleToggleInt}
+                    isClientView={isClientView}
+                    canEdit={perms.canEditIntegration}
+                  />
                 ))}
               </div>
             )}
@@ -214,17 +302,28 @@ export function ClientAccessHubTab({ clientId, isClientView }: Props) {
           {/* Renewals Tab */}
           <TabsContent value="renewals" className="space-y-4">
             {(() => {
-              const withExpiry = credentials.filter(c => c.expiry_date);
+              const withExpiry = visibleCredentials.filter(c => c.expiry_date);
               if (withExpiry.length === 0) return <EmptyState message="No expiry dates tracked yet." />;
               const sorted = [...withExpiry].sort((a, b) => new Date(a.expiry_date!).getTime() - new Date(b.expiry_date!).getTime());
               return sorted.map(c => (
-                <CredentialCard key={c.id} credential={c} onEdit={handleEditCred} onArchive={archiveCredential} onRevealPassword={logRevealPassword} onCopy={logCopyAction} isClientView={isClientView} />
+                <CredentialCard
+                  key={c.id}
+                  credential={c}
+                  onEdit={handleEditCred}
+                  onArchive={archiveCredential}
+                  onRevealPassword={logRevealPassword}
+                  onCopy={logCopyAction}
+                  isClientView={isClientView}
+                  canEdit={perms.canEditCredential}
+                  canArchive={perms.canArchive}
+                  canRevealPassword={perms.canRevealPassword}
+                />
               ));
             })()}
           </TabsContent>
 
-          {/* Audit Log Tab */}
-          {!isClientView && (
+          {/* Audit Log Tab - Admin only */}
+          {perms.canViewAuditLog && (
             <TabsContent value="audit" className="space-y-3">
               {auditLogs.length === 0 ? (
                 <EmptyState message="No audit activity recorded yet." />

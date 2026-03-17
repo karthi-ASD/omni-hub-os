@@ -27,9 +27,10 @@ interface Props {
   onEdit: (i: ProjectIntegration) => void;
   onToggle: (id: string, enabled: boolean) => void;
   isClientView?: boolean;
+  canEdit?: boolean;
 }
 
-export function IntegrationCard({ integration, onEdit, onToggle, isClientView }: Props) {
+export function IntegrationCard({ integration, onEdit, onToggle, isClientView, canEdit = true }: Props) {
   const config = typeConfig[integration.integration_type] || typeConfig.other;
   const Icon = config.icon;
 
@@ -50,7 +51,7 @@ export function IntegrationCard({ integration, onEdit, onToggle, isClientView }:
             <Badge variant="outline" className={`text-[10px] ${statusColors[integration.status] || ""}`}>
               {integration.status}
             </Badge>
-            {!isClientView && (
+            {!isClientView && canEdit && (
               <Switch
                 checked={integration.is_enabled}
                 onCheckedChange={(v) => onToggle(integration.id, v)}
@@ -90,7 +91,20 @@ export function IntegrationCard({ integration, onEdit, onToggle, isClientView }:
           </div>
         )}
 
-        {integration.notes && (
+        {/* Client view: show summary instead of sensitive details */}
+        {isClientView && (
+          <div className="mt-2 p-2.5 bg-muted/30 rounded-lg">
+            <p className="text-xs text-muted-foreground">
+              {integration.is_enabled && integration.status === "connected"
+                ? `✅ ${config.label} is connected and active.`
+                : integration.is_enabled
+                ? `⏳ ${config.label} setup is in progress.`
+                : `⚪ ${config.label} is currently disabled.`}
+            </p>
+          </div>
+        )}
+
+        {integration.notes && !isClientView && (
           <div className="mt-3 p-2.5 bg-muted/30 rounded-lg">
             <p className="text-xs text-muted-foreground">{integration.notes}</p>
           </div>
@@ -102,7 +116,7 @@ export function IntegrationCard({ integration, onEdit, onToggle, isClientView }:
               <Badge variant="secondary" className="text-[10px]">Client Visible</Badge>
             )}
           </div>
-          {!isClientView && (
+          {!isClientView && canEdit && (
             <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => onEdit(integration)}>
               <Pencil className="h-3 w-3" /> Edit
             </Button>
