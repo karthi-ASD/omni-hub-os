@@ -289,6 +289,13 @@ const SuperAdminClientManagementPage = () => {
         <StatCard label="Merged Clients" value={allClients.filter(c => c.client_status === "merged").length} icon={GitMerge} gradient="from-neon-purple to-primary" />
       </div>
 
+      <div className="flex items-center gap-3">
+        <Button variant="outline" onClick={handleBulkFixIsolation} disabled={bulkFixLoading} className="gap-2 border-orange-500/30 text-orange-600 hover:bg-orange-500/10">
+          {bulkFixLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldAlert className="h-4 w-4" />}
+          Bulk Fix Client Isolation
+        </Button>
+      </div>
+
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="all">All Clients</TabsTrigger>
