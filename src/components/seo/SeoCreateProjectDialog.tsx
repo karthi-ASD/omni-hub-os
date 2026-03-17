@@ -62,8 +62,12 @@ export function SeoCreateProjectDialog({ open, onOpenChange, clients, onCreate }
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create SEO Project</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            Create SEO Project
+            <AutoSaveIndicator isDirty={isDirty} isSaving={isSaving} className="ml-auto" />
+          </DialogTitle>
         </DialogHeader>
+        <DraftRestoreBanner draftKey="seo-create-project" onRestore={(data) => setForm(data)} />
         <div className="space-y-4">
           <div>
             <Label>Project Name *</Label>

@@ -219,8 +219,21 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
           <DialogTitle className="flex items-center gap-2">
             <UserPlus className="h-5 w-5 text-primary" />
             New Client
+            <AutoSaveIndicator isDirty={isDirty} isSaving={isSaving} className="ml-auto" />
           </DialogTitle>
         </DialogHeader>
+
+        <div className="px-6">
+          <DraftRestoreBanner
+            draftKey="new-client-form"
+            onRestore={(data) => {
+              if (data.contact_name !== undefined) setForm(data);
+              if (data.selectedServices) setSelectedServices(data.selectedServices);
+              if (data.serviceDetails) setServiceDetails(data.serviceDetails);
+              if (data.servicePricing) setServicePricing(data.servicePricing);
+            }}
+          />
+        </div>
 
         <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="mx-6 grid grid-cols-4">

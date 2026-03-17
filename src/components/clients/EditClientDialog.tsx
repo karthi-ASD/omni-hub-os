@@ -125,6 +125,7 @@ export const EditClientDialog: React.FC<EditClientDialogProps> = ({
           <DialogTitle className="flex items-center gap-2">
             <Pencil className="h-5 w-5 text-primary" />
             Edit Client
+            <AutoSaveIndicator isDirty={isDirty} isSaving={isSaving} className="ml-auto" />
           </DialogTitle>
         </DialogHeader>
 
