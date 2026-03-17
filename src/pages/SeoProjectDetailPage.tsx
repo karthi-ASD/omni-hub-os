@@ -129,6 +129,7 @@ const SeoProjectDetailPage = () => {
           <TabsTrigger value="messages"><MessageSquare className="h-3 w-3 mr-1" /> Messages</TabsTrigger>
           <TabsTrigger value="reports"><BarChart3 className="h-3 w-3 mr-1" /> Reports</TabsTrigger>
           <TabsTrigger value="performance"><BarChart3 className="h-3 w-3 mr-1" /> Performance</TabsTrigger>
+          <TabsTrigger value="maps"><MapPin className="h-3 w-3 mr-1" /> Maps Performance</TabsTrigger>
           <TabsTrigger value="integrations"><Plug className="h-3 w-3 mr-1" /> Integrations</TabsTrigger>
           <TabsTrigger value="ai"><Brain className="h-3 w-3 mr-1" /> AI Advisor</TabsTrigger>
         </TabsList>
