@@ -104,7 +104,7 @@ const ClientLocalPresencePage = () => {
                 <Eye className="h-5 w-5 text-primary/60" />
                 <GrowthBadge pct={viewsGrowth} />
               </div>
-              <p className="text-3xl font-bold"><AnimatedCounter value={totalViews} /></p>
+              <p className="text-3xl font-bold"><AnimatedCounter end={totalViews} /></p>
               <p className="text-xs text-muted-foreground mt-1">Total Views (30 days)</p>
             </CardContent>
           </Card>
