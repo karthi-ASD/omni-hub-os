@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
+import { DraftRestoreBanner } from "@/components/ui/draft-restore-banner";
+import { AutoSaveIndicator } from "@/components/ui/auto-save-indicator";
 import { CustomFieldRenderer } from "@/components/custom-fields/CustomFieldRenderer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
