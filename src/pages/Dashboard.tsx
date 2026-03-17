@@ -1,4 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
+import ClientDashboardPage from "@/pages/ClientDashboardPage";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
