@@ -414,6 +414,7 @@ function ApiTrackingTab({ project, onProjectRefresh }: { project: SeoProject; on
   const { profile } = useAuth();
   const [copied, setCopied] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
 
   const formEndpoint = `${supabaseUrl}/functions/v1/seo-lead-capture`;
