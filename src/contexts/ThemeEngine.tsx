@@ -653,6 +653,18 @@ function getDayThemeIndex(): number {
 
 export type RotateMode = "off" | "daily" | "timed";
 
+function getStoredRotateMode(): RotateMode {
+  if (typeof window === "undefined") return "off";
+  const saved = localStorage.getItem("nw-theme-rotate");
+  return saved === "daily" || saved === "timed" || saved === "off" ? saved : "off";
+}
+
+function getStoredLockState(fallbackRotateMode: RotateMode) {
+  if (typeof window === "undefined") return fallbackRotateMode === "off";
+  const saved = localStorage.getItem("nw-theme-locked");
+  return saved === null ? fallbackRotateMode === "off" : saved === "true";
+}
+
 interface ThemeContextType {
   currentTheme: ThemeConfig;
   setThemeById: (id: string) => void;
@@ -671,17 +683,16 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [isLocked, setIsLocked] = useState(() => localStorage.getItem("nw-theme-locked") === "true");
-  const [rotateMode, setRotateModeState] = useState<RotateMode>(() => {
-    return (localStorage.getItem("nw-theme-rotate") as RotateMode) || "timed";
-  });
+  const initialRotateMode = getStoredRotateMode();
+  const [rotateMode, setRotateModeState] = useState<RotateMode>(initialRotateMode);
+  const [isLocked, setIsLocked] = useState(() => getStoredLockState(initialRotateMode));
   const [rotateIntervalMs, setRotateIntervalMsState] = useState(() => {
     const saved = localStorage.getItem("nw-theme-rotate-interval");
     return saved ? parseInt(saved, 10) : DEFAULT_ROTATE_MS;
   });
   const [themeId, setThemeId] = useState<string>(() => {
     const saved = localStorage.getItem("nw-theme-id");
-    if (saved && isLocked) return saved;
+    if (saved && getStoredLockState(initialRotateMode)) return saved;
     return THEMES[getDayThemeIndex()].id;
   });
 
@@ -692,17 +703,46 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     applyThemeVars(currentTheme);
   }, [currentTheme]);
 
-  // Timed auto-rotation
+  // Timed auto-rotation should never mutate the app while the tab is hidden.
   useEffect(() => {
-    if (rotateMode !== "timed" || isLocked) return;
+    if (rotateMode !== "timed" || isLocked || typeof document === "undefined") return;
+
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
     const rotate = () => {
       setThemeId(prev => {
         const idx = THEMES.findIndex(t => t.id === prev);
         return THEMES[(idx + 1) % THEMES.length].id;
       });
     };
-    const interval = setInterval(rotate, rotateIntervalMs);
-    return () => clearInterval(interval);
+
+    const stopRotation = () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
+
+    const startRotation = () => {
+      if (intervalId || document.visibilityState !== "visible") return;
+      intervalId = setInterval(rotate, rotateIntervalMs);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        startRotation();
+      } else {
+        stopRotation();
+      }
+    };
+
+    startRotation();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      stopRotation();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [rotateMode, isLocked, rotateIntervalMs]);
 
   const setThemeById = useCallback((id: string) => {

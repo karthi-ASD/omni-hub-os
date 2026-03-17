@@ -200,13 +200,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const hydrateUserState = async (nextSession: Session, source: "initial" | "sign_in") => {
-      if (isHydratingRef.current) {
-        console.log("[Auth] hydrate skipped — already in progress", { source, userId: nextSession.user.id });
-        return;
-      }
+      if (isHydratingRef.current) return;
 
       isHydratingRef.current = true;
-      console.log("[Auth] hydrate start", { source, userId: nextSession.user.id });
 
       try {
         setTenantValidationError(null);
@@ -232,7 +228,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         hasHydratedRef.current = true;
       } finally {
         isHydratingRef.current = false;
-        console.log("[Auth] hydrate end", { source, userId: nextSession.user.id });
         finalizeLoading();
       }
     };
@@ -243,26 +238,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }, 0);
     };
 
-    const handleWindowFocus = () => {
-      console.log("WINDOW FOCUS TRIGGERED");
-    };
-
-    const handleVisibilityChange = () => {
-      console.log("[Visibility]", document.visibilityState);
-    };
-
-    window.addEventListener("focus", handleWindowFocus);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    console.log("[Mount] AuthProvider");
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
-      console.log("[Auth Event]", event);
-
       switch (event) {
         case "TOKEN_REFRESHED": {
           hasInitializedRef.current = true;
-          console.log("[Auth] TOKEN_REFRESHED — silent update only");
           const previousSession = sessionRef.current;
           sessionRef.current = nextSession;
           const previousUserId = previousSession?.user.id ?? null;
@@ -276,7 +255,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         case "INITIAL_SESSION":
-          console.log("[Auth] INITIAL_SESSION ignored — getSession is authoritative");
           break;
 
         case "SIGNED_IN":
@@ -324,11 +302,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .catch(() => finalizeLoading());
 
     return () => {
-      console.log("[Unmount] AuthProvider");
       isMounted = false;
       window.clearTimeout(forceStopTimer);
-      window.removeEventListener("focus", handleWindowFocus);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
       subscription.unsubscribe();
     };
   }, []);

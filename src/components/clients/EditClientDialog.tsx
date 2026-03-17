@@ -42,10 +42,6 @@ export const EditClientDialog: React.FC<EditClientDialogProps> = ({
   const [saving, setSaving] = useState(false);
   const { isDirty, isSaving, clearDraft } = useUnsavedChanges(`client:${client.id}`, form, { enabled: open });
 
-  useEffect(() => {
-    console.log("[Mount] EditClientDialog");
-    return () => console.log("[Unmount] EditClientDialog");
-  }, []);
 
   useEffect(() => {
     if (!open || !client) return;

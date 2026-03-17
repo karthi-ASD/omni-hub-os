@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,10 +35,6 @@ const defaultForm = {
 };
 
 export function SeoCreateProjectDialog({ open, onOpenChange, clients, onCreate }: Props) {
-  useEffect(() => {
-    console.log("[Mount] SeoCreateProjectDialog");
-    return () => console.log("[Unmount] SeoCreateProjectDialog");
-  }, []);
 
   const [form, setForm] = useState(defaultForm);
   const [submitting, setSubmitting] = useState(false);
