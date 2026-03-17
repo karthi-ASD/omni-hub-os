@@ -62,7 +62,7 @@ const convTypeIcon: Record<string, React.ElementType> = {
   email: Mail,
 };
 
-type ClientFetchState = "loading" | "ready" | "archived" | "no_access" | "not_found" | "invalid_id";
+type ClientFetchState = "loading" | "ready" | "archived" | "no_access" | "not_found" | "invalid_id" | "fetch_error";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -78,9 +78,21 @@ const ClientProfilePage = () => {
 
   // Safe client fetch — direct DB query, not from in-memory list
   const fetchClientSafe = useCallback(async (clientId: string) => {
-    // Step 0: Validate UUID
+    // Step 0: Validate UUID — if not UUID, attempt identity resolution
     if (!UUID_REGEX.test(clientId)) {
-      console.log("[ClientProfile] Invalid UUID, attempting resolve:", clientId);
+      console.log("[ClientProfile] Non-UUID route param, attempting resolve:", clientId);
+      try {
+        const { data: resolveData } = await supabase.functions.invoke("client-identity-resolver", {
+          body: { action: "resolve", email: clientId, external_id: clientId },
+        });
+        if (resolveData?.client_id) {
+          console.log("[ClientProfile] Resolved non-UUID to client:", resolveData.client_id);
+          navigate(`/clients/${resolveData.client_id}`, { replace: true });
+          return;
+        }
+      } catch (e) {
+        console.log("[ClientProfile] Resolve attempt failed:", e);
+      }
       setFetchState("invalid_id");
       return;
     }
@@ -98,8 +110,11 @@ const ClientProfilePage = () => {
 
     if (error) {
       console.error("[ClientProfile] Fetch error:", error);
-      // RLS denial often comes as error, not empty result
-      setFetchState("no_access");
+      if (error.code === "PGRST116") {
+        setFetchState("not_found");
+      } else {
+        setFetchState("fetch_error");
+      }
       return;
     }
 
@@ -194,6 +209,9 @@ const ClientProfilePage = () => {
   const { hasRole } = useAuth();
   const canEditBilling = hasRole("super_admin") || hasRole("business_admin") || hasRole("manager");
 
+  // Debug log for troubleshooting
+  console.log("[ClientProfile] Render state:", { route_client_id: id, fetch_state: fetchState, resolved_client: client?.id });
+
   // Loading state
   if (fetchState === "loading" || (fetchState === "ready" && loading)) {
     return (
@@ -225,6 +243,21 @@ const ClientProfilePage = () => {
         <p className="text-lg font-medium">You don't have access to this client</p>
         <p className="text-sm text-muted-foreground">This client belongs to a different organization or your permissions don't allow access.</p>
         <Button variant="outline" onClick={() => navigate("/clients")}>Back to Clients</Button>
+      </div>
+    );
+  }
+
+  // Fetch error (non-RLS, non-404)
+  if (fetchState === "fetch_error") {
+    return (
+      <div className="p-8 text-center space-y-4">
+        <AlertTriangle className="h-10 w-10 text-destructive mx-auto" />
+        <p className="text-lg font-medium">Unable to load client data</p>
+        <p className="text-sm text-muted-foreground">An unexpected error occurred while fetching client information. Please refresh or contact support.</p>
+        <div className="flex gap-2 justify-center">
+          <Button variant="outline" onClick={() => id && fetchClientSafe(id)}>Retry</Button>
+          <Button variant="outline" onClick={() => navigate("/clients")}>Back to Clients</Button>
+        </div>
       </div>
     );
   }
