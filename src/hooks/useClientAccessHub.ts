@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { encryptField } from "@/lib/vault-crypto";
 
 export interface AccessCredential {
   id: string;
@@ -72,6 +73,25 @@ export interface AuditLogEntry {
   created_at: string;
 }
 
+/** Fields that need encryption before saving */
+const CREDENTIAL_ENCRYPTED_FIELDS = ["password_encrypted"] as const;
+const INTEGRATION_ENCRYPTED_FIELDS = ["api_key_encrypted", "access_token_encrypted", "refresh_token_encrypted"] as const;
+
+async function encryptObjectFields(data: Record<string, any>, fields: readonly string[]): Promise<Record<string, any>> {
+  const result = { ...data };
+  for (const field of fields) {
+    if (result[field] && typeof result[field] === "string" && result[field].trim() !== "") {
+      try {
+        result[field] = await encryptField(result[field]);
+      } catch {
+        // If encryption fails, store as-is (graceful degradation)
+        console.warn(`Encryption failed for field ${field}, storing as plaintext`);
+      }
+    }
+  }
+  return result;
+}
+
 export function useClientAccessHub(clientId: string | undefined) {
   const { user, profile } = useAuth();
   const [credentials, setCredentials] = useState<AccessCredential[]>([]);
@@ -130,10 +150,12 @@ export function useClientAccessHub(clientId: string | undefined) {
 
   const addCredential = async (data: Partial<AccessCredential>) => {
     if (!clientId || !businessId) return;
+    // Encrypt sensitive fields before saving
+    const encrypted = await encryptObjectFields(data as Record<string, any>, CREDENTIAL_ENCRYPTED_FIELDS);
     const { data: res, error } = await supabase
       .from("client_access_credentials")
       .insert({
-        ...data,
+        ...encrypted,
         client_id: clientId,
         business_id: businessId,
         created_by: user?.id,
@@ -149,9 +171,11 @@ export function useClientAccessHub(clientId: string | undefined) {
   };
 
   const updateCredential = async (id: string, data: Partial<AccessCredential>) => {
+    // Encrypt sensitive fields before updating
+    const encrypted = await encryptObjectFields(data as Record<string, any>, CREDENTIAL_ENCRYPTED_FIELDS);
     const { error } = await supabase
       .from("client_access_credentials")
-      .update({ ...data, updated_by: user?.id } as any)
+      .update({ ...encrypted, updated_by: user?.id } as any)
       .eq("id", id);
     if (error) { toast.error("Failed to update credential"); return; }
     await logAudit("credential", id, "update", "Updated credential");
@@ -172,10 +196,12 @@ export function useClientAccessHub(clientId: string | undefined) {
 
   const addIntegration = async (data: Partial<ProjectIntegration>) => {
     if (!clientId || !businessId) return;
+    // Encrypt sensitive fields
+    const encrypted = await encryptObjectFields(data as Record<string, any>, INTEGRATION_ENCRYPTED_FIELDS);
     const { data: res, error } = await supabase
       .from("client_project_integrations")
       .insert({
-        ...data,
+        ...encrypted,
         client_id: clientId,
         business_id: businessId,
         created_by: user?.id,
@@ -191,9 +217,11 @@ export function useClientAccessHub(clientId: string | undefined) {
   };
 
   const updateIntegration = async (id: string, data: Partial<ProjectIntegration>) => {
+    // Encrypt sensitive fields
+    const encrypted = await encryptObjectFields(data as Record<string, any>, INTEGRATION_ENCRYPTED_FIELDS);
     const { error } = await supabase
       .from("client_project_integrations")
-      .update({ ...data, updated_by: user?.id } as any)
+      .update({ ...encrypted, updated_by: user?.id } as any)
       .eq("id", id);
     if (error) { toast.error("Failed to update integration"); return; }
     await logAudit("integration", id, "update", "Updated integration");

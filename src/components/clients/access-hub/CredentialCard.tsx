@@ -3,8 +3,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Eye, EyeOff, Copy, Pencil, Archive, Globe, Server, Layout, ExternalLink } from "lucide-react";
+import { Eye, EyeOff, Copy, Pencil, Archive, Globe, Server, Layout, ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { decryptField } from "@/lib/vault-crypto";
 import type { AccessCredential } from "@/hooks/useClientAccessHub";
 
 const typeIcons: Record<string, React.ElementType> = {
@@ -27,10 +28,18 @@ interface Props {
   onRevealPassword: (id: string) => void;
   onCopy: (id: string, field: string) => void;
   isClientView?: boolean;
+  canEdit?: boolean;
+  canArchive?: boolean;
+  canRevealPassword?: boolean;
 }
 
-export function CredentialCard({ credential, onEdit, onArchive, onRevealPassword, onCopy, isClientView }: Props) {
+export function CredentialCard({
+  credential, onEdit, onArchive, onRevealPassword, onCopy,
+  isClientView, canEdit = true, canArchive = true, canRevealPassword = true,
+}: Props) {
   const [showPassword, setShowPassword] = useState(false);
+  const [decryptedPassword, setDecryptedPassword] = useState<string | null>(null);
+  const [decrypting, setDecrypting] = useState(false);
   const Icon = typeIcons[credential.credential_type] || Globe;
 
   const copyField = (value: string | null, fieldName: string) => {
@@ -40,9 +49,56 @@ export function CredentialCard({ credential, onEdit, onArchive, onRevealPassword
     toast.success(`${fieldName} copied`);
   };
 
-  const handleReveal = () => {
-    if (!showPassword) onRevealPassword(credential.id);
-    setShowPassword(!showPassword);
+  const handleReveal = async () => {
+    if (showPassword) {
+      setShowPassword(false);
+      setDecryptedPassword(null);
+      return;
+    }
+
+    if (!canRevealPassword) {
+      toast.error("You don't have permission to reveal passwords");
+      return;
+    }
+
+    onRevealPassword(credential.id);
+    setDecrypting(true);
+    try {
+      const decrypted = await decryptField(credential.password_encrypted!, credential.id);
+      setDecryptedPassword(decrypted);
+      setShowPassword(true);
+    } catch {
+      // Fallback: show the raw value (might not be encrypted yet)
+      setDecryptedPassword(credential.password_encrypted);
+      setShowPassword(true);
+    } finally {
+      setDecrypting(false);
+    }
+  };
+
+  const handleCopyPassword = async () => {
+    if (!canRevealPassword) {
+      toast.error("You don't have permission to copy passwords");
+      return;
+    }
+    try {
+      let pwd = decryptedPassword;
+      if (!pwd && credential.password_encrypted) {
+        pwd = await decryptField(credential.password_encrypted, credential.id);
+      }
+      if (pwd) {
+        navigator.clipboard.writeText(pwd);
+        onCopy(credential.id, "password");
+        toast.success("Password copied");
+      }
+    } catch {
+      // Fallback
+      if (credential.password_encrypted) {
+        navigator.clipboard.writeText(credential.password_encrypted);
+        onCopy(credential.id, "password");
+        toast.success("Password copied");
+      }
+    }
   };
 
   const daysUntilExpiry = credential.expiry_date
@@ -85,30 +141,34 @@ export function CredentialCard({ credential, onEdit, onArchive, onRevealPassword
           {credential.username && (
             <FieldRow label="Username" value={credential.username} onCopy={() => copyField(credential.username, "username")} />
           )}
-          {credential.password_encrypted && !isClientView && (
+          {credential.password_encrypted && !isClientView && canRevealPassword && (
             <div className="flex items-center justify-between py-1.5">
               <div>
                 <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Password</p>
                 <p className="font-mono text-sm">
-                  {showPassword ? credential.password_encrypted : "••••••••"}
+                  {decrypting ? (
+                    <span className="flex items-center gap-1 text-muted-foreground">
+                      <Loader2 className="h-3 w-3 animate-spin" /> Decrypting...
+                    </span>
+                  ) : showPassword && decryptedPassword ? decryptedPassword : "••••••••"}
                 </p>
               </div>
               <div className="flex gap-1">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleReveal}>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleReveal} disabled={decrypting}>
                       {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>{showPassword ? "Hide" : "Show"}</TooltipContent>
+                  <TooltipContent>{showPassword ? "Hide" : "Decrypt & Show"}</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => copyField(credential.password_encrypted, "password")}>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleCopyPassword}>
                       <Copy className="h-3.5 w-3.5" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Copy</TooltipContent>
+                  <TooltipContent>Decrypt & Copy</TooltipContent>
                 </Tooltip>
               </div>
             </div>
@@ -163,12 +223,16 @@ export function CredentialCard({ credential, onEdit, onArchive, onRevealPassword
           </p>
           {!isClientView && (
             <div className="flex gap-1">
-              <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => onEdit(credential)}>
-                <Pencil className="h-3 w-3" /> Edit
-              </Button>
-              <Button size="sm" variant="ghost" className="h-7 text-xs gap-1 text-destructive hover:text-destructive" onClick={() => onArchive(credential.id)}>
-                <Archive className="h-3 w-3" /> Archive
-              </Button>
+              {canEdit && (
+                <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => onEdit(credential)}>
+                  <Pencil className="h-3 w-3" /> Edit
+                </Button>
+              )}
+              {canArchive && (
+                <Button size="sm" variant="ghost" className="h-7 text-xs gap-1 text-destructive hover:text-destructive" onClick={() => onArchive(credential.id)}>
+                  <Archive className="h-3 w-3" /> Archive
+                </Button>
+              )}
             </div>
           )}
         </div>
