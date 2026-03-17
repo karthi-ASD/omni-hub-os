@@ -307,7 +307,9 @@ const App = () => (
             <Route
               element={
                 <ProtectedRoute>
-                  <AppShell />
+                  <ClientRouteGuard>
+                    <AppShell />
+                  </ClientRouteGuard>
                 </ProtectedRoute>
               }
             >
