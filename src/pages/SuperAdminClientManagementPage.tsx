@@ -64,14 +64,20 @@ const SuperAdminClientManagementPage = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkFixLoading, setBulkFixLoading] = useState(false);
+  const [showBulkFixConfirm, setShowBulkFixConfirm] = useState(false);
+  const [bulkFixResult, setBulkFixResult] = useState<{ total: number; fixed: number; skipped: number; errors: number } | null>(null);
 
   const handleBulkFixIsolation = async () => {
+    setShowBulkFixConfirm(false);
     setBulkFixLoading(true);
+    setBulkFixResult(null);
     try {
       const { data, error } = await supabase.functions.invoke("bulk-fix-client-isolation");
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success(`Isolation fix complete: ${data.fixed} fixed, ${data.errors || 0} errors out of ${data.total} clients.`);
+      const result = { total: data.total, fixed: data.fixed, skipped: data.skipped || 0, errors: data.errors || 0 };
+      setBulkFixResult(result);
+      toast.success(`Isolation fix complete: ${result.fixed} fixed, ${result.skipped} skipped, ${result.errors} errors.`);
       refetch();
     } catch (err: any) {
       toast.error(err.message || "Bulk fix failed");
@@ -289,11 +295,19 @@ const SuperAdminClientManagementPage = () => {
         <StatCard label="Merged Clients" value={allClients.filter(c => c.client_status === "merged").length} icon={GitMerge} gradient="from-neon-purple to-primary" />
       </div>
 
-      <div className="flex items-center gap-3">
-        <Button variant="outline" onClick={handleBulkFixIsolation} disabled={bulkFixLoading} className="gap-2 border-orange-500/30 text-orange-600 hover:bg-orange-500/10">
+      <div className="flex items-center gap-3 flex-wrap">
+        <Button variant="outline" onClick={() => setShowBulkFixConfirm(true)} disabled={bulkFixLoading} className="gap-2 border-orange-500/30 text-orange-600 hover:bg-orange-500/10">
           {bulkFixLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldAlert className="h-4 w-4" />}
-          Bulk Fix Client Isolation
+          {bulkFixLoading ? "Processing..." : "Bulk Fix Client Isolation"}
         </Button>
+        {bulkFixResult && (
+          <div className="text-xs flex gap-3 text-muted-foreground">
+            <span>Total: <strong>{bulkFixResult.total}</strong></span>
+            <span className="text-green-600">Fixed: <strong>{bulkFixResult.fixed}</strong></span>
+            <span>Skipped: <strong>{bulkFixResult.skipped}</strong></span>
+            {bulkFixResult.errors > 0 && <span className="text-destructive">Errors: <strong>{bulkFixResult.errors}</strong></span>}
+          </div>
+        )}
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
@@ -675,6 +689,32 @@ const SuperAdminClientManagementPage = () => {
             <Button onClick={() => createLoginTarget && handleCreateLogin(createLoginTarget)} disabled={createLoginLoading} className="gap-2">
               {createLoginLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
               {createLoginLoading ? "Creating..." : "Create Login"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Fix Confirmation Dialog */}
+      <Dialog open={showBulkFixConfirm} onOpenChange={setShowBulkFixConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5 text-orange-500" /> Bulk Fix Client Isolation
+            </DialogTitle>
+            <DialogDescription>
+              This will migrate all clients to isolated tenant environments. Each client without a dedicated business will have one created automatically.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1">
+            <p>• Creates a dedicated business for each client</p>
+            <p>• Fixes profile and role mappings</p>
+            <p>• Safe to re-run — already-isolated clients are skipped</p>
+            <p>• Processes all clients (no limit)</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBulkFixConfirm(false)}>Cancel</Button>
+            <Button onClick={handleBulkFixIsolation} className="gap-2 bg-orange-600 hover:bg-orange-700">
+              <ShieldAlert className="h-4 w-4" /> Continue
             </Button>
           </DialogFooter>
         </DialogContent>
