@@ -113,8 +113,9 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [tab, setTab] = useState("details");
 
+  const draftKey = `client:${defaultValues?.deal_id || "new"}`;
   const draftValues = useMemo(() => ({ ...form, selectedServices, serviceDetails, servicePricing }), [form, selectedServices, serviceDetails, servicePricing]);
-  const { isDirty, isSaving, clearDraft } = useUnsavedChanges("new-client-form", draftValues, { enabled: open });
+  const { isDirty, isSaving, crossTabConflict, clearDraft, acceptRemoteDraft, dismissConflict } = useUnsavedChanges(draftKey, draftValues, { enabled: open });
 
   const update = (key: keyof FormState, value: string) =>
     setForm((p) => ({ ...p, [key]: value }));
