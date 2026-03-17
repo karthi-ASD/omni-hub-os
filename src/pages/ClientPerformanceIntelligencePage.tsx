@@ -20,6 +20,7 @@ import {
   ArrowUpRight, Globe, CheckCircle2, Clock, AlertCircle,
   ShieldCheck, RefreshCw,
 } from "lucide-react";
+import { NarrativeSummary } from "@/components/shared/NarrativeSummary";
 
 const PERIOD_DAYS = { "7d": 7, "30d": 30, "90d": 90 } as const;
 type Period = keyof typeof PERIOD_DAYS;
