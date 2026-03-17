@@ -243,6 +243,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }, 0);
     };
 
+    const handleWindowFocus = () => {
+      console.log("WINDOW FOCUS TRIGGERED");
+    };
+
+    const handleVisibilityChange = () => {
+      console.log("[Visibility]", document.visibilityState);
+    };
+
+    window.addEventListener("focus", handleWindowFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    console.log("[Mount] AuthProvider");
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
       console.log("[Auth Event]", event);
 
@@ -305,11 +318,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .catch(() => finalizeLoading());
 
     return () => {
+      console.log("[Unmount] AuthProvider");
       isMounted = false;
       window.clearTimeout(forceStopTimer);
+      window.removeEventListener("focus", handleWindowFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       subscription.unsubscribe();
     };
-  }, [clearAllUserState, session, user?.id]);
+  }, [clearAllUserState]);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
