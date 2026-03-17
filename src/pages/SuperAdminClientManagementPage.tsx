@@ -693,6 +693,32 @@ const SuperAdminClientManagementPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Fix Confirmation Dialog */}
+      <Dialog open={showBulkFixConfirm} onOpenChange={setShowBulkFixConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5 text-orange-500" /> Bulk Fix Client Isolation
+            </DialogTitle>
+            <DialogDescription>
+              This will migrate all clients to isolated tenant environments. Each client without a dedicated business will have one created automatically.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1">
+            <p>• Creates a dedicated business for each client</p>
+            <p>• Fixes profile and role mappings</p>
+            <p>• Safe to re-run — already-isolated clients are skipped</p>
+            <p>• Processes all clients (no limit)</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBulkFixConfirm(false)}>Cancel</Button>
+            <Button onClick={handleBulkFixIsolation} className="gap-2 bg-orange-600 hover:bg-orange-700">
+              <ShieldAlert className="h-4 w-4" /> Continue
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
