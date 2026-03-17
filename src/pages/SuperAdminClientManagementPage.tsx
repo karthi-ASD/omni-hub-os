@@ -245,6 +245,9 @@ const SuperAdminClientManagementPage = () => {
                             <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget(c)}>
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
+                            <Button size="sm" variant="ghost" title="Reset Client Password" onClick={() => { setResetTarget(c); setNewPassword(""); setConfirmPassword(""); }}>
+                              <KeyRound className="h-3.5 w-3.5" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
