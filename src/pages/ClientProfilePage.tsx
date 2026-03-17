@@ -3,7 +3,7 @@ import { useClients, Client, ClientStatus } from "@/hooks/useClients";
 import { useClientProfile } from "@/hooks/useClientProfile";
 import { useClientConversations } from "@/hooks/useClientConversations";
 import { useSalesCallbacks } from "@/hooks/useSalesCallbacks";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { EditClientDialog } from "@/components/clients/EditClientDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,11 +62,102 @@ const convTypeIcon: Record<string, React.ElementType> = {
   email: Mail,
 };
 
+type ClientFetchState = "loading" | "ready" | "archived" | "no_access" | "not_found" | "invalid_id";
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const ClientProfilePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { clients, loading: clientsLoading, updateClientStatus, refetch: fetchClients } = useClients();
-  const client = clients.find((c) => c.id === id);
+  
+  // Direct client fetch state
+  const [client, setClient] = useState<Client | null>(null);
+  const [fetchState, setFetchState] = useState<ClientFetchState>("loading");
+  const { profile } = useAuth();
+
+  // Safe client fetch — direct DB query, not from in-memory list
+  const fetchClientSafe = useCallback(async (clientId: string) => {
+    // Step 0: Validate UUID
+    if (!UUID_REGEX.test(clientId)) {
+      console.log("[ClientProfile] Invalid UUID, attempting resolve:", clientId);
+      setFetchState("invalid_id");
+      return;
+    }
+
+    setFetchState("loading");
+
+    // Step 1: Fetch by ID without any filters
+    const { data: raw, error } = await supabase
+      .from("clients")
+      .select("*")
+      .eq("id", clientId)
+      .maybeSingle();
+
+    console.log("[ClientProfile] Safe fetch:", { route_client_id: clientId, fetched_client: raw, error });
+
+    if (error) {
+      console.error("[ClientProfile] Fetch error:", error);
+      // RLS denial often comes as error, not empty result
+      setFetchState("no_access");
+      return;
+    }
+
+    if (!raw) {
+      // Step 3: Fallback — try identity resolver
+      console.log("[ClientProfile] Client not found by ID, trying fallback resolution");
+      try {
+        const { data: resolveData } = await supabase.functions.invoke("client-identity-resolver", {
+          body: { action: "client_debug", client_id: clientId },
+        });
+        console.log("[ClientProfile] Debug result:", resolveData);
+      } catch (e) {
+        console.log("[ClientProfile] Debug call failed:", e);
+      }
+      setFetchState("not_found");
+      return;
+    }
+
+    // Step 2a: Check merged_into → redirect
+    if (raw.merged_into) {
+      console.log("[ClientProfile] Client merged, redirecting to:", raw.merged_into);
+      navigate(`/clients/${raw.merged_into}`, { replace: true });
+      return;
+    }
+
+    // Step 2b: Check deleted/archived
+    if (raw.deleted_at) {
+      console.log("[ClientProfile] Client archived");
+      setFetchState("archived");
+      return;
+    }
+
+    // Step 2c: Business access check
+    if (profile?.business_id && raw.business_id !== profile.business_id) {
+      console.log("[ClientProfile] Business mismatch:", { client_biz: raw.business_id, user_biz: profile.business_id });
+      setFetchState("no_access");
+      return;
+    }
+
+    // All checks passed — set client
+    setClient(raw as unknown as Client);
+    setFetchState("ready");
+  }, [navigate, profile?.business_id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchClientSafe(id);
+    }
+  }, [id, fetchClientSafe]);
+
+  // Also update client from the clients list when it changes (for status updates etc.)
+  useEffect(() => {
+    if (fetchState === "ready" && id) {
+      const updated = clients.find(c => c.id === id);
+      if (updated) setClient(updated);
+    }
+  }, [clients, id, fetchState]);
+
   const {
     services, websites, apps, seoProjects, invoices, contracts, tickets, timeline,
     loading, addWebsite, addApp, addService, updateServiceStatus,
@@ -103,7 +194,8 @@ const ClientProfilePage = () => {
   const { hasRole } = useAuth();
   const canEditBilling = hasRole("super_admin") || hasRole("business_admin") || hasRole("manager");
 
-  if (clientsLoading || loading) {
+  // Loading state
+  if (fetchState === "loading" || (fetchState === "ready" && loading)) {
     return (
       <div className="space-y-4 p-4">
         <Skeleton className="h-8 w-48" />
@@ -113,10 +205,49 @@ const ClientProfilePage = () => {
     );
   }
 
-  if (!client) {
+  // Archived client
+  if (fetchState === "archived") {
     return (
-      <div className="p-8 text-center">
-        <p className="text-muted-foreground mb-4">Client not found</p>
+      <div className="p-8 text-center space-y-4">
+        <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto" />
+        <p className="text-lg font-medium">This client has been archived</p>
+        <p className="text-sm text-muted-foreground">This client record was deleted or archived. Contact your administrator to restore it.</p>
+        <Button variant="outline" onClick={() => navigate("/clients")}>Back to Clients</Button>
+      </div>
+    );
+  }
+
+  // No access / permission error
+  if (fetchState === "no_access") {
+    return (
+      <div className="p-8 text-center space-y-4">
+        <AlertTriangle className="h-10 w-10 text-destructive mx-auto" />
+        <p className="text-lg font-medium">You don't have access to this client</p>
+        <p className="text-sm text-muted-foreground">This client belongs to a different organization or your permissions don't allow access.</p>
+        <Button variant="outline" onClick={() => navigate("/clients")}>Back to Clients</Button>
+      </div>
+    );
+  }
+
+  // Invalid ID format
+  if (fetchState === "invalid_id") {
+    return (
+      <div className="p-8 text-center space-y-4">
+        <AlertTriangle className="h-10 w-10 text-muted-foreground mx-auto" />
+        <p className="text-lg font-medium">Invalid client reference</p>
+        <p className="text-sm text-muted-foreground">The client ID in the URL is not valid. Please navigate from the clients list.</p>
+        <Button variant="outline" onClick={() => navigate("/clients")}>Back to Clients</Button>
+      </div>
+    );
+  }
+
+  // Truly not found
+  if (fetchState === "not_found" || !client) {
+    return (
+      <div className="p-8 text-center space-y-4">
+        <AlertTriangle className="h-10 w-10 text-muted-foreground mx-auto" />
+        <p className="text-lg font-medium">Client does not exist</p>
+        <p className="text-sm text-muted-foreground">No client record was found with this ID. It may have been permanently deleted or never existed.</p>
         <Button variant="outline" onClick={() => navigate("/clients")}>Back to Clients</Button>
       </div>
     );
