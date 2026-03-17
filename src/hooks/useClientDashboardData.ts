@@ -171,7 +171,7 @@ export function useClientDashboardData() {
     // Debug logging for data visibility issues
     if (clientId) {
       console.debug("[ClientDashboard] clientId:", clientId, "business_id:", bid);
-      console.debug("[ClientDashboard] invoices:", result.openInvoices, "paid:", result.totalPaid, "outstanding:", result.outstandingAmount);
+      console.debug("[ClientDashboard] totalInvoices:", result.totalInvoices, "openInvoices:", result.openInvoices, "paid:", result.totalPaid, "outstanding:", result.outstandingAmount);
       console.debug("[ClientDashboard] seoKeywords:", result.seoKeywords.length, "seoProject:", result.seoProject?.id ?? "none");
       console.debug("[ClientDashboard] tickets:", result.openTickets, "leads:", result.totalLeads, "services:", result.services.length);
     }
