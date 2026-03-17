@@ -76,8 +76,37 @@ const ClientProfilePage = () => {
   const [fetchState, setFetchState] = useState<ClientFetchState>("loading");
   const { profile } = useAuth();
 
+  const getClientByIdAdmin = useCallback(async (routeClientId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("get_client_by_id_admin", {
+        body: { client_id: routeClientId },
+      });
+
+      console.log("CLIENT_ADMIN_RESULT", {
+        route_client_id: routeClientId,
+        data,
+        error,
+      });
+
+      return { data, error };
+    } catch (error) {
+      console.error("[ClientProfile] Admin debug invoke failed:", error);
+      console.log("CLIENT_ADMIN_RESULT", {
+        route_client_id: routeClientId,
+        data: null,
+        error,
+      });
+      return { data: null, error };
+    }
+  }, []);
+
   // Safe client fetch — direct DB query, not from in-memory list
   const fetchClientSafe = useCallback(async (clientId: string) => {
+    console.log("CLIENT_DEBUG", {
+      route_client_id: clientId,
+      profile_business_id: profile?.business_id,
+    });
+
     // Step 0: Validate UUID — if not UUID, attempt identity resolution
     if (!UUID_REGEX.test(clientId)) {
       console.log("[ClientProfile] Non-UUID route param, attempting resolve:", clientId);
@@ -99,17 +128,27 @@ const ClientProfilePage = () => {
 
     setFetchState("loading");
 
-    // Step 1: Fetch by ID without any filters
     const { data: raw, error } = await supabase
       .from("clients")
       .select("*")
       .eq("id", clientId)
       .maybeSingle();
 
-    console.log("[ClientProfile] Safe fetch:", { route_client_id: clientId, fetched_client: raw, error });
+    console.log("CLIENT_DB_RESULT", {
+      data: raw,
+      error,
+    });
 
     if (error) {
       console.error("[ClientProfile] Fetch error:", error);
+      console.log("CLIENT_FAILURE", {
+        route_client_id: clientId,
+        db_result: raw,
+        db_error: error,
+        debug_function_result: null,
+        business_mismatch: false,
+      });
+
       if (error.code === "PGRST116") {
         setFetchState("not_found");
       } else {
@@ -119,45 +158,72 @@ const ClientProfilePage = () => {
     }
 
     if (!raw) {
-      // Step 3: Fallback — try identity resolver
-      console.log("[ClientProfile] Client not found by ID, trying fallback resolution");
-      try {
-        const { data: resolveData } = await supabase.functions.invoke("client-identity-resolver", {
-          body: { action: "client_debug", client_id: clientId },
-        });
-        console.log("[ClientProfile] Debug result:", resolveData);
-      } catch (e) {
-        console.log("[ClientProfile] Debug call failed:", e);
+      const { data: adminResult, error: adminError } = await getClientByIdAdmin(clientId);
+      const adminClient = adminResult?.client ?? null;
+      const businessMismatch = Boolean(
+        adminClient?.business_id && profile?.business_id && adminClient.business_id !== profile.business_id
+      );
+
+      console.log("CLIENT_FAILURE", {
+        route_client_id: clientId,
+        db_result: raw,
+        db_error: error,
+        debug_function_result: adminResult,
+        business_mismatch: businessMismatch,
+      });
+
+      if (adminError) {
+        setFetchState("fetch_error");
+        return;
       }
+
+      if (adminClient?.merged_into) {
+        navigate(`/clients/${adminClient.merged_into}`, { replace: true });
+        return;
+      }
+
+      if (adminClient?.deleted_at) {
+        setFetchState("archived");
+        return;
+      }
+
+      if (adminResult?.exists) {
+        setFetchState("no_access");
+        return;
+      }
+
       setFetchState("not_found");
       return;
     }
 
-    // Step 2a: Check merged_into → redirect
     if (raw.merged_into) {
       console.log("[ClientProfile] Client merged, redirecting to:", raw.merged_into);
       navigate(`/clients/${raw.merged_into}`, { replace: true });
       return;
     }
 
-    // Step 2b: Check deleted/archived
     if (raw.deleted_at) {
       console.log("[ClientProfile] Client archived");
       setFetchState("archived");
       return;
     }
 
-    // Step 2c: Business access check
     if (profile?.business_id && raw.business_id !== profile.business_id) {
       console.log("[ClientProfile] Business mismatch:", { client_biz: raw.business_id, user_biz: profile.business_id });
+      console.log("CLIENT_FAILURE", {
+        route_client_id: clientId,
+        db_result: raw,
+        db_error: null,
+        debug_function_result: null,
+        business_mismatch: true,
+      });
       setFetchState("no_access");
       return;
     }
 
-    // All checks passed — set client
     setClient(raw as unknown as Client);
     setFetchState("ready");
-  }, [navigate, profile?.business_id]);
+  }, [getClientByIdAdmin, navigate, profile?.business_id]);
 
   useEffect(() => {
     if (id) {
@@ -209,8 +275,11 @@ const ClientProfilePage = () => {
   const { hasRole } = useAuth();
   const canEditBilling = hasRole("super_admin") || hasRole("business_admin") || hasRole("manager");
 
-  // Debug log for troubleshooting
-  console.log("[ClientProfile] Render state:", { route_client_id: id, fetch_state: fetchState, resolved_client: client?.id });
+  console.log({
+    route_client_id: id,
+    fetch_state: fetchState,
+    resolved_client: client?.id,
+  });
 
   // Loading state
   if (fetchState === "loading" || (fetchState === "ready" && loading)) {
