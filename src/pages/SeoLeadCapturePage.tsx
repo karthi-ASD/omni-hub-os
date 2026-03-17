@@ -214,7 +214,7 @@ function ClientDashboard({ project, onBack, businessId }: { project: SeoProject;
           <FormBuilderTab project={project} businessId={businessId} forms={forms} onRefresh={fetchForms} />
         </TabsContent>
         <TabsContent value="api">
-          <ApiTrackingTab project={project} />
+          <ApiTrackingTab project={project} onProjectRefresh={fetchAll} />
         </TabsContent>
         <TabsContent value="automation">
           <AutomationTab project={project} businessId={businessId} settings={settings} onRefresh={fetchSettings} />
