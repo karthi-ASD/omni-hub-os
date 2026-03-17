@@ -92,7 +92,7 @@ export function useClientDashboardData() {
     const result: ClientDashboardData = {
       totalLeads: 0, leadsThisMonth: 0, totalCalls: 0, callsThisMonth: 0,
       openDeals: 0, totalCustomers: 0, openTickets: 0, openInvoices: 0,
-      outstandingAmount: 0, totalPaid: 0,
+      totalInvoices: 0, outstandingAmount: 0, totalPaid: 0,
       seoKeywords: [], seoCompetitors: [], seoProject: null,
       recentLeads: [], workLog: [], services: [], websites: [],
     };
