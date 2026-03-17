@@ -165,6 +165,14 @@ export function useClientDashboardData() {
       result.websites = (websites.data as any) ?? [];
     }
 
+    // Debug logging for data visibility issues
+    if (clientId) {
+      console.debug("[ClientDashboard] clientId:", clientId, "business_id:", bid);
+      console.debug("[ClientDashboard] invoices:", result.openInvoices, "paid:", result.totalPaid, "outstanding:", result.outstandingAmount);
+      console.debug("[ClientDashboard] seoKeywords:", result.seoKeywords.length, "seoProject:", result.seoProject?.id ?? "none");
+      console.debug("[ClientDashboard] tickets:", result.openTickets, "leads:", result.totalLeads, "services:", result.services.length);
+    }
+
     setData(result);
     setLoading(false);
   }, [profile?.business_id, clientId]);
