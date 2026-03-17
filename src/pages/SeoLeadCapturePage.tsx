@@ -483,6 +483,29 @@ document.querySelectorAll('a[href^="tel:"]').forEach(link => {
     setTesting(false);
   };
 
+  const regenerateApiKey = async () => {
+    if (!confirm("Are you sure? This will invalidate the current API key. All integrations will need updating.")) return;
+    setRegenerating(true);
+    const oldKey = project.api_key;
+    const newKey = crypto.randomUUID();
+    const { error } = await supabase.from("seo_projects").update({ api_key: newKey } as any).eq("id", project.id);
+    if (error) {
+      toast({ title: "Failed to regenerate", description: error.message, variant: "destructive" });
+    } else {
+      if (profile?.business_id) {
+        await supabase.from("seo_audit_log").insert({
+          business_id: profile.business_id, seo_project_id: project.id, user_id: profile.user_id,
+          action: "api_key_rotated", entity_type: "seo_project", entity_id: project.id,
+          old_value: { api_key: oldKey?.slice(0, 8) + "..." }, new_value: { api_key: newKey.slice(0, 8) + "..." },
+        } as any);
+      }
+      project.api_key = newKey;
+      toast({ title: "API key regenerated", description: "Update all integrations with the new key." });
+      onProjectRefresh?.();
+    }
+    setRegenerating(false);
+  };
+
   return (
     <div className="mt-4 space-y-6">
       {/* API Key */}
@@ -494,6 +517,10 @@ document.querySelectorAll('a[href^="tel:"]').forEach(link => {
             <code className="flex-1 text-xs bg-muted p-2 rounded font-mono">{apiKey || "Generating..."}</code>
             <Button variant="outline" size="sm" onClick={() => copyText(apiKey, "api-key")}>
               {copied === "api-key" ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+            </Button>
+            <Button variant="outline" size="sm" onClick={regenerateApiKey} disabled={regenerating} className="gap-1">
+              <RefreshCw className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
+              {regenerating ? "Rotating…" : "Rotate Key"}
             </Button>
           </div>
         </CardContent>
