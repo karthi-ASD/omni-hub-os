@@ -3,7 +3,7 @@ import { useClients, Client, ClientStatus } from "@/hooks/useClients";
 import { useClientProfile } from "@/hooks/useClientProfile";
 import { useClientConversations } from "@/hooks/useClientConversations";
 import { useSalesCallbacks } from "@/hooks/useSalesCallbacks";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { EditClientDialog } from "@/components/clients/EditClientDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
