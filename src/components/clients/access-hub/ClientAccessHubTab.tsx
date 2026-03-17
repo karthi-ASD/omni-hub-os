@@ -26,33 +26,36 @@ interface Props {
 type FilterType = "all" | "credentials" | "integrations" | "expiring" | "expired" | "active" | "client_visible";
 
 /**
- * Determine permissions based on user role:
+ * Determine permissions based on user role + department:
  * - super_admin / business_admin: Full access
- * - accounts: View renewals/billing, add renewal notes, no edit sensitive
- * - seo_team / seo_manager: Manage integrations, view credentials
- * - developer: View technical credentials/hosting API
+ * - manager: Full access
+ * - accounts dept employees: View renewals/billing, add renewal notes
+ * - seo dept employees: Manage integrations, view credentials
+ * - development dept employees: View technical credentials/hosting API
  * - client: View-only, client-visible items only, no secrets
  */
 function useAccessPermissions(isClientView?: boolean) {
   const { hasRole, isSuperAdmin, isBusinessAdmin } = useAuth();
+  const { departmentName } = useEmployeeDepartment();
 
   const isAdmin = isSuperAdmin || isBusinessAdmin;
-  const isAccounts = hasRole("accounts");
-  const isSeo = hasRole("seo_manager") || hasRole("seo_team");
-  const isDev = hasRole("developer");
-  const isManager = hasRole("manager");
+  const isManagerRole = hasRole("manager");
+  const deptLower = departmentName?.toLowerCase() ?? "";
+  const isAccounts = deptLower.includes("account") || deptLower.includes("finance");
+  const isSeo = deptLower.includes("seo");
+  const isDev = deptLower.includes("dev") || deptLower.includes("engineering") || deptLower.includes("tech");
 
   return {
-    canAddCredential: isAdmin || isSeo || isDev || isManager,
-    canAddIntegration: isAdmin || isSeo || isManager,
-    canEditCredential: isAdmin || isSeo || isDev || isManager,
-    canEditIntegration: isAdmin || isSeo || isManager,
+    canAddCredential: isAdmin || isManagerRole || isSeo || isDev,
+    canAddIntegration: isAdmin || isManagerRole || isSeo,
+    canEditCredential: isAdmin || isManagerRole || isSeo || isDev,
+    canEditIntegration: isAdmin || isManagerRole || isSeo,
     canArchive: isAdmin,
-    canRevealPassword: isAdmin || isSeo || isDev || isManager,
+    canRevealPassword: isAdmin || isManagerRole || isSeo || isDev,
     canViewAuditLog: isAdmin,
-    canViewCredentials: !isClientView, // all staff can view
+    canViewCredentials: !isClientView,
     canViewIntegrations: !isClientView,
-    canViewRenewals: isAdmin || isAccounts || isSeo || isManager,
+    canViewRenewals: isAdmin || isAccounts || isSeo || isManagerRole,
     isClientView: !!isClientView,
   };
 }
