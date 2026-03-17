@@ -10,23 +10,25 @@ interface SearchResult {
 }
 
 export function useGlobalSearch() {
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, profile } = useAuth();
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
 
   const search = useCallback(async (query: string) => {
-    if (!query || query.length < 2) {
+    if (!query || query.length < 2 || !profile?.business_id) {
       setResults([]);
       return;
     }
     setLoading(true);
+    const bid = profile.business_id;
 
     const allResults: SearchResult[] = [];
 
-    // Search users
+    // Search users (within same business)
     const { data: users } = await supabase
       .from("profiles")
       .select("id, full_name, email")
+      .eq("business_id", bid)
       .or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
       .limit(5);
 
@@ -61,6 +63,7 @@ export function useGlobalSearch() {
     const { data: events } = await supabase
       .from("calendar_events")
       .select("id, title, start_datetime")
+      .eq("business_id", bid)
       .ilike("title", `%${query}%`)
       .limit(5);
 
@@ -77,6 +80,7 @@ export function useGlobalSearch() {
     const { data: inquiries } = await supabase
       .from("inquiries")
       .select("id, name, email, status")
+      .eq("business_id", bid)
       .or(`name.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%`)
       .limit(5);
 
@@ -93,6 +97,7 @@ export function useGlobalSearch() {
     const { data: leads } = await supabase
       .from("leads")
       .select("id, name, email, stage")
+      .eq("business_id", bid)
       .or(`name.ilike.%${query}%,email.ilike.%${query}%,business_name.ilike.%${query}%`)
       .limit(5);
 
@@ -109,6 +114,7 @@ export function useGlobalSearch() {
     const { data: deals2 } = await supabase
       .from("deals")
       .select("id, deal_name, contact_name, stage")
+      .eq("business_id", bid)
       .or(`deal_name.ilike.%${query}%,contact_name.ilike.%${query}%,email.ilike.%${query}%`)
       .limit(5);
 
@@ -125,6 +131,7 @@ export function useGlobalSearch() {
     const { data: proposals2 } = await supabase
       .from("proposals")
       .select("id, title, status")
+      .eq("business_id", bid)
       .ilike("title", `%${query}%`)
       .limit(5);
 
@@ -141,6 +148,7 @@ export function useGlobalSearch() {
     const { data: clients2 } = await supabase
       .from("clients")
       .select("id, contact_name, email, company_name")
+      .eq("business_id", bid)
       .or(`contact_name.ilike.%${query}%,email.ilike.%${query}%,company_name.ilike.%${query}%`)
       .limit(5);
 
@@ -157,6 +165,7 @@ export function useGlobalSearch() {
     const { data: projects2 } = await supabase
       .from("projects")
       .select("id, project_name, status")
+      .eq("business_id", bid)
       .ilike("project_name", `%${query}%`)
       .limit(5);
 
@@ -173,6 +182,7 @@ export function useGlobalSearch() {
     const { data: invoices2 } = await supabase
       .from("invoices")
       .select("id, invoice_number, status, total, currency")
+      .eq("business_id", bid)
       .limit(5);
 
     invoices2?.forEach((inv: any) =>
@@ -186,7 +196,7 @@ export function useGlobalSearch() {
 
     setResults(allResults);
     setLoading(false);
-  }, [isSuperAdmin]);
+  }, [isSuperAdmin, profile?.business_id]);
 
   const clear = () => setResults([]);
 

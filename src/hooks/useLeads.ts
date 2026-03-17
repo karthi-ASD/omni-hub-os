@@ -17,15 +17,17 @@ export function useLeads() {
   const [loading, setLoading] = useState(true);
 
   const fetchLeads = useCallback(async () => {
+    if (!profile?.business_id) return;
     setLoading(true);
     const { data, error } = await supabase
       .from("leads")
       .select("*")
+      .eq("business_id", profile.business_id)
       .order("created_at", { ascending: false })
       .limit(200);
     if (!error) setLeads(data || []);
     setLoading(false);
-  }, []);
+  }, [profile?.business_id]);
 
   useEffect(() => {
     fetchLeads();

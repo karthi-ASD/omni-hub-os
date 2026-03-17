@@ -32,14 +32,16 @@ export function useSalesCommandCenter() {
   });
 
   const fetchAll = useCallback(async () => {
+    if (!profile?.business_id) return;
+    const bid = profile.business_id;
     setData((p) => ({ ...p, loading: true }));
 
     const [leadsR, dealsR, clientsR, callsR, profilesR] = await Promise.all([
-      supabase.from("leads").select("*").eq("is_deleted", false).order("created_at", { ascending: false }).limit(1000),
-      supabase.from("deals").select("*").order("created_at", { ascending: false }).limit(1000),
-      supabase.from("clients").select("id, contact_name, company_name, client_status, sales_owner_id, salesperson_owner, created_at, contract_value, service_category").order("created_at", { ascending: false }).limit(1000),
-      supabase.from("call_logs").select("*").order("created_at", { ascending: false }).limit(500),
-      supabase.from("profiles").select("user_id, full_name, email").limit(200),
+      supabase.from("leads").select("*").eq("business_id", bid).eq("is_deleted", false).order("created_at", { ascending: false }).limit(1000),
+      supabase.from("deals").select("*").eq("business_id", bid).order("created_at", { ascending: false }).limit(1000),
+      supabase.from("clients").select("id, contact_name, company_name, client_status, sales_owner_id, salesperson_owner, created_at, contract_value, service_category").eq("business_id", bid).order("created_at", { ascending: false }).limit(1000),
+      supabase.from("call_logs").select("*").eq("business_id", bid).order("created_at", { ascending: false }).limit(500),
+      supabase.from("profiles").select("user_id, full_name, email").eq("business_id", bid).limit(200),
     ]);
 
     setData({
@@ -50,7 +52,7 @@ export function useSalesCommandCenter() {
       profiles: (profilesR.data as any[]) || [],
       loading: false,
     });
-  }, []);
+  }, [profile?.business_id]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 

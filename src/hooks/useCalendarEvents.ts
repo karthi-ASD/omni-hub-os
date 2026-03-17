@@ -23,11 +23,12 @@ export function useCalendarEvents(month?: Date) {
   const [loading, setLoading] = useState(true);
 
   const fetchEvents = useCallback(async () => {
-    if (!profile) return;
+    if (!profile?.business_id) return;
 
     let query = supabase
       .from("calendar_events")
       .select("*")
+      .eq("business_id", profile.business_id)
       .order("start_datetime", { ascending: true });
 
     if (month) {
@@ -41,7 +42,7 @@ export function useCalendarEvents(month?: Date) {
     const { data } = await query;
     setEvents((data as any as CalendarEvent[]) ?? []);
     setLoading(false);
-  }, [profile, month]);
+  }, [profile?.business_id, month]);
 
   useEffect(() => {
     fetchEvents();

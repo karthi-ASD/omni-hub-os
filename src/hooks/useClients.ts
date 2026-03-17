@@ -81,14 +81,17 @@ export function useClients(options?: UseClientsOptions) {
   const statusFilter = options?.statusFilter;
 
   const fetchClients = useCallback(async (pageNum = 0, searchTerm = "", append = false) => {
+    if (!profile?.business_id) return;
     if (!append) setLoading(true);
     const from = pageNum * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
+    const bid = profile.business_id;
 
     // Get count first
     let countQuery = supabase
       .from("clients")
       .select("id", { count: "exact", head: true })
+      .eq("business_id", bid)
       .neq("client_status", "reverted")
       .neq("client_status", "deleted")
       .neq("client_status", "merged");
