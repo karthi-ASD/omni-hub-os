@@ -199,6 +199,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Setup Wizard", icon: Workflow, to: "/business-onboarding", roles: ["super_admin", "business_admin"] },
       { label: "Audit Logs", icon: Activity, to: "/audit-logs" },
       { label: "SA Tools", icon: Wrench, to: "/super-admin-tools", roles: ["super_admin"] },
+      { label: "SA Clients", icon: Users, to: "/super-admin-clients", roles: ["super_admin"] },
       { label: "Business Mgmt", icon: Building2, to: "/business-admin-management", roles: ["super_admin"] },
       { label: "System Health", icon: Activity, to: "/system-health", roles: ["super_admin"] },
     ],
