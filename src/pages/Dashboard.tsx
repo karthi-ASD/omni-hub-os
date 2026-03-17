@@ -59,8 +59,12 @@ const KPICard = ({ stat, loading, index }: { stat: StatCard; loading: boolean; i
 );
 
 const Dashboard = () => {
+  const { profile, isSuperAdmin, hasRole, isClientUser } = useAuth();
+
+  // Client users get a completely different dashboard
+  if (isClientUser) return <ClientDashboardPage />;
+
   usePageTitle("Dashboard", "Your NextWeb OS command center — real-time stats, quick actions, and activity feed.");
-  const { profile, isSuperAdmin, hasRole } = useAuth();
   const { stats, loading } = useDashboardStats();
   const { departmentName } = useEmployeeDepartment();
   const navigate = useNavigate();
