@@ -202,7 +202,7 @@ const ClientDashboardPage = () => {
               ) : (
                 <div className="text-center py-8 text-muted-foreground text-sm">
                   <Globe className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  SEO keywords will appear here once your campaign starts
+                  Your SEO campaign is getting started. Keywords will appear here soon.
                 </div>
               )}
             </CardContent>
