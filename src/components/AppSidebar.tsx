@@ -24,10 +24,84 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { profile, isSuperAdmin, isBusinessAdmin, roles, signOut } = useAuth();
+  const { profile, isSuperAdmin, isBusinessAdmin, isClientUser, roles, signOut } = useAuth();
   const { departmentName } = useEmployeeDepartment();
 
   const isAdmin = isSuperAdmin || isBusinessAdmin;
+
+  // Client users get a completely different navigation
+  if (isClientUser) {
+    return (
+      <Sidebar collapsible="icon" className="border-r-0">
+        <SidebarHeader className="p-3">
+          <div className={cn("flex items-center gap-2.5 transition-all", collapsed && "justify-center")}>
+            <NWLogo size="sm" />
+            {!collapsed && (
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-bold text-sidebar-accent-foreground leading-tight truncate">
+                  Client Portal
+                </span>
+                <span className="text-[10px] text-sidebar-foreground leading-tight truncate">
+                  {profile?.full_name?.split(" ")[0] || "User"}
+                </span>
+              </div>
+            )}
+          </div>
+        </SidebarHeader>
+        <SidebarContent className="px-2">
+          {CLIENT_NAV_SECTIONS.map(section => (
+            <SidebarGroup key={section.title}>
+              {!collapsed && (
+                <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-sidebar-foreground/50 font-semibold px-2">
+                  {section.title}
+                </SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {section.items.map(item => {
+                    const active = location.pathname === item.to || location.pathname.startsWith(item.to + "/");
+                    return (
+                      <SidebarMenuItem key={item.to + item.label}>
+                        <SidebarMenuButton asChild isActive={active}>
+                          <NavLink
+                            to={item.to}
+                            end={item.to === "/dashboard"}
+                            className={cn(
+                              "flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-all",
+                              active
+                                ? "bg-sidebar-accent text-sidebar-primary font-medium"
+                                : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                            )}
+                          >
+                            <item.icon className={cn("h-4 w-4 shrink-0", active && "text-sidebar-primary")} />
+                            {!collapsed && <span className="truncate">{item.label}</span>}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
+        </SidebarContent>
+        <SidebarFooter className="p-3">
+          <button
+            onClick={signOut}
+            className={cn(
+              "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive transition-all w-full",
+              collapsed && "justify-center"
+            )}
+          >
+            <LogOut className="h-4 w-4 shrink-0" />
+            {!collapsed && <span>Sign Out</span>}
+          </button>
+        </SidebarFooter>
+      </Sidebar>
+    );
+  }
+
+  // Staff / admin navigation
 
   const filteredSections = NAV_SECTIONS.filter(section => {
     // Admins see everything
