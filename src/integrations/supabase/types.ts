@@ -6234,12 +6234,16 @@ export type Database = {
           created_at: string
           created_by: string | null
           deal_id: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           email: string
           health_score: string | null
           id: string
           last_payment_date: string | null
           lead_id: string | null
           login_status: string
+          merged_at: string | null
+          merged_into: string | null
           mobile: string | null
           onboarding_status: Database["public"]["Enums"]["onboarding_status"]
           payment_method: string | null
@@ -6280,12 +6284,16 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deal_id?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           email: string
           health_score?: string | null
           id?: string
           last_payment_date?: string | null
           lead_id?: string | null
           login_status?: string
+          merged_at?: string | null
+          merged_into?: string | null
           mobile?: string | null
           onboarding_status?: Database["public"]["Enums"]["onboarding_status"]
           payment_method?: string | null
@@ -6326,12 +6334,16 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deal_id?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           email?: string
           health_score?: string | null
           id?: string
           last_payment_date?: string | null
           lead_id?: string | null
           login_status?: string
+          merged_at?: string | null
+          merged_into?: string | null
           mobile?: string | null
           onboarding_status?: Database["public"]["Enums"]["onboarding_status"]
           payment_method?: string | null
@@ -6371,6 +6383,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_merged_into_fkey"
+            columns: ["merged_into"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
