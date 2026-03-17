@@ -16,7 +16,6 @@ import {
   ArrowUpRight, ArrowDownRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
 
 interface StatCard {
   label: string;

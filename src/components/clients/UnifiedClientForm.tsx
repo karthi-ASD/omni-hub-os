@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import { DraftRestoreBanner, CrossTabConflictBanner } from "@/components/ui/draft-restore-banner";
 import { AutoSaveIndicator } from "@/components/ui/auto-save-indicator";

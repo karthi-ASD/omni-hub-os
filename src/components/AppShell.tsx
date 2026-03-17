@@ -1,5 +1,4 @@
 import { Outlet } from "react-router-dom";
-import { useEffect } from "react";
 import { BottomNav } from "@/components/mobile/BottomNav";
 import { FloatingActionButton } from "@/components/mobile/FloatingActionButton";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
