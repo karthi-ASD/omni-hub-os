@@ -464,6 +464,7 @@ document.querySelectorAll('a[href^="tel:"]').forEach(link => {
           phone: "0400000000",
           message: "This is a test lead from the dashboard",
           project_id: project.id,
+          api_key: project.api_key || "",
           source: "form",
         }),
       });
