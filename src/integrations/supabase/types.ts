@@ -5707,6 +5707,54 @@ export type Database = {
           },
         ]
       }
+      client_contacts: {
+        Row: {
+          business_id: string
+          client_id: string
+          contact_type: string
+          created_at: string
+          id: string
+          is_primary: boolean | null
+          label: string | null
+          value: string
+        }
+        Insert: {
+          business_id: string
+          client_id: string
+          contact_type: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          label?: string | null
+          value: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string
+          contact_type?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          label?: string | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_contacts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_contacts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_conversations: {
         Row: {
           business_id: string
@@ -6585,6 +6633,48 @@ export type Database = {
           },
         ]
       }
+      client_social_links: {
+        Row: {
+          business_id: string
+          client_id: string
+          created_at: string
+          id: string
+          platform: string
+          url: string
+        }
+        Insert: {
+          business_id: string
+          client_id: string
+          created_at?: string
+          id?: string
+          platform: string
+          url: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          platform?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_social_links_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_social_links_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_users: {
         Row: {
           client_id: string
@@ -6616,6 +6706,60 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "client_users_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_website_pages: {
+        Row: {
+          business_id: string
+          client_id: string
+          created_at: string
+          id: string
+          level: number
+          page_title: string | null
+          parent_url: string | null
+          status_code: number | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          business_id: string
+          client_id: string
+          created_at?: string
+          id?: string
+          level?: number
+          page_title?: string | null
+          parent_url?: string | null
+          status_code?: number | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          level?: number
+          page_title?: string | null
+          parent_url?: string | null
+          status_code?: number | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_website_pages_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_website_pages_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -6698,6 +6842,7 @@ export type Database = {
           commission_rate: number | null
           company_name: string | null
           contact_name: string
+          contact_person_name: string | null
           contract_value: number | null
           country: string | null
           created_at: string
@@ -6706,6 +6851,7 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           email: string
+          google_map_link: string | null
           health_score: string | null
           id: string
           last_payment_date: string | null
@@ -6749,6 +6895,7 @@ export type Database = {
           commission_rate?: number | null
           company_name?: string | null
           contact_name: string
+          contact_person_name?: string | null
           contract_value?: number | null
           country?: string | null
           created_at?: string
@@ -6757,6 +6904,7 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           email: string
+          google_map_link?: string | null
           health_score?: string | null
           id?: string
           last_payment_date?: string | null
@@ -6800,6 +6948,7 @@ export type Database = {
           commission_rate?: number | null
           company_name?: string | null
           contact_name?: string
+          contact_person_name?: string | null
           contract_value?: number | null
           country?: string | null
           created_at?: string
@@ -6808,6 +6957,7 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           email?: string
+          google_map_link?: string | null
           health_score?: string | null
           id?: string
           last_payment_date?: string | null
