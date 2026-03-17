@@ -555,6 +555,8 @@ const App = () => (
               <Route path="/client-reports" element={<ClientReportsPage />} />
               <Route path="/client-departments" element={<ClientDepartmentsPage />} />
               <Route path="/client-employees" element={<ClientEmployeesPage />} />
+              <Route path="/client-seo-projects" element={<ClientSeoProjectsPage />} />
+              <Route path="/client-seo-projects/:projectId" element={<ClientSeoProjectDetailPage />} />
               <Route path="/my-appointments" element={<CustomerAppointmentPage />} />
               <Route path="/staff-app" element={<StaffMobileAppPage />} />
               <Route path="/hr/departments" element={
