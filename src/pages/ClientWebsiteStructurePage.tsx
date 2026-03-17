@@ -41,7 +41,7 @@ const ClientWebsiteStructurePage = () => {
         <ClientPortalEmptyState
           icon={Globe}
           title="Your website structure is being analyzed"
-          message="It will appear shortly once our team completes the analysis."
+          message="Your website structure is being analyzed. Please ask your SEO team to generate it if you don't see data here soon."
         />
       ) : (
         <Card className="rounded-xl">
