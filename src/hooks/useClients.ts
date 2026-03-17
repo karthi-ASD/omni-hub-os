@@ -162,7 +162,7 @@ export function useClients(options?: UseClientsOptions) {
     setHasMore(batch.length === PAGE_SIZE);
     setPage(pageNum);
     setLoading(false);
-  }, [salesOwnerId, statusFilter]);
+  }, [salesOwnerId, statusFilter, profile?.business_id]);
 
   useEffect(() => {
     fetchClients(0, search);
