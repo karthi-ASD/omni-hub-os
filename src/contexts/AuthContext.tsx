@@ -56,6 +56,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
   const [clientUserId, setClientUserId] = useState<string | null>(null);
 
+  const isHydratingRef = React.useRef(false);
+  const hasHydratedRef = React.useRef(false);
+
   const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -167,6 +170,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const clearAllUserState = () => {
+    setRawProfile(null);
+    setRoles([]);
+    setAllBusinesses([]);
+    setSelectedTenantId(null);
+    setClientUserId(null);
+    setTenantValidationError(null);
+    hasHydratedRef.current = false;
+    isHydratingRef.current = false;
+  };
+
   useEffect(() => {
     let isMounted = true;
     const forceStopTimer = window.setTimeout(() => {
@@ -180,6 +194,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const hydrateUserState = async (nextSession: Session) => {
+      if (isHydratingRef.current) {
+        console.log("[Auth] Hydration already in progress — skipping");
+        return;
+      }
+      isHydratingRef.current = true;
+
       try {
         setTenantValidationError(null);
 
@@ -199,65 +219,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               return active?.id || biz[0].id;
             });
           }
-        } else {
-          setAllBusinesses([]);
-          setSelectedTenantId(null);
         }
+
+        hasHydratedRef.current = true;
       } finally {
+        isHydratingRef.current = false;
         finalizeLoading();
       }
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, nextSession) => {
-        // Skip full re-hydration on token refresh — this fires on tab focus
-        // and was causing the entire app to flicker/reset
-        if (event === "TOKEN_REFRESHED") {
-          console.log("[Auth] TOKEN_REFRESHED — updating session silently (no re-hydrate)");
-          setSession(nextSession);
-          setUser(nextSession?.user ?? null);
-          return;
-        }
+        console.log("[Auth Event]", event);
 
-        // For INITIAL_SESSION, only hydrate if we haven't already
-        if (event === "INITIAL_SESSION") {
-          if (rawProfile) {
-            console.log("[Auth] INITIAL_SESSION skipped — already hydrated");
-            return;
-          }
-        }
+        switch (event) {
+          case "TOKEN_REFRESHED":
+            // Silent update — NEVER reset state or re-hydrate
+            setSession(nextSession);
+            setUser(nextSession?.user ?? null);
+            break;
 
-        console.log("[Auth] onAuthStateChange:", event);
-        setLoading(true);
-        setTenantValidationError(null);
-        setSession(nextSession);
-        setUser(nextSession?.user ?? null);
+          case "INITIAL_SESSION":
+            if (hasHydratedRef.current) {
+              console.log("[Auth] INITIAL_SESSION skipped — already hydrated");
+              break;
+            }
+            setSession(nextSession);
+            setUser(nextSession?.user ?? null);
+            if (nextSession?.user) {
+              setLoading(true);
+              setTimeout(() => {
+                if (isMounted) void hydrateUserState(nextSession);
+              }, 0);
+            } else {
+              finalizeLoading();
+            }
+            break;
 
-        if (nextSession?.user) {
-          setRawProfile(null);
-          setRoles([]);
-          setAllBusinesses([]);
-          setSelectedTenantId(null);
-          setClientUserId(null);
+          case "SIGNED_IN":
+            setSession(nextSession);
+            setUser(nextSession?.user ?? null);
+            if (nextSession?.user) {
+              clearAllUserState();
+              setLoading(true);
+              setTimeout(() => {
+                if (isMounted) void hydrateUserState(nextSession);
+              }, 0);
+            }
+            break;
 
-          setTimeout(() => {
-            if (!isMounted) return;
-            void hydrateUserState(nextSession);
-          }, 0);
-        } else {
-          setRawProfile(null);
-          setRoles([]);
-          setAllBusinesses([]);
-          setSelectedTenantId(null);
-          setClientUserId(null);
-          setTenantValidationError(null);
-          finalizeLoading();
+          case "SIGNED_OUT":
+            setSession(null);
+            setUser(null);
+            clearAllUserState();
+            finalizeLoading();
+            break;
+
+          default:
+            // Unknown event — do nothing
+            break;
         }
       }
     );
 
     supabase.auth.getSession()
       .then(({ data: { session: currentSession } }) => {
+        if (hasHydratedRef.current) return;
         setLoading(true);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
