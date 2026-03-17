@@ -80,7 +80,7 @@ export default function ClientDataIntegrityPage() {
         <Card className="rounded-xl">
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="h-5 w-5 text-yellow-600" />
+              <AlertTriangle className="h-5 w-5 text-destructive" />
               <div>
                 <p className="text-2xl font-bold">{duplicates.length}</p>
                 <p className="text-xs text-muted-foreground">Duplicate Issues</p>
