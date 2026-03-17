@@ -13,6 +13,7 @@ import { useSeoClientMessages } from "@/hooks/useSeoClientMessages";
 import { useSeoMonthlyReports } from "@/hooks/useSeoMonthlyReports";
 import { useSeoAiRecommendations } from "@/hooks/useSeoAiRecommendations";
 import { useSeoKeywords } from "@/hooks/useSeo";
+import { PerformanceDashboard } from "@/components/clients/access-hub/PerformanceDashboard";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
