@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sidebar";
 import { LogOut } from "lucide-react";
 import { NAV_SECTIONS, type NavItem, type NavSection } from "@/components/sidebar/nav-sections";
+import { CLIENT_NAV_SECTIONS } from "@/components/sidebar/client-nav-sections";
 
 function matchesDept(list: string[] | undefined, deptName: string | null): boolean {
   if (!list || list.length === 0 || !deptName) return false;
