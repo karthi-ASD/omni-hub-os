@@ -76,6 +76,36 @@ Deno.serve(async (req) => {
         users_count: metrics?.users || 0,
         leads_count: metrics?.conversions || 0,
       }, { onConflict: "business_id,date" });
+
+      // Store historical snapshot in google_analytics_daily_stats (never overwrite)
+      if (project_id) {
+        const { data: existingSnapshot } = await supabase
+          .from("google_analytics_daily_stats")
+          .select("id")
+          .eq("project_id", project_id)
+          .eq("snapshot_date", targetDate)
+          .limit(1);
+
+        if (!existingSnapshot || existingSnapshot.length === 0) {
+          await supabase.from("google_analytics_daily_stats").insert({
+            project_id,
+            client_id: client_id || null,
+            business_id,
+            snapshot_date: targetDate,
+            users_count: metrics?.users || 0,
+            sessions: metrics?.sessions || 0,
+            pageviews: metrics?.pageviews || 0,
+            bounce_rate: metrics?.bounce_rate || 0,
+            avg_session_duration: metrics?.avg_session_duration || 0,
+            organic_traffic: metrics?.organic_traffic || 0,
+            direct_traffic: metrics?.direct_traffic || 0,
+            paid_traffic: metrics?.paid_traffic || 0,
+            referral_traffic: metrics?.referral_traffic || 0,
+            conversions: metrics?.conversions || 0,
+            top_pages_json: metrics?.top_pages || [],
+          });
+        }
+      }
     }
 
     // If it's GSC data, update gsc_data table too

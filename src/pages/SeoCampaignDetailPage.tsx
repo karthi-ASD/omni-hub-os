@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { SeoAuditPanel } from "@/components/seo/SeoAuditPanel";
 import { WebsiteTreePanel } from "@/components/seo/WebsiteTreePanel";
+import { AnalyticsDashboardPanel } from "@/components/seo/AnalyticsDashboardPanel";
 import { SeoTechnicalPanel } from "@/components/seo/SeoTechnicalPanel";
 import { KeywordCsvImportDialog } from "@/components/seo/KeywordCsvImportDialog";
 import { SeoRankingPanel } from "@/components/seo/SeoRankingPanel";
@@ -155,6 +156,7 @@ const SeoCampaignDetailPage = () => {
             <TabsTrigger value="reports" className="gap-1.5 text-xs"><BarChart3 className="h-3 w-3" /> Reports</TabsTrigger>
             <TabsTrigger value="comms" className="gap-1.5 text-xs"><MessageSquare className="h-3 w-3" /> Comms</TabsTrigger>
             <TabsTrigger value="website-tree" className="gap-1.5 text-xs"><Globe className="h-3 w-3" /> Website Tree</TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-1.5 text-xs"><BarChart3 className="h-3 w-3" /> Analytics</TabsTrigger>
           </TabsList>
         </div>
 
@@ -593,6 +595,11 @@ const SeoCampaignDetailPage = () => {
               websiteDomain={project.website_domain}
             />
           )}
+        </TabsContent>
+
+        {/* Analytics Dashboard Tab */}
+        <TabsContent value="analytics">
+          {projectId && <AnalyticsDashboardPanel projectId={projectId} />}
         </TabsContent>
       </Tabs>
     </div>

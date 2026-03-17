@@ -11532,6 +11532,88 @@ export type Database = {
         }
         Relationships: []
       }
+      google_analytics_daily_stats: {
+        Row: {
+          avg_session_duration: number | null
+          bounce_rate: number | null
+          business_id: string
+          client_id: string | null
+          conversions: number | null
+          created_at: string
+          direct_traffic: number | null
+          id: string
+          organic_traffic: number | null
+          pageviews: number | null
+          paid_traffic: number | null
+          project_id: string | null
+          referral_traffic: number | null
+          sessions: number | null
+          snapshot_date: string
+          top_pages_json: Json | null
+          users_count: number | null
+        }
+        Insert: {
+          avg_session_duration?: number | null
+          bounce_rate?: number | null
+          business_id: string
+          client_id?: string | null
+          conversions?: number | null
+          created_at?: string
+          direct_traffic?: number | null
+          id?: string
+          organic_traffic?: number | null
+          pageviews?: number | null
+          paid_traffic?: number | null
+          project_id?: string | null
+          referral_traffic?: number | null
+          sessions?: number | null
+          snapshot_date: string
+          top_pages_json?: Json | null
+          users_count?: number | null
+        }
+        Update: {
+          avg_session_duration?: number | null
+          bounce_rate?: number | null
+          business_id?: string
+          client_id?: string | null
+          conversions?: number | null
+          created_at?: string
+          direct_traffic?: number | null
+          id?: string
+          organic_traffic?: number | null
+          pageviews?: number | null
+          paid_traffic?: number | null
+          project_id?: string | null
+          referral_traffic?: number | null
+          sessions?: number | null
+          snapshot_date?: string
+          top_pages_json?: Json | null
+          users_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_analytics_daily_stats_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "google_analytics_daily_stats_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "google_analytics_daily_stats_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       google_rank_checks: {
         Row: {
           business_id: string
