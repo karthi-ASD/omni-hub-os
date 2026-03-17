@@ -183,6 +183,8 @@ import EmployeeSelfServicePage from "./pages/EmployeeSelfServicePage";
 import ManagerDashboardPage from "./pages/ManagerDashboardPage";
 import AgencyCommandCenterPage from "./pages/AgencyCommandCenterPage";
 import ClientProjectsPage from "./pages/ClientProjectsPage";
+import ClientSeoProjectsPage from "./pages/ClientSeoProjectsPage";
+import ClientSeoProjectDetailPage from "./pages/ClientSeoProjectDetailPage";
 import TaskPipelinePage from "./pages/TaskPipelinePage";
 import TaskDetailPage from "./pages/TaskDetailPage";
 import TeamHierarchyPage from "./pages/TeamHierarchyPage";
