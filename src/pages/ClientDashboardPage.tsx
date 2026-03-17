@@ -153,7 +153,7 @@ const ClientDashboardPage = () => {
               ) : (
                 <div className="text-center py-6 text-muted-foreground text-sm">
                   <Search className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  No SEO data available yet
+                  Your SEO campaign is getting started. Data will appear soon.
                 </div>
               )}
             </CardContent>
@@ -202,7 +202,7 @@ const ClientDashboardPage = () => {
               ) : (
                 <div className="text-center py-8 text-muted-foreground text-sm">
                   <Globe className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  SEO keywords will appear here once your campaign starts
+                  Your SEO campaign is getting started. Keywords will appear here soon.
                 </div>
               )}
             </CardContent>
@@ -275,7 +275,7 @@ const ClientDashboardPage = () => {
               ) : (
                 <div className="text-center py-8 text-muted-foreground text-sm">
                   <Eye className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  Competitor analysis will be available once your SEO project starts
+                  Your campaign is getting started. Competitor analysis will appear soon.
                 </div>
               )}
             </CardContent>
