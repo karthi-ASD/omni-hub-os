@@ -6,7 +6,7 @@ import {
   Palette, Activity, Layers, UserCog, LogOut, Search, Bell,
   BookOpen, Lock, Cpu, Workflow, Store, Gauge, Brain,
   TrendingUp, Code, FileEdit, PhoneCall, CalendarCheck, Handshake,
-  MapPin, RefreshCw, Star, ListChecks, Inbox, Sparkles,
+  MapPin, RefreshCw, Star, ListChecks, Inbox, Sparkles, Plug,
 } from "lucide-react";
 
 export interface NavItem {
@@ -202,6 +202,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "SA Clients", icon: Users, to: "/super-admin-clients", roles: ["super_admin"] },
       { label: "Business Mgmt", icon: Building2, to: "/business-admin-management", roles: ["super_admin"] },
       { label: "System Health", icon: Activity, to: "/system-health", roles: ["super_admin"] },
+      { label: "Integrations", icon: Plug, to: "/integrations-overview", roles: ["super_admin"] },
       { label: "Feature Registry", icon: ClipboardCheck, to: "/feature-registry", roles: ["super_admin"] },
     ],
   },

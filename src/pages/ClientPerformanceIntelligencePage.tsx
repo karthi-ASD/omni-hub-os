@@ -20,6 +20,7 @@ import {
   ArrowUpRight, Globe, CheckCircle2, Clock, AlertCircle,
   ShieldCheck, RefreshCw,
 } from "lucide-react";
+import { NarrativeSummary } from "@/components/shared/NarrativeSummary";
 
 const PERIOD_DAYS = { "7d": 7, "30d": 30, "90d": 90 } as const;
 type Period = keyof typeof PERIOD_DAYS;
@@ -141,6 +142,16 @@ const ClientPerformanceIntelligencePage = () => {
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto">
+      {/* ═══ NARRATIVE SUMMARY ═══ */}
+      <NarrativeSummary
+        type="analytics"
+        metrics={{
+          totalUsers: aggregates.totalUsers,
+          totalSessions: aggregates.totalSessions,
+          growthPct: aggregates.growthPct,
+        }}
+      />
+
       {/* ═══ HERO SECTION ═══ */}
       <Card className="rounded-2xl overflow-hidden border-0 shadow-xl relative">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/8 to-transparent" />

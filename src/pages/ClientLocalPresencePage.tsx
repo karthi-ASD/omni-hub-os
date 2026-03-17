@@ -14,6 +14,7 @@ import {
   TrendingUp, TrendingDown, Lightbulb, Clock, RefreshCw,
 } from "lucide-react";
 import { useMemo } from "react";
+import { NarrativeSummary } from "@/components/shared/NarrativeSummary";
 
 const ClientLocalPresencePage = () => {
   const { clientId } = useAuth();
@@ -73,6 +74,21 @@ const ClientLocalPresencePage = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* ─── Narrative Summary ─── */}
+      {hasData && (
+        <NarrativeSummary
+          type="maps"
+          metrics={{
+            totalViews,
+            viewsGrowth,
+            totalCalls,
+            totalDirections,
+            latestRating,
+            latestReviews,
+          }}
+        />
+      )}
+
       {/* ─── Hero Section ─── */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-background border p-6 md:p-8">
         <div className="relative z-10">
