@@ -275,8 +275,8 @@ export function ProjectIntegrationsTab({ projectId, businessId }: Props) {
               <div className="p-3 rounded-lg bg-muted/50">
                 <p className="text-xs text-muted-foreground">Credentials</p>
                 <div className="flex items-center gap-1">
-                  <Shield className="h-3.5 w-3.5 text-emerald-500" />
-                  <p className="font-medium text-sm text-emerald-600">Encrypted & Stored</p>
+                  <Shield className="h-3.5 w-3.5 text-primary" />
+                  <p className="font-medium text-sm text-primary">Encrypted & Stored</p>
                 </div>
               </div>
             </div>
