@@ -363,29 +363,47 @@ const ClientDashboardPage = () => {
           <Card className="rounded-2xl border-0 shadow-elevated bg-gradient-to-br from-success/5 to-primary/5">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-success" /> Your ROI
+                <DollarSign className="h-4 w-4 text-success" /> Your ROI & Billing
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center p-3 rounded-xl bg-card/50">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">You Paid</p>
-                  <AnimatedCounter end={data.totalPaid + monthlyFee} prefix="$" className="text-xl font-extrabold" />
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Total Paid</p>
+                  <AnimatedCounter end={data.totalPaid} prefix="$" className="text-xl font-extrabold" />
                 </div>
+                <div className="text-center p-3 rounded-xl bg-card/50">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Invoices</p>
+                  <AnimatedCounter end={data.totalInvoices} className="text-xl font-extrabold text-primary" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="text-center p-3 rounded-xl bg-card/50">
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Leads Generated</p>
                   <AnimatedCounter end={data.totalLeads} className="text-xl font-extrabold text-success" />
                 </div>
+                <div className="text-center p-3 rounded-xl bg-card/50">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Open Invoices</p>
+                  <AnimatedCounter end={data.openInvoices} className="text-xl font-extrabold text-warning" />
+                </div>
               </div>
-              {data.outstandingAmount > 0 && (
+              {data.outstandingAmount > 0 ? (
                 <div className="flex items-center justify-between p-3 rounded-xl bg-warning/10 border border-warning/20">
                   <div className="flex items-center gap-2">
                     <Receipt className="h-4 w-4 text-warning" />
-                    <span className="text-sm font-semibold">Outstanding</span>
+                    <span className="text-sm font-semibold">Outstanding Balance</span>
                   </div>
                   <span className="text-sm font-bold text-warning">{fmt(data.outstandingAmount)}</span>
                 </div>
-              )}
+              ) : data.totalInvoices > 0 ? (
+                <div className="flex items-center justify-between p-3 rounded-xl bg-success/10 border border-success/20">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm font-semibold text-success">All invoices paid</span>
+                  </div>
+                  <span className="text-sm font-bold text-success">No outstanding balance</span>
+                </div>
+              ) : null}
               <button
                 onClick={() => navigate("/my-billing")}
                 className="w-full text-center text-sm text-primary font-semibold py-2 rounded-xl border border-primary/20 hover:bg-primary/5 transition-colors flex items-center justify-center gap-1"

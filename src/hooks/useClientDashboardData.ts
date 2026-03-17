@@ -97,29 +97,44 @@ export function useClientDashboardData() {
       recentLeads: [], workLog: [], services: [], websites: [],
     };
 
-    // ── CRM stats: scoped to client's own business_id ──
+    // ── CRM stats: client's own business for leads/deals/customers ──
+    // ── Support tickets & call logs use client_id (provider context) ──
     const [
-      leadsAll, leadsMonth, callsAll, callsMonth, deals, customers,
-      tickets, recentLeads
+      leadsAll, leadsMonth, deals, customers, recentLeads
     ] = await Promise.all([
       supabase.from("leads").select("id", { count: "exact", head: true }).eq("business_id", bid).eq("is_deleted", false),
       supabase.from("leads").select("id", { count: "exact", head: true }).eq("business_id", bid).eq("is_deleted", false).gte("created_at", monthStart),
-      supabase.from("call_logs").select("id", { count: "exact", head: true }).eq("business_id", bid),
-      supabase.from("call_logs").select("id", { count: "exact", head: true }).eq("business_id", bid).gte("call_time", monthStart),
       supabase.from("deals").select("id", { count: "exact", head: true }).eq("business_id", bid).eq("status", "open"),
       supabase.from("clients").select("id", { count: "exact", head: true }).eq("business_id", bid),
-      supabase.from("support_tickets").select("id", { count: "exact", head: true }).eq("business_id", bid).in("status", ["open", "in_progress"]),
       supabase.from("leads").select("id, name, email, phone, source, created_at, stage").eq("business_id", bid).eq("is_deleted", false).order("created_at", { ascending: false }).limit(5),
     ]);
 
     result.totalLeads = leadsAll.count ?? 0;
     result.leadsThisMonth = leadsMonth.count ?? 0;
-    result.totalCalls = callsAll.count ?? 0;
-    result.callsThisMonth = callsMonth.count ?? 0;
     result.openDeals = deals.count ?? 0;
     result.totalCustomers = customers.count ?? 0;
-    result.openTickets = tickets.count ?? 0;
     result.recentLeads = (recentLeads.data as any) ?? [];
+
+    // ── Tickets & calls: use client_id when available (provider context), fallback to business_id ──
+    if (clientId) {
+      const [tickets, callsAll, callsMonth] = await Promise.all([
+        supabase.from("support_tickets").select("id", { count: "exact", head: true }).eq("client_id", clientId).in("status", ["open", "in_progress"]),
+        supabase.from("call_logs").select("id", { count: "exact", head: true }).eq("client_id", clientId),
+        supabase.from("call_logs").select("id", { count: "exact", head: true }).eq("client_id", clientId).gte("call_time", monthStart),
+      ]);
+      result.openTickets = tickets.count ?? 0;
+      result.totalCalls = callsAll.count ?? 0;
+      result.callsThisMonth = callsMonth.count ?? 0;
+    } else {
+      const [tickets, callsAll, callsMonth] = await Promise.all([
+        supabase.from("support_tickets").select("id", { count: "exact", head: true }).eq("business_id", bid).in("status", ["open", "in_progress"]),
+        supabase.from("call_logs").select("id", { count: "exact", head: true }).eq("business_id", bid),
+        supabase.from("call_logs").select("id", { count: "exact", head: true }).eq("business_id", bid).gte("call_time", monthStart),
+      ]);
+      result.openTickets = tickets.count ?? 0;
+      result.totalCalls = callsAll.count ?? 0;
+      result.callsThisMonth = callsMonth.count ?? 0;
+    }
 
     // ── Invoices: fetch from xero_invoices by client_id (NextWeb's invoices FOR this client) ──
     if (clientId) {

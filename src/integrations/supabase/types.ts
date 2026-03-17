@@ -4990,6 +4990,7 @@ export type Database = {
           call_time: string
           call_type: Database["public"]["Enums"]["call_type"]
           caller_user_id: string
+          client_id: string | null
           created_at: string
           duration_seconds: number | null
           id: string
@@ -5003,6 +5004,7 @@ export type Database = {
           call_time?: string
           call_type?: Database["public"]["Enums"]["call_type"]
           caller_user_id: string
+          client_id?: string | null
           created_at?: string
           duration_seconds?: number | null
           id?: string
@@ -5016,6 +5018,7 @@ export type Database = {
           call_time?: string
           call_type?: Database["public"]["Enums"]["call_type"]
           caller_user_id?: string
+          client_id?: string | null
           created_at?: string
           duration_seconds?: number | null
           id?: string
@@ -5030,6 +5033,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
