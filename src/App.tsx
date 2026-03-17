@@ -699,6 +699,9 @@ const App = () => (
               <Route path="/system-health" element={
                 <ProtectedRoute requiredRoles={["super_admin"]}><SystemHealthPage /></ProtectedRoute>
               } />
+              <Route path="/integrations-overview" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><IntegrationsOverviewPage /></ProtectedRoute>
+              } />
               <Route path="/feature-registry" element={
                 <ProtectedRoute requiredRoles={["super_admin"]}><FeatureRegistryPage /></ProtectedRoute>
               } />
