@@ -18277,6 +18277,45 @@ export type Database = {
           },
         ]
       }
+      seo_audit_log: {
+        Row: {
+          action: string
+          business_id: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          seo_project_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          business_id: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          seo_project_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          business_id?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          seo_project_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       seo_automation_logs: {
         Row: {
           automation_type: string
@@ -18340,6 +18379,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      seo_automation_queue: {
+        Row: {
+          attempts: number
+          automation_type: string
+          business_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          last_error: string | null
+          lead_id: string
+          max_attempts: number
+          next_retry_at: string
+          payload: Json
+          seo_project_id: string
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          automation_type: string
+          business_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          lead_id: string
+          max_attempts?: number
+          next_retry_at?: string
+          payload?: Json
+          seo_project_id: string
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          automation_type?: string
+          business_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          lead_id?: string
+          max_attempts?: number
+          next_retry_at?: string
+          payload?: Json
+          seo_project_id?: string
+          status?: string
+        }
+        Relationships: []
       }
       seo_automation_settings: {
         Row: {
@@ -20494,6 +20581,7 @@ export type Database = {
           contract_end: string | null
           contract_start: string | null
           created_at: string
+          default_country_code: string | null
           id: string
           monthly_fee: number | null
           onboarding_notes: string | null
@@ -20524,6 +20612,7 @@ export type Database = {
           contract_end?: string | null
           contract_start?: string | null
           created_at?: string
+          default_country_code?: string | null
           id?: string
           monthly_fee?: number | null
           onboarding_notes?: string | null
@@ -20554,6 +20643,7 @@ export type Database = {
           contract_end?: string | null
           contract_start?: string | null
           created_at?: string
+          default_country_code?: string | null
           id?: string
           monthly_fee?: number | null
           onboarding_notes?: string | null

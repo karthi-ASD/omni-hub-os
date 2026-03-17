@@ -15,7 +15,7 @@ import {
   BarChart3, Phone, Mail, MessageSquare, Globe, Settings, Users,
   Plus, Trash2, GripVertical, Copy, Check, ArrowLeft, Zap, TrendingUp,
   PhoneCall, FileText, Eye, ArrowUpRight, ArrowDownRight, Rocket, Send,
-  Link2, Wifi, WifiOff, ShieldCheck
+  Link2, Wifi, WifiOff, ShieldCheck, RefreshCw, AlertTriangle, Clock, History
 } from "lucide-react";
 
 // ─── Types ───
@@ -214,7 +214,7 @@ function ClientDashboard({ project, onBack, businessId }: { project: SeoProject;
           <FormBuilderTab project={project} businessId={businessId} forms={forms} onRefresh={fetchForms} />
         </TabsContent>
         <TabsContent value="api">
-          <ApiTrackingTab project={project} />
+          <ApiTrackingTab project={project} onProjectRefresh={fetchAll} />
         </TabsContent>
         <TabsContent value="automation">
           <AutomationTab project={project} businessId={businessId} settings={settings} onRefresh={fetchSettings} />
@@ -409,10 +409,12 @@ function FormBuilderTab({ project, businessId, forms, onRefresh }: { project: Se
 }
 
 // ─── API & Tracking Tab ───
-function ApiTrackingTab({ project }: { project: SeoProject }) {
+function ApiTrackingTab({ project, onProjectRefresh }: { project: SeoProject; onProjectRefresh?: () => void }) {
   const { toast } = useToast();
+  const { profile } = useAuth();
   const [copied, setCopied] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
 
   const formEndpoint = `${supabaseUrl}/functions/v1/seo-lead-capture`;
@@ -481,6 +483,29 @@ document.querySelectorAll('a[href^="tel:"]').forEach(link => {
     setTesting(false);
   };
 
+  const regenerateApiKey = async () => {
+    if (!confirm("Are you sure? This will invalidate the current API key. All integrations will need updating.")) return;
+    setRegenerating(true);
+    const oldKey = project.api_key;
+    const newKey = crypto.randomUUID();
+    const { error } = await supabase.from("seo_projects").update({ api_key: newKey } as any).eq("id", project.id);
+    if (error) {
+      toast({ title: "Failed to regenerate", description: error.message, variant: "destructive" });
+    } else {
+      if (profile?.business_id) {
+        await supabase.from("seo_audit_log").insert({
+          business_id: profile.business_id, seo_project_id: project.id, user_id: profile.user_id,
+          action: "api_key_rotated", entity_type: "seo_project", entity_id: project.id,
+          old_value: { api_key: oldKey?.slice(0, 8) + "..." }, new_value: { api_key: newKey.slice(0, 8) + "..." },
+        } as any);
+      }
+      project.api_key = newKey;
+      toast({ title: "API key regenerated", description: "Update all integrations with the new key." });
+      onProjectRefresh?.();
+    }
+    setRegenerating(false);
+  };
+
   return (
     <div className="mt-4 space-y-6">
       {/* API Key */}
@@ -492,6 +517,10 @@ document.querySelectorAll('a[href^="tel:"]').forEach(link => {
             <code className="flex-1 text-xs bg-muted p-2 rounded font-mono">{apiKey || "Generating..."}</code>
             <Button variant="outline" size="sm" onClick={() => copyText(apiKey, "api-key")}>
               {copied === "api-key" ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+            </Button>
+            <Button variant="outline" size="sm" onClick={regenerateApiKey} disabled={regenerating} className="gap-1">
+              <RefreshCw className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
+              {regenerating ? "Rotating…" : "Rotate Key"}
             </Button>
           </div>
         </CardContent>
@@ -546,15 +575,31 @@ document.querySelectorAll('a[href^="tel:"]').forEach(link => {
 // ─── Automation Tab (Admin-level WhatsApp control) ───
 function AutomationTab({ project, businessId, settings, onRefresh }: { project: SeoProject; businessId: string; settings: AutomationSettings | null; onRefresh: () => void }) {
   const { toast } = useToast();
+  const { profile } = useAuth();
   const [local, setLocal] = useState<AutomationSettings>(settings || {
     seo_project_id: project.id, whatsapp_number: "", whatsapp_connected: false,
     enable_email: false, enable_whatsapp: false, enable_call: false, enable_acknowledgment: false
   });
   const [saving, setSaving] = useState(false);
+  const [recentLogs, setRecentLogs] = useState<any[]>([]);
 
   useEffect(() => {
     if (settings) setLocal(settings);
   }, [settings]);
+
+  useEffect(() => {
+    fetchRecentLogs();
+  }, [project.id]);
+
+  const fetchRecentLogs = async () => {
+    const { data } = await supabase
+      .from("seo_automation_logs")
+      .select("id, automation_type, status, error_message, execution_time_ms, created_at")
+      .eq("seo_project_id", project.id)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    setRecentLogs((data as any) || []);
+  };
 
   const save = async () => {
     if (local.whatsapp_number && !local.whatsapp_number.startsWith("+")) {
@@ -562,7 +607,6 @@ function AutomationTab({ project, businessId, settings, onRefresh }: { project: 
       return;
     }
 
-    // WhatsApp automation requires connection
     if (local.enable_whatsapp && !local.whatsapp_connected) {
       toast({ title: "WhatsApp not connected", description: "Connect WhatsApp first before enabling automation", variant: "destructive" });
       return;
@@ -574,6 +618,7 @@ function AutomationTab({ project, businessId, settings, onRefresh }: { project: 
     }
 
     setSaving(true);
+    const oldSettings = settings ? { enable_email: settings.enable_email, enable_whatsapp: settings.enable_whatsapp, enable_call: settings.enable_call, whatsapp_number: settings.whatsapp_number } : null;
     const payload = {
       business_id: businessId,
       seo_project_id: project.id,
@@ -591,6 +636,17 @@ function AutomationTab({ project, businessId, settings, onRefresh }: { project: 
     } else {
       await supabase.from("seo_automation_settings").insert(payload as any);
     }
+
+    // Audit log
+    if (profile?.business_id) {
+      await supabase.from("seo_audit_log").insert({
+        business_id: profile.business_id, seo_project_id: project.id, user_id: profile.user_id,
+        action: "settings_updated", entity_type: "seo_automation_settings",
+        entity_id: local.id || project.id,
+        old_value: oldSettings, new_value: { enable_email: local.enable_email, enable_whatsapp: local.enable_whatsapp, enable_call: local.enable_call, whatsapp_number: local.whatsapp_number },
+      } as any);
+    }
+
     toast({ title: "Settings saved" });
     setSaving(false);
     onRefresh();
@@ -655,6 +711,33 @@ function AutomationTab({ project, businessId, settings, onRefresh }: { project: 
       </Card>
 
       <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save Settings"}</Button>
+
+      {/* Automation Health */}
+      {recentLogs.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-sm flex items-center gap-2"><History className="h-4 w-4" />Recent Automation Activity</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-[300px] overflow-auto">
+              {recentLogs.map((log: any) => (
+                <div key={log.id} className="flex items-center justify-between p-2 border rounded text-xs">
+                  <div className="flex items-center gap-2">
+                    <Badge variant={log.status === "success" ? "default" : "destructive"} className="text-xs">
+                      {log.status === "success" ? <Check className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
+                      {log.status}
+                    </Badge>
+                    <span className="font-medium">{log.automation_type}</span>
+                    {log.execution_time_ms && <span className="text-muted-foreground">{log.execution_time_ms}ms</span>}
+                  </div>
+                  <div className="text-right">
+                    <span className="text-muted-foreground">{new Date(log.created_at).toLocaleString()}</span>
+                    {log.error_message && <p className="text-destructive truncate max-w-[200px]">{log.error_message}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
