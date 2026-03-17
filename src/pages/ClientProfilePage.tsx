@@ -110,8 +110,11 @@ const ClientProfilePage = () => {
 
     if (error) {
       console.error("[ClientProfile] Fetch error:", error);
-      // RLS denial often comes as error, not empty result
-      setFetchState("no_access");
+      if (error.code === "PGRST116") {
+        setFetchState("not_found");
+      } else {
+        setFetchState("fetch_error");
+      }
       return;
     }
 
