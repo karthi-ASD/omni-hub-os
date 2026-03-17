@@ -248,6 +248,7 @@ import SalesProposalsPage from "./pages/SalesProposalsPage";
 import SalesActivitiesPage from "./pages/SalesActivitiesPage";
 import SalesToolsPage from "./pages/SalesToolsPage";
 import SeoLeadCapturePage from "./pages/SeoLeadCapturePage";
+import WhatsAppSupportPage from "./pages/WhatsAppSupportPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -710,6 +711,7 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["super_admin"]}><FeatureRegistryPage /></ProtectedRoute>
               } />
               <Route path="/advocacy-engine" element={<AdvocacyEnginePage />} />
+              <Route path="/whatsapp-support" element={<WhatsAppSupportPage />} />
               <Route path="/user/:userId" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><UserProfilePage /></ProtectedRoute>
               } />

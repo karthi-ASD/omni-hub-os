@@ -144,6 +144,7 @@ export const NAV_SECTIONS: NavSection[] = [
     hiddenFromDepartments: [...SALES_DEPTS, ...FINANCE_DEPTS],
     items: [
       { label: "Ticket Center", icon: Inbox, to: "/unified-tickets" },
+      { label: "WhatsApp Support", icon: Phone, to: "/whatsapp-support" },
       { label: "Tickets (Legacy)", icon: Ticket, to: "/tickets" },
       { label: "Internal Tickets", icon: Ticket, to: "/internal-tickets" },
       { label: "CS Dashboard", icon: Headphones, to: "/cs-dashboard", hiddenFromDepartments: SEO_DEPTS },

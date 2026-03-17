@@ -31,6 +31,7 @@ import { useClientFinancials } from "@/hooks/useClientFinancials";
 import { ClientAccessHubTab } from "@/components/clients/access-hub/ClientAccessHubTab";
 import { WebsiteTreeTab } from "@/components/clients/WebsiteTreeTab";
 import { ClientProfileTab } from "@/components/clients/ClientProfileTab";
+import { ClientWhatsAppHistoryTab } from "@/components/clients/ClientWhatsAppHistoryTab";
 import { useSalesTeam } from "@/hooks/useSalesTeam";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, parseISO, isToday, isTomorrow, isPast } from "date-fns";
@@ -236,6 +237,7 @@ const ClientProfilePage = () => {
           <TabsTrigger value="tickets">Tickets</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="activity"><Clock className="h-3.5 w-3.5 mr-1" />Activity</TabsTrigger>
+          <TabsTrigger value="whatsapp"><MessageSquare className="h-3.5 w-3.5 mr-1" />WhatsApp</TabsTrigger>
         </TabsList>
 
         {/* ── Conversations / Notes ── */}
@@ -792,6 +794,13 @@ const ClientProfilePage = () => {
               <ClientActivityTimeline clientId={id} />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ── WhatsApp History ── */}
+        <TabsContent value="whatsapp">
+          {id && client && (
+            <ClientWhatsAppHistoryTab clientId={id} businessId={client.business_id} />
+          )}
         </TabsContent>
       </Tabs>
 
