@@ -112,6 +112,7 @@ import ContentManagementPage from "./pages/ContentManagementPage";
 import WebsiteDevStagesPage from "./pages/WebsiteDevStagesPage";
 import ActivityTimelinePage from "./pages/ActivityTimelinePage";
 import SuperAdminBusinessManagementPage from "./pages/SuperAdminBusinessManagementPage";
+import SuperAdminClientManagementPage from "./pages/SuperAdminClientManagementPage";
 import SystemHealthPage from "./pages/SystemHealthPage";
 import AdvocacyEnginePage from "./pages/AdvocacyEnginePage";
 import GovernanceDashboardPage from "./pages/GovernanceDashboardPage";
