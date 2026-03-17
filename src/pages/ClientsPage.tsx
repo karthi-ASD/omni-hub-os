@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo } from "react";
+import { SmartEmptyState } from "@/components/ui/smart-empty-state";
 import { useNavigate } from "react-router-dom";
 import { useClients, Client, ClientStatus } from "@/hooks/useClients";
 import { useAuth } from "@/contexts/AuthContext";
