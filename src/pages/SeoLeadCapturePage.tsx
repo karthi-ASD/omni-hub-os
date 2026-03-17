@@ -330,6 +330,7 @@ function FormBuilderTab({ project, businessId, forms, onRefresh }: { project: Se
   const getFormPayload = (formId: string) => JSON.stringify({
     form_id: formId,
     project_id: project.id,
+    api_key: project.api_key || "",
     name: "",
     email: "",
     phone: "",
