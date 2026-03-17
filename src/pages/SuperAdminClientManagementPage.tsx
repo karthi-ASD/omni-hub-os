@@ -63,6 +63,22 @@ const SuperAdminClientManagementPage = () => {
   // Bulk selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkFixLoading, setBulkFixLoading] = useState(false);
+
+  const handleBulkFixIsolation = async () => {
+    setBulkFixLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("bulk-fix-client-isolation");
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Isolation fix complete: ${data.fixed} fixed, ${data.errors || 0} errors out of ${data.total} clients.`);
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Bulk fix failed");
+    } finally {
+      setBulkFixLoading(false);
+    }
+  };
 
   const filteredAll = useMemo(() => {
     if (!search) return allClients;
