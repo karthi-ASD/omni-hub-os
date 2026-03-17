@@ -20,23 +20,30 @@ function extractDomain(url: string): string {
   }
 }
 
-function normalizePath(url: string, domain: string): string {
+/** Strict URL normalization: strips query, hash, trailing slash, lowercases */
+function cleanUrl(raw: string, domain: string): string {
   try {
-    const u = new URL(url);
+    const u = new URL(raw);
     if (u.origin !== new URL(domain).origin) return "";
-    return u.pathname.replace(/\/$/, "") || "/";
+    let path = u.pathname.split("?")[0].split("#")[0];
+    path = path.replace(/\/$/, "") || "/";
+    return path.toLowerCase();
   } catch {
-    return "";
+    // Handle relative paths
+    let p = raw.replace(domain, "");
+    p = p.split("?")[0].split("#")[0];
+    if (!p.startsWith("/")) p = "/" + p;
+    if (p !== "/" && p.endsWith("/")) p = p.slice(0, -1);
+    return p.toLowerCase();
   }
 }
 
 function buildHierarchy(urls: string[], domain: string): PageEntry[] {
   const paths = urls
-    .map((u) => normalizePath(u, domain))
+    .map((u) => cleanUrl(u, domain))
     .filter((p) => p !== "")
-    .filter((v, i, a) => a.indexOf(v) === i);
+    .filter((v, i, a) => a.indexOf(v) === i); // deduplicate
 
-  // Sort by depth then alphabetically
   paths.sort((a, b) => {
     const da = a.split("/").filter(Boolean).length;
     const db = b.split("/").filter(Boolean).length;
@@ -48,16 +55,20 @@ function buildHierarchy(urls: string[], domain: string): PageEntry[] {
 
   for (const path of paths) {
     const segments = path.split("/").filter(Boolean);
-    const level = segments.length === 0 ? 0 : segments.length;
+    const level = segments.length;
 
-    // Find parent
     let parentPath: string | null = null;
     if (segments.length > 0) {
       const parentSegments = segments.slice(0, -1);
       const candidate = parentSegments.length === 0 ? "/" : "/" + parentSegments.join("/");
-      parentPath = pathSet.has(candidate) ? domain + candidate : null;
-      // If no direct parent in set, link to home
-      if (!parentPath && path !== "/") parentPath = domain + "/";
+      if (pathSet.has(candidate)) {
+        parentPath = domain + candidate;
+      } else if (segments.length > 1) {
+        // Create synthetic parent path (don't fallback to home for deep pages)
+        parentPath = domain + "/" + segments.slice(0, -1).join("/");
+      } else if (path !== "/") {
+        parentPath = domain + "/";
+      }
     }
 
     const fullUrl = domain + (path === "/" ? "" : path);
@@ -67,12 +78,7 @@ function buildHierarchy(urls: string[], domain: string): PageEntry[] {
           .replace(/[-_]/g, " ")
           .replace(/\b\w/g, (c) => c.toUpperCase());
 
-    entries.push({
-      url: fullUrl,
-      parent_url: parentPath,
-      level,
-      page_title: title,
-    });
+    entries.push({ url: fullUrl, parent_url: parentPath, level, page_title: title });
   }
 
   return entries;
@@ -92,7 +98,6 @@ async function fetchSitemapXml(websiteUrl: string): Promise<string[]> {
     const xml = await res.text();
     if (!xml.includes("<url") && !xml.includes("<sitemap")) return [];
 
-    // Extract URLs from <loc> tags
     const urls: string[] = [];
     const locRegex = /<loc>\s*(.*?)\s*<\/loc>/gi;
     let match;
@@ -100,9 +105,8 @@ async function fetchSitemapXml(websiteUrl: string): Promise<string[]> {
       urls.push(match[1].trim());
     }
 
-    // Check if it's a sitemap index (contains nested sitemaps)
+    // Sitemap index detection
     if (xml.includes("<sitemapindex") && urls.length > 0) {
-      // Fetch first 3 sub-sitemaps
       const subUrls: string[] = [];
       for (const subSitemapUrl of urls.slice(0, 3)) {
         try {
@@ -153,13 +157,22 @@ async function discoverByLinkCrawl(websiteUrl: string): Promise<string[]> {
       let match;
       while ((match = hrefRegex.exec(html)) !== null) {
         let href = match[1];
-        if (href.startsWith("/")) href = domain + href;
-        const normalized = normalizePath(href, domain);
+
+        // Filter out invalid links
+        if (href.includes("mailto:") || href.includes("tel:") || href.includes("javascript:")) continue;
+
+        if (href.startsWith("/")) {
+          href = domain + href;
+        } else if (!href.startsWith(domain)) {
+          // Skip external domains
+          continue;
+        }
+
+        const normalized = cleanUrl(href, domain);
         if (normalized && normalized !== "") {
           const fullUrl = domain + normalized;
           if (!discovered.has(fullUrl) && discovered.size < 200) {
             discovered.add(fullUrl);
-            // Only crawl up to depth 3
             const depth = normalized.split("/").filter(Boolean).length;
             if (depth <= 3) queue.push(fullUrl);
           }
@@ -185,7 +198,6 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Verify user
     const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -225,7 +237,6 @@ Deno.serve(async (req) => {
     }
 
     const businessId = userProfile.business_id;
-    const domain = extractDomain(website_url);
 
     // Check cache: if last crawl < 24h ago, return cached
     const { data: existingPages } = await adminClient
@@ -249,7 +260,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`Crawling sitemap for ${domain}...`);
+    console.log(`Crawling sitemap for ${website_url}...`);
 
     // Step 1: Try sitemap.xml
     let urls = await fetchSitemapXml(website_url);
@@ -263,7 +274,7 @@ Deno.serve(async (req) => {
     }
 
     if (urls.length === 0) {
-      // At minimum add the home page
+      const domain = extractDomain(website_url);
       urls = [domain + "/"];
       method = "manual";
     }
@@ -271,10 +282,16 @@ Deno.serve(async (req) => {
     // Limit to 200 pages max
     urls = urls.slice(0, 200);
 
-    // Build hierarchy
+    const domain = extractDomain(website_url);
     const pages = buildHierarchy(urls, domain);
 
-    // Clear existing and insert new
+    // Safe delete + insert: backup existing data first
+    const { data: backupRows } = await adminClient
+      .from("client_website_pages")
+      .select("*")
+      .eq("client_id", client_id);
+
+    // Delete existing
     await adminClient
       .from("client_website_pages")
       .delete()
@@ -294,8 +311,13 @@ Deno.serve(async (req) => {
       const { error: insertErr } = await adminClient
         .from("client_website_pages")
         .insert(rows);
+
       if (insertErr) {
-        console.error("Insert error:", insertErr);
+        console.error("Insert error, restoring backup:", insertErr);
+        // Restore backup on failure
+        if (backupRows && backupRows.length > 0) {
+          await adminClient.from("client_website_pages").insert(backupRows);
+        }
         throw insertErr;
       }
     }
