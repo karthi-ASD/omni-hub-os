@@ -17,12 +17,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
   const [securityCheck, setSecurityCheck] = useState<"loading" | "pass" | "required">("pass");
 
   useEffect(() => {
+    console.log("[Mount] ProtectedRoute");
+    return () => console.log("[Unmount] ProtectedRoute");
+  }, []);
+
+  useEffect(() => {
     if (loading || tenantValidationError) return;
     if (!user) {
       setSecurityCheck("pass");
       return;
     }
-    checkFirstLoginSecurity();
+    void checkFirstLoginSecurity();
   }, [user?.id, loading, tenantValidationError]);
 
   const checkFirstLoginSecurity = async () => {

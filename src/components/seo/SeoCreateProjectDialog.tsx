@@ -35,6 +35,11 @@ const defaultForm = {
 };
 
 export function SeoCreateProjectDialog({ open, onOpenChange, clients, onCreate }: Props) {
+  useEffect(() => {
+    console.log("[Mount] SeoCreateProjectDialog");
+    return () => console.log("[Unmount] SeoCreateProjectDialog");
+  }, []);
+
   const [form, setForm] = useState(defaultForm);
   const [submitting, setSubmitting] = useState(false);
   const { isDirty, isSaving, clearDraft } = useUnsavedChanges("seo:new", form, { enabled: open });
