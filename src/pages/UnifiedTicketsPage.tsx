@@ -138,11 +138,11 @@ const UnifiedTicketsPage = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
         <StatCard label="Open" value={stats.open} icon={Inbox} gradient="from-primary to-accent" />
         <StatCard label="In Progress" value={stats.in_progress} icon={Clock} gradient="from-[hsl(var(--warning))] to-orange-500" />
+        <StatCard label="Unassigned" value={(stats as any).unassigned || 0} icon={Users} gradient="from-purple-500 to-violet-600" />
         <StatCard label="SLA Breached" value={(stats as any).sla_breached || 0} icon={AlertTriangle} gradient="from-destructive to-red-600" />
         <StatCard label="Unmatched" value={stats.unmatched} icon={LinkIcon} gradient="from-destructive to-red-400" />
         <StatCard label="Escalated" value={stats.escalated} icon={AlertTriangle} gradient="from-destructive to-orange-600" />
         <StatCard label="Resolved" value={stats.resolved} icon={CheckCircle} gradient="from-[hsl(var(--success))] to-emerald-500" />
-        <StatCard label="Closed" value={stats.closed} icon={CheckCircle} gradient="from-muted to-muted" />
         <StatCard label="Total" value={stats.total} icon={Ticket} gradient="from-secondary to-muted" />
       </div>
 
