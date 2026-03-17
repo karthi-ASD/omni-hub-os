@@ -31,6 +31,10 @@ interface AuthContextType {
   isSuperAdmin: boolean;
   isBusinessAdmin: boolean;
   isHRManager: boolean;
+  /** True when the logged-in user is a client portal user */
+  isClientUser: boolean;
+  /** The client_id this user is linked to (from client_users) */
+  clientId: string | null;
   /** All businesses — only populated for super_admin */
   allBusinesses: TenantBusiness[];
   /** Selected tenant for super_admin context switching */
