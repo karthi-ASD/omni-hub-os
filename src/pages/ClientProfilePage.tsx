@@ -62,7 +62,7 @@ const convTypeIcon: Record<string, React.ElementType> = {
   email: Mail,
 };
 
-type ClientFetchState = "loading" | "ready" | "archived" | "no_access" | "not_found" | "invalid_id";
+type ClientFetchState = "loading" | "ready" | "archived" | "no_access" | "not_found" | "invalid_id" | "fetch_error";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
