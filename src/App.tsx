@@ -246,6 +246,7 @@ import SalesClientsPage from "./pages/SalesClientsPage";
 import SalesProposalsPage from "./pages/SalesProposalsPage";
 import SalesActivitiesPage from "./pages/SalesActivitiesPage";
 import SalesToolsPage from "./pages/SalesToolsPage";
+import SeoLeadCapturePage from "./pages/SeoLeadCapturePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
