@@ -38,6 +38,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const SeoProjectDetailPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { profile } = useAuth();
   const { projects } = useSeoProjects();
   const project = projects.find(p => p.id === projectId);
