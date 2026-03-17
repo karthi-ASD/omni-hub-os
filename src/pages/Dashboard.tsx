@@ -1,4 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
+import ClientDashboardPage from "@/pages/ClientDashboardPage";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
@@ -59,10 +60,13 @@ const KPICard = ({ stat, loading, index }: { stat: StatCard; loading: boolean; i
 
 const Dashboard = () => {
   usePageTitle("Dashboard", "Your NextWeb OS command center — real-time stats, quick actions, and activity feed.");
-  const { profile, isSuperAdmin, hasRole } = useAuth();
+  const { profile, isSuperAdmin, hasRole, isClientUser } = useAuth();
   const { stats, loading } = useDashboardStats();
   const { departmentName } = useEmployeeDepartment();
   const navigate = useNavigate();
+
+  // Client users get a completely different dashboard
+  if (isClientUser) return <ClientDashboardPage />;
   const isManager = hasRole("manager");
   const deptLower = departmentName?.toLowerCase() ?? "";
   const isFinanceDept = deptLower.includes("finance") || deptLower.includes("accounts");
