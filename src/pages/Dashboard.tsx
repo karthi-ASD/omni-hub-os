@@ -16,6 +16,7 @@ import {
   ArrowUpRight, ArrowDownRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 interface StatCard {
   label: string;
@@ -59,6 +60,11 @@ const KPICard = ({ stat, loading, index }: { stat: StatCard; loading: boolean; i
 );
 
 const Dashboard = () => {
+  useEffect(() => {
+    console.log("[Mount] Dashboard");
+    return () => console.log("[Unmount] Dashboard");
+  }, []);
+
   usePageTitle("Dashboard", "Your NextWeb OS command center — real-time stats, quick actions, and activity feed.");
   const { profile, isSuperAdmin, hasRole, isClientUser } = useAuth();
   const { stats, loading } = useDashboardStats();

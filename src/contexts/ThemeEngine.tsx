@@ -752,14 +752,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const lightThemes = useMemo(() => THEMES.filter(t => t.category === "light"), []);
   const darkThemes = useMemo(() => THEMES.filter(t => t.category === "dark"), []);
 
+  const contextValue = useMemo(() => ({
+    currentTheme,
+    setThemeById,
+    isLocked,
+    lockTheme,
+    allThemes: THEMES,
+    lightThemes,
+    darkThemes,
+    rotateMode,
+    setRotateMode,
+    rotateIntervalMs,
+    setRotateIntervalMs,
+    isDarkTheme,
+  }), [currentTheme, setThemeById, isLocked, lockTheme, lightThemes, darkThemes, rotateMode, setRotateMode, rotateIntervalMs, setRotateIntervalMs, isDarkTheme]);
+
   return (
-    <ThemeContext.Provider value={{
-      currentTheme, setThemeById, isLocked, lockTheme,
-      allThemes: THEMES, lightThemes, darkThemes,
-      rotateMode, setRotateMode,
-      rotateIntervalMs, setRotateIntervalMs,
-      isDarkTheme,
-    }}>
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   );

@@ -43,8 +43,15 @@ export const EditClientDialog: React.FC<EditClientDialogProps> = ({
   const { isDirty, isSaving, clearDraft } = useUnsavedChanges(`client:${client.id}`, form, { enabled: open });
 
   useEffect(() => {
-    if (open && client) {
-      setForm({
+    console.log("[Mount] EditClientDialog");
+    return () => console.log("[Unmount] EditClientDialog");
+  }, []);
+
+  useEffect(() => {
+    if (!open || !client) return;
+
+    setForm((current) => {
+      const next = {
         contact_name: client.contact_name || "",
         company_name: client.company_name || "",
         email: client.email || "",
@@ -55,9 +62,12 @@ export const EditClientDialog: React.FC<EditClientDialogProps> = ({
         city: client.city || "",
         state: client.state || "",
         country: client.country || "",
-      });
-    }
-  }, [open, client]);
+      };
+
+      const hasUnsavedInput = Object.values(current).some(Boolean);
+      return hasUnsavedInput ? current : next;
+    });
+  }, [open, client.id]);
 
   const handleSave = async () => {
     if (!form.contact_name || !form.email) {

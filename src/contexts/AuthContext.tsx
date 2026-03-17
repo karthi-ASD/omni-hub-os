@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -58,6 +58,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const isHydratingRef = React.useRef(false);
   const hasHydratedRef = React.useRef(false);
+  const hasInitializedRef = React.useRef(false);
+  const sessionRef = React.useRef<Session | null>(null);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -170,7 +172,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const clearAllUserState = () => {
+  const clearAllUserState = useCallback(() => {
     setRawProfile(null);
     setRoles([]);
     setAllBusinesses([]);
@@ -179,7 +181,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTenantValidationError(null);
     hasHydratedRef.current = false;
     isHydratingRef.current = false;
-  };
+  }, []);
+
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   useEffect(() => {
     let isMounted = true;
@@ -193,12 +199,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     };
 
-    const hydrateUserState = async (nextSession: Session) => {
+    const hydrateUserState = async (nextSession: Session, source: "initial" | "sign_in") => {
       if (isHydratingRef.current) {
-        console.log("[Auth] Hydration already in progress — skipping");
+        console.log("[Auth] hydrate skipped — already in progress", { source, userId: nextSession.user.id });
         return;
       }
+
       isHydratingRef.current = true;
+      console.log("[Auth] hydrate start", { source, userId: nextSession.user.id });
 
       try {
         setTenantValidationError(null);
@@ -224,73 +232,84 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         hasHydratedRef.current = true;
       } finally {
         isHydratingRef.current = false;
+        console.log("[Auth] hydrate end", { source, userId: nextSession.user.id });
         finalizeLoading();
       }
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, nextSession) => {
-        console.log("[Auth Event]", event);
+    const queueHydration = (nextSession: Session, source: "initial" | "sign_in") => {
+      window.setTimeout(() => {
+        if (isMounted) void hydrateUserState(nextSession, source);
+      }, 0);
+    };
 
-        switch (event) {
-          case "TOKEN_REFRESHED":
-            // Silent update — NEVER reset state or re-hydrate
+    const handleWindowFocus = () => {
+      console.log("WINDOW FOCUS TRIGGERED");
+    };
+
+    const handleVisibilityChange = () => {
+      console.log("[Visibility]", document.visibilityState);
+    };
+
+    window.addEventListener("focus", handleWindowFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    console.log("[Mount] AuthProvider");
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      console.log("[Auth Event]", event);
+
+      switch (event) {
+        case "TOKEN_REFRESHED":
+          hasInitializedRef.current = true;
+          console.log("[Auth] TOKEN_REFRESHED — silent update only");
+          if (!sessionRef.current && nextSession) {
             setSession(nextSession);
-            setUser(nextSession?.user ?? null);
-            break;
+            setUser(nextSession.user);
+          }
+          break;
 
-          case "INITIAL_SESSION":
-            if (hasHydratedRef.current) {
-              console.log("[Auth] INITIAL_SESSION skipped — already hydrated");
-              break;
-            }
-            setSession(nextSession);
-            setUser(nextSession?.user ?? null);
-            if (nextSession?.user) {
-              setLoading(true);
-              setTimeout(() => {
-                if (isMounted) void hydrateUserState(nextSession);
-              }, 0);
-            } else {
-              finalizeLoading();
-            }
-            break;
+        case "INITIAL_SESSION":
+          console.log("[Auth] INITIAL_SESSION ignored — getSession is authoritative");
+          break;
 
-          case "SIGNED_IN":
-            setSession(nextSession);
-            setUser(nextSession?.user ?? null);
-            if (nextSession?.user) {
-              clearAllUserState();
-              setLoading(true);
-              setTimeout(() => {
-                if (isMounted) void hydrateUserState(nextSession);
-              }, 0);
-            }
-            break;
-
-          case "SIGNED_OUT":
-            setSession(null);
-            setUser(null);
+        case "SIGNED_IN":
+          hasInitializedRef.current = true;
+          setSession(nextSession);
+          setUser(nextSession?.user ?? null);
+          if (nextSession?.user) {
             clearAllUserState();
+            setLoading(true);
+            queueHydration(nextSession, "sign_in");
+          } else {
             finalizeLoading();
-            break;
+          }
+          break;
 
-          default:
-            // Unknown event — do nothing
-            break;
-        }
+        case "SIGNED_OUT":
+          hasInitializedRef.current = true;
+          setSession(null);
+          setUser(null);
+          clearAllUserState();
+          finalizeLoading();
+          break;
+
+        default:
+          break;
       }
-    );
+    });
 
     supabase.auth.getSession()
       .then(({ data: { session: currentSession } }) => {
-        if (hasHydratedRef.current) return;
+        if (hasInitializedRef.current) return;
+
+        hasInitializedRef.current = true;
         setLoading(true);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
 
         if (currentSession?.user) {
-          void hydrateUserState(currentSession);
+          queueHydration(currentSession, "initial");
         } else {
           setTenantValidationError(null);
           finalizeLoading();
@@ -299,30 +318,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .catch(() => finalizeLoading());
 
     return () => {
+      console.log("[Unmount] AuthProvider");
       isMounted = false;
       window.clearTimeout(forceStopTimer);
+      window.removeEventListener("focus", handleWindowFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       subscription.unsubscribe();
     };
-  }, []);
+  }, [clearAllUserState]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
-    setRawProfile(null);
-    setRoles([]);
-    setAllBusinesses([]);
-    setSelectedTenantId(null);
-    setClientUserId(null);
-    setTenantValidationError(null);
-  };
+    clearAllUserState();
+  }, [clearAllUserState]);
 
-  const hasRole = (role: AppRole) => roles.includes(role);
+  const hasRole = useCallback((role: AppRole) => roles.includes(role), [roles]);
   const isSuperAdmin = hasRole("super_admin");
   const isBusinessAdmin = hasRole("business_admin");
   const isHRManager = hasRole("hr_manager");
   const isClientUser = !!clientUserId && !isSuperAdmin;
   const clientId = clientUserId;
+  const selectTenant = useCallback((id: string | null) => setSelectedTenantId(id), []);
 
   // KEY FIX: For super_admin, override profile.business_id with selected tenant
   // This makes ALL hooks that use profile.business_id work automatically
@@ -335,14 +353,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     : null;
 
-  return (
-    <AuthContext.Provider value={{
-      session, user, profile, roles, loading, tenantValidationError, signOut,
-      hasRole, isSuperAdmin, isBusinessAdmin, isHRManager,
-      isClientUser, clientId,
-      allBusinesses, selectedTenantId, selectTenant: setSelectedTenantId,
-    }}>
+  const contextValue = useMemo(() => ({
+    session,
+    user,
+    profile,
+    roles,
+    loading,
+    tenantValidationError,
+    signOut,
+    hasRole,
+    isSuperAdmin,
+    isBusinessAdmin,
+    isHRManager,
+    isClientUser,
+    clientId,
+    allBusinesses,
+    selectedTenantId,
+    selectTenant,
+  }), [session, user, profile, roles, loading, tenantValidationError, signOut, hasRole, isSuperAdmin, isBusinessAdmin, isHRManager, isClientUser, clientId, allBusinesses, selectedTenantId, selectTenant]);
 
+  return (
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

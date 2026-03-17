@@ -1,4 +1,5 @@
 import { Outlet } from "react-router-dom";
+import { useEffect } from "react";
 import { BottomNav } from "@/components/mobile/BottomNav";
 import { FloatingActionButton } from "@/components/mobile/FloatingActionButton";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
@@ -13,6 +14,11 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { BroadcastPopup } from "@/components/notifications/BroadcastPopup";
 
 const AppShell = () => {
+  useEffect(() => {
+    console.log("[Mount] AppShell");
+    return () => console.log("[Unmount] AppShell");
+  }, []);
+
   const { profile } = useAuth();
   const businessId = profile?.business_id;
   const isMobile = useIsMobile();

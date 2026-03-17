@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import { DraftRestoreBanner, CrossTabConflictBanner } from "@/components/ui/draft-restore-banner";
 import { AutoSaveIndicator } from "@/components/ui/auto-save-indicator";
@@ -92,6 +92,10 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
   onSubmit,
   defaultValues,
 }) => {
+  useEffect(() => {
+    console.log("[Mount] UnifiedClientForm");
+    return () => console.log("[Unmount] UnifiedClientForm");
+  }, []);
   const [form, setForm] = useState<FormState>({
     ...EMPTY_FORM,
     contact_name: defaultValues?.contact_name || "",
