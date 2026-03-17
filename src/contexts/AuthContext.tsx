@@ -323,7 +323,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       subscription.unsubscribe();
     };
-  }, [clearAllUserState]);
+  }, []);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
