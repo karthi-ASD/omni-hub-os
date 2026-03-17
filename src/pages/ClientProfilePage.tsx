@@ -219,21 +219,23 @@ const ClientProfilePage = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="details" className="space-y-4">
-        <TabsList className="grid grid-cols-4 lg:grid-cols-14 xl:grid-cols-14">
+        <TabsList className="flex flex-wrap gap-1 h-auto p-1">
           <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsTrigger value="profile"><User className="h-3.5 w-3.5 mr-1" />Profile</TabsTrigger>
+          <TabsTrigger value="website-tree"><GitBranch className="h-3.5 w-3.5 mr-1" />Site Map</TabsTrigger>
           <TabsTrigger value="conversations"><MessageSquare className="h-3.5 w-3.5 mr-1" />Notes</TabsTrigger>
           <TabsTrigger value="callbacks"><PhoneCall className="h-3.5 w-3.5 mr-1" />Callbacks</TabsTrigger>
           <TabsTrigger value="onboarding"><ClipboardCheck className="h-3.5 w-3.5 mr-1" />Onboarding</TabsTrigger>
           <TabsTrigger value="finance"><DollarSign className="h-3.5 w-3.5 mr-1" />Finance</TabsTrigger>
           <TabsTrigger value="services">Services</TabsTrigger>
-          <TabsTrigger value="access" className="hidden lg:inline-flex"><Key className="h-3.5 w-3.5 mr-1" />Access</TabsTrigger>
-          <TabsTrigger value="websites" className="hidden lg:inline-flex">Websites</TabsTrigger>
-          <TabsTrigger value="seo" className="hidden lg:inline-flex">SEO</TabsTrigger>
-          <TabsTrigger value="apps" className="hidden lg:inline-flex">Apps</TabsTrigger>
-          <TabsTrigger value="billing" className="hidden lg:inline-flex">Billing</TabsTrigger>
-          <TabsTrigger value="tickets" className="hidden lg:inline-flex">Tickets</TabsTrigger>
-          <TabsTrigger value="timeline" className="hidden lg:inline-flex">Timeline</TabsTrigger>
-          <TabsTrigger value="activity" className="hidden lg:inline-flex"><Clock className="h-3.5 w-3.5 mr-1" />Activity</TabsTrigger>
+          <TabsTrigger value="access"><Key className="h-3.5 w-3.5 mr-1" />Access</TabsTrigger>
+          <TabsTrigger value="websites">Websites</TabsTrigger>
+          <TabsTrigger value="seo">SEO</TabsTrigger>
+          <TabsTrigger value="apps">Apps</TabsTrigger>
+          <TabsTrigger value="billing">Billing</TabsTrigger>
+          <TabsTrigger value="tickets">Tickets</TabsTrigger>
+          <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          <TabsTrigger value="activity"><Clock className="h-3.5 w-3.5 mr-1" />Activity</TabsTrigger>
         </TabsList>
 
         {/* ── Conversations / Notes ── */}
