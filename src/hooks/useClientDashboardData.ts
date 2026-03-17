@@ -55,6 +55,7 @@ export interface ClientDashboardData {
   totalCustomers: number;
   openTickets: number;
   openInvoices: number;
+  totalInvoices: number;
   outstandingAmount: number;
   totalPaid: number;
   // SEO
