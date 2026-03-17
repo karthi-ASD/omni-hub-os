@@ -125,7 +125,43 @@ const SuperAdminClientManagementPage = () => {
     setMergeSearchB("");
   };
 
-  const statusBadge = (status: string) => {
+  const handleResetPassword = async () => {
+    if (!resetTarget || !newPassword || newPassword !== confirmPassword) return;
+    if (newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    setResetLoading(true);
+    try {
+      const { data: { session } } = await (await import("@/integrations/supabase/client")).supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reset-client-password`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ client_id: resetTarget.id, new_password: newPassword }),
+        }
+      );
+      const result = await res.json();
+      if (!res.ok) {
+        toast.error(result.error || "Failed to reset password");
+      } else {
+        toast.success("Password updated successfully.");
+        setResetTarget(null);
+        setNewPassword("");
+        setConfirmPassword("");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An error occurred");
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+
     const colors: Record<string, string> = {
       active: "bg-green-500/10 text-green-600",
       pending: "bg-yellow-500/10 text-yellow-600",
