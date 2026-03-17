@@ -163,6 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setRoles([]);
           setAllBusinesses([]);
           setSelectedTenantId(null);
+          setClientUserId(null);
           finalizeLoading();
         }
       }
