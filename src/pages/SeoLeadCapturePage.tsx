@@ -24,6 +24,7 @@ interface SeoProject {
   project_name: string;
   website_domain: string;
   client_id: string;
+  api_key?: string;
   clients?: { contact_name: string; phone: string; email: string; whatsapp_number?: string } | null;
 }
 
