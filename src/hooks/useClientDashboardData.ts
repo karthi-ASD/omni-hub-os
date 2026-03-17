@@ -139,7 +139,7 @@ export function useClientDashboardData() {
         .from("seo_projects")
         .select("id, project_name, service_package, contract_start, project_status")
         .eq("client_id", clientId)
-        .eq("project_status", "active")
+        .in("project_status", ["active", "ACTIVE", "Active"])
         .limit(1)
         .maybeSingle();
 
