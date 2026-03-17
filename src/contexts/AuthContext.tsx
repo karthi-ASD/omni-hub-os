@@ -173,7 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const clearAllUserState = () => {
+  const clearAllUserState = useCallback(() => {
     setRawProfile(null);
     setRoles([]);
     setAllBusinesses([]);
@@ -182,7 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTenantValidationError(null);
     hasHydratedRef.current = false;
     isHydratingRef.current = false;
-  };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
