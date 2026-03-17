@@ -117,6 +117,7 @@ import SuperAdminBusinessManagementPage from "./pages/SuperAdminBusinessManageme
 import SuperAdminClientManagementPage from "./pages/SuperAdminClientManagementPage";
 import SystemHealthPage from "./pages/SystemHealthPage";
 import FeatureRegistryPage from "./pages/FeatureRegistryPage";
+import ClientDataIntegrityPage from "./pages/ClientDataIntegrityPage";
 import AdvocacyEnginePage from "./pages/AdvocacyEnginePage";
 import GovernanceDashboardPage from "./pages/GovernanceDashboardPage";
 import TasksPage from "./pages/TasksPage";
@@ -709,6 +710,9 @@ const App = () => (
               } />
               <Route path="/feature-registry" element={
                 <ProtectedRoute requiredRoles={["super_admin"]}><FeatureRegistryPage /></ProtectedRoute>
+              } />
+              <Route path="/client-data-integrity" element={
+                <ProtectedRoute requiredRoles={["super_admin"]}><ClientDataIntegrityPage /></ProtectedRoute>
               } />
               <Route path="/advocacy-engine" element={<AdvocacyEnginePage />} />
               <Route path="/whatsapp-support" element={<WhatsAppSupportPage />} />

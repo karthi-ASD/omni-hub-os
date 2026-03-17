@@ -208,6 +208,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "System Health", icon: Activity, to: "/system-health", roles: ["super_admin"] },
       { label: "Integrations", icon: Plug, to: "/integrations-overview", roles: ["super_admin"] },
       { label: "Feature Registry", icon: ClipboardCheck, to: "/feature-registry", roles: ["super_admin"] },
+      { label: "Data Integrity", icon: Shield, to: "/client-data-integrity", roles: ["super_admin"] },
     ],
   },
 ];
