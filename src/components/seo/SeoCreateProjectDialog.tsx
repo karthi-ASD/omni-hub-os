@@ -53,6 +53,7 @@ export function SeoCreateProjectDialog({ open, onOpenChange, clients, onCreate }
       contract_end: form.contract_end || undefined,
     });
     setForm(defaultForm);
+    clearDraft();
     setSubmitting(false);
     onOpenChange(false);
   };
