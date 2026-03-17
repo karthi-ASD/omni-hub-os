@@ -115,7 +115,7 @@ export function useClients(options?: UseClientsOptions) {
     const statusValues = ["active", "cancelled", "pending", "prospect", "suspended", "reverted"];
     const statusCountResults: Record<string, number> = {};
     await Promise.all(statusValues.map(async (s) => {
-      let sq = supabase.from("clients").select("id", { count: "exact", head: true }).eq("client_status", s);
+      let sq = supabase.from("clients").select("id", { count: "exact", head: true }).eq("business_id", bid).eq("client_status", s);
       if (searchTerm) {
         sq = sq.or(`contact_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,company_name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
       }
