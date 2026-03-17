@@ -119,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const hydrateUserState = async (nextSession: Session) => {
       try {
-        const [, userRoles] = await Promise.all([
+        const [profileData, userRoles] = await Promise.all([
           fetchProfile(nextSession.user.id),
           fetchRoles(nextSession.user.id),
         ]);
@@ -132,6 +132,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .eq("is_primary", true)
           .maybeSingle();
         setClientUserId(clientLink?.client_id || null);
+
+        // Client context validation: if client user, verify profile.business_id
+        // matches client_business_id. Auto-correct if mismatched.
+        if (clientLink?.client_id && profileData?.business_id) {
+          const { data: clientRecord } = await supabase
+            .from("clients")
+            .select("client_business_id, business_id")
+            .eq("id", clientLink.client_id)
+            .maybeSingle();
+
+          if (clientRecord?.client_business_id &&
+              profileData.business_id !== clientRecord.client_business_id) {
+            // Auto-correct: update profile to correct tenant
+            await supabase
+              .from("profiles")
+              .update({ business_id: clientRecord.client_business_id } as any)
+              .eq("user_id", nextSession.user.id);
+            // Re-fetch profile with corrected business_id
+            await fetchProfile(nextSession.user.id);
+          }
+        }
 
         if (userRoles.includes("super_admin")) {
           const biz = await fetchBusinesses();

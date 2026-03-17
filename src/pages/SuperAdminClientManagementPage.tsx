@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Search, Trash2, RotateCcw, AlertTriangle, Merge, Eye, Pencil, Users, UserX, GitMerge, KeyRound, UserPlus, Loader2, ShieldCheck } from "lucide-react";
+import { Search, Trash2, RotateCcw, AlertTriangle, Merge, Eye, Pencil, Users, UserX, GitMerge, KeyRound, UserPlus, Loader2, ShieldCheck, ShieldAlert } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { StatCard } from "@/components/ui/stat-card";
 import { format } from "date-fns";
@@ -63,6 +63,22 @@ const SuperAdminClientManagementPage = () => {
   // Bulk selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkFixLoading, setBulkFixLoading] = useState(false);
+
+  const handleBulkFixIsolation = async () => {
+    setBulkFixLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("bulk-fix-client-isolation");
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Isolation fix complete: ${data.fixed} fixed, ${data.errors || 0} errors out of ${data.total} clients.`);
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Bulk fix failed");
+    } finally {
+      setBulkFixLoading(false);
+    }
+  };
 
   const filteredAll = useMemo(() => {
     if (!search) return allClients;
@@ -271,6 +287,13 @@ const SuperAdminClientManagementPage = () => {
         <StatCard label="Total Clients" value={allClients.length} icon={Users} gradient="from-neon-green to-success" />
         <StatCard label="Deleted Clients" value={deletedClients.length} icon={UserX} gradient="from-destructive to-red-400" />
         <StatCard label="Merged Clients" value={allClients.filter(c => c.client_status === "merged").length} icon={GitMerge} gradient="from-neon-purple to-primary" />
+      </div>
+
+      <div className="flex items-center gap-3">
+        <Button variant="outline" onClick={handleBulkFixIsolation} disabled={bulkFixLoading} className="gap-2 border-orange-500/30 text-orange-600 hover:bg-orange-500/10">
+          {bulkFixLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldAlert className="h-4 w-4" />}
+          Bulk Fix Client Isolation
+        </Button>
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
