@@ -156,6 +156,7 @@ const SeoCampaignDetailPage = () => {
             <TabsTrigger value="reports" className="gap-1.5 text-xs"><BarChart3 className="h-3 w-3" /> Reports</TabsTrigger>
             <TabsTrigger value="comms" className="gap-1.5 text-xs"><MessageSquare className="h-3 w-3" /> Comms</TabsTrigger>
             <TabsTrigger value="website-tree" className="gap-1.5 text-xs"><Globe className="h-3 w-3" /> Website Tree</TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-1.5 text-xs"><BarChart3 className="h-3 w-3" /> Analytics</TabsTrigger>
           </TabsList>
         </div>
 
