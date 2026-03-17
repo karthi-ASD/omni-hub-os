@@ -192,6 +192,7 @@ import ClientWebsiteStructurePage from "./pages/ClientWebsiteStructurePage";
 import ClientWebsitePerformancePage from "./pages/ClientWebsitePerformancePage";
 import ClientPerformanceIntelligencePage from "./pages/ClientPerformanceIntelligencePage";
 import ClientLocalPresencePage from "./pages/ClientLocalPresencePage";
+import ClientLeadsDashboardPage from "./pages/ClientLeadsDashboardPage";
 import IntegrationsOverviewPage from "./pages/IntegrationsOverviewPage";
 import TeamHierarchyPage from "./pages/TeamHierarchyPage";
 import CrossDeptRequestsPage from "./pages/CrossDeptRequestsPage";
@@ -573,6 +574,7 @@ const App = () => (
               <Route path="/client-website-performance" element={<ClientWebsitePerformancePage />} />
                <Route path="/client-performance-intelligence" element={<ClientPerformanceIntelligencePage />} />
                <Route path="/client-local-presence" element={<ClientLocalPresencePage />} />
+               <Route path="/client-leads-dashboard" element={<ClientLeadsDashboardPage />} />
               <Route path="/my-appointments" element={<CustomerAppointmentPage />} />
               <Route path="/staff-app" element={<StaffMobileAppPage />} />
               <Route path="/hr/departments" element={

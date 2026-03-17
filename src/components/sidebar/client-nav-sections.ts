@@ -1,7 +1,7 @@
 import {
   Home, Users, Receipt, Search, BarChart3, Ticket,
   Target, Phone, Settings, Briefcase, Calendar,
-  Building2, GitBranch, TrendingUp, Zap, MapPin,
+  Building2, GitBranch, TrendingUp, Zap, MapPin, Megaphone,
 } from "lucide-react";
 import type { NavSection } from "./nav-sections";
 
@@ -18,6 +18,7 @@ export const CLIENT_NAV_SECTIONS: NavSection[] = [
       { label: "Support Tickets", icon: Ticket, to: "/unified-tickets" },
       { label: "Website Intelligence", icon: GitBranch, to: "/client-website-structure" },
       { label: "Local Presence", icon: MapPin, to: "/client-local-presence" },
+      { label: "Lead Dashboard", icon: Megaphone, to: "/client-leads-dashboard" },
     ],
   },
   {

@@ -24,6 +24,7 @@ interface SeoProject {
   project_name: string;
   website_domain: string;
   client_id: string;
+  api_key?: string;
   clients?: { contact_name: string; phone: string; email: string; whatsapp_number?: string } | null;
 }
 
@@ -71,7 +72,7 @@ export default function SeoLeadCapturePage() {
   const fetchProjects = async () => {
     const { data } = await supabase
       .from("seo_projects")
-      .select("id, project_name, website_domain, client_id, clients(contact_name, phone, email, whatsapp_number)")
+      .select("id, project_name, website_domain, client_id, api_key, clients(contact_name, phone, email, whatsapp_number)")
       .eq("business_id", profile!.business_id!)
       .eq("project_status", "active")
       .order("project_name");
@@ -329,6 +330,7 @@ function FormBuilderTab({ project, businessId, forms, onRefresh }: { project: Se
   const getFormPayload = (formId: string) => JSON.stringify({
     form_id: formId,
     project_id: project.id,
+    api_key: project.api_key || "",
     name: "",
     email: "",
     phone: "",
@@ -416,12 +418,15 @@ function ApiTrackingTab({ project }: { project: SeoProject }) {
   const formEndpoint = `${supabaseUrl}/functions/v1/seo-lead-capture`;
   const callEndpoint = `${supabaseUrl}/functions/v1/seo-call-click`;
 
+  const apiKey = project.api_key || "";
+
   const formPayload = JSON.stringify({
     name: "John Doe",
     email: "john@example.com",
     phone: "0412345678",
     message: "I need SEO help",
     project_id: project.id,
+    api_key: apiKey,
     source: "form"
   }, null, 2);
 
@@ -433,6 +438,7 @@ document.querySelectorAll('a[href^="tel:"]').forEach(link => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         project_id: '${project.id}',
+        api_key: '${apiKey}',
         source: 'call_click',
         page_url: window.location.href
       })
@@ -459,6 +465,7 @@ document.querySelectorAll('a[href^="tel:"]').forEach(link => {
           phone: "0400000000",
           message: "This is a test lead from the dashboard",
           project_id: project.id,
+          api_key: project.api_key || "",
           source: "form",
         }),
       });
@@ -476,6 +483,20 @@ document.querySelectorAll('a[href^="tel:"]').forEach(link => {
 
   return (
     <div className="mt-4 space-y-6">
+      {/* API Key */}
+      <Card>
+        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><ShieldCheck className="h-4 w-4" />API Key (Required for all requests)</CardTitle></CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-xs text-muted-foreground">Include this key in every API request as <code className="bg-muted px-1 rounded">api_key</code> in the JSON body.</p>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 text-xs bg-muted p-2 rounded font-mono">{apiKey || "Generating..."}</code>
+            <Button variant="outline" size="sm" onClick={() => copyText(apiKey, "api-key")}>
+              {copied === "api-key" ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Globe className="h-4 w-4" />Form API Endpoint</CardTitle></CardHeader>
         <CardContent className="space-y-3">

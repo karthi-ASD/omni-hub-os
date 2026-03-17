@@ -18282,6 +18282,8 @@ export type Database = {
           automation_type: string
           business_id: string
           created_at: string | null
+          error_message: string | null
+          execution_time_ms: number | null
           id: string
           lead_id: string | null
           response_json: Json | null
@@ -18292,6 +18294,8 @@ export type Database = {
           automation_type: string
           business_id: string
           created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
           id?: string
           lead_id?: string | null
           response_json?: Json | null
@@ -18302,6 +18306,8 @@ export type Database = {
           automation_type?: string
           business_id?: string
           created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
           id?: string
           lead_id?: string | null
           response_json?: Json | null
@@ -20476,6 +20482,7 @@ export type Database = {
       }
       seo_projects: {
         Row: {
+          api_key: string | null
           assigned_content_writer_id: string | null
           billing_type: string
           business_id: string
@@ -20505,6 +20512,7 @@ export type Database = {
           website_domain: string
         }
         Insert: {
+          api_key?: string | null
           assigned_content_writer_id?: string | null
           billing_type?: string
           business_id: string
@@ -20534,6 +20542,7 @@ export type Database = {
           website_domain: string
         }
         Update: {
+          api_key?: string | null
           assigned_content_writer_id?: string | null
           billing_type?: string
           business_id?: string

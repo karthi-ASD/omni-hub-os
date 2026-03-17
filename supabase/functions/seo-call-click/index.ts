@@ -10,10 +10,10 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { project_id, page_url } = body;
+    const { project_id, page_url, api_key } = body;
 
     if (!project_id) {
-      return new Response(JSON.stringify({ error: "project_id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return json({ error: "project_id is required" }, 400);
     }
 
     const supabase = createClient(
@@ -23,12 +23,30 @@ Deno.serve(async (req) => {
 
     const { data: project, error: projErr } = await supabase
       .from("seo_projects")
-      .select("id, business_id, client_id")
+      .select("id, business_id, client_id, api_key")
       .eq("id", project_id)
       .single();
 
     if (projErr || !project) {
-      return new Response(JSON.stringify({ error: "Invalid project_id" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return json({ error: "Invalid project_id" }, 404);
+    }
+
+    // API key validation
+    if (!api_key || api_key !== project.api_key) {
+      return json({ error: "Unauthorized: invalid or missing api_key" }, 401);
+    }
+
+    // Rate limiting: max 20 call clicks per minute per project
+    const oneMinAgo = new Date(Date.now() - 60 * 1000).toISOString();
+    const { count } = await supabase
+      .from("seo_captured_leads")
+      .select("*", { count: "exact", head: true })
+      .eq("seo_project_id", project_id)
+      .eq("source", "call_click")
+      .gte("created_at", oneMinAgo);
+
+    if ((count || 0) > 20) {
+      return json({ error: "Rate limit exceeded" }, 429);
     }
 
     // Spam protection: ignore duplicate clicks within 30 seconds
@@ -42,10 +60,7 @@ Deno.serve(async (req) => {
       .limit(1);
 
     if (recent && recent.length > 0) {
-      return new Response(JSON.stringify({ message: "Duplicate click ignored" }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ message: "Duplicate click ignored" }, 200);
     }
 
     const { data: lead, error: insertErr } = await supabase
@@ -63,15 +78,23 @@ Deno.serve(async (req) => {
 
     if (insertErr) {
       console.error("Call click insert error:", insertErr);
-      return new Response(JSON.stringify({ error: insertErr.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return json({ error: insertErr.message }, 500);
     }
 
-    return new Response(JSON.stringify({ success: true, lead_id: lead.id }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ success: true, lead_id: lead.id }, 200);
   } catch (error) {
     console.error("seo-call-click error:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return json({ error: "Internal server error" }, 500);
   }
 });
+
+function json(data: any, status: number) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+      "Content-Type": "application/json",
+    },
+  });
+}
