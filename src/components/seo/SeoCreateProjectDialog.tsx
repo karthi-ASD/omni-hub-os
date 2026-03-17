@@ -37,6 +37,7 @@ const defaultForm = {
 export function SeoCreateProjectDialog({ open, onOpenChange, clients, onCreate }: Props) {
   const [form, setForm] = useState(defaultForm);
   const [submitting, setSubmitting] = useState(false);
+  const { isDirty, isSaving, clearDraft } = useUnsavedChanges("seo-create-project", form, { enabled: open });
 
   const handleCreate = async () => {
     if (!form.website_domain || !form.project_name) return;
