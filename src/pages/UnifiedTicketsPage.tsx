@@ -81,8 +81,14 @@ const UnifiedTicketsPage = () => {
 
   const filtered = useMemo(() => {
     let list = tickets;
+    const now = new Date();
     if (activeTab === "unmatched") {
       list = list.filter(t => (t as any).client_match_status === "unmatched" || (t as any).client_match_status === "suggested");
+    } else if (activeTab === "sla_breached") {
+      list = list.filter(t =>
+        t.sla_due_at && new Date(t.sla_due_at) < now &&
+        !["resolved", "closed"].includes(t.status)
+      );
     } else if (activeTab !== "all") {
       list = list.filter(t => t.status === activeTab);
     }
