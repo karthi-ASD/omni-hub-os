@@ -188,6 +188,7 @@ import ClientSeoProjectsPage from "./pages/ClientSeoProjectsPage";
 import ClientSeoProjectDetailPage from "./pages/ClientSeoProjectDetailPage";
 import TaskPipelinePage from "./pages/TaskPipelinePage";
 import TaskDetailPage from "./pages/TaskDetailPage";
+import ClientWebsiteStructurePage from "./pages/ClientWebsiteStructurePage";
 import TeamHierarchyPage from "./pages/TeamHierarchyPage";
 import CrossDeptRequestsPage from "./pages/CrossDeptRequestsPage";
 import DepartmentDashboardPage from "./pages/DepartmentDashboardPage";
@@ -562,6 +563,7 @@ const App = () => (
               <Route path="/client-seo-projects" element={<ClientSeoProjectsPage />} />
               <Route path="/client-seo-projects/:projectId" element={<ClientSeoProjectDetailPage />} />
               <Route path="/my-access" element={<ClientAccessHubPage />} />
+              <Route path="/client-website-structure" element={<ClientWebsiteStructurePage />} />
               <Route path="/my-appointments" element={<CustomerAppointmentPage />} />
               <Route path="/staff-app" element={<StaffMobileAppPage />} />
               <Route path="/hr/departments" element={

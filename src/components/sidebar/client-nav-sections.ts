@@ -1,7 +1,7 @@
 import {
   Home, Users, Receipt, Search, BarChart3, Ticket,
   Target, Phone, Settings, Briefcase, Calendar,
-  Building2,
+  Building2, GitBranch,
 } from "lucide-react";
 import type { NavSection } from "./nav-sections";
 
@@ -15,6 +15,7 @@ export const CLIENT_NAV_SECTIONS: NavSection[] = [
       { label: "SEO Projects", icon: Search, to: "/client-seo-projects" },
       { label: "Reports", icon: BarChart3, to: "/client-reports" },
       { label: "Support Tickets", icon: Ticket, to: "/unified-tickets" },
+      { label: "Website Structure", icon: GitBranch, to: "/client-website-structure" },
     ],
   },
   {

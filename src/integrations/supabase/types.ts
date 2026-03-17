@@ -23356,6 +23356,67 @@ export type Database = {
           },
         ]
       }
+      website_trees: {
+        Row: {
+          business_id: string
+          client_id: string
+          created_at: string
+          domain: string
+          id: string
+          project_id: string | null
+          source_type: string
+          total_pages: number | null
+          tree_data: Json | null
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          client_id: string
+          created_at?: string
+          domain: string
+          id?: string
+          project_id?: string | null
+          source_type?: string
+          total_pages?: number | null
+          tree_data?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string
+          created_at?: string
+          domain?: string
+          id?: string
+          project_id?: string | null
+          source_type?: string
+          total_pages?: number | null
+          tree_data?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_trees_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_trees_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_trees_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       white_label_settings: {
         Row: {
           business_id: string
