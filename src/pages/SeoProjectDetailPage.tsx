@@ -68,6 +68,7 @@ const SeoProjectDetailPage = () => {
   const [updateOpen, setUpdateOpen] = useState(false);
   const [updateForm, setUpdateForm] = useState({ update_type: "TECHNICAL_FIX", title: "", description: "" });
   const [msgInput, setMsgInput] = useState("");
+  const [activeTab, setActiveTab] = useState("tasks");
 
   const statusBadge = (status: string) => {
     const colors: Record<string, string> = {
