@@ -409,8 +409,9 @@ function FormBuilderTab({ project, businessId, forms, onRefresh }: { project: Se
 }
 
 // ─── API & Tracking Tab ───
-function ApiTrackingTab({ project }: { project: SeoProject }) {
+function ApiTrackingTab({ project, onProjectRefresh }: { project: SeoProject; onProjectRefresh?: () => void }) {
   const { toast } = useToast();
+  const { profile } = useAuth();
   const [copied, setCopied] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
