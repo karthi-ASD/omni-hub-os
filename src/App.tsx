@@ -190,6 +190,7 @@ import TaskPipelinePage from "./pages/TaskPipelinePage";
 import TaskDetailPage from "./pages/TaskDetailPage";
 import ClientWebsiteStructurePage from "./pages/ClientWebsiteStructurePage";
 import ClientWebsitePerformancePage from "./pages/ClientWebsitePerformancePage";
+import ClientPerformanceIntelligencePage from "./pages/ClientPerformanceIntelligencePage";
 import TeamHierarchyPage from "./pages/TeamHierarchyPage";
 import CrossDeptRequestsPage from "./pages/CrossDeptRequestsPage";
 import DepartmentDashboardPage from "./pages/DepartmentDashboardPage";
