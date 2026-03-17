@@ -263,10 +263,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         case "TOKEN_REFRESHED":
           hasInitializedRef.current = true;
           console.log("[Auth] TOKEN_REFRESHED — silent update only");
-          if (!sessionRef.current && nextSession) {
-            setSession(nextSession);
-            setUser(nextSession.user);
-          }
+          setSession(nextSession);
+          setUser(nextSession?.user ?? null);
           break;
 
         case "INITIAL_SESSION":
@@ -325,7 +323,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       subscription.unsubscribe();
     };
-  }, [clearAllUserState]);
+  }, []);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
