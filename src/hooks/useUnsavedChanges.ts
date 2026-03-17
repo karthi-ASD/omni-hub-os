@@ -65,6 +65,7 @@ export function useUnsavedChanges<T extends Record<string, any>>(
   const clearDraft = useCallback(() => {
     localStorage.removeItem(`draft:${key}`);
     setIsDirty(false);
+    setIsSaving(false);
     initialRef.current = currentValues;
   }, [key, currentValues]);
 
