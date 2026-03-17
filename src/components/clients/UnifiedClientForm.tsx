@@ -226,13 +226,24 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
 
         <div className="px-6">
           <DraftRestoreBanner
-            draftKey="new-client-form"
+            draftKey={draftKey}
             onRestore={(data) => {
               if (data.contact_name !== undefined) setForm(data);
               if (data.selectedServices) setSelectedServices(data.selectedServices);
               if (data.serviceDetails) setServiceDetails(data.serviceDetails);
               if (data.servicePricing) setServicePricing(data.servicePricing);
             }}
+          />
+          <CrossTabConflictBanner
+            visible={crossTabConflict}
+            onAcceptRemote={() => {
+              const remote = acceptRemoteDraft();
+              if (remote) {
+                if ((remote as any).contact_name !== undefined) setForm(remote as any);
+                if ((remote as any).selectedServices) setSelectedServices((remote as any).selectedServices);
+              }
+            }}
+            onKeepCurrent={dismissConflict}
           />
         </div>
 
