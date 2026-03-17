@@ -1,0 +1,99 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const clientId = (await req.json())?.client_id as string | undefined;
+    if (!clientId || !UUID_REGEX.test(clientId)) {
+      return new Response(JSON.stringify({ error: "Invalid client ID" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: {
+        headers: {
+          Authorization: authHeader,
+        },
+      },
+    });
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const userId = claimsData.claims.sub;
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+    const [{ data: profile }, { data: roleRows }, { data: client, error: clientError }] = await Promise.all([
+      adminClient.from("profiles").select("business_id").eq("user_id", userId).maybeSingle(),
+      adminClient.from("user_roles").select("role").eq("user_id", userId),
+      adminClient.from("clients").select("*").eq("id", clientId).maybeSingle(),
+    ]);
+
+    if (clientError) {
+      console.error("[get_client_by_id_admin] fetch error", { clientId, clientError });
+      return new Response(JSON.stringify({ error: clientError.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!client) {
+      return new Response(JSON.stringify({ exists: false, client: null }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const isSuperAdmin = (roleRows || []).some((row) => row.role === "super_admin");
+    const canAccess = Boolean(isSuperAdmin || (profile?.business_id && client.business_id === profile.business_id));
+
+    return new Response(JSON.stringify({
+      exists: true,
+      can_access: canAccess,
+      client: canAccess ? client : {
+        id: client.id,
+        business_id: client.business_id,
+        merged_into: client.merged_into,
+        deleted_at: client.deleted_at,
+      },
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("[get_client_by_id_admin] unexpected error", error);
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});

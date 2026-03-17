@@ -275,8 +275,11 @@ const ClientProfilePage = () => {
   const { hasRole } = useAuth();
   const canEditBilling = hasRole("super_admin") || hasRole("business_admin") || hasRole("manager");
 
-  // Debug log for troubleshooting
-  console.log("[ClientProfile] Render state:", { route_client_id: id, fetch_state: fetchState, resolved_client: client?.id });
+  console.log({
+    route_client_id: id,
+    fetch_state: fetchState,
+    resolved_client: client?.id,
+  });
 
   // Loading state
   if (fetchState === "loading" || (fetchState === "ready" && loading)) {
