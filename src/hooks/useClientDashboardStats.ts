@@ -60,7 +60,7 @@ export function useClientDashboardStats() {
     // SEO keywords count (via client_id if available)
     if (clientId) {
       const { count: kwCount } = await supabase
-        .from("seo_keywords")
+        .from("seo_keywords" as any)
         .select("id", { count: "exact", head: true })
         .eq("client_id", clientId);
       result.seoKeywords = kwCount ?? 0;
