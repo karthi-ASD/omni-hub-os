@@ -141,6 +141,7 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
     setServiceDetails({});
     setServicePricing({});
     setTab("details");
+    clearDraft();
   };
 
   const handleSubmit = async () => {
