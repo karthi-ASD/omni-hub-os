@@ -112,6 +112,7 @@ export function useUnifiedTickets(departmentFilter?: string) {
   }, [bid, fetchTickets]);
 
   // Stats
+  const now = new Date();
   const stats = {
     total: tickets.length,
     open: tickets.filter(t => t.status === "open").length,
@@ -120,6 +121,10 @@ export function useUnifiedTickets(departmentFilter?: string) {
     escalated: tickets.filter(t => t.status === "escalated").length,
     resolved: tickets.filter(t => t.status === "resolved").length,
     closed: tickets.filter(t => t.status === "closed").length,
+    sla_breached: tickets.filter(t =>
+      t.sla_due_at && new Date(t.sla_due_at) < now &&
+      !["resolved", "closed"].includes(t.status)
+    ).length,
   };
 
   // Create ticket
