@@ -3597,6 +3597,73 @@ export type Database = {
           },
         ]
       }
+      analytics_sync_status: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          last_sync_at: string | null
+          next_sync_at: string | null
+          project_id: string | null
+          retry_count: number | null
+          source: string
+          sync_status: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          last_sync_at?: string | null
+          next_sync_at?: string | null
+          project_id?: string | null
+          retry_count?: number | null
+          source?: string
+          sync_status?: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          last_sync_at?: string | null
+          next_sync_at?: string | null
+          project_id?: string | null
+          retry_count?: number | null
+          source?: string
+          sync_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_sync_status_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_sync_status_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_sync_status_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_keys: {
         Row: {
           business_id: string
