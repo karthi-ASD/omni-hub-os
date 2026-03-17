@@ -151,6 +151,9 @@ const UnifiedTicketsPage = () => {
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="open">Open</TabsTrigger>
             <TabsTrigger value="in_progress">In Progress</TabsTrigger>
+            <TabsTrigger value="unassigned">
+              Unassigned ({(stats as any).unassigned || 0})
+            </TabsTrigger>
             <TabsTrigger value="sla_breached" className="text-destructive">
               SLA Breached ({(stats as any).sla_breached || 0})
             </TabsTrigger>
