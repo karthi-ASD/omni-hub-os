@@ -711,6 +711,33 @@ function AutomationTab({ project, businessId, settings, onRefresh }: { project: 
       </Card>
 
       <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save Settings"}</Button>
+
+      {/* Automation Health */}
+      {recentLogs.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-sm flex items-center gap-2"><History className="h-4 w-4" />Recent Automation Activity</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-[300px] overflow-auto">
+              {recentLogs.map((log: any) => (
+                <div key={log.id} className="flex items-center justify-between p-2 border rounded text-xs">
+                  <div className="flex items-center gap-2">
+                    <Badge variant={log.status === "success" ? "default" : "destructive"} className="text-xs">
+                      {log.status === "success" ? <Check className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
+                      {log.status}
+                    </Badge>
+                    <span className="font-medium">{log.automation_type}</span>
+                    {log.execution_time_ms && <span className="text-muted-foreground">{log.execution_time_ms}ms</span>}
+                  </div>
+                  <div className="text-right">
+                    <span className="text-muted-foreground">{new Date(log.created_at).toLocaleString()}</span>
+                    {log.error_message && <p className="text-destructive truncate max-w-[200px]">{log.error_message}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
