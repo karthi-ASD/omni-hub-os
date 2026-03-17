@@ -241,7 +241,7 @@ const ClientsPage = () => {
       {loading && clients.length === 0 ? (
         <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-2xl" />)}</div>
       ) : clients.length === 0 ? (
-        <Card className="rounded-2xl border-0 shadow-elevated"><CardContent className="py-16 text-center text-muted-foreground">No clients found</CardContent></Card>
+        <SmartEmptyState variant={search ? "no-results" : "no-data"} entityName="clients" onRetry={refetch} />
       ) : (
         <>
           {/* Select all toggle */}
