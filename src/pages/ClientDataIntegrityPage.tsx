@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useClientIntegrity } from "@/hooks/useClientIntegrity";
 import { useClients } from "@/hooks/useClients";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -15,22 +15,26 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { PageHeader } from "@/components/ui/page-header";
 import { ManualRefresh } from "@/components/ui/manual-refresh";
 import { SmartEmptyState } from "@/components/ui/smart-empty-state";
-import { ShieldCheck, AlertTriangle, Link2, Search, ScanLine, Database, Users, FileWarning } from "lucide-react";
+import { ClientDebugView } from "@/components/admin/ClientDebugView";
+import { ModuleSummaryView } from "@/components/admin/ModuleSummaryView";
+import { BackfillPanel } from "@/components/admin/BackfillPanel";
+import { ShieldCheck, AlertTriangle, Link2, Search, ScanLine, Users, FileWarning, Activity, Database, FileText } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 export default function ClientDataIntegrityPage() {
   usePageTitle("Client Data Integrity");
   const { isSuperAdmin } = useAuth();
-  const { duplicates, unmatchedRecords, loading, scanning, scanOrphans, linkRecord, refetch } = useClientIntegrity();
+  const {
+    duplicates, unmatchedRecords, moduleSummary, preReport, backfillResult, clientDebug,
+    loading, scanning, scanOrphans, linkRecord, runBackfill, getClientDebug, fetchPreReport, refetch,
+  } = useClientIntegrity();
   const { clients } = useClients({});
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [linkDialog, setLinkDialog] = useState<{ recordId: string; sourceTable: string } | null>(null);
   const [clientSearch, setClientSearch] = useState("");
+  const [debugLoading, setDebugLoading] = useState(false);
 
-  const handleRefresh = () => {
-    refetch();
-    setLastUpdated(new Date());
-  };
+  const handleRefresh = () => { refetch(); setLastUpdated(new Date()); };
 
   const filteredClients = clientSearch.length >= 2
     ? clients.filter(c =>
@@ -43,11 +47,14 @@ export default function ClientDataIntegrityPage() {
   const handleLink = async (clientId: string) => {
     if (!linkDialog) return;
     const success = await linkRecord(linkDialog.recordId, clientId);
-    if (success) {
-      setLinkDialog(null);
-      setClientSearch("");
-    }
+    if (success) { setLinkDialog(null); setClientSearch(""); }
   };
+
+  const handleDebugSelect = useCallback(async (clientId: string) => {
+    setDebugLoading(true);
+    await getClientDebug(clientId);
+    setDebugLoading(false);
+  }, [getClientDebug]);
 
   if (!isSuperAdmin) {
     return (
@@ -65,7 +72,7 @@ export default function ClientDataIntegrityPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="rounded-xl">
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-3">
@@ -83,7 +90,7 @@ export default function ClientDataIntegrityPage() {
               <AlertTriangle className="h-5 w-5 text-destructive" />
               <div>
                 <p className="text-2xl font-bold">{duplicates.length}</p>
-                <p className="text-xs text-muted-foreground">Duplicate Issues</p>
+                <p className="text-xs text-muted-foreground">Duplicates</p>
               </div>
             </div>
           </CardContent>
@@ -94,7 +101,18 @@ export default function ClientDataIntegrityPage() {
               <FileWarning className="h-5 w-5 text-destructive" />
               <div>
                 <p className="text-2xl font-bold">{unmatchedRecords.length}</p>
-                <p className="text-xs text-muted-foreground">Unmatched Records</p>
+                <p className="text-xs text-muted-foreground">Unmatched</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="rounded-xl">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center gap-3">
+              <Database className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-2xl font-bold">{Object.values(moduleSummary).reduce((s, v) => s + v.orphans, 0)}</p>
+                <p className="text-xs text-muted-foreground">Total Orphans</p>
               </div>
             </div>
           </CardContent>
@@ -103,25 +121,34 @@ export default function ClientDataIntegrityPage() {
           <CardContent className="pt-4 pb-4 flex items-center">
             <Button onClick={scanOrphans} disabled={scanning} variant="outline" className="w-full">
               <ScanLine className="h-4 w-4 mr-2" />
-              {scanning ? "Scanning..." : "Scan for Orphans"}
+              {scanning ? "Scanning…" : "Scan All"}
             </Button>
           </CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="unmatched">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="unmatched">
-            Unmatched Records
-            {unmatchedRecords.length > 0 && <Badge variant="destructive" className="ml-2 text-[10px] h-4 px-1">{unmatchedRecords.length}</Badge>}
+            Unmatched
+            {unmatchedRecords.length > 0 && <Badge variant="destructive" className="ml-1.5 text-[10px] h-4 px-1">{unmatchedRecords.length}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="duplicates">
             Duplicates
-            {duplicates.length > 0 && <Badge variant="secondary" className="ml-2 text-[10px] h-4 px-1">{duplicates.length}</Badge>}
+            {duplicates.length > 0 && <Badge variant="secondary" className="ml-1.5 text-[10px] h-4 px-1">{duplicates.length}</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="modules">
+            <Database className="h-3.5 w-3.5 mr-1" />Modules
+          </TabsTrigger>
+          <TabsTrigger value="backfill">
+            <FileText className="h-3.5 w-3.5 mr-1" />Backfill
+          </TabsTrigger>
+          <TabsTrigger value="debug">
+            <Activity className="h-3.5 w-3.5 mr-1" />Client Debug
           </TabsTrigger>
         </TabsList>
 
-        {/* Unmatched Records Tab */}
+        {/* Unmatched Tab */}
         <TabsContent value="unmatched" className="mt-4">
           {loading ? (
             <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}</div>
@@ -132,9 +159,10 @@ export default function ClientDataIntegrityPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Source Table</TableHead>
+                    <TableHead>Source</TableHead>
                     <TableHead>Record ID</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Confidence</TableHead>
+                    <TableHead>Method</TableHead>
                     <TableHead>Found</TableHead>
                     <TableHead>Action</TableHead>
                   </TableRow>
@@ -147,14 +175,19 @@ export default function ClientDataIntegrityPage() {
                       </TableCell>
                       <TableCell className="font-mono text-xs">{rec.source_record_id.slice(0, 8)}…</TableCell>
                       <TableCell>
-                        <Badge variant="destructive" className="text-[10px]">{rec.resolution_status}</Badge>
+                        {rec.match_confidence ? (
+                          <Badge variant={rec.match_confidence === "high" ? "default" : rec.match_confidence === "medium" ? "secondary" : "destructive"} className="text-[10px]">
+                            {rec.match_confidence}
+                          </Badge>
+                        ) : <span className="text-xs text-muted-foreground">—</span>}
                       </TableCell>
+                      <TableCell className="text-xs capitalize">{rec.suggested_match_method?.replace(/_/g, " ") || "—"}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {formatDistanceToNow(new Date(rec.created_at), { addSuffix: true })}
                       </TableCell>
                       <TableCell>
                         <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setLinkDialog({ recordId: rec.id, sourceTable: rec.source_table })}>
-                          <Link2 className="h-3 w-3 mr-1" /> Link to Client
+                          <Link2 className="h-3 w-3 mr-1" /> Link
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -178,7 +211,6 @@ export default function ClientDataIntegrityPage() {
                   <TableRow>
                     <TableHead>Client</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
                     <TableHead>Dup Email</TableHead>
                     <TableHead>Dup Phone</TableHead>
                     <TableHead>Tickets</TableHead>
@@ -191,16 +223,11 @@ export default function ClientDataIntegrityPage() {
                     <TableRow key={d.id}>
                       <TableCell className="font-medium text-sm">{d.contact_name}</TableCell>
                       <TableCell className="text-xs">{d.email}</TableCell>
-                      <TableCell className="text-xs">{d.phone || "—"}</TableCell>
                       <TableCell>
-                        {d.duplicate_email_count > 0 ? (
-                          <Badge variant="destructive" className="text-[10px]">{d.duplicate_email_count} dup</Badge>
-                        ) : <span className="text-xs text-muted-foreground">—</span>}
+                        {d.duplicate_email_count > 0 ? <Badge variant="destructive" className="text-[10px]">{d.duplicate_email_count}</Badge> : <span className="text-xs text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell>
-                        {d.duplicate_phone_count > 0 ? (
-                          <Badge variant="secondary" className="text-[10px]">{d.duplicate_phone_count} dup</Badge>
-                        ) : <span className="text-xs text-muted-foreground">—</span>}
+                        {d.duplicate_phone_count > 0 ? <Badge variant="secondary" className="text-[10px]">{d.duplicate_phone_count}</Badge> : <span className="text-xs text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell className="text-xs">{d.ticket_count}</TableCell>
                       <TableCell className="text-xs">{d.seo_project_count}</TableCell>
@@ -212,9 +239,36 @@ export default function ClientDataIntegrityPage() {
             </Card>
           )}
         </TabsContent>
+
+        {/* Modules Tab */}
+        <TabsContent value="modules" className="mt-4">
+          <ModuleSummaryView summary={moduleSummary} />
+        </TabsContent>
+
+        {/* Backfill Tab */}
+        <TabsContent value="backfill" className="mt-4">
+          <BackfillPanel
+            backfillResult={backfillResult}
+            preReport={preReport}
+            onDryRun={() => runBackfill(true)}
+            onApply={() => runBackfill(false)}
+            onFetchReport={fetchPreReport}
+            scanning={scanning}
+          />
+        </TabsContent>
+
+        {/* Debug Tab */}
+        <TabsContent value="debug" className="mt-4">
+          <ClientDebugView
+            clientDebug={clientDebug}
+            clients={clients}
+            onSelectClient={handleDebugSelect}
+            loading={debugLoading}
+          />
+        </TabsContent>
       </Tabs>
 
-      {/* Link to Client Dialog */}
+      {/* Link Dialog */}
       <Dialog open={!!linkDialog} onOpenChange={(v) => { if (!v) { setLinkDialog(null); setClientSearch(""); } }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -226,26 +280,17 @@ export default function ClientDataIntegrityPage() {
           <div className="space-y-4">
             {linkDialog && (
               <p className="text-xs text-muted-foreground">
-                Linking <Badge variant="outline" className="text-[10px]">{linkDialog.sourceTable}</Badge> record to a client
+                Linking <Badge variant="outline" className="text-[10px]">{linkDialog.sourceTable}</Badge> record
               </p>
             )}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search clients by name or email..."
-                value={clientSearch}
-                onChange={(e) => setClientSearch(e.target.value)}
-                className="pl-9"
-              />
+              <Input placeholder="Search clients…" value={clientSearch} onChange={e => setClientSearch(e.target.value)} className="pl-9" />
             </div>
             <ScrollArea className="max-h-[300px]">
               <div className="space-y-2">
                 {filteredClients.map(c => (
-                  <button
-                    key={c.id}
-                    className="w-full text-left p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors"
-                    onClick={() => handleLink(c.id)}
-                  >
+                  <button key={c.id} className="w-full text-left p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors" onClick={() => handleLink(c.id)}>
                     <p className="text-sm font-medium">{c.contact_name}</p>
                     <p className="text-xs text-muted-foreground">{c.email} {c.company_name ? `· ${c.company_name}` : ""}</p>
                   </button>
