@@ -427,6 +427,61 @@ export type Database = {
           },
         ]
       }
+      ads_snapshots: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          created_at: string
+          date: string
+          id: string
+          metrics_json: Json | null
+          project_id: string | null
+          source: string
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          metrics_json?: Json | null
+          project_id?: string | null
+          source?: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          metrics_json?: Json | null
+          project_id?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ads_snapshots_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ads_snapshots_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ads_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       advocacy_badges: {
         Row: {
           badge_label: string
@@ -2206,6 +2261,70 @@ export type Database = {
           },
         ]
       }
+      ai_insights: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          insight_type: string
+          is_dismissed: boolean | null
+          project_id: string | null
+          severity: string
+          source_data_json: Json | null
+          title: string
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          insight_type?: string
+          is_dismissed?: boolean | null
+          project_id?: string | null
+          severity?: string
+          source_data_json?: Json | null
+          title: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          insight_type?: string
+          is_dismissed?: boolean | null
+          project_id?: string | null
+          severity?: string
+          source_data_json?: Json | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_insights_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_insights_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_insights_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_keyword_clusters: {
         Row: {
           business_id: string
@@ -3419,6 +3538,61 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      analytics_snapshots: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          created_at: string
+          date: string
+          id: string
+          metrics_json: Json | null
+          project_id: string | null
+          source: string
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          metrics_json?: Json | null
+          project_id?: string | null
+          source?: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          metrics_json?: Json | null
+          project_id?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_snapshots_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_snapshots_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
             referencedColumns: ["id"]
           },
         ]
@@ -5275,10 +5449,13 @@ export type Database = {
           id: string
           is_archived: boolean | null
           is_client_visible: boolean | null
+          last_accessed_at: string | null
+          last_decrypted_at: string | null
           login_url: string | null
           notes: string | null
           password_encrypted: string | null
           platform_type: string | null
+          project_id: string | null
           provider_name: string | null
           recovery_email: string | null
           reminder_days: number | null
@@ -5305,10 +5482,13 @@ export type Database = {
           id?: string
           is_archived?: boolean | null
           is_client_visible?: boolean | null
+          last_accessed_at?: string | null
+          last_decrypted_at?: string | null
           login_url?: string | null
           notes?: string | null
           password_encrypted?: string | null
           platform_type?: string | null
+          project_id?: string | null
           provider_name?: string | null
           recovery_email?: string | null
           reminder_days?: number | null
@@ -5335,10 +5515,13 @@ export type Database = {
           id?: string
           is_archived?: boolean | null
           is_client_visible?: boolean | null
+          last_accessed_at?: string | null
+          last_decrypted_at?: string | null
           login_url?: string | null
           notes?: string | null
           password_encrypted?: string | null
           platform_type?: string | null
+          project_id?: string | null
           provider_name?: string | null
           recovery_email?: string | null
           reminder_days?: number | null
@@ -5363,6 +5546,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_access_credentials_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
             referencedColumns: ["id"]
           },
         ]
@@ -6095,6 +6285,7 @@ export type Database = {
           last_sync_at: string | null
           measurement_id: string | null
           notes: string | null
+          project_id: string | null
           property_id: string | null
           provider_name: string | null
           refresh_token_encrypted: string | null
@@ -6122,6 +6313,7 @@ export type Database = {
           last_sync_at?: string | null
           measurement_id?: string | null
           notes?: string | null
+          project_id?: string | null
           property_id?: string | null
           provider_name?: string | null
           refresh_token_encrypted?: string | null
@@ -6149,6 +6341,7 @@ export type Database = {
           last_sync_at?: string | null
           measurement_id?: string | null
           notes?: string | null
+          project_id?: string | null
           property_id?: string | null
           provider_name?: string | null
           refresh_token_encrypted?: string | null
@@ -6170,6 +6363,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_project_integrations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
             referencedColumns: ["id"]
           },
         ]
@@ -17040,6 +17240,76 @@ export type Database = {
         }
         Relationships: []
       }
+      roi_metrics: {
+        Row: {
+          breakdown_json: Json | null
+          business_id: string
+          client_id: string | null
+          created_at: string
+          estimated_revenue: number | null
+          id: string
+          leads_generated: number | null
+          period_end: string
+          period_start: string
+          project_id: string | null
+          roi_multiple: number | null
+          total_spend: number | null
+          updated_at: string
+        }
+        Insert: {
+          breakdown_json?: Json | null
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          estimated_revenue?: number | null
+          id?: string
+          leads_generated?: number | null
+          period_end: string
+          period_start: string
+          project_id?: string | null
+          roi_multiple?: number | null
+          total_spend?: number | null
+          updated_at?: string
+        }
+        Update: {
+          breakdown_json?: Json | null
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          estimated_revenue?: number | null
+          id?: string
+          leads_generated?: number | null
+          period_end?: string
+          period_start?: string
+          project_id?: string | null
+          roi_multiple?: number | null
+          total_spend?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roi_metrics_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roi_metrics_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roi_metrics_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_module_permissions: {
         Row: {
           business_id: string
@@ -19830,6 +20100,61 @@ export type Database = {
           {
             foreignKeyName: "seo_roadmaps_seo_project_id_fkey"
             columns: ["seo_project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_snapshots: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          created_at: string
+          date: string
+          id: string
+          metrics_json: Json | null
+          project_id: string | null
+          source: string
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          metrics_json?: Json | null
+          project_id?: string | null
+          source?: string
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          metrics_json?: Json | null
+          project_id?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_snapshots_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_snapshots_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_snapshots_project_id_fkey"
+            columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "seo_projects"
             referencedColumns: ["id"]

@@ -92,3 +92,9 @@ verify_jwt = false
 
 [functions.reset-client-password]
 verify_jwt = false
+
+[functions.fetch-analytics-data]
+verify_jwt = false
+
+[functions.generate-ai-insights]
+verify_jwt = false

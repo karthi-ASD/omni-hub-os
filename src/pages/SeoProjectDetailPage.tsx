@@ -13,6 +13,7 @@ import { useSeoClientMessages } from "@/hooks/useSeoClientMessages";
 import { useSeoMonthlyReports } from "@/hooks/useSeoMonthlyReports";
 import { useSeoAiRecommendations } from "@/hooks/useSeoAiRecommendations";
 import { useSeoKeywords } from "@/hooks/useSeo";
+import { PerformanceDashboard } from "@/components/clients/access-hub/PerformanceDashboard";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -126,6 +127,7 @@ const SeoProjectDetailPage = () => {
           <TabsTrigger value="updates"><BarChart3 className="h-3 w-3 mr-1" /> Updates</TabsTrigger>
           <TabsTrigger value="messages"><MessageSquare className="h-3 w-3 mr-1" /> Messages</TabsTrigger>
           <TabsTrigger value="reports"><BarChart3 className="h-3 w-3 mr-1" /> Reports</TabsTrigger>
+          <TabsTrigger value="performance"><BarChart3 className="h-3 w-3 mr-1" /> Performance</TabsTrigger>
           <TabsTrigger value="ai"><Brain className="h-3 w-3 mr-1" /> AI Advisor</TabsTrigger>
         </TabsList>
 
@@ -525,6 +527,11 @@ const SeoProjectDetailPage = () => {
               ))}
             </TableBody></Table></Card>
           )}
+        </TabsContent>
+
+        {/* PERFORMANCE TAB */}
+        <TabsContent value="performance" className="space-y-4">
+          <PerformanceDashboard clientId={project?.client_id} projectId={projectId} />
         </TabsContent>
 
         {/* AI ADVISOR TAB */}
