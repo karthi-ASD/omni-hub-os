@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useSeoProjects } from "@/hooks/useSeoProjects";
@@ -38,6 +38,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const SeoProjectDetailPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { profile } = useAuth();
   const { projects } = useSeoProjects();
   const project = projects.find(p => p.id === projectId);
@@ -68,7 +69,13 @@ const SeoProjectDetailPage = () => {
   const [updateOpen, setUpdateOpen] = useState(false);
   const [updateForm, setUpdateForm] = useState({ update_type: "TECHNICAL_FIX", title: "", description: "" });
   const [msgInput, setMsgInput] = useState("");
-  const [activeTab, setActiveTab] = useState("tasks");
+  const tabFromUrl = new URLSearchParams(location.search).get("tab");
+  const [activeTab, setActiveTab] = useState(tabFromUrl || "tasks");
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    navigate(`?tab=${tab}`, { replace: true });
+  };
 
   const statusBadge = (status: string) => {
     const colors: Record<string, string> = {
@@ -84,6 +91,14 @@ const SeoProjectDetailPage = () => {
   const completedTasks = tasks.filter(t => t.status === "COMPLETED").length;
   const totalTasks = tasks.length;
   const progressPct = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  if (!projectId) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-muted-foreground">No project selected. Please go back and select a project.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -120,7 +135,7 @@ const SeoProjectDetailPage = () => {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="flex-wrap">
           <TabsTrigger value="tasks"><ListChecks className="h-3 w-3 mr-1" /> Tasks ({totalTasks})</TabsTrigger>
           <TabsTrigger value="blogs"><FileText className="h-3 w-3 mr-1" /> Blogs ({blogs.length})</TabsTrigger>
