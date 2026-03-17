@@ -83,18 +83,18 @@ export function useGoogleAnalyticsStats(projectId?: string, clientId?: string) {
       setStats((data as any[]) ?? []);
 
       // Fetch sync status
-      const syncQuery = supabase
+      let syncQ = supabase
         .from("analytics_sync_status" as any)
-        .select("last_sync_at, next_sync_at, sync_status, error_message");
+        .select("last_sync_at, next_sync_at, sync_status, error_message") as any;
 
       if (resolvedProjectId) {
-        syncQuery.eq("project_id", resolvedProjectId);
+        syncQ = syncQ.eq("project_id", resolvedProjectId);
       } else if (clientId) {
-        syncQuery.eq("client_id", clientId);
+        syncQ = syncQ.eq("client_id", clientId);
       }
 
-      const { data: syncData } = await syncQuery.limit(1).maybeSingle();
-      setSyncStatus(syncData as SyncStatus | null);
+      const { data: syncData } = await syncQ.limit(1).maybeSingle();
+      setSyncStatus((syncData as SyncStatus) || null);
     } catch (err) {
       console.error("GA stats error:", err);
       setStats([]);
