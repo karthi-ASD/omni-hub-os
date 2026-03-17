@@ -23252,6 +23252,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decrypt_sensitive_field: {
+        Args: { cipher_text: string; passphrase?: string }
+        Returns: string
+      }
+      encrypt_sensitive_field: {
+        Args: { passphrase?: string; plain_text: string }
+        Returns: string
+      }
       find_client_by_email: {
         Args: { _business_id: string; _email: string }
         Returns: string
@@ -23341,6 +23349,7 @@ export type Database = {
         Returns: boolean
       }
       is_client_user: { Args: { _user_id: string }; Returns: boolean }
+      refresh_credential_statuses: { Args: never; Returns: undefined }
     }
     Enums: {
       agent_action_status: "PLANNED" | "EXECUTED" | "SKIPPED" | "FAILED"
