@@ -38,6 +38,7 @@ export function useUnsavedChanges<T extends Record<string, any>>(
   // Auto-save draft (debounced)
   useEffect(() => {
     if (!enabled || !isDirty) return;
+    setIsSaving(true);
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       try {
@@ -45,6 +46,7 @@ export function useUnsavedChanges<T extends Record<string, any>>(
       } catch {
         // quota exceeded – ignore
       }
+      setIsSaving(false);
     }, debounceMs);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
