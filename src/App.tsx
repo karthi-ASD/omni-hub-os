@@ -117,6 +117,7 @@ import SuperAdminBusinessManagementPage from "./pages/SuperAdminBusinessManageme
 import SuperAdminClientManagementPage from "./pages/SuperAdminClientManagementPage";
 import SystemHealthPage from "./pages/SystemHealthPage";
 import FeatureRegistryPage from "./pages/FeatureRegistryPage";
+import ClientDataIntegrityPage from "./pages/ClientDataIntegrityPage";
 import AdvocacyEnginePage from "./pages/AdvocacyEnginePage";
 import GovernanceDashboardPage from "./pages/GovernanceDashboardPage";
 import TasksPage from "./pages/TasksPage";
