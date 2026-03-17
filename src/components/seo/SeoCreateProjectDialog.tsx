@@ -67,7 +67,7 @@ export function SeoCreateProjectDialog({ open, onOpenChange, clients, onCreate }
             <AutoSaveIndicator isDirty={isDirty} isSaving={isSaving} className="ml-auto" />
           </DialogTitle>
         </DialogHeader>
-        <DraftRestoreBanner draftKey="seo-create-project" onRestore={(data) => setForm(data)} />
+        <DraftRestoreBanner draftKey="seo:new" onRestore={(data) => setForm(data)} />
         <div className="space-y-4">
           <div>
             <Label>Project Name *</Label>
