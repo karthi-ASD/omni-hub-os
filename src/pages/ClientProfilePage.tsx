@@ -794,6 +794,13 @@ const ClientProfilePage = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* ── WhatsApp History ── */}
+        <TabsContent value="whatsapp">
+          {id && client && (
+            <ClientWhatsAppHistoryTab clientId={id} businessId={client.business_id} />
+          )}
+        </TabsContent>
       </Tabs>
 
       {/* Add Website Dialog */}
