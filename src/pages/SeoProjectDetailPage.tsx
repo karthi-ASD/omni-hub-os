@@ -535,7 +535,13 @@ const SeoProjectDetailPage = () => {
           <PerformanceDashboard clientId={project?.client_id} projectId={projectId} />
         </TabsContent>
 
-        {/* AI ADVISOR TAB */}
+        {/* INTEGRATIONS TAB */}
+        <TabsContent value="integrations" className="space-y-4">
+          {projectId && project?.business_id && (
+            <ProjectIntegrationsTab projectId={projectId} businessId={project.business_id} />
+          )}
+        </TabsContent>
+
         <TabsContent value="ai" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-semibold">AI SEO Advisor</h2>
