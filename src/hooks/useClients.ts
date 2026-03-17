@@ -131,6 +131,7 @@ export function useClients(options?: UseClientsOptions) {
     let dataQuery = supabase
       .from("clients")
       .select("*")
+      .eq("business_id", bid)
       .neq("client_status", "reverted")
       .neq("client_status", "deleted")
       .neq("client_status", "merged")
