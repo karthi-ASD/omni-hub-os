@@ -97,7 +97,7 @@ export function useGoogleAnalyticsStats(projectId?: string, clientId?: string) {
         .order("last_sync_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      setSyncStatus((syncData as SyncStatus) || null);
+      setSyncStatus((syncData as unknown as SyncStatus) || null);
     } catch (err) {
       console.error("GA stats error:", err);
       setStats([]);
