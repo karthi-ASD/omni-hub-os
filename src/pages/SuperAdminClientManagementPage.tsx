@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSuperAdminClients, SuperAdminClient } from "@/hooks/useSuperAdminClients";
 import { PageHeader } from "@/components/ui/page-header";
@@ -11,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Search, Trash2, RotateCcw, AlertTriangle, Merge, Eye, Pencil, Users, UserX, GitMerge } from "lucide-react";
+import { Search, Trash2, RotateCcw, AlertTriangle, Merge, Eye, Pencil, Users, UserX, GitMerge, KeyRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { StatCard } from "@/components/ui/stat-card";
 import { format } from "date-fns";
@@ -46,6 +47,12 @@ const SuperAdminClientManagementPage = () => {
   const [mergePrimary, setMergePrimary] = useState<"A" | "B">("A");
   const [mergeConfirm, setMergeConfirm] = useState("");
   const [showMergeDialog, setShowMergeDialog] = useState(false);
+
+  // Reset password state
+  const [resetTarget, setResetTarget] = useState<SuperAdminClient | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
 
   const filteredAll = useMemo(() => {
     if (!search) return allClients;
@@ -117,6 +124,42 @@ const SuperAdminClientManagementPage = () => {
     setMergeConfirm("");
     setMergeSearchA("");
     setMergeSearchB("");
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetTarget || !newPassword || newPassword !== confirmPassword) return;
+    if (newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    setResetLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reset-client-password`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ client_id: resetTarget.id, new_password: newPassword }),
+        }
+      );
+      const result = await res.json();
+      if (!res.ok) {
+        toast.error(result.error || "Failed to reset password");
+      } else {
+        toast.success("Password updated successfully.");
+        setResetTarget(null);
+        setNewPassword("");
+        setConfirmPassword("");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An error occurred");
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   const statusBadge = (status: string) => {
@@ -202,6 +245,9 @@ const SuperAdminClientManagementPage = () => {
                             </Button>
                             <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget(c)}>
                               <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="sm" variant="ghost" title="Reset Client Password" onClick={() => { setResetTarget(c); setNewPassword(""); setConfirmPassword(""); }}>
+                              <KeyRound className="h-3.5 w-3.5" />
                             </Button>
                           </div>
                         </TableCell>
@@ -432,6 +478,40 @@ const SuperAdminClientManagementPage = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => { setShowMergeDialog(false); setMergeConfirm(""); }}>Cancel</Button>
             <Button disabled={mergeConfirm !== "MERGE"} onClick={handleMerge}>Merge Clients</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* RESET CLIENT PASSWORD DIALOG */}
+      <Dialog open={!!resetTarget} onOpenChange={open => { if (!open) { setResetTarget(null); setNewPassword(""); setConfirmPassword(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Client Password</DialogTitle>
+            <DialogDescription>
+              Reset the login password for <strong>{resetTarget?.contact_name}</strong> ({resetTarget?.email}).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>New Password</Label>
+              <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Minimum 8 characters" />
+            </div>
+            <div>
+              <Label>Confirm Password</Label>
+              <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Re-enter password" />
+            </div>
+            {newPassword && confirmPassword && newPassword !== confirmPassword && (
+              <p className="text-xs text-destructive">Passwords do not match.</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setResetTarget(null); setNewPassword(""); setConfirmPassword(""); }}>Cancel</Button>
+            <Button
+              disabled={!newPassword || newPassword.length < 8 || newPassword !== confirmPassword || resetLoading}
+              onClick={handleResetPassword}
+            >
+              {resetLoading ? "Updating..." : "Update Password"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
