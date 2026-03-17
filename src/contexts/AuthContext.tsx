@@ -313,24 +313,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [clearAllUserState, session, user?.id]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
-    setRawProfile(null);
-    setRoles([]);
-    setAllBusinesses([]);
-    setSelectedTenantId(null);
-    setClientUserId(null);
-    setTenantValidationError(null);
-  };
+    clearAllUserState();
+  }, [clearAllUserState]);
 
-  const hasRole = (role: AppRole) => roles.includes(role);
+  const hasRole = useCallback((role: AppRole) => roles.includes(role), [roles]);
   const isSuperAdmin = hasRole("super_admin");
   const isBusinessAdmin = hasRole("business_admin");
   const isHRManager = hasRole("hr_manager");
   const isClientUser = !!clientUserId && !isSuperAdmin;
   const clientId = clientUserId;
+  const selectTenant = useCallback((id: string | null) => setSelectedTenantId(id), []);
 
   // KEY FIX: For super_admin, override profile.business_id with selected tenant
   // This makes ALL hooks that use profile.business_id work automatically
@@ -343,14 +339,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     : null;
 
-  return (
-    <AuthContext.Provider value={{
-      session, user, profile, roles, loading, tenantValidationError, signOut,
-      hasRole, isSuperAdmin, isBusinessAdmin, isHRManager,
-      isClientUser, clientId,
-      allBusinesses, selectedTenantId, selectTenant: setSelectedTenantId,
-    }}>
+  const contextValue = useMemo(() => ({
+    session,
+    user,
+    profile,
+    roles,
+    loading,
+    tenantValidationError,
+    signOut,
+    hasRole,
+    isSuperAdmin,
+    isBusinessAdmin,
+    isHRManager,
+    isClientUser,
+    clientId,
+    allBusinesses,
+    selectedTenantId,
+    selectTenant,
+  }), [session, user, profile, roles, loading, tenantValidationError, signOut, hasRole, isSuperAdmin, isBusinessAdmin, isHRManager, isClientUser, clientId, allBusinesses, selectedTenantId, selectTenant]);
 
+  return (
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
