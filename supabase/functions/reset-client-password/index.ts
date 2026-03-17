@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     if (!client_id) throw new Error("Missing client_id");
     if (!new_password || new_password.length < 8) throw new Error("Password must be at least 8 characters");
 
-    // Find the auth user_id linked to this client via client_users table
+    // Step 1: Try client_users table (primary link)
     const { data: clientUser } = await supabaseAdmin
       .from("client_users")
       .select("user_id")
@@ -44,8 +44,38 @@ Deno.serve(async (req) => {
       .eq("is_primary", true)
       .maybeSingle();
 
-    if (!clientUser?.user_id) {
-      return new Response(JSON.stringify({ error: "Client login account not found." }), {
+    let authUserId = clientUser?.user_id || null;
+
+    // Step 2: Fallback to clients.auth_user_id (Xero imports, legacy records)
+    if (!authUserId) {
+      const { data: clientRecord } = await supabaseAdmin
+        .from("clients")
+        .select("auth_user_id, email, contact_name, business_id")
+        .eq("id", client_id)
+        .single();
+
+      if (clientRecord?.auth_user_id) {
+        authUserId = clientRecord.auth_user_id;
+      } else if (clientRecord?.email) {
+        // Step 3: Find auth user by email
+        const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
+        const matchedUser = usersData?.users?.find(
+          (u: any) => u.email?.toLowerCase() === clientRecord.email.toLowerCase()
+        );
+        if (matchedUser) {
+          authUserId = matchedUser.id;
+          // Auto-link for future lookups
+          await supabaseAdmin.from("clients").update({ auth_user_id: matchedUser.id }).eq("id", client_id);
+          await supabaseAdmin.from("client_users").upsert(
+            { user_id: matchedUser.id, client_id, role: "owner", is_primary: true },
+            { onConflict: "user_id,client_id" }
+          );
+        }
+      }
+    }
+
+    if (!authUserId) {
+      return new Response(JSON.stringify({ error: "Client login account not found. Please create a login account for this client first." }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -53,7 +83,7 @@ Deno.serve(async (req) => {
 
     // Update the password
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-      clientUser.user_id,
+      authUserId,
       { password: new_password }
     );
 
