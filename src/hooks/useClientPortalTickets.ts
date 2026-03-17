@@ -37,18 +37,26 @@ export function useClientPortalTickets() {
       .maybeSingle();
 
     if (!clientRecord?.business_id) {
+      console.warn("[ClientTickets] No business_id for client:", clientId);
       setTickets([]);
       setLoading(false);
       return;
     }
 
-    const { data } = await supabase
+    // CRITICAL: Use client_id (profile/client record id), NOT auth.user.id
+    const { data, error } = await supabase
       .from("support_tickets")
       .select("id, ticket_number, subject, description, department, priority, status, sla_due_at, created_at, updated_at")
       .eq("business_id", clientRecord.business_id)
       .eq("client_id", clientId)
       .order("created_at", { ascending: false })
       .limit(100);
+
+    if (error) {
+      console.error("[ClientTickets] Fetch error:", error);
+    } else {
+      console.log("[ClientTickets] Fetched:", data?.length, "tickets for client:", clientId);
+    }
 
     setTickets((data as ClientPortalTicket[]) ?? []);
     setLoading(false);
@@ -58,6 +66,22 @@ export function useClientPortalTickets() {
     void fetchTickets();
   }, [fetchTickets]);
 
+  // Realtime for client tickets
+  useEffect(() => {
+    if (!clientId) return;
+    const ch = supabase
+      .channel("client-tickets-rt")
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "support_tickets",
+      }, () => {
+        fetchTickets();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [clientId, fetchTickets]);
+
   const submitTicket = useCallback(async (input: {
     subject: string;
     description?: string;
@@ -66,6 +90,17 @@ export function useClientPortalTickets() {
     category?: string;
   }) => {
     if (!clientId || !user?.id) return null;
+
+    // Duplicate prevention: same subject within 2 minutes
+    const recentDupe = tickets.find(t =>
+      t.subject === input.subject &&
+      (Date.now() - new Date(t.created_at).getTime()) < 2 * 60 * 1000
+    );
+    if (recentDupe) {
+      throw new Error("Duplicate ticket detected — please wait before resubmitting");
+    }
+
+    console.log("[ClientTickets] Submitting ticket:", { clientId, subject: input.subject, department: input.department });
 
     setSubmitting(true);
     try {
@@ -80,12 +115,13 @@ export function useClientPortalTickets() {
         priority: input.priority,
         category: input.category,
       });
+      console.log("[ClientTickets] Ticket created:", inserted);
       await fetchTickets();
       return inserted;
     } finally {
       setSubmitting(false);
     }
-  }, [clientId, user?.id, profile?.full_name, profile?.email, fetchTickets]);
+  }, [clientId, user?.id, profile?.full_name, profile?.email, fetchTickets, tickets]);
 
   return {
     tickets,
