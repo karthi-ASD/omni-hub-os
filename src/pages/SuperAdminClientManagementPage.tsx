@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Search, Trash2, RotateCcw, AlertTriangle, Merge, Eye, Pencil, Users, UserX, GitMerge } from "lucide-react";
+import { Search, Trash2, RotateCcw, AlertTriangle, Merge, Eye, Pencil, Users, UserX, GitMerge, KeyRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { StatCard } from "@/components/ui/stat-card";
 import { format } from "date-fns";
