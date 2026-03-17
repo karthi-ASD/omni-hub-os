@@ -374,6 +374,7 @@ const App = () => (
               <Route path="/seo-ops/:projectId" element={<SeoProjectDetailPage />} />
               <Route path="/seo-team" element={<SeoTeamDashboardPage />} />
               <Route path="/seo-intel/:projectId" element={<SeoIntelligencePage />} />
+              <Route path="/seo-lead-capture" element={<SeoLeadCapturePage />} />
               <Route path="/seo-exec/:projectId" element={<Navigate to="/seo" replace />} />
               <Route path="/sales-seo-intel" element={<SalesSeoPitchPage />} />
               <Route path="/seo-client-reports" element={<SeoClientReportsPage />} />
