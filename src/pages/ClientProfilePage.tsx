@@ -761,6 +761,11 @@ const ClientProfilePage = () => {
           )}
         </TabsContent>
 
+        {/* ── Access & Integrations ── */}
+        <TabsContent value="access">
+          {id && <ClientAccessHubTab clientId={id} />}
+        </TabsContent>
+
         {/* ── Client Activity Log (Internal) ── */}
         <TabsContent value="activity">
           <Card className="rounded-xl">
