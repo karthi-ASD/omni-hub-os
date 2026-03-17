@@ -28,7 +28,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import {
   ArrowLeft, Plus, ListChecks, FileText, Globe, MapPin, Share2, MessageSquare,
-  BarChart3, Brain, Send, Sparkles, Instagram, Facebook,
+  BarChart3, Brain, Send, Sparkles, Instagram, Facebook, Key, Plug,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
