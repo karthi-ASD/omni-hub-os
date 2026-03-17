@@ -269,6 +269,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAllBusinesses([]);
     setSelectedTenantId(null);
     setClientUserId(null);
+    setTenantValidationError(null);
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
@@ -291,11 +292,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider value={{
-      session, user, profile, roles, loading, signOut,
+      session, user, profile, roles, loading, tenantValidationError, signOut,
       hasRole, isSuperAdmin, isBusinessAdmin, isHRManager,
       isClientUser, clientId,
       allBusinesses, selectedTenantId, selectTenant: setSelectedTenantId,
     }}>
+
       {children}
     </AuthContext.Provider>
   );
