@@ -482,6 +482,20 @@ document.querySelectorAll('a[href^="tel:"]').forEach(link => {
 
   return (
     <div className="mt-4 space-y-6">
+      {/* API Key */}
+      <Card>
+        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><ShieldCheck className="h-4 w-4" />API Key (Required for all requests)</CardTitle></CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-xs text-muted-foreground">Include this key in every API request as <code className="bg-muted px-1 rounded">api_key</code> in the JSON body.</p>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 text-xs bg-muted p-2 rounded font-mono">{apiKey || "Generating..."}</code>
+            <Button variant="outline" size="sm" onClick={() => copyText(apiKey, "api-key")}>
+              {copied === "api-key" ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Globe className="h-4 w-4" />Form API Endpoint</CardTitle></CardHeader>
         <CardContent className="space-y-3">
