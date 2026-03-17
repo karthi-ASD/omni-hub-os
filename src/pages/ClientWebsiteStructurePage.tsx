@@ -13,11 +13,11 @@ import { useState } from "react";
 
 const ClientWebsiteStructurePage = () => {
   usePageTitle("Website Structure");
-  const { clientId } = useAuth();
+  const { clientId, loading: authLoading } = useAuth();
   const { clientTree, competitorTrees, loading } = useWebsiteTrees(undefined, clientId || undefined);
   const [activeTab, setActiveTab] = useState("client");
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="p-6">
         <div className="flex items-center gap-2 text-muted-foreground">
