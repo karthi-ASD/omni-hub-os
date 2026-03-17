@@ -129,6 +129,8 @@ export function useClients(options?: UseClientsOptions) {
       .from("clients")
       .select("*")
       .neq("client_status", "reverted")
+      .neq("client_status", "deleted")
+      .neq("client_status", "merged")
       .order("created_at", { ascending: false })
       .range(from, to);
 
