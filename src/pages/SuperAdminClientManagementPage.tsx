@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSuperAdminClients, SuperAdminClient } from "@/hooks/useSuperAdminClients";
 import { PageHeader } from "@/components/ui/page-header";
