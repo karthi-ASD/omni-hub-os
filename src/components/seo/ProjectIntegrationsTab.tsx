@@ -196,7 +196,7 @@ export function ProjectIntegrationsTab({ projectId, businessId }: Props) {
   // Status helpers
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "active": return <CheckCircle2 className="h-5 w-5 text-emerald-500" />;
+      case "active": return <CheckCircle2 className="h-5 w-5 text-primary" />;
       case "error": return <AlertTriangle className="h-5 w-5 text-destructive" />;
       default: return <XCircle className="h-5 w-5 text-muted-foreground" />;
     }
