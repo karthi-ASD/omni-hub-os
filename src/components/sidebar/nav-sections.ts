@@ -2,7 +2,7 @@ import {
   Home, Target, FolderKanban, Users, ClipboardList, Globe, BarChart3,
   Receipt, Briefcase, Mail, Bot, Settings, Shield, Ticket,
   Calendar, Megaphone, Headphones, Building2, FileText, Zap,
-  Phone, DollarSign, Wrench, Network, Heart, PieChart,
+  Phone, DollarSign, Wrench, Network, Heart, PieChart, ClipboardCheck,
   Palette, Activity, Layers, UserCog, LogOut, Search, Bell,
   BookOpen, Lock, Cpu, Workflow, Store, Gauge, Brain,
   TrendingUp, Code, FileEdit, PhoneCall, CalendarCheck, Handshake,
@@ -202,6 +202,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "SA Clients", icon: Users, to: "/super-admin-clients", roles: ["super_admin"] },
       { label: "Business Mgmt", icon: Building2, to: "/business-admin-management", roles: ["super_admin"] },
       { label: "System Health", icon: Activity, to: "/system-health", roles: ["super_admin"] },
+      { label: "Feature Registry", icon: ClipboardCheck, to: "/feature-registry", roles: ["super_admin"] },
     ],
   },
 ];
