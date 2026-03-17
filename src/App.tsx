@@ -563,6 +563,7 @@ const App = () => (
               <Route path="/client-seo-projects" element={<ClientSeoProjectsPage />} />
               <Route path="/client-seo-projects/:projectId" element={<ClientSeoProjectDetailPage />} />
               <Route path="/my-access" element={<ClientAccessHubPage />} />
+              <Route path="/client-website-structure" element={<ClientWebsiteStructurePage />} />
               <Route path="/my-appointments" element={<CustomerAppointmentPage />} />
               <Route path="/staff-app" element={<StaffMobileAppPage />} />
               <Route path="/hr/departments" element={

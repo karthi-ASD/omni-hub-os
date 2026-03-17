@@ -582,6 +582,18 @@ const SeoCampaignDetailPage = () => {
             </TableBody></Table></Card>
           )}
         </TabsContent>
+
+        {/* Website Tree Tab */}
+        <TabsContent value="website-tree">
+          {project && projectId && (
+            <WebsiteTreePanel
+              projectId={projectId}
+              clientId={project.client_id}
+              businessId={project.business_id}
+              websiteDomain={project.website_domain}
+            />
+          )}
+        </TabsContent>
       </Tabs>
     </div>
   );
