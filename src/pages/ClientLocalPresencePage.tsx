@@ -134,7 +134,7 @@ const ClientLocalPresencePage = () => {
                 <MousePointerClick className="h-5 w-5 text-primary/60" />
                 <GrowthBadge pct={clicksGrowth} />
               </div>
-              <p className="text-3xl font-bold"><AnimatedCounter value={totalWebClicks} /></p>
+              <p className="text-3xl font-bold"><AnimatedCounter end={totalWebClicks} /></p>
               <p className="text-xs text-muted-foreground mt-1">Website Clicks</p>
             </CardContent>
           </Card>
