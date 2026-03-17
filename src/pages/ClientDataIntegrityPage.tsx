@@ -60,7 +60,7 @@ export default function ClientDataIntegrityPage() {
   return (
     <div className="p-4 md:p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <PageHeader title="Client Data Integrity" subtitle="Monitor and resolve data mapping issues" icon={<ShieldCheck className="h-6 w-6" />} />
+        <PageHeader title="Client Data Integrity" subtitle="Monitor and resolve data mapping issues" icon={ShieldCheck} />
         <ManualRefresh onRefresh={handleRefresh} lastUpdated={lastUpdated} />
       </div>
 
