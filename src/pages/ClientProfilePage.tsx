@@ -28,6 +28,7 @@ import { AddServiceDialog, ServiceFormData } from "@/components/clients/AddServi
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useClientFinancials } from "@/hooks/useClientFinancials";
+import { ClientAccessHubTab } from "@/components/clients/access-hub/ClientAccessHubTab";
 import { useSalesTeam } from "@/hooks/useSalesTeam";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, parseISO, isToday, isTomorrow, isPast } from "date-fns";
