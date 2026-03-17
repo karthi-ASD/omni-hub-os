@@ -119,7 +119,7 @@ const SeoProjectDetailPage = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="tasks">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="flex-wrap">
           <TabsTrigger value="tasks"><ListChecks className="h-3 w-3 mr-1" /> Tasks ({totalTasks})</TabsTrigger>
           <TabsTrigger value="blogs"><FileText className="h-3 w-3 mr-1" /> Blogs ({blogs.length})</TabsTrigger>
