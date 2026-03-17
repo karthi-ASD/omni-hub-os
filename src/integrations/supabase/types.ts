@@ -18277,6 +18277,73 @@ export type Database = {
           },
         ]
       }
+      seo_automation_settings: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          created_at: string | null
+          enable_acknowledgment: boolean | null
+          enable_call: boolean | null
+          enable_email: boolean | null
+          enable_whatsapp: boolean | null
+          id: string
+          seo_project_id: string
+          updated_at: string | null
+          whatsapp_connected: boolean | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          created_at?: string | null
+          enable_acknowledgment?: boolean | null
+          enable_call?: boolean | null
+          enable_email?: boolean | null
+          enable_whatsapp?: boolean | null
+          id?: string
+          seo_project_id: string
+          updated_at?: string | null
+          whatsapp_connected?: boolean | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          created_at?: string | null
+          enable_acknowledgment?: boolean | null
+          enable_call?: boolean | null
+          enable_email?: boolean | null
+          enable_whatsapp?: boolean | null
+          id?: string
+          seo_project_id?: string
+          updated_at?: string | null
+          whatsapp_connected?: boolean | null
+          whatsapp_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_automation_settings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_automation_settings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_automation_settings_seo_project_id_fkey"
+            columns: ["seo_project_id"]
+            isOneToOne: true
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_autopilot_tasks: {
         Row: {
           business_id: string
@@ -18654,6 +18721,86 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_captured_leads: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          created_at: string | null
+          email: string | null
+          extra_data: Json | null
+          form_id: string | null
+          id: string
+          message: string | null
+          name: string | null
+          page_url: string | null
+          phone: string | null
+          seo_project_id: string
+          source: string
+          status: string | null
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          extra_data?: Json | null
+          form_id?: string | null
+          id?: string
+          message?: string | null
+          name?: string | null
+          page_url?: string | null
+          phone?: string | null
+          seo_project_id: string
+          source?: string
+          status?: string | null
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          extra_data?: Json | null
+          form_id?: string | null
+          id?: string
+          message?: string | null
+          name?: string | null
+          page_url?: string | null
+          phone?: string | null
+          seo_project_id?: string
+          source?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_captured_leads_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_captured_leads_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_captured_leads_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "seo_lead_forms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_captured_leads_seo_project_id_fkey"
+            columns: ["seo_project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
             referencedColumns: ["id"]
           },
         ]
@@ -19751,6 +19898,102 @@ export type Database = {
           },
           {
             foreignKeyName: "seo_keywords_seo_project_id_fkey"
+            columns: ["seo_project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_lead_form_fields: {
+        Row: {
+          created_at: string | null
+          field_label: string
+          field_options: Json | null
+          field_type: string
+          form_id: string
+          id: string
+          is_required: boolean | null
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          field_label: string
+          field_options?: Json | null
+          field_type?: string
+          form_id: string
+          id?: string
+          is_required?: boolean | null
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          field_label?: string
+          field_options?: Json | null
+          field_type?: string
+          form_id?: string
+          id?: string
+          is_required?: boolean | null
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_lead_form_fields_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "seo_lead_forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_lead_forms: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          created_at: string | null
+          form_name: string
+          id: string
+          is_active: boolean | null
+          seo_project_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          created_at?: string | null
+          form_name?: string
+          id?: string
+          is_active?: boolean | null
+          seo_project_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          created_at?: string | null
+          form_name?: string
+          id?: string
+          is_active?: boolean | null
+          seo_project_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_lead_forms_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_lead_forms_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_lead_forms_seo_project_id_fkey"
             columns: ["seo_project_id"]
             isOneToOne: false
             referencedRelation: "seo_projects"
