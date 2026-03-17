@@ -153,7 +153,7 @@ const ClientDashboardPage = () => {
               ) : (
                 <div className="text-center py-6 text-muted-foreground text-sm">
                   <Search className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  No SEO data available yet
+                  Your SEO campaign is getting started. Data will appear soon.
                 </div>
               )}
             </CardContent>
