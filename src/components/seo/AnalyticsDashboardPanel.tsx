@@ -17,7 +17,7 @@ interface AnalyticsDashboardPanelProps {
 }
 
 export const AnalyticsDashboardPanel = ({ projectId }: AnalyticsDashboardPanelProps) => {
-  const { stats, loading, aggregates, insights, trendData, sourceData, refetch } = useGoogleAnalyticsStats(projectId);
+  const { stats, loading, aggregates, insights, trendData, sourceData, syncStatus, refetch } = useGoogleAnalyticsStats(projectId);
 
   if (loading) {
     return (
