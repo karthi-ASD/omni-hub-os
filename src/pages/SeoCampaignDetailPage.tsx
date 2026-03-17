@@ -596,6 +596,11 @@ const SeoCampaignDetailPage = () => {
             />
           )}
         </TabsContent>
+
+        {/* Analytics Dashboard Tab */}
+        <TabsContent value="analytics">
+          {projectId && <AnalyticsDashboardPanel projectId={projectId} />}
+        </TabsContent>
       </Tabs>
     </div>
   );

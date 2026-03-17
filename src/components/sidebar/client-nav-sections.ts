@@ -16,6 +16,7 @@ export const CLIENT_NAV_SECTIONS: NavSection[] = [
       { label: "Reports", icon: BarChart3, to: "/client-reports" },
       { label: "Support Tickets", icon: Ticket, to: "/unified-tickets" },
       { label: "Website Structure", icon: GitBranch, to: "/client-website-structure" },
+      { label: "Website Performance", icon: TrendingUp, to: "/client-website-performance" },
     ],
   },
   {
