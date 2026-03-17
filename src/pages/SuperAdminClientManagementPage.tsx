@@ -295,11 +295,19 @@ const SuperAdminClientManagementPage = () => {
         <StatCard label="Merged Clients" value={allClients.filter(c => c.client_status === "merged").length} icon={GitMerge} gradient="from-neon-purple to-primary" />
       </div>
 
-      <div className="flex items-center gap-3">
-        <Button variant="outline" onClick={handleBulkFixIsolation} disabled={bulkFixLoading} className="gap-2 border-orange-500/30 text-orange-600 hover:bg-orange-500/10">
+      <div className="flex items-center gap-3 flex-wrap">
+        <Button variant="outline" onClick={() => setShowBulkFixConfirm(true)} disabled={bulkFixLoading} className="gap-2 border-orange-500/30 text-orange-600 hover:bg-orange-500/10">
           {bulkFixLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldAlert className="h-4 w-4" />}
-          Bulk Fix Client Isolation
+          {bulkFixLoading ? "Processing..." : "Bulk Fix Client Isolation"}
         </Button>
+        {bulkFixResult && (
+          <div className="text-xs flex gap-3 text-muted-foreground">
+            <span>Total: <strong>{bulkFixResult.total}</strong></span>
+            <span className="text-green-600">Fixed: <strong>{bulkFixResult.fixed}</strong></span>
+            <span>Skipped: <strong>{bulkFixResult.skipped}</strong></span>
+            {bulkFixResult.errors > 0 && <span className="text-destructive">Errors: <strong>{bulkFixResult.errors}</strong></span>}
+          </div>
+        )}
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
