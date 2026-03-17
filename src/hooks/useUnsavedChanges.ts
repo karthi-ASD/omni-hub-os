@@ -13,6 +13,7 @@ export function useUnsavedChanges<T extends Record<string, any>>(
 ) {
   const { debounceMs = 5000, enabled = true } = options ?? {};
   const [isDirty, setIsDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const initialRef = useRef<T>(currentValues);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
