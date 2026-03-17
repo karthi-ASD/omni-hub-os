@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Lookup project to get business_id and client_id
+    // Lookup project
     const { data: project, error: projErr } = await supabase
       .from("seo_projects")
       .select("id, business_id, client_id")
@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: insertErr.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Check automation settings and trigger if enabled
+    // Check automation settings
     const { data: autoSettings } = await supabase
       .from("seo_automation_settings")
       .select("*")
@@ -78,7 +78,37 @@ Deno.serve(async (req) => {
 
     const automationTriggered: string[] = [];
 
+    const logAutomation = async (type: string, status: string, response?: any) => {
+      await supabase.from("seo_automation_logs").insert({
+        lead_id: lead.id,
+        seo_project_id: project_id,
+        business_id: project.business_id,
+        automation_type: type,
+        status,
+        response_json: response || null,
+      });
+    };
+
     if (autoSettings) {
+      // Email automation
+      if (autoSettings.enable_email && email) {
+        try {
+          await supabase.functions.invoke("send-email", {
+            body: {
+              to: email,
+              subject: "Thank you for your enquiry",
+              message: `Hi ${name || "there"}, we received your enquiry and will contact you shortly.`,
+              business_id: project.business_id,
+            },
+          });
+          automationTriggered.push("email");
+          await logAutomation("email", "success");
+        } catch (e) {
+          console.error("Email automation failed:", e);
+          await logAutomation("email", "failed", { error: String(e) });
+        }
+      }
+
       // WhatsApp automation
       if (autoSettings.enable_whatsapp && autoSettings.whatsapp_connected && phone) {
         try {
@@ -90,7 +120,29 @@ Deno.serve(async (req) => {
             },
           });
           automationTriggered.push("whatsapp");
-        } catch (e) { console.error("WhatsApp automation failed:", e); }
+          await logAutomation("whatsapp", "success");
+        } catch (e) {
+          console.error("WhatsApp automation failed:", e);
+          await logAutomation("whatsapp", "failed", { error: String(e) });
+        }
+      }
+
+      // Call automation
+      if (autoSettings.enable_call && phone) {
+        try {
+          await supabase.functions.invoke("trigger-call", {
+            body: {
+              phone,
+              project_id,
+              type: "lead_followup",
+            },
+          });
+          automationTriggered.push("call");
+          await logAutomation("call", "success");
+        } catch (e) {
+          console.error("Call automation failed:", e);
+          await logAutomation("call", "failed", { error: String(e) });
+        }
       }
     }
 

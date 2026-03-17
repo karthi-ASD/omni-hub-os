@@ -18277,6 +18277,61 @@ export type Database = {
           },
         ]
       }
+      seo_automation_logs: {
+        Row: {
+          automation_type: string
+          business_id: string
+          created_at: string | null
+          id: string
+          lead_id: string | null
+          response_json: Json | null
+          seo_project_id: string
+          status: string
+        }
+        Insert: {
+          automation_type: string
+          business_id: string
+          created_at?: string | null
+          id?: string
+          lead_id?: string | null
+          response_json?: Json | null
+          seo_project_id: string
+          status?: string
+        }
+        Update: {
+          automation_type?: string
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          lead_id?: string | null
+          response_json?: Json | null
+          seo_project_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_automation_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_automation_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "seo_captured_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_automation_logs_seo_project_id_fkey"
+            columns: ["seo_project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seo_automation_settings: {
         Row: {
           business_id: string
