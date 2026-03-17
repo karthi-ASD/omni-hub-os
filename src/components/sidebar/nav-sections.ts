@@ -123,6 +123,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Website Dev", icon: Globe, to: "/website-dev-stages" },
       { label: "Content Mgmt", icon: FileText, to: "/content-management" },
       { label: "Job CRM", icon: Wrench, to: "/job-crm" },
+      { label: "Integrations", icon: Plug, to: "/integrations-overview" },
     ],
   },
   {
