@@ -72,7 +72,7 @@ export default function SeoLeadCapturePage() {
   const fetchProjects = async () => {
     const { data } = await supabase
       .from("seo_projects")
-      .select("id, project_name, website_domain, client_id, clients(contact_name, phone, email, whatsapp_number)")
+      .select("id, project_name, website_domain, client_id, api_key, clients(contact_name, phone, email, whatsapp_number)")
       .eq("business_id", profile!.business_id!)
       .eq("project_status", "active")
       .order("project_name");
