@@ -4,6 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
+import { DraftRestoreBanner } from "@/components/ui/draft-restore-banner";
+import { AutoSaveIndicator } from "@/components/ui/auto-save-indicator";
 
 interface Client {
   id: string;
@@ -34,6 +37,7 @@ const defaultForm = {
 export function SeoCreateProjectDialog({ open, onOpenChange, clients, onCreate }: Props) {
   const [form, setForm] = useState(defaultForm);
   const [submitting, setSubmitting] = useState(false);
+  const { isDirty, isSaving, clearDraft } = useUnsavedChanges("seo-create-project", form, { enabled: open });
 
   const handleCreate = async () => {
     if (!form.website_domain || !form.project_name) return;
@@ -49,6 +53,7 @@ export function SeoCreateProjectDialog({ open, onOpenChange, clients, onCreate }
       contract_end: form.contract_end || undefined,
     });
     setForm(defaultForm);
+    clearDraft();
     setSubmitting(false);
     onOpenChange(false);
   };
@@ -57,8 +62,12 @@ export function SeoCreateProjectDialog({ open, onOpenChange, clients, onCreate }
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create SEO Project</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            Create SEO Project
+            <AutoSaveIndicator isDirty={isDirty} isSaving={isSaving} className="ml-auto" />
+          </DialogTitle>
         </DialogHeader>
+        <DraftRestoreBanner draftKey="seo-create-project" onRestore={(data) => setForm(data)} />
         <div className="space-y-4">
           <div>
             <Label>Project Name *</Label>

@@ -13,6 +13,7 @@ export function useUnsavedChanges<T extends Record<string, any>>(
 ) {
   const { debounceMs = 5000, enabled = true } = options ?? {};
   const [isDirty, setIsDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const initialRef = useRef<T>(currentValues);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -37,6 +38,7 @@ export function useUnsavedChanges<T extends Record<string, any>>(
   // Auto-save draft (debounced)
   useEffect(() => {
     if (!enabled || !isDirty) return;
+    setIsSaving(true);
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       try {
@@ -44,6 +46,7 @@ export function useUnsavedChanges<T extends Record<string, any>>(
       } catch {
         // quota exceeded – ignore
       }
+      setIsSaving(false);
     }, debounceMs);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -62,6 +65,7 @@ export function useUnsavedChanges<T extends Record<string, any>>(
   const clearDraft = useCallback(() => {
     localStorage.removeItem(`draft:${key}`);
     setIsDirty(false);
+    setIsSaving(false);
     initialRef.current = currentValues;
   }, [key, currentValues]);
 
@@ -70,5 +74,5 @@ export function useUnsavedChanges<T extends Record<string, any>>(
     setIsDirty(false);
   }, []);
 
-  return { isDirty, restoreDraft, clearDraft, resetInitial };
+  return { isDirty, isSaving, restoreDraft, clearDraft, resetInitial };
 }

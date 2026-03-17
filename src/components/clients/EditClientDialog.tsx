@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
+import { AutoSaveIndicator } from "@/components/ui/auto-save-indicator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +40,7 @@ export const EditClientDialog: React.FC<EditClientDialogProps> = ({
     country: "",
   });
   const [saving, setSaving] = useState(false);
+  const { isDirty, isSaving, clearDraft } = useUnsavedChanges("edit-client-" + client.id, form, { enabled: open });
 
   useEffect(() => {
     if (open && client) {
@@ -102,6 +105,7 @@ export const EditClientDialog: React.FC<EditClientDialogProps> = ({
       if (updateError) throw updateError;
 
       toast.success("Client updated successfully");
+      clearDraft();
       onSuccess();
       onOpenChange(false);
     } catch (err: any) {
@@ -121,6 +125,7 @@ export const EditClientDialog: React.FC<EditClientDialogProps> = ({
           <DialogTitle className="flex items-center gap-2">
             <Pencil className="h-5 w-5 text-primary" />
             Edit Client
+            <AutoSaveIndicator isDirty={isDirty} isSaving={isSaving} className="ml-auto" />
           </DialogTitle>
         </DialogHeader>
 

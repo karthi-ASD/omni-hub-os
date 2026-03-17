@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
+import { DraftRestoreBanner } from "@/components/ui/draft-restore-banner";
+import { AutoSaveIndicator } from "@/components/ui/auto-save-indicator";
 import { CustomFieldRenderer } from "@/components/custom-fields/CustomFieldRenderer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -110,6 +113,9 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [tab, setTab] = useState("details");
 
+  const draftValues = useMemo(() => ({ ...form, selectedServices, serviceDetails, servicePricing }), [form, selectedServices, serviceDetails, servicePricing]);
+  const { isDirty, isSaving, clearDraft } = useUnsavedChanges("new-client-form", draftValues, { enabled: open });
+
   const update = (key: keyof FormState, value: string) =>
     setForm((p) => ({ ...p, [key]: value }));
 
@@ -135,6 +141,7 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
     setServiceDetails({});
     setServicePricing({});
     setTab("details");
+    clearDraft();
   };
 
   const handleSubmit = async () => {
@@ -212,8 +219,21 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
           <DialogTitle className="flex items-center gap-2">
             <UserPlus className="h-5 w-5 text-primary" />
             New Client
+            <AutoSaveIndicator isDirty={isDirty} isSaving={isSaving} className="ml-auto" />
           </DialogTitle>
         </DialogHeader>
+
+        <div className="px-6">
+          <DraftRestoreBanner
+            draftKey="new-client-form"
+            onRestore={(data) => {
+              if (data.contact_name !== undefined) setForm(data);
+              if (data.selectedServices) setSelectedServices(data.selectedServices);
+              if (data.serviceDetails) setServiceDetails(data.serviceDetails);
+              if (data.servicePricing) setServicePricing(data.servicePricing);
+            }}
+          />
+        </div>
 
         <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="mx-6 grid grid-cols-4">
