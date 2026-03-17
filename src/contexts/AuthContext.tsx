@@ -202,6 +202,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isSuperAdmin = hasRole("super_admin");
   const isBusinessAdmin = hasRole("business_admin");
   const isHRManager = hasRole("hr_manager");
+  const isClientUser = !!clientUserId && !isSuperAdmin;
+  const clientId = clientUserId;
 
   // KEY FIX: For super_admin, override profile.business_id with selected tenant
   // This makes ALL hooks that use profile.business_id work automatically
