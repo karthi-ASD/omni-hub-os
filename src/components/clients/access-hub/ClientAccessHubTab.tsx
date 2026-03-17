@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useClientAccessHub, AccessCredential, ProjectIntegration } from "@/hooks/useClientAccessHub";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
 import { CredentialCard } from "./CredentialCard";
 import { IntegrationCard } from "./IntegrationCard";
 import { CredentialFormDialog } from "./CredentialFormDialog";
