@@ -78,9 +78,21 @@ const ClientProfilePage = () => {
 
   // Safe client fetch — direct DB query, not from in-memory list
   const fetchClientSafe = useCallback(async (clientId: string) => {
-    // Step 0: Validate UUID
+    // Step 0: Validate UUID — if not UUID, attempt identity resolution
     if (!UUID_REGEX.test(clientId)) {
-      console.log("[ClientProfile] Invalid UUID, attempting resolve:", clientId);
+      console.log("[ClientProfile] Non-UUID route param, attempting resolve:", clientId);
+      try {
+        const { data: resolveData } = await supabase.functions.invoke("client-identity-resolver", {
+          body: { action: "resolve", email: clientId, external_id: clientId },
+        });
+        if (resolveData?.client_id) {
+          console.log("[ClientProfile] Resolved non-UUID to client:", resolveData.client_id);
+          navigate(`/clients/${resolveData.client_id}`, { replace: true });
+          return;
+        }
+      } catch (e) {
+        console.log("[ClientProfile] Resolve attempt failed:", e);
+      }
       setFetchState("invalid_id");
       return;
     }
