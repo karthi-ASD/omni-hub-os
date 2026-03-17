@@ -246,6 +246,18 @@ const UnifiedTicketsPage = () => {
                         <Clock className="h-2.5 w-2.5" />
                         {new Date(ticket.created_at).toLocaleDateString()}
                       </span>
+                      {ticket.sla_due_at && !["resolved", "closed"].includes(ticket.status) && (() => {
+                        const due = new Date(ticket.sla_due_at);
+                        const now = new Date();
+                        const breached = due < now;
+                        const hoursLeft = Math.round((due.getTime() - now.getTime()) / (1000 * 60 * 60));
+                        return (
+                          <span className={`flex items-center gap-1 font-semibold ${breached ? "text-destructive" : hoursLeft <= 2 ? "text-[hsl(var(--warning))]" : "text-[hsl(var(--success))]"}`}>
+                            <AlertTriangle className="h-2.5 w-2.5" />
+                            {breached ? "SLA BREACHED" : `${hoursLeft}h left`}
+                          </span>
+                        );
+                      })()}
                       {ticket.channel && (
                         <span className="capitalize">{ticket.channel}</span>
                       )}
