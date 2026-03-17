@@ -254,9 +254,9 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 0,
-      refetchOnWindowFocus: true,
-      refetchOnReconnect: true,
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
       retry: 1,
     },
   },

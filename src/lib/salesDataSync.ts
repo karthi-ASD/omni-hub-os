@@ -67,22 +67,11 @@ export function useSalesDataAutoRefresh(
       }
     };
 
-    const handleWindowFocus = () => runRefetch();
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        runRefetch();
-      }
-    };
-
     window.addEventListener(SALES_DATA_REFRESH_EVENT, handleRefreshEvent as EventListener);
-    window.addEventListener("focus", handleWindowFocus);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       if (timeout) clearTimeout(timeout);
       window.removeEventListener(SALES_DATA_REFRESH_EVENT, handleRefreshEvent as EventListener);
-      window.removeEventListener("focus", handleWindowFocus);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [refetch, scopeKey]);
 }
