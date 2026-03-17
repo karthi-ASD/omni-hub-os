@@ -5845,6 +5845,59 @@ export type Database = {
           },
         ]
       }
+      client_backfill_audit_log: {
+        Row: {
+          applied_at: string | null
+          applied_by: string | null
+          business_id: string
+          confidence: string
+          created_at: string
+          id: string
+          is_dry_run: boolean
+          match_method: string
+          new_client_id: string | null
+          old_client_id: string | null
+          source_record_id: string
+          source_table: string
+        }
+        Insert: {
+          applied_at?: string | null
+          applied_by?: string | null
+          business_id: string
+          confidence?: string
+          created_at?: string
+          id?: string
+          is_dry_run?: boolean
+          match_method: string
+          new_client_id?: string | null
+          old_client_id?: string | null
+          source_record_id: string
+          source_table: string
+        }
+        Update: {
+          applied_at?: string | null
+          applied_by?: string | null
+          business_id?: string
+          confidence?: string
+          created_at?: string
+          id?: string
+          is_dry_run?: boolean
+          match_method?: string
+          new_client_id?: string | null
+          old_client_id?: string | null
+          source_record_id?: string
+          source_table?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_backfill_audit_log_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_billing_schedules: {
         Row: {
           billing_cycle: string | null
@@ -7211,6 +7264,7 @@ export type Database = {
           churn_risk: string | null
           city: string | null
           client_business_id: string | null
+          client_health_status: string
           client_since: string | null
           client_start_date: string | null
           client_status: string
@@ -7264,6 +7318,7 @@ export type Database = {
           churn_risk?: string | null
           city?: string | null
           client_business_id?: string | null
+          client_health_status?: string
           client_since?: string | null
           client_start_date?: string | null
           client_status?: string
@@ -7317,6 +7372,7 @@ export type Database = {
           churn_risk?: string | null
           city?: string | null
           client_business_id?: string | null
+          client_health_status?: string
           client_since?: string | null
           client_start_date?: string | null
           client_status?: string
@@ -23629,6 +23685,7 @@ export type Database = {
           created_at: string
           id: string
           match_attempted_at: string
+          match_confidence: string | null
           match_email: string | null
           match_external_id: string | null
           match_name: string | null
@@ -23641,12 +23698,14 @@ export type Database = {
           source_record_id: string
           source_table: string
           suggested_client_id: string | null
+          suggested_match_method: string | null
         }
         Insert: {
           business_id: string
           created_at?: string
           id?: string
           match_attempted_at?: string
+          match_confidence?: string | null
           match_email?: string | null
           match_external_id?: string | null
           match_name?: string | null
@@ -23659,12 +23718,14 @@ export type Database = {
           source_record_id: string
           source_table: string
           suggested_client_id?: string | null
+          suggested_match_method?: string | null
         }
         Update: {
           business_id?: string
           created_at?: string
           id?: string
           match_attempted_at?: string
+          match_confidence?: string | null
           match_email?: string | null
           match_external_id?: string | null
           match_name?: string | null
@@ -23677,6 +23738,7 @@ export type Database = {
           source_record_id?: string
           source_table?: string
           suggested_client_id?: string | null
+          suggested_match_method?: string | null
         }
         Relationships: [
           {
