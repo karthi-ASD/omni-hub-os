@@ -80,7 +80,8 @@ export const AnalyticsDashboardPanel = ({ projectId }: AnalyticsDashboardPanelPr
             <Activity className="h-5 w-5 text-primary" /> Analytics Dashboard
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {stats.length} data points · Last updated: {new Date(stats[stats.length - 1].created_at).toLocaleDateString()}
+            {stats.length} data points · Last 30 days
+            {syncStatus?.last_sync_at && ` · Synced ${new Date(syncStatus.last_sync_at).toLocaleDateString()}`}
           </p>
         </div>
         <Button size="sm" variant="outline" onClick={() => refetch()}>
