@@ -60,10 +60,11 @@ const DEPARTMENTS = [
 const UnifiedTicketsPage = () => {
   usePageTitle("Ticket Center");
   const navigate = useNavigate();
-  const { isSuperAdmin, isBusinessAdmin } = useAuth();
+  const { isSuperAdmin, isBusinessAdmin, hasRole } = useAuth();
   const { departmentName } = useEmployeeDepartment();
+  const isManager = hasRole("manager");
 
-  const deptFilter = (isSuperAdmin || isBusinessAdmin) ? undefined : departmentName?.toLowerCase();
+  const deptFilter = (isSuperAdmin || isBusinessAdmin || isManager) ? undefined : departmentName?.toLowerCase();
   const { tickets, stats, loading, createTicket } = useUnifiedTickets(deptFilter);
 
   const [createOpen, setCreateOpen] = useState(false);
