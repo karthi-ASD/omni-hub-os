@@ -446,9 +446,9 @@ const ClientDashboardPage = () => {
               { label: "Add Customer", icon: Plus, to: "/clients" },
               { label: "View Leads", icon: Target, to: "/leads" },
               { label: "My Deals", icon: FolderKanban, to: "/deals" },
-              { label: "SEO Dashboard", icon: Globe, to: "/seo" },
+              { label: "SEO Projects", icon: Globe, to: "/client-seo-projects" },
               { label: "View Reports", icon: BarChart3, to: "/client-reports" },
-              { label: "Invoices", icon: Receipt, to: "/invoices" },
+              { label: "Invoices", icon: Receipt, to: "/my-billing" },
               { label: "Raise Ticket", icon: Ticket, to: "/unified-tickets" },
               { label: "My Package", icon: Briefcase, to: "/my-billing" },
             ].map(action => (
