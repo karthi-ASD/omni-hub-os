@@ -9,14 +9,15 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
   BarChart3, Phone, Mail, MessageSquare, Globe, Settings, Users,
   Plus, Trash2, GripVertical, Copy, Check, ArrowLeft, Zap, TrendingUp,
-  PhoneCall, FileText, Activity, Eye
+  PhoneCall, FileText, Eye, ArrowUpRight, ArrowDownRight, Rocket, Send
 } from "lucide-react";
 
+// ─── Types ───
 interface SeoProject {
   id: string;
   project_name: string;
@@ -30,16 +31,6 @@ interface LeadForm {
   form_name: string;
   is_active: boolean;
   seo_project_id: string;
-  fields?: FormField[];
-}
-
-interface FormField {
-  id: string;
-  field_label: string;
-  field_type: string;
-  field_options: any;
-  is_required: boolean;
-  sort_order: number;
 }
 
 interface AutomationSettings {
@@ -65,9 +56,9 @@ interface CapturedLead {
   created_at: string;
 }
 
+// ─── Main Page ───
 export default function SeoLeadCapturePage() {
   const { profile } = useAuth();
-  const { toast } = useToast();
   const [projects, setProjects] = useState<SeoProject[]>([]);
   const [selectedProject, setSelectedProject] = useState<SeoProject | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,7 +79,13 @@ export default function SeoLeadCapturePage() {
   };
 
   if (selectedProject) {
-    return <ClientDashboard project={selectedProject} onBack={() => setSelectedProject(null)} businessId={profile!.business_id!} />;
+    return (
+      <ClientDashboard
+        project={selectedProject}
+        onBack={() => setSelectedProject(null)}
+        businessId={profile!.business_id!}
+      />
+    );
   }
 
   return (
@@ -99,9 +96,17 @@ export default function SeoLeadCapturePage() {
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {loading ? (
-          <p className="text-muted-foreground col-span-full">Loading projects…</p>
+          Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i}><CardContent className="pt-6 space-y-2">
+              <Skeleton className="h-5 w-3/4" /><Skeleton className="h-4 w-1/2" /><Skeleton className="h-4 w-2/3" />
+            </CardContent></Card>
+          ))
         ) : projects.length === 0 ? (
-          <p className="text-muted-foreground col-span-full">No active SEO projects found.</p>
+          <div className="col-span-full text-center py-16">
+            <Rocket className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
+            <h3 className="text-lg font-semibold">No Active SEO Projects</h3>
+            <p className="text-sm text-muted-foreground mt-1">Create an SEO project first to start capturing leads.</p>
+          </div>
         ) : (
           projects.map((p) => (
             <Card key={p.id} className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => setSelectedProject(p)}>
@@ -120,13 +125,13 @@ export default function SeoLeadCapturePage() {
   );
 }
 
-/* ─── Client Dashboard ─── */
+// ─── Client Dashboard ───
 function ClientDashboard({ project, onBack, businessId }: { project: SeoProject; onBack: () => void; businessId: string }) {
-  const { toast } = useToast();
   const [leads, setLeads] = useState<CapturedLead[]>([]);
   const [forms, setForms] = useState<LeadForm[]>([]);
   const [settings, setSettings] = useState<AutomationSettings | null>(null);
   const [tab, setTab] = useState("overview");
+  const [loadingLeads, setLoadingLeads] = useState(true);
 
   useEffect(() => {
     fetchAll();
@@ -147,6 +152,7 @@ function ClientDashboard({ project, onBack, businessId }: { project: SeoProject;
       .order("created_at", { ascending: false })
       .limit(200);
     setLeads((data as any) || []);
+    setLoadingLeads(false);
   };
 
   const fetchForms = async () => {
@@ -156,7 +162,21 @@ function ClientDashboard({ project, onBack, businessId }: { project: SeoProject;
 
   const fetchSettings = async () => {
     const { data } = await supabase.from("seo_automation_settings").select("*").eq("seo_project_id", project.id).maybeSingle();
-    setSettings(data as any || { seo_project_id: project.id, whatsapp_number: "", whatsapp_connected: false, enable_email: false, enable_whatsapp: false, enable_call: false, enable_acknowledgment: false });
+    if (data) {
+      setSettings(data as any);
+    } else {
+      // Auto-create default settings
+      const { data: created } = await supabase.from("seo_automation_settings").insert({
+        business_id: businessId,
+        seo_project_id: project.id,
+        client_id: project.client_id,
+        enable_email: false,
+        enable_whatsapp: false,
+        enable_call: false,
+        enable_acknowledgment: false,
+      } as any).select().single();
+      setSettings(created as any || { seo_project_id: project.id, whatsapp_number: "", whatsapp_connected: false, enable_email: false, enable_whatsapp: false, enable_call: false, enable_acknowledgment: false });
+    }
   };
 
   const client = project.clients as any;
@@ -186,7 +206,7 @@ function ClientDashboard({ project, onBack, businessId }: { project: SeoProject;
         </TabsList>
 
         <TabsContent value="overview">
-          <OverviewTab project={project} client={client} settings={settings} leads={leads} formLeads={formLeads} callLeads={callLeads} lastLead={lastLead} />
+          <OverviewTab project={project} client={client} settings={settings} leads={leads} formLeads={formLeads} callLeads={callLeads} lastLead={lastLead} loading={loadingLeads} />
         </TabsContent>
         <TabsContent value="forms">
           <FormBuilderTab project={project} businessId={businessId} forms={forms} onRefresh={fetchForms} />
@@ -198,7 +218,7 @@ function ClientDashboard({ project, onBack, businessId }: { project: SeoProject;
           <AutomationTab project={project} businessId={businessId} settings={settings} onRefresh={fetchSettings} />
         </TabsContent>
         <TabsContent value="leads">
-          <LeadsTab leads={leads} />
+          <LeadsTab leads={leads} loading={loadingLeads} />
         </TabsContent>
         <TabsContent value="reports">
           <ReportsTab leads={leads} formLeads={formLeads} callLeads={callLeads} apiLeads={apiLeads} />
@@ -208,8 +228,10 @@ function ClientDashboard({ project, onBack, businessId }: { project: SeoProject;
   );
 }
 
-/* ─── Overview Tab ─── */
-function OverviewTab({ project, client, settings, leads, formLeads, callLeads, lastLead }: any) {
+// ─── Overview Tab ───
+function OverviewTab({ project, client, settings, leads, formLeads, callLeads, lastLead, loading }: any) {
+  if (loading) return <div className="grid gap-4 md:grid-cols-4 mt-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>;
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
       <Card><CardContent className="pt-6 text-center">
@@ -217,11 +239,11 @@ function OverviewTab({ project, client, settings, leads, formLeads, callLeads, l
         <p className="text-sm text-muted-foreground">Total Leads</p>
       </CardContent></Card>
       <Card><CardContent className="pt-6 text-center">
-        <div className="text-3xl font-bold text-blue-500">{formLeads}</div>
+        <div className="text-3xl font-bold text-chart-1">{formLeads}</div>
         <p className="text-sm text-muted-foreground">Form Leads</p>
       </CardContent></Card>
       <Card><CardContent className="pt-6 text-center">
-        <div className="text-3xl font-bold text-emerald-500">{callLeads}</div>
+        <div className="text-3xl font-bold text-chart-2">{callLeads}</div>
         <p className="text-sm text-muted-foreground">Call Clicks</p>
       </CardContent></Card>
       <Card><CardContent className="pt-6 text-center">
@@ -250,11 +272,12 @@ function OverviewTab({ project, client, settings, leads, formLeads, callLeads, l
   );
 }
 
-/* ─── Form Builder Tab ─── */
+// ─── Form Builder Tab ───
 function FormBuilderTab({ project, businessId, forms, onRefresh }: { project: SeoProject; businessId: string; forms: LeadForm[]; onRefresh: () => void }) {
   const { toast } = useToast();
   const [creating, setCreating] = useState(false);
   const [formName, setFormName] = useState("Contact Form");
+  const [copied, setCopied] = useState<string | null>(null);
   const [fields, setFields] = useState<Array<{ label: string; type: string; required: boolean }>>([
     { label: "Name", type: "text", required: true },
     { label: "Email", type: "email", required: true },
@@ -262,8 +285,17 @@ function FormBuilderTab({ project, businessId, forms, onRefresh }: { project: Se
     { label: "Message", type: "textarea", required: false },
   ]);
 
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
+  const formEndpoint = `${supabaseUrl}/functions/v1/seo-lead-capture`;
+
   const addField = () => setFields([...fields, { label: "", type: "text", required: false }]);
   const removeField = (i: number) => setFields(fields.filter((_, idx) => idx !== i));
+
+  const copyText = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(label);
+    setTimeout(() => setCopied(null), 2000);
+  };
 
   const saveForm = async () => {
     setCreating(true);
@@ -285,10 +317,19 @@ function FormBuilderTab({ project, businessId, forms, onRefresh }: { project: Se
     }));
 
     await supabase.from("seo_lead_form_fields").insert(fieldRows as any);
-    toast({ title: "Form saved" });
+    toast({ title: "Form saved successfully" });
     setCreating(false);
     onRefresh();
   };
+
+  const getFormPayload = (formId: string) => JSON.stringify({
+    form_id: formId,
+    project_id: project.id,
+    name: "",
+    email: "",
+    phone: "",
+    message: ""
+  }, null, 2);
 
   return (
     <div className="mt-4 space-y-6">
@@ -325,19 +366,35 @@ function FormBuilderTab({ project, businessId, forms, onRefresh }: { project: Se
 
       {forms.length > 0 && (
         <Card>
-          <CardHeader><CardTitle className="text-sm">Existing Forms</CardTitle></CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {forms.map(f => (
-                <div key={f.id} className="flex items-center justify-between p-3 border rounded-lg">
+          <CardHeader><CardTitle className="text-sm">Existing Forms — API Integration</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            {forms.map(f => (
+              <div key={f.id} className="p-4 border rounded-lg space-y-3">
+                <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium text-sm">{f.form_name}</p>
-                    <p className="text-xs text-muted-foreground">ID: {f.id}</p>
+                    <p className="text-xs text-muted-foreground font-mono">Form ID: {f.id}</p>
                   </div>
                   <Badge variant={f.is_active ? "default" : "secondary"}>{f.is_active ? "Active" : "Inactive"}</Badge>
                 </div>
-              ))}
-            </div>
+                <div>
+                  <Label className="text-xs">API Endpoint</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <code className="flex-1 text-xs bg-muted p-2 rounded truncate">{formEndpoint}</code>
+                    <Button variant="outline" size="sm" onClick={() => copyText(formEndpoint, `api-${f.id}`)}>
+                      {copied === `api-${f.id}` ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs">Payload</Label>
+                  <pre className="text-xs bg-muted p-2 rounded mt-1 overflow-auto max-h-32">{getFormPayload(f.id)}</pre>
+                  <Button variant="outline" size="sm" className="mt-1" onClick={() => copyText(getFormPayload(f.id), `payload-${f.id}`)}>
+                    {copied === `payload-${f.id}` ? <><Check className="h-3.5 w-3.5 mr-1" />Copied</> : <><Copy className="h-3.5 w-3.5 mr-1" />Copy Payload</>}
+                  </Button>
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
       )}
@@ -345,9 +402,11 @@ function FormBuilderTab({ project, businessId, forms, onRefresh }: { project: Se
   );
 }
 
-/* ─── API & Tracking Tab ─── */
+// ─── API & Tracking Tab ───
 function ApiTrackingTab({ project }: { project: SeoProject }) {
+  const { toast } = useToast();
   const [copied, setCopied] = useState<string | null>(null);
+  const [testing, setTesting] = useState(false);
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
 
   const formEndpoint = `${supabaseUrl}/functions/v1/seo-lead-capture`;
@@ -360,12 +419,6 @@ function ApiTrackingTab({ project }: { project: SeoProject }) {
     message: "I need SEO help",
     project_id: project.id,
     source: "form"
-  }, null, 2);
-
-  const callPayload = JSON.stringify({
-    project_id: project.id,
-    source: "call_click",
-    page_url: "https://example.com/contact"
   }, null, 2);
 
   const callTrackingSnippet = `<script>
@@ -390,6 +443,33 @@ document.querySelectorAll('a[href^="tel:"]').forEach(link => {
     setTimeout(() => setCopied(null), 2000);
   };
 
+  const sendTestLead = async () => {
+    setTesting(true);
+    try {
+      const res = await fetch(formEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Test Lead",
+          email: `test-${Date.now()}@example.com`,
+          phone: "0400000000",
+          message: "This is a test lead from the dashboard",
+          project_id: project.id,
+          source: "form",
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast({ title: "✅ Test lead created", description: `Lead ID: ${data.lead_id}` });
+      } else {
+        toast({ title: "Test failed", description: data.error, variant: "destructive" });
+      }
+    } catch (e) {
+      toast({ title: "Test failed", description: String(e), variant: "destructive" });
+    }
+    setTesting(false);
+  };
+
   return (
     <div className="mt-4 space-y-6">
       <Card>
@@ -404,9 +484,14 @@ document.querySelectorAll('a[href^="tel:"]').forEach(link => {
           <div>
             <Label className="text-xs">Payload Format</Label>
             <pre className="text-xs bg-muted p-3 rounded mt-1 overflow-auto">{formPayload}</pre>
-            <Button variant="outline" size="sm" className="mt-2" onClick={() => copyText(formPayload, "form-payload")}>
-              {copied === "form-payload" ? <><Check className="h-3.5 w-3.5 mr-1" />Copied</> : <><Copy className="h-3.5 w-3.5 mr-1" />Copy Payload</>}
-            </Button>
+            <div className="flex gap-2 mt-2">
+              <Button variant="outline" size="sm" onClick={() => copyText(formPayload, "form-payload")}>
+                {copied === "form-payload" ? <><Check className="h-3.5 w-3.5 mr-1" />Copied</> : <><Copy className="h-3.5 w-3.5 mr-1" />Copy Payload</>}
+              </Button>
+              <Button size="sm" onClick={sendTestLead} disabled={testing}>
+                <Send className="h-3.5 w-3.5 mr-1" />{testing ? "Sending…" : "Send Test Lead"}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -433,7 +518,7 @@ document.querySelectorAll('a[href^="tel:"]').forEach(link => {
   );
 }
 
-/* ─── Automation Tab ─── */
+// ─── Automation Tab ───
 function AutomationTab({ project, businessId, settings, onRefresh }: { project: SeoProject; businessId: string; settings: AutomationSettings | null; onRefresh: () => void }) {
   const { toast } = useToast();
   const [local, setLocal] = useState<AutomationSettings>(settings || {
@@ -447,6 +532,12 @@ function AutomationTab({ project, businessId, settings, onRefresh }: { project: 
   }, [settings]);
 
   const save = async () => {
+    // WhatsApp validation
+    if (local.whatsapp_number && !local.whatsapp_number.startsWith("+")) {
+      toast({ title: "Invalid WhatsApp number", description: "Number must start with + (e.g., +61412345678)", variant: "destructive" });
+      return;
+    }
+
     setSaving(true);
     const payload = {
       business_id: businessId,
@@ -475,7 +566,11 @@ function AutomationTab({ project, businessId, settings, onRefresh }: { project: 
       <Card>
         <CardHeader><CardTitle className="text-sm flex items-center gap-2"><MessageSquare className="h-4 w-4" />WhatsApp Integration</CardTitle></CardHeader>
         <CardContent className="space-y-3">
-          <div><Label>WhatsApp Number</Label><Input value={local.whatsapp_number} onChange={e => setLocal({ ...local, whatsapp_number: e.target.value })} placeholder="+61412345678" /></div>
+          <div>
+            <Label>WhatsApp Number</Label>
+            <Input value={local.whatsapp_number} onChange={e => setLocal({ ...local, whatsapp_number: e.target.value })} placeholder="+61412345678" />
+            <p className="text-xs text-muted-foreground mt-1">Must include country code (e.g., +61)</p>
+          </div>
           <div className="flex items-center gap-2">
             <Switch checked={local.whatsapp_connected} onCheckedChange={v => setLocal({ ...local, whatsapp_connected: v })} />
             <Label>Connected</Label>
@@ -509,33 +604,46 @@ function AutomationTab({ project, businessId, settings, onRefresh }: { project: 
   );
 }
 
-/* ─── Leads Tab ─── */
-function LeadsTab({ leads }: { leads: CapturedLead[] }) {
+// ─── Leads Tab ───
+function LeadsTab({ leads, loading }: { leads: CapturedLead[]; loading: boolean }) {
+  const sourceConfig: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive"; className: string }> = {
+    form: { label: "📝 Form", variant: "default", className: "bg-chart-1/10 text-chart-1 border-chart-1/20" },
+    call_click: { label: "📞 Call Click", variant: "outline", className: "bg-chart-4/10 text-chart-4 border-chart-4/20" },
+    api: { label: "🔗 API", variant: "secondary", className: "bg-chart-2/10 text-chart-2 border-chart-2/20" },
+  };
+
+  if (loading) return <div className="mt-4 space-y-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16" />)}</div>;
+
   return (
     <div className="mt-4">
       <Card>
         <CardHeader><CardTitle className="text-sm">Captured Leads ({leads.length})</CardTitle></CardHeader>
         <CardContent>
           {leads.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No leads captured yet.</p>
+            <div className="text-center py-12">
+              <Rocket className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+              <h3 className="font-semibold">Your campaign is getting started</h3>
+              <p className="text-sm text-muted-foreground mt-1">Leads will appear here once users interact with your website.</p>
+            </div>
           ) : (
             <div className="space-y-2 max-h-[500px] overflow-auto">
-              {leads.map(lead => (
-                <div key={lead.id} className="flex items-start justify-between p-3 border rounded-lg">
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-medium">{lead.name || "Anonymous"}</p>
-                    <p className="text-xs text-muted-foreground">{lead.email} • {lead.phone}</p>
-                    {lead.message && <p className="text-xs text-muted-foreground truncate max-w-md">{lead.message}</p>}
-                    {lead.page_url && <p className="text-xs text-muted-foreground">{lead.page_url}</p>}
+              {leads.map(lead => {
+                const src = sourceConfig[lead.source] || sourceConfig.form;
+                return (
+                  <div key={lead.id} className="flex items-start justify-between p-3 border rounded-lg">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-medium">{lead.name || "Anonymous"}</p>
+                      <p className="text-xs text-muted-foreground">{lead.email} • {lead.phone}</p>
+                      {lead.message && <p className="text-xs text-muted-foreground truncate max-w-md">{lead.message}</p>}
+                      {lead.page_url && <p className="text-xs text-muted-foreground">{lead.page_url}</p>}
+                    </div>
+                    <div className="text-right space-y-1">
+                      <Badge variant={src.variant} className={`text-xs ${src.className}`}>{src.label}</Badge>
+                      <p className="text-xs text-muted-foreground">{new Date(lead.created_at).toLocaleString()}</p>
+                    </div>
                   </div>
-                  <div className="text-right space-y-1">
-                    <Badge variant={lead.source === "call_click" ? "outline" : "default"} className="text-xs">
-                      {lead.source === "call_click" ? "📞 Call Click" : lead.source === "api" ? "🔗 API" : "📝 Form"}
-                    </Badge>
-                    <p className="text-xs text-muted-foreground">{new Date(lead.created_at).toLocaleString()}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -544,50 +652,71 @@ function LeadsTab({ leads }: { leads: CapturedLead[] }) {
   );
 }
 
-/* ─── Reports Tab ─── */
+// ─── Reports Tab ───
 function ReportsTab({ leads, formLeads, callLeads, apiLeads }: { leads: CapturedLead[]; formLeads: number; callLeads: number; apiLeads: number }) {
-  const today = new Date();
-  const last30 = leads.filter(l => new Date(l.created_at) > new Date(today.getTime() - 30 * 86400000));
-  const last7 = leads.filter(l => new Date(l.created_at) > new Date(today.getTime() - 7 * 86400000));
+  const now = Date.now();
+  const todayLeads = leads.filter(l => new Date(l.created_at) > new Date(now - 86400000)).length;
+  const last7 = leads.filter(l => new Date(l.created_at) > new Date(now - 7 * 86400000)).length;
+  const last30 = leads.filter(l => new Date(l.created_at) > new Date(now - 30 * 86400000)).length;
+  const prev30 = leads.filter(l => {
+    const d = new Date(l.created_at).getTime();
+    return d > now - 60 * 86400000 && d <= now - 30 * 86400000;
+  }).length;
+  const growth = prev30 > 0 ? Math.round(((last30 - prev30) / prev30) * 100) : last30 > 0 ? 100 : 0;
+
+  const lastApiHit = leads[0]?.created_at;
 
   return (
     <div className="mt-4 space-y-4">
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card><CardContent className="pt-6 text-center">
-          <div className="text-2xl font-bold">{last7.length}</div>
+          <div className="text-2xl font-bold">{todayLeads}</div>
+          <p className="text-xs text-muted-foreground">Today</p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-6 text-center">
+          <div className="text-2xl font-bold">{last7}</div>
           <p className="text-xs text-muted-foreground">Last 7 Days</p>
         </CardContent></Card>
         <Card><CardContent className="pt-6 text-center">
-          <div className="text-2xl font-bold">{last30.length}</div>
+          <div className="text-2xl font-bold">{last30}</div>
           <p className="text-xs text-muted-foreground">Last 30 Days</p>
         </CardContent></Card>
         <Card><CardContent className="pt-6 text-center">
           <div className="text-2xl font-bold">{leads.length}</div>
           <p className="text-xs text-muted-foreground">All Time</p>
         </CardContent></Card>
+        <Card><CardContent className="pt-6 text-center">
+          <div className={`text-2xl font-bold flex items-center justify-center gap-1 ${growth >= 0 ? "text-chart-2" : "text-destructive"}`}>
+            {growth >= 0 ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
+            {Math.abs(growth)}%
+          </div>
+          <p className="text-xs text-muted-foreground">Monthly Growth</p>
+        </CardContent></Card>
       </div>
+
+      {lastApiHit && (
+        <div className="text-xs text-muted-foreground">Last API hit: {new Date(lastApiHit).toLocaleString()}</div>
+      )}
 
       <Card>
         <CardHeader><CardTitle className="text-sm">Lead Sources Breakdown</CardTitle></CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2"><FileText className="h-4 w-4 text-blue-500" /><span className="text-sm">Form Submissions</span></div>
-              <span className="font-bold">{formLeads}</span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2"><div className="bg-blue-500 h-2 rounded-full" style={{ width: `${leads.length ? (formLeads / leads.length) * 100 : 0}%` }} /></div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2"><PhoneCall className="h-4 w-4 text-emerald-500" /><span className="text-sm">Call Clicks</span></div>
-              <span className="font-bold">{callLeads}</span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2"><div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${leads.length ? (callLeads / leads.length) * 100 : 0}%` }} /></div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-amber-500" /><span className="text-sm">API / External</span></div>
-              <span className="font-bold">{apiLeads}</span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2"><div className="bg-amber-500 h-2 rounded-full" style={{ width: `${leads.length ? (apiLeads / leads.length) * 100 : 0}%` }} /></div>
+            {[
+              { label: "Form Submissions", count: formLeads, color: "bg-chart-1" },
+              { label: "Call Clicks", count: callLeads, color: "bg-chart-2" },
+              { label: "API / External", count: apiLeads, color: "bg-chart-4" },
+            ].map(src => (
+              <div key={src.label}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm">{src.label}</span>
+                  <span className="font-bold text-sm">{src.count} ({leads.length ? Math.round((src.count / leads.length) * 100) : 0}%)</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div className={`${src.color} h-2 rounded-full transition-all`} style={{ width: `${leads.length ? (src.count / leads.length) * 100 : 0}%` }} />
+                </div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
