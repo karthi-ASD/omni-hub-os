@@ -27,9 +27,22 @@ export interface GAInsight {
   color: "green" | "red" | "blue";
 }
 
+export interface SyncStatus {
+  last_sync_at: string | null;
+  next_sync_at: string | null;
+  sync_status: string;
+  error_message: string | null;
+}
+
+/**
+ * Fetches GA stats.
+ * For client users: resolves linked seo_project(s) via client_id, then reads stats by project_id.
+ * For staff: reads directly by projectId.
+ */
 export function useGoogleAnalyticsStats(projectId?: string, clientId?: string) {
   const [stats, setStats] = useState<GADailyStat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
 
   const fetchStats = useCallback(async () => {
     if (!projectId && !clientId) {
@@ -39,13 +52,28 @@ export function useGoogleAnalyticsStats(projectId?: string, clientId?: string) {
     }
     setLoading(true);
     try {
+      let resolvedProjectId = projectId;
+
+      // Client path: resolve project_id from seo_projects via client_id
+      if (!resolvedProjectId && clientId) {
+        const { data: proj } = await supabase
+          .from("seo_projects")
+          .select("id")
+          .eq("client_id", clientId)
+          .in("project_status", ["active", "ACTIVE", "Active"])
+          .limit(1)
+          .maybeSingle();
+        resolvedProjectId = proj?.id || undefined;
+      }
+
+      // Fetch stats by project_id (primary) or fallback to client_id
       let query = supabase
         .from("google_analytics_daily_stats" as any)
         .select("*")
         .order("snapshot_date", { ascending: true });
 
-      if (projectId) {
-        query = query.eq("project_id", projectId);
+      if (resolvedProjectId) {
+        query = query.eq("project_id", resolvedProjectId);
       } else if (clientId) {
         query = query.eq("client_id", clientId);
       }
@@ -53,6 +81,20 @@ export function useGoogleAnalyticsStats(projectId?: string, clientId?: string) {
       const { data, error } = await query;
       if (error) console.error("GA stats fetch error:", error);
       setStats((data as any[]) ?? []);
+
+      // Fetch sync status
+      const syncQuery = supabase
+        .from("analytics_sync_status" as any)
+        .select("last_sync_at, next_sync_at, sync_status, error_message");
+
+      if (resolvedProjectId) {
+        syncQuery.eq("project_id", resolvedProjectId);
+      } else if (clientId) {
+        syncQuery.eq("client_id", clientId);
+      }
+
+      const { data: syncData } = await syncQuery.limit(1).maybeSingle();
+      setSyncStatus(syncData as SyncStatus | null);
     } catch (err) {
       console.error("GA stats error:", err);
       setStats([]);
@@ -65,63 +107,95 @@ export function useGoogleAnalyticsStats(projectId?: string, clientId?: string) {
     fetchStats();
   }, [fetchStats]);
 
-  // Computed aggregates
+  /**
+   * AGGREGATION LOGIC (corrected):
+   * - "Latest" KPIs come from the most recent snapshot
+   * - Period totals are sums within specified date ranges
+   * - Growth % compares last 30 days vs previous 30 days
+   * - Averages (bounce rate, session duration) use mean over snapshots
+   */
   const aggregates = useMemo(() => {
     if (stats.length === 0) return null;
 
     const latest = stats[stats.length - 1];
-    const totalUsers = stats.reduce((s, r) => s + (r.users_count || 0), 0);
-    const totalSessions = stats.reduce((s, r) => s + (r.sessions || 0), 0);
-    const totalPageviews = stats.reduce((s, r) => s + (r.pageviews || 0), 0);
-    const totalConversions = stats.reduce((s, r) => s + (r.conversions || 0), 0);
-    const avgBounce = stats.length > 0
-      ? stats.reduce((s, r) => s + (r.bounce_rate || 0), 0) / stats.length
-      : 0;
-    const avgDuration = stats.length > 0
-      ? stats.reduce((s, r) => s + (r.avg_session_duration || 0), 0) / stats.length
-      : 0;
-
-    // Traffic source totals
-    const organicTotal = stats.reduce((s, r) => s + (r.organic_traffic || 0), 0);
-    const directTotal = stats.reduce((s, r) => s + (r.direct_traffic || 0), 0);
-    const paidTotal = stats.reduce((s, r) => s + (r.paid_traffic || 0), 0);
-    const referralTotal = stats.reduce((s, r) => s + (r.referral_traffic || 0), 0);
-
-    // Growth calculation (compare last 30 days vs previous 30 days)
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000);
     const sixtyDaysAgo = new Date(now.getTime() - 60 * 86400000);
+    const ninetyDaysAgo = new Date(now.getTime() - 90 * 86400000);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 86400000);
 
-    const recent = stats.filter((s) => new Date(s.snapshot_date) >= thirtyDaysAgo);
-    const previous = stats.filter(
-      (s) => new Date(s.snapshot_date) >= sixtyDaysAgo && new Date(s.snapshot_date) < thirtyDaysAgo
+    // Period-based filtering
+    const last7 = stats.filter(s => new Date(s.snapshot_date) >= sevenDaysAgo);
+    const last30 = stats.filter(s => new Date(s.snapshot_date) >= thirtyDaysAgo);
+    const prev30 = stats.filter(
+      s => new Date(s.snapshot_date) >= sixtyDaysAgo && new Date(s.snapshot_date) < thirtyDaysAgo
     );
+    const last90 = stats.filter(s => new Date(s.snapshot_date) >= ninetyDaysAgo);
 
-    const recentUsers = recent.reduce((s, r) => s + (r.users_count || 0), 0);
-    const previousUsers = previous.reduce((s, r) => s + (r.users_count || 0), 0);
-    const growthPct = previousUsers > 0 ? ((recentUsers - previousUsers) / previousUsers) * 100 : 0;
+    // Sum helpers for a period
+    const sumField = (arr: GADailyStat[], field: keyof GADailyStat) =>
+      arr.reduce((s, r) => s + (Number(r[field]) || 0), 0);
 
-    const conversionRate = totalSessions > 0 ? (totalConversions / totalSessions) * 100 : 0;
+    const avgField = (arr: GADailyStat[], field: keyof GADailyStat) =>
+      arr.length > 0 ? arr.reduce((s, r) => s + (Number(r[field]) || 0), 0) / arr.length : 0;
+
+    // Last 30 day totals (primary display)
+    const periodUsers = sumField(last30, "users_count");
+    const periodSessions = sumField(last30, "sessions");
+    const periodPageviews = sumField(last30, "pageviews");
+    const periodConversions = sumField(last30, "conversions");
+
+    // Previous 30 day totals (for growth comparison)
+    const prevUsers = sumField(prev30, "users_count");
+
+    // Growth percentage
+    const growthPct = prevUsers > 0
+      ? Math.round(((periodUsers - prevUsers) / prevUsers) * 1000) / 10
+      : 0;
+
+    // Averages from last 30 days
+    const avgBounce = Math.round(avgField(last30, "bounce_rate") * 100) / 100;
+    const avgDuration = Math.round(avgField(last30, "avg_session_duration"));
+
+    // Conversion rate over period
+    const conversionRate = periodSessions > 0
+      ? Math.round((periodConversions / periodSessions) * 10000) / 100
+      : 0;
+
+    // Traffic source totals (last 30 days)
+    const organicTotal = sumField(last30, "organic_traffic");
+    const directTotal = sumField(last30, "direct_traffic");
+    const paidTotal = sumField(last30, "paid_traffic");
+    const referralTotal = sumField(last30, "referral_traffic");
 
     return {
-      totalUsers,
-      totalSessions,
-      totalPageviews,
-      totalConversions,
-      avgBounce: Math.round(avgBounce * 100) / 100,
-      avgDuration: Math.round(avgDuration),
+      // Latest snapshot values
+      latest,
+      // Period totals (last 30 days by default)
+      totalUsers: periodUsers,
+      totalSessions: periodSessions,
+      totalPageviews: periodPageviews,
+      totalConversions: periodConversions,
+      // Averages
+      avgBounce,
+      avgDuration,
+      // Rates
+      conversionRate,
+      growthPct,
+      // Traffic sources
       organicTotal,
       directTotal,
       paidTotal,
       referralTotal,
-      growthPct: Math.round(growthPct * 10) / 10,
-      conversionRate: Math.round(conversionRate * 100) / 100,
-      latest,
-      recentUsers,
+      // Period-specific data for charts
+      last7,
+      last30,
+      last90,
+      recentUsers: periodUsers,
     };
   }, [stats]);
 
-  // AI-style insights
+  // AI-style insights (based on last 30 days)
   const insights = useMemo((): GAInsight[] => {
     if (!aggregates || stats.length < 2) return [];
     const result: GAInsight[] = [];
@@ -148,26 +222,40 @@ export function useGoogleAnalyticsStats(projectId?: string, clientId?: string) {
     if (sources[0].val > 0) {
       result.push({
         icon: "up", color: "blue",
-        message: `${sources[0].name} is your top traffic source`,
+        message: `${sources[0].name} is your strongest traffic channel`,
       });
     }
 
     if (aggregates.avgDuration > 120) {
       result.push({
         icon: "up", color: "green",
-        message: "Users are spending quality time on your site (avg " + Math.round(aggregates.avgDuration / 60) + " min)",
+        message: `Visitors are spending quality time on your site (avg ${Math.round(aggregates.avgDuration / 60)} min)`,
       });
     }
 
     if (aggregates.avgBounce < 50) {
       result.push({
         icon: "up", color: "green",
-        message: "Bounce rate is healthy at " + aggregates.avgBounce + "%",
+        message: `Bounce rate is healthy at ${aggregates.avgBounce}% — users are engaging well`,
       });
     } else if (aggregates.avgBounce > 70) {
       result.push({
         icon: "down", color: "red",
-        message: "Bounce rate is high at " + aggregates.avgBounce + "% — consider improving engagement",
+        message: `Bounce rate is high at ${aggregates.avgBounce}% — consider improving engagement`,
+      });
+    }
+
+    if (aggregates.totalConversions > 0) {
+      result.push({
+        icon: "up", color: "green",
+        message: `Your site is converting at ${aggregates.conversionRate}% — conversions are being tracked`,
+      });
+    }
+
+    if (aggregates.totalPageviews > aggregates.totalSessions * 2) {
+      result.push({
+        icon: "up", color: "blue",
+        message: "Your top pages are attracting steady engagement with multiple pageviews per session",
       });
     }
 
@@ -184,7 +272,7 @@ export function useGoogleAnalyticsStats(projectId?: string, clientId?: string) {
     }));
   }, [stats]);
 
-  // Pie chart data
+  // Pie chart data (last 30 days)
   const sourceData = useMemo(() => {
     if (!aggregates) return [];
     return [
@@ -202,6 +290,7 @@ export function useGoogleAnalyticsStats(projectId?: string, clientId?: string) {
     insights,
     trendData,
     sourceData,
+    syncStatus,
     refetch: fetchStats,
   };
 }
