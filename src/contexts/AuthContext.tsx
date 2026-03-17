@@ -107,6 +107,66 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const validateClientTenantMapping = async (userId: string, profileData: Profile | null) => {
+    try {
+      const { data: clientLink } = await supabase
+        .from("client_users")
+        .select("client_id")
+        .eq("user_id", userId)
+        .eq("is_primary", true)
+        .maybeSingle();
+
+      const linkedClientId = clientLink?.client_id || null;
+      setClientUserId(linkedClientId);
+
+      if (!linkedClientId) {
+        setTenantValidationError(null);
+        return profileData;
+      }
+
+      const { data: clientRecord } = await supabase
+        .from("clients")
+        .select("client_business_id, business_id")
+        .eq("id", linkedClientId)
+        .maybeSingle();
+
+      const expectedBusinessId = clientRecord?.client_business_id ?? null;
+
+      if (!expectedBusinessId) {
+        setTenantValidationError("Tenant mapping error");
+        return null;
+      }
+
+      if (profileData?.business_id !== expectedBusinessId) {
+        await Promise.all([
+          supabase
+            .from("profiles")
+            .update({ business_id: expectedBusinessId } as any)
+            .eq("user_id", userId),
+          supabase
+            .from("user_roles")
+            .update({ business_id: expectedBusinessId } as any)
+            .eq("user_id", userId),
+        ]);
+
+        const refreshedProfile = await fetchProfile(userId);
+        if (!refreshedProfile || refreshedProfile.business_id !== expectedBusinessId) {
+          setTenantValidationError("Tenant mapping error");
+          return null;
+        }
+
+        setTenantValidationError(null);
+        return refreshedProfile;
+      }
+
+      setTenantValidationError(null);
+      return profileData;
+    } catch {
+      setTenantValidationError("Tenant mapping error");
+      return null;
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
     const forceStopTimer = window.setTimeout(() => {
