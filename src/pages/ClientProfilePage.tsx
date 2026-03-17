@@ -413,6 +413,16 @@ const ClientProfilePage = () => {
           />
         </TabsContent>
 
+        {/* ── Profile (Contacts, Socials) ── */}
+        <TabsContent value="profile">
+          {id && <ClientProfileTab clientId={id} client={client as any} />}
+        </TabsContent>
+
+        {/* ── Website Tree ── */}
+        <TabsContent value="website-tree">
+          {id && <WebsiteTreeTab clientId={id} websiteUrl={(client as any).website} />}
+        </TabsContent>
+
         {/* ── Financial Portfolio ── */}
         <TabsContent value="finance">
           <div className="space-y-4">
