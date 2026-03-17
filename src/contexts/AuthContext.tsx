@@ -209,7 +209,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, nextSession) => {
+      (event, nextSession) => {
+        // Skip full re-hydration on token refresh — this fires on tab focus
+        // and was causing the entire app to flicker/reset
+        if (event === "TOKEN_REFRESHED") {
+          console.log("[Auth] TOKEN_REFRESHED — updating session silently (no re-hydrate)");
+          setSession(nextSession);
+          setUser(nextSession?.user ?? null);
+          return;
+        }
+
+        // For INITIAL_SESSION, only hydrate if we haven't already
+        if (event === "INITIAL_SESSION") {
+          if (rawProfile) {
+            console.log("[Auth] INITIAL_SESSION skipped — already hydrated");
+            return;
+          }
+        }
+
+        console.log("[Auth] onAuthStateChange:", event);
         setLoading(true);
         setTenantValidationError(null);
         setSession(nextSession);
