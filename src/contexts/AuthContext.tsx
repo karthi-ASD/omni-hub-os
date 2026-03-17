@@ -26,6 +26,7 @@ interface AuthContextType {
   profile: Profile | null;
   roles: AppRole[];
   loading: boolean;
+  tenantValidationError: string | null;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
   isSuperAdmin: boolean;
