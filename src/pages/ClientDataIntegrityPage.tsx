@@ -52,7 +52,7 @@ export default function ClientDataIntegrityPage() {
   if (!isSuperAdmin) {
     return (
       <div className="p-6">
-        <PageHeader title="Client Data Integrity" subtitle="Access restricted to Super Admins" icon={<ShieldCheck className="h-6 w-6" />} />
+        <PageHeader title="Client Data Integrity" subtitle="Access restricted to Super Admins" icon={ShieldCheck} />
       </div>
     );
   }
