@@ -3388,40 +3388,64 @@ export type Database = {
       }
       analytics_connections: {
         Row: {
+          account_name: string | null
           auth_type: string
           business_id: string
           created_at: string
+          credentials_encrypted: string | null
           external_account_id: string | null
           id: string
+          is_active: boolean
+          last_error: string | null
+          measurement_id: string | null
+          project_id: string | null
+          property_id: string | null
           provider: string
           refresh_token_encrypted: string | null
           scopes_json: Json | null
           status: string
           token_encrypted: string | null
+          updated_at: string
         }
         Insert: {
+          account_name?: string | null
           auth_type?: string
           business_id: string
           created_at?: string
+          credentials_encrypted?: string | null
           external_account_id?: string | null
           id?: string
+          is_active?: boolean
+          last_error?: string | null
+          measurement_id?: string | null
+          project_id?: string | null
+          property_id?: string | null
           provider: string
           refresh_token_encrypted?: string | null
           scopes_json?: Json | null
           status?: string
           token_encrypted?: string | null
+          updated_at?: string
         }
         Update: {
+          account_name?: string | null
           auth_type?: string
           business_id?: string
           created_at?: string
+          credentials_encrypted?: string | null
           external_account_id?: string | null
           id?: string
+          is_active?: boolean
+          last_error?: string | null
+          measurement_id?: string | null
+          project_id?: string | null
+          property_id?: string | null
           provider?: string
           refresh_token_encrypted?: string | null
           scopes_json?: Json | null
           status?: string
           token_encrypted?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -3429,6 +3453,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_connections_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "seo_projects"
             referencedColumns: ["id"]
           },
         ]
