@@ -66,12 +66,12 @@ export function ProjectIntegrationsTab({ projectId, businessId }: Props) {
 
   const fetchConnection = useCallback(async () => {
     setLoading(true);
-    const { data } = await (supabase
+    const { data } = await (supabase as any)
       .from("analytics_connections")
       .select("*")
-      .eq("project_id" as any, projectId)
+      .eq("project_id", projectId)
       .eq("provider", "GA4")
-      .maybeSingle() as any);
+      .maybeSingle();
 
     const conn = data as any as GAConnection | null;
     setConnection(conn);
