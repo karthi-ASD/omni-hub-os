@@ -74,5 +74,5 @@ export function useUnsavedChanges<T extends Record<string, any>>(
     setIsDirty(false);
   }, []);
 
-  return { isDirty, restoreDraft, clearDraft, resetInitial };
+  return { isDirty, isSaving, restoreDraft, clearDraft, resetInitial };
 }
