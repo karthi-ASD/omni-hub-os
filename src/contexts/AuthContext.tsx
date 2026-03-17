@@ -185,8 +185,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     sessionRef.current = session;
-    userIdRef.current = user?.id ?? null;
-  }, [session, user?.id]);
+  }, [session]);
 
   useEffect(() => {
     let isMounted = true;
