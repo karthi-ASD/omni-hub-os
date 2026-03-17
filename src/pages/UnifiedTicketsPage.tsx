@@ -81,8 +81,14 @@ const UnifiedTicketsPage = () => {
 
   const filtered = useMemo(() => {
     let list = tickets;
+    const now = new Date();
     if (activeTab === "unmatched") {
       list = list.filter(t => (t as any).client_match_status === "unmatched" || (t as any).client_match_status === "suggested");
+    } else if (activeTab === "sla_breached") {
+      list = list.filter(t =>
+        t.sla_due_at && new Date(t.sla_due_at) < now &&
+        !["resolved", "closed"].includes(t.status)
+      );
     } else if (activeTab !== "all") {
       list = list.filter(t => t.status === activeTab);
     }
@@ -127,9 +133,10 @@ const UnifiedTicketsPage = () => {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
         <StatCard label="Open" value={stats.open} icon={Inbox} gradient="from-primary to-accent" />
         <StatCard label="In Progress" value={stats.in_progress} icon={Clock} gradient="from-[hsl(var(--warning))] to-orange-500" />
+        <StatCard label="SLA Breached" value={(stats as any).sla_breached || 0} icon={AlertTriangle} gradient="from-destructive to-red-600" />
         <StatCard label="Unmatched" value={stats.unmatched} icon={LinkIcon} gradient="from-destructive to-red-400" />
         <StatCard label="Escalated" value={stats.escalated} icon={AlertTriangle} gradient="from-destructive to-orange-600" />
         <StatCard label="Resolved" value={stats.resolved} icon={CheckCircle} gradient="from-[hsl(var(--success))] to-emerald-500" />
@@ -144,6 +151,9 @@ const UnifiedTicketsPage = () => {
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="open">Open</TabsTrigger>
             <TabsTrigger value="in_progress">In Progress</TabsTrigger>
+            <TabsTrigger value="sla_breached" className="text-destructive">
+              SLA Breached ({(stats as any).sla_breached || 0})
+            </TabsTrigger>
             <TabsTrigger value="unmatched" className="text-destructive">
               Unmatched ({stats.unmatched})
             </TabsTrigger>
@@ -236,6 +246,18 @@ const UnifiedTicketsPage = () => {
                         <Clock className="h-2.5 w-2.5" />
                         {new Date(ticket.created_at).toLocaleDateString()}
                       </span>
+                      {ticket.sla_due_at && !["resolved", "closed"].includes(ticket.status) && (() => {
+                        const due = new Date(ticket.sla_due_at);
+                        const now = new Date();
+                        const breached = due < now;
+                        const hoursLeft = Math.round((due.getTime() - now.getTime()) / (1000 * 60 * 60));
+                        return (
+                          <span className={`flex items-center gap-1 font-semibold ${breached ? "text-destructive" : hoursLeft <= 2 ? "text-[hsl(var(--warning))]" : "text-[hsl(var(--success))]"}`}>
+                            <AlertTriangle className="h-2.5 w-2.5" />
+                            {breached ? "SLA BREACHED" : `${hoursLeft}h left`}
+                          </span>
+                        );
+                      })()}
                       {ticket.channel && (
                         <span className="capitalize">{ticket.channel}</span>
                       )}

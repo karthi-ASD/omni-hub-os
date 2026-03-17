@@ -11,6 +11,7 @@ export interface ClientPortalTicket {
   department: string | null;
   priority: string;
   status: string;
+  sla_due_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -43,7 +44,7 @@ export function useClientPortalTickets() {
 
     const { data } = await supabase
       .from("support_tickets")
-      .select("id, ticket_number, subject, description, department, priority, status, created_at, updated_at")
+      .select("id, ticket_number, subject, description, department, priority, status, sla_due_at, created_at, updated_at")
       .eq("business_id", clientRecord.business_id)
       .eq("client_id", clientId)
       .order("created_at", { ascending: false })

@@ -311,7 +311,20 @@ const UnifiedTicketDetailPage = () => {
             <div><span className="text-muted-foreground">Source:</span> <span className="text-foreground capitalize">{ticket.source_type || "manual"}</span></div>
             <div><span className="text-muted-foreground">From:</span> <span className="text-foreground">{ticket.sender_name || ticket.sender_email || "—"}</span></div>
             <div><span className="text-muted-foreground">Created:</span> <span className="text-foreground">{format(new Date(ticket.created_at), "MMM d, yyyy h:mm a")}</span></div>
-            {ticket.sla_due_at && <div><span className="text-muted-foreground">SLA Due:</span> <span className="text-foreground">{format(new Date(ticket.sla_due_at), "MMM d, h:mm a")}</span></div>}
+            {ticket.sla_due_at && (() => {
+              const breached = new Date(ticket.sla_due_at) < new Date() && !["resolved", "closed"].includes(ticket.status);
+              const hoursLeft = Math.round((new Date(ticket.sla_due_at).getTime() - Date.now()) / (1000 * 60 * 60));
+              return (
+                <div>
+                  <span className="text-muted-foreground">SLA Due:</span>{" "}
+                  <span className={`font-semibold ${breached ? "text-destructive" : hoursLeft <= 2 ? "text-[hsl(var(--warning))]" : "text-foreground"}`}>
+                    {format(new Date(ticket.sla_due_at), "MMM d, h:mm a")}
+                    {breached && " ⚠ BREACHED"}
+                    {!breached && hoursLeft <= 2 && ` (${hoursLeft}h left)`}
+                  </span>
+                </div>
+              );
+            })()}
             {ticket.sentiment && <div><span className="text-muted-foreground">Sentiment:</span> <span className="text-foreground capitalize">{ticket.sentiment}</span></div>}
           </div>
           {ticket.ai_tags && ticket.ai_tags.length > 0 && (
