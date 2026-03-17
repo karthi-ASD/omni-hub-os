@@ -162,7 +162,7 @@ const SuperAdminClientManagementPage = () => {
     }
   };
 
-
+  const statusBadge = (status: string) => {
     const colors: Record<string, string> = {
       active: "bg-green-500/10 text-green-600",
       pending: "bg-yellow-500/10 text-yellow-600",
