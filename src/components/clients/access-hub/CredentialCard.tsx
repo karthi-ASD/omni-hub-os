@@ -67,10 +67,8 @@ export function CredentialCard({
       const decrypted = await decryptField(credential.password_encrypted!, credential.id);
       setDecryptedPassword(decrypted);
       setShowPassword(true);
-    } catch {
-      // Fallback: show the raw value (might not be encrypted yet)
-      setDecryptedPassword(credential.password_encrypted);
-      setShowPassword(true);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to decrypt password. Access denied.");
     } finally {
       setDecrypting(false);
     }
