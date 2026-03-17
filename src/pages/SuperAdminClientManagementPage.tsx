@@ -47,6 +47,12 @@ const SuperAdminClientManagementPage = () => {
   const [mergeConfirm, setMergeConfirm] = useState("");
   const [showMergeDialog, setShowMergeDialog] = useState(false);
 
+  // Reset password state
+  const [resetTarget, setResetTarget] = useState<SuperAdminClient | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+
   const filteredAll = useMemo(() => {
     if (!search) return allClients;
     const q = search.toLowerCase();
