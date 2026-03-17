@@ -114,7 +114,7 @@ const ClientLocalPresencePage = () => {
                 <Phone className="h-5 w-5 text-primary/60" />
                 <GrowthBadge pct={callsGrowth} />
               </div>
-              <p className="text-3xl font-bold"><AnimatedCounter value={totalCalls} /></p>
+              <p className="text-3xl font-bold"><AnimatedCounter end={totalCalls} /></p>
               <p className="text-xs text-muted-foreground mt-1">Calls Received</p>
             </CardContent>
           </Card>
