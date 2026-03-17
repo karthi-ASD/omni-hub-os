@@ -417,12 +417,15 @@ function ApiTrackingTab({ project }: { project: SeoProject }) {
   const formEndpoint = `${supabaseUrl}/functions/v1/seo-lead-capture`;
   const callEndpoint = `${supabaseUrl}/functions/v1/seo-call-click`;
 
+  const apiKey = project.api_key || "";
+
   const formPayload = JSON.stringify({
     name: "John Doe",
     email: "john@example.com",
     phone: "0412345678",
     message: "I need SEO help",
     project_id: project.id,
+    api_key: apiKey,
     source: "form"
   }, null, 2);
 
@@ -434,6 +437,7 @@ document.querySelectorAll('a[href^="tel:"]').forEach(link => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         project_id: '${project.id}',
+        api_key: '${apiKey}',
         source: 'call_click',
         page_url: window.location.href
       })
