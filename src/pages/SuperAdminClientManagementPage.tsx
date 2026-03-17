@@ -11,8 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Search, Trash2, RotateCcw, AlertTriangle, Merge, Eye, Pencil, Users, UserX, GitMerge, KeyRound } from "lucide-react";
+import { Search, Trash2, RotateCcw, AlertTriangle, Merge, Eye, Pencil, Users, UserX, GitMerge, KeyRound, UserPlus, Loader2, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { StatCard } from "@/components/ui/stat-card";
 import { format } from "date-fns";
@@ -23,6 +24,7 @@ const SuperAdminClientManagementPage = () => {
   const {
     allClients, deletedClients, loading,
     softDeleteClient, restoreClient, permanentDeleteClient, mergeClients,
+    refetch,
   } = useSuperAdminClients();
 
   const [tab, setTab] = useState("all");
@@ -53,6 +55,14 @@ const SuperAdminClientManagementPage = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
+
+  // Create login state
+  const [createLoginTarget, setCreateLoginTarget] = useState<SuperAdminClient | null>(null);
+  const [createLoginLoading, setCreateLoginLoading] = useState(false);
+
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   const filteredAll = useMemo(() => {
     if (!search) return allClients;
@@ -162,6 +172,85 @@ const SuperAdminClientManagementPage = () => {
     }
   };
 
+  const handleCreateLogin = async (client: SuperAdminClient) => {
+    setCreateLoginLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-client-auth", {
+        body: {
+          client_id: client.id,
+          email: client.email,
+          full_name: client.contact_name,
+          business_id: client.business_id,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (data?.already_exists) {
+        toast.info("Client login already exists.");
+      } else {
+        toast.success(`Login created for ${client.contact_name}. ${data?.password_info || ""}`);
+      }
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create client login");
+    } finally {
+      setCreateLoginLoading(false);
+      setCreateLoginTarget(null);
+    }
+  };
+
+  const handleBulkActivate = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkLoading(true);
+    try {
+      const bulkPayload = Array.from(selectedIds).map(id => {
+        const client = allClients.find(c => c.id === id);
+        return {
+          client_id: id,
+          email: client?.email || "",
+          full_name: client?.contact_name || "",
+          business_id: client?.business_id || "",
+        };
+      });
+
+      const { data, error } = await supabase.functions.invoke("create-client-auth", {
+        body: { bulk: bulkPayload },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      const results = data?.results || [];
+      const created = results.filter((r: any) => r.success && !r.already_exists).length;
+      const existing = results.filter((r: any) => r.already_exists).length;
+      const failed = results.filter((r: any) => r.error).length;
+
+      toast.success(`Bulk activation complete: ${created} created, ${existing} already existed, ${failed} failed.`);
+      setSelectedIds(new Set());
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Bulk activation failed");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredAll.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredAll.map(c => c.id)));
+    }
+  };
+
   const statusBadge = (status: string) => {
     const colors: Record<string, string> = {
       active: "bg-green-500/10 text-green-600",
@@ -175,7 +264,7 @@ const SuperAdminClientManagementPage = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Client Management" subtitle="Super Admin client control — delete, restore, merge" />
+      <PageHeader title="Client Management" subtitle="Super Admin client control — delete, restore, merge, activate portals" />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard label="Active Clients" value={allClients.filter(c => c.client_status === "active").length} icon={Users} gradient="from-primary to-accent" />
@@ -191,9 +280,9 @@ const SuperAdminClientManagementPage = () => {
           <TabsTrigger value="merge">Merge Clients</TabsTrigger>
         </TabsList>
 
-        <div className="mt-4">
+        <div className="mt-4 flex items-center gap-3 flex-wrap">
           {tab !== "merge" && (
-            <div className="relative max-w-md">
+            <div className="relative max-w-md flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search clients..."
@@ -202,6 +291,12 @@ const SuperAdminClientManagementPage = () => {
                 className="pl-9"
               />
             </div>
+          )}
+          {tab === "all" && selectedIds.size > 0 && (
+            <Button onClick={handleBulkActivate} disabled={bulkLoading} className="gap-2">
+              {bulkLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+              Activate Client Portal ({selectedIds.size})
+            </Button>
           )}
         </div>
 
@@ -213,6 +308,12 @@ const SuperAdminClientManagementPage = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={filteredAll.length > 0 && selectedIds.size === filteredAll.length}
+                          onCheckedChange={toggleSelectAll}
+                        />
+                      </TableHead>
                       <TableHead>Client Name</TableHead>
                       <TableHead>Business Name</TableHead>
                       <TableHead>Email</TableHead>
@@ -224,11 +325,17 @@ const SuperAdminClientManagementPage = () => {
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
                     ) : filteredAll.length === 0 ? (
-                      <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No clients found</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No clients found</TableCell></TableRow>
                     ) : filteredAll.map(c => (
                       <TableRow key={c.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedIds.has(c.id)}
+                            onCheckedChange={() => toggleSelect(c.id)}
+                          />
+                        </TableCell>
                         <TableCell className="font-medium">{c.contact_name}</TableCell>
                         <TableCell>{c.company_name || "—"}</TableCell>
                         <TableCell className="text-xs">{c.email}</TableCell>
@@ -237,16 +344,19 @@ const SuperAdminClientManagementPage = () => {
                         <TableCell className="text-xs">{format(new Date(c.created_at), "dd MMM yyyy")}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button size="sm" variant="ghost" onClick={() => navigate(`/clients/${c.id}`)}>
+                            <Button size="sm" variant="ghost" onClick={() => navigate(`/clients/${c.id}`)} title="View">
                               <Eye className="h-3.5 w-3.5" />
                             </Button>
-                            <Button size="sm" variant="ghost" onClick={() => navigate(`/clients/${c.id}`)}>
+                            <Button size="sm" variant="ghost" onClick={() => navigate(`/clients/${c.id}`)} title="Edit">
                               <Pencil className="h-3.5 w-3.5" />
                             </Button>
-                            <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget(c)}>
+                            <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget(c)} title="Delete">
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
-                            <Button size="sm" variant="ghost" title="Reset Client Password" onClick={() => { setResetTarget(c); setNewPassword(""); setConfirmPassword(""); }}>
+                            <Button size="sm" variant="ghost" title="Create Login" onClick={() => setCreateLoginTarget(c)}>
+                              <UserPlus className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="sm" variant="ghost" title="Reset Password" onClick={() => { setResetTarget(c); setNewPassword(""); setConfirmPassword(""); }}>
                               <KeyRound className="h-3.5 w-3.5" />
                             </Button>
                           </div>
@@ -511,6 +621,37 @@ const SuperAdminClientManagementPage = () => {
               onClick={handleResetPassword}
             >
               {resetLoading ? "Updating..." : "Update Password"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* CREATE CLIENT LOGIN DIALOG */}
+      <Dialog open={!!createLoginTarget} onOpenChange={open => { if (!open) setCreateLoginTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-primary" />
+              Create Client Login
+            </DialogTitle>
+            <DialogDescription>
+              Create a portal login account for this client so they can access the CRM portal and mobile app.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-lg border p-4 space-y-2">
+            <p className="font-semibold">{createLoginTarget?.contact_name}</p>
+            <p className="text-sm text-muted-foreground">{createLoginTarget?.email}</p>
+            <p className="text-sm text-muted-foreground">{createLoginTarget?.company_name || "No company"}</p>
+          </div>
+          <div className="bg-muted/50 p-3 rounded-lg text-sm space-y-1">
+            <p><strong>Testing Mode:</strong> Password will be set to <code>nextweb123</code></p>
+            <p><strong>Production Mode:</strong> A random password will be generated</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateLoginTarget(null)}>Cancel</Button>
+            <Button onClick={() => createLoginTarget && handleCreateLogin(createLoginTarget)} disabled={createLoginLoading} className="gap-2">
+              {createLoginLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+              {createLoginLoading ? "Creating..." : "Create Login"}
             </Button>
           </DialogFooter>
         </DialogContent>
