@@ -529,6 +529,11 @@ const SeoProjectDetailPage = () => {
           )}
         </TabsContent>
 
+        {/* PERFORMANCE TAB */}
+        <TabsContent value="performance" className="space-y-4">
+          <PerformanceDashboard clientId={project?.client_id} projectId={projectId} />
+        </TabsContent>
+
         {/* AI ADVISOR TAB */}
         <TabsContent value="ai" className="space-y-4">
           <div className="flex justify-between items-center">
