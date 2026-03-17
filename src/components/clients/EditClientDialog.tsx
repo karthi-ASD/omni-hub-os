@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
+import { AutoSaveIndicator } from "@/components/ui/auto-save-indicator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
