@@ -1,0 +1,1 @@
+ALTER TABLE public.client_website_pages ADD CONSTRAINT client_website_pages_client_url_unique UNIQUE (client_id, url);
