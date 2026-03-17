@@ -6,6 +6,7 @@ import { useClientDashboardData } from "@/hooks/useClientDashboardData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -14,7 +15,7 @@ import {
 } from "recharts";
 import {
   TrendingUp, TrendingDown, Minus, Users, Eye,
-  Activity, Sparkles, BarChart3, Loader2, Rocket,
+  Activity, Sparkles, BarChart3, Rocket,
   Timer, MousePointerClick, FileText, Target, Zap,
   ArrowUpRight, Globe, CheckCircle2, Clock, AlertCircle,
   ShieldCheck, RefreshCw,
@@ -27,7 +28,7 @@ const ClientPerformanceIntelligencePage = () => {
   usePageTitle("Performance Intelligence Layer");
   const { clientId, loading: authLoading } = useAuth();
   const [period, setPeriod] = useState<Period>("30d");
-  const { stats, loading, aggregates, insights, trendData, sourceData, syncStatus } =
+  const { stats, loading, aggregates, insights, trendData, sourceData, syncStatus, projectCount } =
     useGoogleAnalyticsStats(undefined, clientId || undefined);
   const { data: crmData } = useClientDashboardData();
 
@@ -38,12 +39,14 @@ const ClientPerformanceIntelligencePage = () => {
 
   const topPagesData = useMemo(() => {
     if (!aggregates?.latest?.top_pages_json) return [];
-    return (aggregates.latest.top_pages_json as any[]).slice(0, 6).map((p: any) => ({
+    const pages = Array.isArray(aggregates.latest.top_pages_json) ? aggregates.latest.top_pages_json : [];
+    return pages.slice(0, 6).map((p: any) => ({
       page: (p.path || p.url || "/").replace(/^https?:\/\/[^/]+/, "").slice(0, 30),
       views: p.views || p.pageviews || 0,
     }));
   }, [aggregates]);
 
+  // ROI: Leads vs Traffic
   const leadsVsTraffic = useMemo(() => {
     if (!stats.length || !crmData) return [];
     const monthlyMap = new Map<string, { month: string; visitors: number; leads: number }>();
@@ -62,19 +65,47 @@ const ClientPerformanceIntelligencePage = () => {
     return months;
   }, [stats, crmData]);
 
+  // ROI metrics
+  const roiMetrics = useMemo(() => {
+    if (!aggregates || !crmData) return null;
+    const totalVisitors = aggregates.totalUsers || 0;
+    const totalLeads = crmData.totalLeads || 0;
+    const leadsPer100 = totalVisitors > 0 ? Math.round((totalLeads / totalVisitors) * 10000) / 100 : 0;
+    return { totalVisitors, totalLeads, leadsPer100 };
+  }, [aggregates, crmData]);
+
+  // Skeleton Loading
   if (authLoading || loading) {
     return (
-      <div className="p-6 flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-4 animate-fade-in">
-          <div className="relative">
-            <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto">
+        <Card className="rounded-2xl overflow-hidden border-0 shadow-xl">
+          <CardContent className="p-6 md:p-10 space-y-6">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-12 w-12 rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-7 w-72" />
+                <Skeleton className="h-4 w-48" />
+              </div>
             </div>
-          </div>
-          <div className="text-center">
-            <p className="font-semibold text-foreground">Loading Performance Intelligence</p>
-            <p className="text-xs text-muted-foreground mt-1">Preparing your business insights...</p>
-          </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="p-4 rounded-xl border border-border/50 space-y-3">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-8 w-28" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card className="rounded-xl"><CardContent className="p-6"><Skeleton className="h-[280px] w-full rounded-lg" /></CardContent></Card>
+          <Card className="rounded-xl"><CardContent className="p-6"><Skeleton className="h-[280px] w-full rounded-lg" /></CardContent></Card>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="rounded-xl"><CardContent className="p-4 space-y-3"><Skeleton className="h-4 w-20" /><Skeleton className="h-8 w-24" /></CardContent></Card>
+          ))}
         </div>
       </div>
     );
@@ -93,7 +124,7 @@ const ClientPerformanceIntelligencePage = () => {
             <p className="text-sm text-muted-foreground max-w-md mb-6">
               Analytics data will appear here after the first successful sync. Our team syncs your business data automatically every 48 hours to showcase your growth.
             </p>
-            <SyncStatusBadge syncStatus={syncStatus} />
+            <SyncStatusBadge syncStatus={syncStatus} showDetail />
           </CardContent>
         </Card>
       </div>
@@ -116,7 +147,7 @@ const ClientPerformanceIntelligencePage = () => {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.12),transparent_70%)]" />
         <div className="absolute top-0 right-0 w-64 h-64 bg-[radial-gradient(circle,hsl(var(--primary)/0.06),transparent_70%)]" />
         <CardContent className="p-6 md:p-10 relative z-10">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-primary/15 border border-primary/20">
                 <Rocket className="h-6 w-6 text-primary" />
@@ -127,10 +158,13 @@ const ClientPerformanceIntelligencePage = () => {
                 </h1>
                 <p className="text-sm text-muted-foreground mt-0.5">
                   Real-time business growth insights powered by NextWeb
+                  {projectCount > 1 && (
+                    <Badge variant="outline" className="ml-2 text-[10px]">{projectCount} projects</Badge>
+                  )}
                 </p>
               </div>
             </div>
-            <SyncStatusBadge syncStatus={syncStatus} />
+            <SyncStatusBadge syncStatus={syncStatus} showDetail />
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-6">
@@ -187,7 +221,10 @@ const ClientPerformanceIntelligencePage = () => {
         </CardContent>
       </Card>
 
-      {/* ═══ SECTION B: TRAFFIC GROWTH ═══ */}
+      {/* ═══ DATA FRESHNESS BAR ═══ */}
+      <DataFreshnessBar syncStatus={syncStatus} />
+
+      {/* ═══ GROWTH STORY ═══ */}
       <Card className="rounded-xl shadow-sm">
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-bold flex items-center gap-2">
@@ -225,9 +262,8 @@ const ClientPerformanceIntelligencePage = () => {
         </CardContent>
       </Card>
 
-      {/* ═══ SECTION C & D: SOURCES + TOP PAGES ═══ */}
+      {/* ═══ SOURCES + TOP PAGES ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Traffic Sources */}
         <Card className="rounded-xl shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold flex items-center gap-2">
@@ -262,20 +298,13 @@ const ClientPerformanceIntelligencePage = () => {
                     );
                   })}
                 </div>
-                {sourceData.length > 0 && (
-                  <div className="mt-4 px-4 py-2.5 rounded-lg bg-blue-500/10 text-xs font-medium text-blue-600 dark:text-blue-400 flex items-center gap-2">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    {sourceData[0].name} is your strongest traffic channel
-                  </div>
-                )}
               </>
             ) : (
-              <p className="text-xs text-muted-foreground py-10">Traffic source data will appear after more data is collected</p>
+              <p className="text-xs text-muted-foreground py-10">Traffic source data will appear after the first sync</p>
             )}
           </CardContent>
         </Card>
 
-        {/* Top Pages */}
         <Card className="rounded-xl shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold flex items-center gap-2">
@@ -296,14 +325,15 @@ const ClientPerformanceIntelligencePage = () => {
             ) : (
               <div className="py-10 text-center">
                 <FileText className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                <p className="text-xs text-muted-foreground">Top pages data will appear once more data is collected</p>
+                <p className="text-xs text-muted-foreground">Top pages will populate after analytics sync completes</p>
+                <p className="text-[11px] text-muted-foreground/60 mt-1">Ensure Google Analytics is connected to your project</p>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* ═══ SECTION E: ENGAGEMENT SNAPSHOT ═══ */}
+      {/* ═══ ENGAGEMENT SNAPSHOT ═══ */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <EngagementCard
           label="Bounce Rate"
@@ -311,8 +341,8 @@ const ClientPerformanceIntelligencePage = () => {
           icon={<MousePointerClick className="h-5 w-5" />}
           color="text-orange-500"
           bgColor="bg-orange-500/10"
-          status={aggregates.avgBounce < 50 ? "good" : aggregates.avgBounce > 70 ? "bad" : "neutral"}
-          hint={aggregates.avgBounce < 50 ? "Healthy" : aggregates.avgBounce > 70 ? "Needs attention" : "Average"}
+          status={aggregates.avgBounce > 0 && aggregates.avgBounce < 50 ? "good" : aggregates.avgBounce > 70 ? "bad" : "neutral"}
+          hint={aggregates.avgBounce > 0 && aggregates.avgBounce < 50 ? "Healthy" : aggregates.avgBounce > 70 ? "Needs attention" : "Average"}
         />
         <EngagementCard
           label="Avg Duration"
@@ -339,11 +369,11 @@ const ClientPerformanceIntelligencePage = () => {
           color="text-emerald-500"
           bgColor="bg-emerald-500/10"
           status={aggregates.totalConversions > 0 ? "good" : "neutral"}
-          hint={aggregates.totalConversions > 0 ? "Being tracked" : "Pending"}
+          hint={aggregates.totalConversions > 0 ? "Being tracked" : "Pending setup"}
         />
       </div>
 
-      {/* ═══ SECTION F: SMART INSIGHTS ═══ */}
+      {/* ═══ SMART INSIGHTS ═══ */}
       {insights.length > 0 && (
         <Card className="rounded-xl border-primary/20 overflow-hidden">
           <div className="h-1 bg-gradient-to-r from-primary via-primary/60 to-transparent" />
@@ -377,35 +407,55 @@ const ClientPerformanceIntelligencePage = () => {
         </Card>
       )}
 
-      {/* ═══ SECTION: LEADS VS TRAFFIC ═══ */}
-      {leadsVsTraffic.length > 0 && crmData && crmData.totalLeads > 0 && (
-        <Card className="rounded-xl shadow-sm">
+      {/* ═══ ROI / BUSINESS IMPACT ═══ */}
+      {roiMetrics && roiMetrics.totalLeads > 0 && (
+        <Card className="rounded-xl shadow-sm overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-emerald-500 via-emerald-400 to-transparent" />
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold flex items-center gap-2">
-              <Target className="h-4 w-4 text-emerald-500" /> Visitors vs Leads Conversion
+              <Target className="h-4 w-4 text-emerald-500" /> Business Impact — ROI Intelligence
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[260px] w-full">
-              <AreaChart data={leadsVsTraffic} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                <defs>
-                  <linearGradient id="pil-fillVisitors" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--chart-1))" stopOpacity={0.2} />
-                    <stop offset="100%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="pil-fillLeads" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
-                <XAxis dataKey="month" tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Area type="monotone" dataKey="visitors" stroke="hsl(var(--chart-1))" strokeWidth={2} fill="url(#pil-fillVisitors)" />
-                <Area type="monotone" dataKey="leads" stroke="hsl(var(--chart-3))" strokeWidth={2.5} fill="url(#pil-fillLeads)" />
-              </AreaChart>
-            </ChartContainer>
+          <CardContent className="space-y-4">
+            {/* ROI KPIs */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 text-center">
+                <p className="text-2xl font-extrabold text-blue-500">{roiMetrics.totalVisitors.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mt-1">Total Visitors</p>
+              </div>
+              <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10 text-center">
+                <p className="text-2xl font-extrabold text-emerald-500">{roiMetrics.totalLeads.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mt-1">Total Leads</p>
+              </div>
+              <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 text-center">
+                <p className="text-2xl font-extrabold text-amber-500">{roiMetrics.leadsPer100}</p>
+                <p className="text-xs text-muted-foreground mt-1">Leads per 100 Visitors</p>
+              </div>
+            </div>
+
+            {/* Visitors vs Leads Chart */}
+            {leadsVsTraffic.length > 0 && (
+              <ChartContainer config={chartConfig} className="h-[240px] w-full">
+                <AreaChart data={leadsVsTraffic} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                  <defs>
+                    <linearGradient id="pil-fillVisitors2" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--chart-1))" stopOpacity={0.2} />
+                      <stop offset="100%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="pil-fillLeads2" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                  <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Area type="monotone" dataKey="visitors" stroke="hsl(var(--chart-1))" strokeWidth={2} fill="url(#pil-fillVisitors2)" />
+                  <Area type="monotone" dataKey="leads" stroke="hsl(var(--chart-3))" strokeWidth={2.5} fill="url(#pil-fillLeads2)" />
+                </AreaChart>
+              </ChartContainer>
+            )}
           </CardContent>
         </Card>
       )}
@@ -447,6 +497,34 @@ const HeroEmpty = () => (
     </CardContent>
   </Card>
 );
+
+const DataFreshnessBar = ({ syncStatus }: { syncStatus: { last_sync_at: string | null; next_sync_at: string | null; sync_status: string } | null }) => {
+  if (!syncStatus?.last_sync_at) return null;
+
+  const lastSync = new Date(syncStatus.last_sync_at);
+  const hoursAgo = Math.round((Date.now() - lastSync.getTime()) / (1000 * 60 * 60));
+  const nextSync = syncStatus.next_sync_at ? new Date(syncStatus.next_sync_at) : null;
+  const hoursUntilNext = nextSync ? Math.max(0, Math.round((nextSync.getTime() - Date.now()) / (1000 * 60 * 60))) : null;
+
+  return (
+    <div className="flex items-center gap-4 text-xs text-muted-foreground bg-muted/40 rounded-lg px-4 py-2.5 border border-border/50">
+      <div className="flex items-center gap-1.5">
+        <Clock className="h-3.5 w-3.5" />
+        <span>Updated <strong className="text-foreground">{hoursAgo}h ago</strong></span>
+      </div>
+      {hoursUntilNext !== null && (
+        <div className="flex items-center gap-1.5">
+          <RefreshCw className="h-3.5 w-3.5" />
+          <span>Next update in <strong className="text-foreground">{hoursUntilNext}h</strong></span>
+        </div>
+      )}
+      <div className="flex items-center gap-1.5 ml-auto">
+        <div className={`w-2 h-2 rounded-full ${syncStatus.sync_status === "synced" ? "bg-emerald-500" : "bg-amber-500"}`} />
+        <span className="capitalize">{syncStatus.sync_status}</span>
+      </div>
+    </div>
+  );
+};
 
 const SyncStatusBadge = ({
   syncStatus,
