@@ -568,7 +568,8 @@ const App = () => (
               <Route path="/my-access" element={<ClientAccessHubPage />} />
               <Route path="/client-website-structure" element={<ClientWebsiteStructurePage />} />
               <Route path="/client-website-performance" element={<ClientWebsitePerformancePage />} />
-              <Route path="/client-performance-intelligence" element={<ClientPerformanceIntelligencePage />} />
+               <Route path="/client-performance-intelligence" element={<ClientPerformanceIntelligencePage />} />
+               <Route path="/client-local-presence" element={<ClientLocalPresencePage />} />
               <Route path="/my-appointments" element={<CustomerAppointmentPage />} />
               <Route path="/staff-app" element={<StaffMobileAppPage />} />
               <Route path="/hr/departments" element={
