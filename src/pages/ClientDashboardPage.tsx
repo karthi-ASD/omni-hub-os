@@ -166,7 +166,7 @@ const ClientDashboardPage = () => {
                 <TrendingUp className="h-4 w-4 text-success" /> Top Performing Keywords
               </CardTitle>
               {data.seoKeywords.length > 0 && (
-                <button onClick={() => navigate("/seo")} className="text-xs text-primary font-semibold flex items-center gap-1 hover:underline">
+                <button onClick={() => navigate("/client-seo-projects")} className="text-xs text-primary font-semibold flex items-center gap-1 hover:underline">
                   View All <ArrowRight className="h-3 w-3" />
                 </button>
               )}
