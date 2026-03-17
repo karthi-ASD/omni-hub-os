@@ -711,6 +711,7 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["super_admin"]}><FeatureRegistryPage /></ProtectedRoute>
               } />
               <Route path="/advocacy-engine" element={<AdvocacyEnginePage />} />
+              <Route path="/whatsapp-support" element={<WhatsAppSupportPage />} />
               <Route path="/user/:userId" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><UserProfilePage /></ProtectedRoute>
               } />
