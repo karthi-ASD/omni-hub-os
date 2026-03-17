@@ -40,6 +40,7 @@ export const EditClientDialog: React.FC<EditClientDialogProps> = ({
     country: "",
   });
   const [saving, setSaving] = useState(false);
+  const { isDirty, isSaving, clearDraft } = useUnsavedChanges("edit-client-" + client.id, form, { enabled: open });
 
   useEffect(() => {
     if (open && client) {
