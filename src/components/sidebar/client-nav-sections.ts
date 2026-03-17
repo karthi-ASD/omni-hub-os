@@ -1,7 +1,7 @@
 import {
   Home, Users, Receipt, Search, BarChart3, Ticket,
   Target, Phone, Settings, Briefcase, Calendar,
-  Building2, GitBranch, TrendingUp,
+  Building2, GitBranch, TrendingUp, Zap,
 } from "lucide-react";
 import type { NavSection } from "./nav-sections";
 
@@ -10,6 +10,7 @@ export const CLIENT_NAV_SECTIONS: NavSection[] = [
     title: "My Services",
     items: [
       { label: "Dashboard", icon: Home, to: "/dashboard" },
+      { label: "Performance Intelligence", icon: Zap, to: "/client-performance-intelligence" },
       { label: "My Package", icon: Briefcase, to: "/my-billing" },
       { label: "Billing & Invoices", icon: Receipt, to: "/my-billing" },
       { label: "SEO Projects", icon: Search, to: "/client-seo-projects" },

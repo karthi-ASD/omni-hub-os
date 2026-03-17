@@ -190,6 +190,7 @@ import TaskPipelinePage from "./pages/TaskPipelinePage";
 import TaskDetailPage from "./pages/TaskDetailPage";
 import ClientWebsiteStructurePage from "./pages/ClientWebsiteStructurePage";
 import ClientWebsitePerformancePage from "./pages/ClientWebsitePerformancePage";
+import ClientPerformanceIntelligencePage from "./pages/ClientPerformanceIntelligencePage";
 import TeamHierarchyPage from "./pages/TeamHierarchyPage";
 import CrossDeptRequestsPage from "./pages/CrossDeptRequestsPage";
 import DepartmentDashboardPage from "./pages/DepartmentDashboardPage";
@@ -566,6 +567,7 @@ const App = () => (
               <Route path="/my-access" element={<ClientAccessHubPage />} />
               <Route path="/client-website-structure" element={<ClientWebsiteStructurePage />} />
               <Route path="/client-website-performance" element={<ClientWebsitePerformancePage />} />
+              <Route path="/client-performance-intelligence" element={<ClientPerformanceIntelligencePage />} />
               <Route path="/my-appointments" element={<CustomerAppointmentPage />} />
               <Route path="/staff-app" element={<StaffMobileAppPage />} />
               <Route path="/hr/departments" element={
