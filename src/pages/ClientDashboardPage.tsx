@@ -275,7 +275,7 @@ const ClientDashboardPage = () => {
               ) : (
                 <div className="text-center py-8 text-muted-foreground text-sm">
                   <Eye className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  Competitor analysis will be available once your SEO project starts
+                  Your campaign is getting started. Competitor analysis will appear soon.
                 </div>
               )}
             </CardContent>
