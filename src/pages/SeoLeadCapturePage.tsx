@@ -575,15 +575,31 @@ document.querySelectorAll('a[href^="tel:"]').forEach(link => {
 // ─── Automation Tab (Admin-level WhatsApp control) ───
 function AutomationTab({ project, businessId, settings, onRefresh }: { project: SeoProject; businessId: string; settings: AutomationSettings | null; onRefresh: () => void }) {
   const { toast } = useToast();
+  const { profile } = useAuth();
   const [local, setLocal] = useState<AutomationSettings>(settings || {
     seo_project_id: project.id, whatsapp_number: "", whatsapp_connected: false,
     enable_email: false, enable_whatsapp: false, enable_call: false, enable_acknowledgment: false
   });
   const [saving, setSaving] = useState(false);
+  const [recentLogs, setRecentLogs] = useState<any[]>([]);
 
   useEffect(() => {
     if (settings) setLocal(settings);
   }, [settings]);
+
+  useEffect(() => {
+    fetchRecentLogs();
+  }, [project.id]);
+
+  const fetchRecentLogs = async () => {
+    const { data } = await supabase
+      .from("seo_automation_logs")
+      .select("id, automation_type, status, error_message, execution_time_ms, created_at")
+      .eq("seo_project_id", project.id)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    setRecentLogs((data as any) || []);
+  };
 
   const save = async () => {
     if (local.whatsapp_number && !local.whatsapp_number.startsWith("+")) {
@@ -591,7 +607,6 @@ function AutomationTab({ project, businessId, settings, onRefresh }: { project: 
       return;
     }
 
-    // WhatsApp automation requires connection
     if (local.enable_whatsapp && !local.whatsapp_connected) {
       toast({ title: "WhatsApp not connected", description: "Connect WhatsApp first before enabling automation", variant: "destructive" });
       return;
@@ -603,6 +618,7 @@ function AutomationTab({ project, businessId, settings, onRefresh }: { project: 
     }
 
     setSaving(true);
+    const oldSettings = settings ? { enable_email: settings.enable_email, enable_whatsapp: settings.enable_whatsapp, enable_call: settings.enable_call, whatsapp_number: settings.whatsapp_number } : null;
     const payload = {
       business_id: businessId,
       seo_project_id: project.id,
@@ -620,6 +636,17 @@ function AutomationTab({ project, businessId, settings, onRefresh }: { project: 
     } else {
       await supabase.from("seo_automation_settings").insert(payload as any);
     }
+
+    // Audit log
+    if (profile?.business_id) {
+      await supabase.from("seo_audit_log").insert({
+        business_id: profile.business_id, seo_project_id: project.id, user_id: profile.user_id,
+        action: "settings_updated", entity_type: "seo_automation_settings",
+        entity_id: local.id || project.id,
+        old_value: oldSettings, new_value: { enable_email: local.enable_email, enable_whatsapp: local.enable_whatsapp, enable_call: local.enable_call, whatsapp_number: local.whatsapp_number },
+      } as any);
+    }
+
     toast({ title: "Settings saved" });
     setSaving(false);
     onRefresh();
