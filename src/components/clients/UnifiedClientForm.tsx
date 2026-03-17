@@ -92,6 +92,10 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
   onSubmit,
   defaultValues,
 }) => {
+  useEffect(() => {
+    console.log("[Mount] UnifiedClientForm");
+    return () => console.log("[Unmount] UnifiedClientForm");
+  }, []);
   const [form, setForm] = useState<FormState>({
     ...EMPTY_FORM,
     contact_name: defaultValues?.contact_name || "",
