@@ -409,7 +409,7 @@ export default function WhatsAppSupportPage() {
                 </button>
               ))}
               {clientSearch.length >= 2 && clientResults.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">No clients found</p>
+                <p className="text-sm text-muted-foreground text-center py-4">No matching clients. Try a different search term.</p>
               )}
             </ScrollArea>
           </div>

@@ -534,7 +534,7 @@ const UnifiedTicketDetailPage = () => {
               )}
 
               <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                {clientResults.length === 0 && clientSearch && <p className="text-xs text-muted-foreground text-center py-4">No clients found. Try different search terms or create a new client.</p>}
+                {clientResults.length === 0 && clientSearch && <p className="text-xs text-muted-foreground text-center py-4">No matching clients. Try different search terms or create a new client.</p>}
                 {clientResults.map(client => (
                   <div key={client.id} className="flex items-center justify-between p-2 rounded-lg border border-border hover:bg-muted/50 transition-colors">
                     <div>

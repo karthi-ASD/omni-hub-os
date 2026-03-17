@@ -364,7 +364,7 @@ const SuperAdminClientManagementPage = () => {
                     {loading ? (
                       <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
                     ) : filteredAll.length === 0 ? (
-                      <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No clients found</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No clients match your filters. Try adjusting your search.</TableCell></TableRow>
                     ) : filteredAll.map(c => (
                       <TableRow key={c.id}>
                         <TableCell>
