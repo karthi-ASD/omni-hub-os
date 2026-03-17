@@ -11,6 +11,7 @@ export interface ClientPortalTicket {
   department: string | null;
   priority: string;
   status: string;
+  sla_due_at: string | null;
   created_at: string;
   updated_at: string;
 }
