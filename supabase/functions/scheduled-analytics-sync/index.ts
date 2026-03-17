@@ -77,17 +77,32 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Look up analytics connection by project's business_id
-        const { data: connection } = await supabase
+        // Look up analytics connection by project_id first, fallback to business_id
+        let { data: connection } = await supabase
           .from("analytics_connections")
           .select("*")
-          .eq("business_id", project.business_id)
-          .eq("provider", "google_analytics")
-          .eq("status", "active")
+          .eq("project_id", project.id)
+          .eq("is_active", true)
           .limit(1)
           .maybeSingle();
 
-        if (!connection || !connection.token_encrypted || !connection.external_account_id) {
+        if (!connection) {
+          // Fallback: check by business_id + provider
+          const { data: fallback } = await supabase
+            .from("analytics_connections")
+            .select("*")
+            .eq("business_id", project.business_id)
+            .eq("provider", "GA4")
+            .eq("is_active", true)
+            .limit(1)
+            .maybeSingle();
+          connection = fallback;
+        }
+
+        const propertyId = connection?.property_id || connection?.external_account_id;
+        const credentials = connection?.credentials_encrypted || connection?.token_encrypted;
+
+        if (!connection || !credentials || !propertyId) {
           await upsertSyncStatus(supabase, project, now, "no_connection", "No active Google Analytics connection with credentials");
           skippedCount++;
           continue;

@@ -14,6 +14,7 @@ import { useSeoMonthlyReports } from "@/hooks/useSeoMonthlyReports";
 import { useSeoAiRecommendations } from "@/hooks/useSeoAiRecommendations";
 import { useSeoKeywords } from "@/hooks/useSeo";
 import { PerformanceDashboard } from "@/components/clients/access-hub/PerformanceDashboard";
+import { ProjectIntegrationsTab } from "@/components/seo/ProjectIntegrationsTab";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -128,6 +129,7 @@ const SeoProjectDetailPage = () => {
           <TabsTrigger value="messages"><MessageSquare className="h-3 w-3 mr-1" /> Messages</TabsTrigger>
           <TabsTrigger value="reports"><BarChart3 className="h-3 w-3 mr-1" /> Reports</TabsTrigger>
           <TabsTrigger value="performance"><BarChart3 className="h-3 w-3 mr-1" /> Performance</TabsTrigger>
+          <TabsTrigger value="integrations"><Plug className="h-3 w-3 mr-1" /> Integrations</TabsTrigger>
           <TabsTrigger value="ai"><Brain className="h-3 w-3 mr-1" /> AI Advisor</TabsTrigger>
         </TabsList>
 
@@ -534,7 +536,13 @@ const SeoProjectDetailPage = () => {
           <PerformanceDashboard clientId={project?.client_id} projectId={projectId} />
         </TabsContent>
 
-        {/* AI ADVISOR TAB */}
+        {/* INTEGRATIONS TAB */}
+        <TabsContent value="integrations" className="space-y-4">
+          {projectId && project?.business_id && (
+            <ProjectIntegrationsTab projectId={projectId} businessId={project.business_id} />
+          )}
+        </TabsContent>
+
         <TabsContent value="ai" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-semibold">AI SEO Advisor</h2>
