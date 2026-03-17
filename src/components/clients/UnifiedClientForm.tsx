@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
-import { DraftRestoreBanner } from "@/components/ui/draft-restore-banner";
+import { DraftRestoreBanner, CrossTabConflictBanner } from "@/components/ui/draft-restore-banner";
 import { AutoSaveIndicator } from "@/components/ui/auto-save-indicator";
 import { CustomFieldRenderer } from "@/components/custom-fields/CustomFieldRenderer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -113,8 +113,9 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [tab, setTab] = useState("details");
 
+  const draftKey = `client:${defaultValues?.deal_id || "new"}`;
   const draftValues = useMemo(() => ({ ...form, selectedServices, serviceDetails, servicePricing }), [form, selectedServices, serviceDetails, servicePricing]);
-  const { isDirty, isSaving, clearDraft } = useUnsavedChanges("new-client-form", draftValues, { enabled: open });
+  const { isDirty, isSaving, crossTabConflict, clearDraft, acceptRemoteDraft, dismissConflict } = useUnsavedChanges(draftKey, draftValues, { enabled: open });
 
   const update = (key: keyof FormState, value: string) =>
     setForm((p) => ({ ...p, [key]: value }));
@@ -225,13 +226,24 @@ const UnifiedClientForm: React.FC<UnifiedClientFormProps> = ({
 
         <div className="px-6">
           <DraftRestoreBanner
-            draftKey="new-client-form"
+            draftKey={draftKey}
             onRestore={(data) => {
               if (data.contact_name !== undefined) setForm(data);
               if (data.selectedServices) setSelectedServices(data.selectedServices);
               if (data.serviceDetails) setServiceDetails(data.serviceDetails);
               if (data.servicePricing) setServicePricing(data.servicePricing);
             }}
+          />
+          <CrossTabConflictBanner
+            visible={crossTabConflict}
+            onAcceptRemote={() => {
+              const remote = acceptRemoteDraft();
+              if (remote) {
+                if ((remote as any).contact_name !== undefined) setForm(remote as any);
+                if ((remote as any).selectedServices) setSelectedServices((remote as any).selectedServices);
+              }
+            }}
+            onKeepCurrent={dismissConflict}
           />
         </div>
 

@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
-import { DraftRestoreBanner } from "@/components/ui/draft-restore-banner";
+import { DraftRestoreBanner, CrossTabConflictBanner } from "@/components/ui/draft-restore-banner";
 import { AutoSaveIndicator } from "@/components/ui/auto-save-indicator";
 
 interface Client {
@@ -37,7 +37,7 @@ const defaultForm = {
 export function SeoCreateProjectDialog({ open, onOpenChange, clients, onCreate }: Props) {
   const [form, setForm] = useState(defaultForm);
   const [submitting, setSubmitting] = useState(false);
-  const { isDirty, isSaving, clearDraft } = useUnsavedChanges("seo-create-project", form, { enabled: open });
+  const { isDirty, isSaving, clearDraft } = useUnsavedChanges("seo:new", form, { enabled: open });
 
   const handleCreate = async () => {
     if (!form.website_domain || !form.project_name) return;
@@ -67,7 +67,7 @@ export function SeoCreateProjectDialog({ open, onOpenChange, clients, onCreate }
             <AutoSaveIndicator isDirty={isDirty} isSaving={isSaving} className="ml-auto" />
           </DialogTitle>
         </DialogHeader>
-        <DraftRestoreBanner draftKey="seo-create-project" onRestore={(data) => setForm(data)} />
+        <DraftRestoreBanner draftKey="seo:new" onRestore={(data) => setForm(data)} />
         <div className="space-y-4">
           <div>
             <Label>Project Name *</Label>
