@@ -124,6 +124,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           fetchRoles(nextSession.user.id),
         ]);
 
+        // Check if user is a client user
+        const { data: clientLink } = await supabase
+          .from("client_users")
+          .select("client_id")
+          .eq("user_id", nextSession.user.id)
+          .eq("is_primary", true)
+          .maybeSingle();
+        setClientUserId(clientLink?.client_id || null);
+
         if (userRoles.includes("super_admin")) {
           const biz = await fetchBusinesses();
           if (biz.length > 0) {
