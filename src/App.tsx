@@ -192,6 +192,7 @@ import ClientWebsiteStructurePage from "./pages/ClientWebsiteStructurePage";
 import ClientWebsitePerformancePage from "./pages/ClientWebsitePerformancePage";
 import ClientPerformanceIntelligencePage from "./pages/ClientPerformanceIntelligencePage";
 import ClientLocalPresencePage from "./pages/ClientLocalPresencePage";
+import IntegrationsOverviewPage from "./pages/IntegrationsOverviewPage";
 import TeamHierarchyPage from "./pages/TeamHierarchyPage";
 import CrossDeptRequestsPage from "./pages/CrossDeptRequestsPage";
 import DepartmentDashboardPage from "./pages/DepartmentDashboardPage";
