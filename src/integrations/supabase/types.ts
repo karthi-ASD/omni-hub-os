@@ -6928,6 +6928,53 @@ export type Database = {
           },
         ]
       }
+      client_whatsapp_identity: {
+        Row: {
+          client_id: string
+          contact_name: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          is_primary: boolean
+          notes: string | null
+          updated_at: string
+          whatsapp_phone_e164: string
+          whatsapp_phone_normalized: string
+        }
+        Insert: {
+          client_id: string
+          contact_name?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          notes?: string | null
+          updated_at?: string
+          whatsapp_phone_e164: string
+          whatsapp_phone_normalized: string
+        }
+        Update: {
+          client_id?: string
+          contact_name?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          notes?: string | null
+          updated_at?: string
+          whatsapp_phone_e164?: string
+          whatsapp_phone_normalized?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_whatsapp_identity_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           activation_token: string | null
@@ -11535,6 +11582,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      global_integrations: {
+        Row: {
+          config: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          integration_key: string
+          integration_name: string
+          is_active: boolean
+          provider: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          integration_key: string
+          integration_name: string
+          is_active?: boolean
+          provider: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          integration_key?: string
+          integration_name?: string
+          is_active?: boolean
+          provider?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       gmb_tasks: {
         Row: {
@@ -21764,12 +21850,14 @@ export type Database = {
         Row: {
           ai_summary: string | null
           ai_tags: string[] | null
+          assigned_team: string | null
           assigned_to_user_id: string | null
           auto_reply_sent: boolean | null
           business_id: string
           category: string
           channel: string | null
           client_id: string | null
+          client_last_message_at: string | null
           client_match_status: string
           closed_at: string | null
           company_account_id: string | null
@@ -21795,22 +21883,28 @@ export type Database = {
           sender_name: string | null
           sentiment: string | null
           sla_due_at: string | null
+          source: string | null
+          source_channel: string | null
           source_type: string
           status: string
           subject: string
           suggested_client_ids: string[] | null
+          support_last_reply_at: string | null
           ticket_number: string
           updated_at: string
+          whatsapp_conversation_id: string | null
         }
         Insert: {
           ai_summary?: string | null
           ai_tags?: string[] | null
+          assigned_team?: string | null
           assigned_to_user_id?: string | null
           auto_reply_sent?: boolean | null
           business_id: string
           category?: string
           channel?: string | null
           client_id?: string | null
+          client_last_message_at?: string | null
           client_match_status?: string
           closed_at?: string | null
           company_account_id?: string | null
@@ -21836,22 +21930,28 @@ export type Database = {
           sender_name?: string | null
           sentiment?: string | null
           sla_due_at?: string | null
+          source?: string | null
+          source_channel?: string | null
           source_type?: string
           status?: string
           subject: string
           suggested_client_ids?: string[] | null
+          support_last_reply_at?: string | null
           ticket_number?: string
           updated_at?: string
+          whatsapp_conversation_id?: string | null
         }
         Update: {
           ai_summary?: string | null
           ai_tags?: string[] | null
+          assigned_team?: string | null
           assigned_to_user_id?: string | null
           auto_reply_sent?: boolean | null
           business_id?: string
           category?: string
           channel?: string | null
           client_id?: string | null
+          client_last_message_at?: string | null
           client_match_status?: string
           closed_at?: string | null
           company_account_id?: string | null
@@ -21877,12 +21977,16 @@ export type Database = {
           sender_name?: string | null
           sentiment?: string | null
           sla_due_at?: string | null
+          source?: string | null
+          source_channel?: string | null
           source_type?: string
           status?: string
           subject?: string
           suggested_client_ids?: string[] | null
+          support_last_reply_at?: string | null
           ticket_number?: string
           updated_at?: string
+          whatsapp_conversation_id?: string | null
         }
         Relationships: [
           {
@@ -21904,6 +22008,13 @@ export type Database = {
             columns: ["company_account_id"]
             isOneToOne: false
             referencedRelation: "company_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_whatsapp_conversation_id_fkey"
+            columns: ["whatsapp_conversation_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -24075,6 +24186,264 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "seo_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_conversations: {
+        Row: {
+          business_account_id: string | null
+          business_id: string
+          channel_type: string
+          client_id: string | null
+          client_whatsapp_phone: string
+          created_at: string
+          direction_last: string | null
+          id: string
+          last_message_at: string | null
+          last_message_preview: string | null
+          metadata: Json
+          phone_number_id: string
+          status: string
+          ticket_id: string | null
+          unread_for_client_count: number
+          unread_for_support_count: number
+          updated_at: string
+        }
+        Insert: {
+          business_account_id?: string | null
+          business_id: string
+          channel_type?: string
+          client_id?: string | null
+          client_whatsapp_phone: string
+          created_at?: string
+          direction_last?: string | null
+          id?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          metadata?: Json
+          phone_number_id: string
+          status?: string
+          ticket_id?: string | null
+          unread_for_client_count?: number
+          unread_for_support_count?: number
+          updated_at?: string
+        }
+        Update: {
+          business_account_id?: string | null
+          business_id?: string
+          channel_type?: string
+          client_id?: string | null
+          client_whatsapp_phone?: string
+          created_at?: string
+          direction_last?: string | null
+          id?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          metadata?: Json
+          phone_number_id?: string
+          status?: string
+          ticket_id?: string | null
+          unread_for_client_count?: number
+          unread_for_support_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_conversations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_conversations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_conversations_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_message_status_events: {
+        Row: {
+          business_id: string
+          conversation_id: string | null
+          created_at: string
+          event_payload: Json
+          event_time: string | null
+          id: string
+          status: string
+          whatsapp_message_id: string
+        }
+        Insert: {
+          business_id: string
+          conversation_id?: string | null
+          created_at?: string
+          event_payload?: Json
+          event_time?: string | null
+          id?: string
+          status: string
+          whatsapp_message_id: string
+        }
+        Update: {
+          business_id?: string
+          conversation_id?: string | null
+          created_at?: string
+          event_payload?: Json
+          event_time?: string | null
+          id?: string
+          status?: string
+          whatsapp_message_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_message_status_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_message_status_events_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_messages: {
+        Row: {
+          business_id: string
+          client_id: string | null
+          conversation_id: string
+          created_at: string
+          delivered_at: string | null
+          direction: string
+          error_message: string | null
+          failed_at: string | null
+          from_phone: string | null
+          id: string
+          media_file_name: string | null
+          media_meta: Json
+          media_mime_type: string | null
+          media_url: string | null
+          message_text: string | null
+          message_type: string
+          raw_payload: Json
+          read_at: string | null
+          received_at: string | null
+          recipient_phone: string | null
+          sender_display_name: string | null
+          sender_type: string
+          sender_user_id: string | null
+          sent_at: string | null
+          status: string
+          status_updated_at: string | null
+          ticket_id: string | null
+          to_phone: string | null
+          updated_at: string
+          whatsapp_message_id: string | null
+        }
+        Insert: {
+          business_id: string
+          client_id?: string | null
+          conversation_id: string
+          created_at?: string
+          delivered_at?: string | null
+          direction: string
+          error_message?: string | null
+          failed_at?: string | null
+          from_phone?: string | null
+          id?: string
+          media_file_name?: string | null
+          media_meta?: Json
+          media_mime_type?: string | null
+          media_url?: string | null
+          message_text?: string | null
+          message_type?: string
+          raw_payload?: Json
+          read_at?: string | null
+          received_at?: string | null
+          recipient_phone?: string | null
+          sender_display_name?: string | null
+          sender_type: string
+          sender_user_id?: string | null
+          sent_at?: string | null
+          status?: string
+          status_updated_at?: string | null
+          ticket_id?: string | null
+          to_phone?: string | null
+          updated_at?: string
+          whatsapp_message_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          client_id?: string | null
+          conversation_id?: string
+          created_at?: string
+          delivered_at?: string | null
+          direction?: string
+          error_message?: string | null
+          failed_at?: string | null
+          from_phone?: string | null
+          id?: string
+          media_file_name?: string | null
+          media_meta?: Json
+          media_mime_type?: string | null
+          media_url?: string | null
+          message_text?: string | null
+          message_type?: string
+          raw_payload?: Json
+          read_at?: string | null
+          received_at?: string | null
+          recipient_phone?: string | null
+          sender_display_name?: string | null
+          sender_type?: string
+          sender_user_id?: string | null
+          sent_at?: string | null
+          status?: string
+          status_updated_at?: string | null
+          ticket_id?: string | null
+          to_phone?: string | null
+          updated_at?: string
+          whatsapp_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
             referencedColumns: ["id"]
           },
         ]
