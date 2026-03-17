@@ -14,6 +14,7 @@ import {
   TrendingUp, TrendingDown, Lightbulb, Clock, RefreshCw,
 } from "lucide-react";
 import { useMemo } from "react";
+import { NarrativeSummary } from "@/components/shared/NarrativeSummary";
 
 const ClientLocalPresencePage = () => {
   const { clientId } = useAuth();
