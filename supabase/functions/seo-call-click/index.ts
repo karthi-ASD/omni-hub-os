@@ -5,11 +5,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Origin validation
 function validateOrigin(req: Request, allowedDomains: string[] | null): boolean {
   if (!allowedDomains || allowedDomains.length === 0) return true;
-  const origin = req.headers.get("origin") || req.headers.get("referer") || "";
-  return allowedDomains.some((d) => origin.includes(d));
+  const origin = req.headers.get("origin") || "";
+  const referer = req.headers.get("referer") || "";
+  try {
+    const originHost = origin ? new URL(origin).hostname : "";
+    const refererHost = referer ? new URL(referer).hostname : "";
+    return allowedDomains.some((d) => {
+      const clean = d.replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase();
+      return originHost === clean || originHost.endsWith("." + clean) ||
+             refererHost === clean || refererHost.endsWith("." + clean);
+    });
+  } catch {
+    return false;
+  }
 }
 
 Deno.serve(async (req) => {
@@ -19,9 +29,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { project_id, page_url, api_key } = body;
 
-    if (!project_id) {
-      return json({ error: "project_id is required" }, 400);
-    }
+    if (!project_id) return json({ error: "project_id is required" }, 400);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -34,22 +42,17 @@ Deno.serve(async (req) => {
       .eq("id", project_id)
       .single();
 
-    if (projErr || !project) {
-      return json({ error: "Invalid project_id" }, 404);
-    }
+    if (projErr || !project) return json({ error: "Invalid project_id" }, 404);
 
-    // API key validation
     if (!api_key || api_key !== project.api_key) {
       return json({ error: "Unauthorized: invalid or missing api_key" }, 401);
     }
 
-    // Origin validation
     const allowedDomains = project.website_domain ? [project.website_domain] : null;
     if (!validateOrigin(req, allowedDomains)) {
       return json({ error: "Origin not allowed" }, 403);
     }
 
-    // Rate limiting: max 20 call clicks per minute per project
     const oneMinAgo = new Date(Date.now() - 60 * 1000).toISOString();
     const { count } = await supabase
       .from("seo_captured_leads")
@@ -58,23 +61,15 @@ Deno.serve(async (req) => {
       .eq("source", "call_click")
       .gte("created_at", oneMinAgo);
 
-    if ((count || 0) > 20) {
-      return json({ error: "Rate limit exceeded" }, 429);
-    }
+    if ((count || 0) > 20) return json({ error: "Rate limit exceeded" }, 429);
 
-    // Spam protection: ignore duplicate clicks within 30 seconds
     const thirtySecAgo = new Date(Date.now() - 30 * 1000).toISOString();
     const { data: recent } = await supabase
-      .from("seo_captured_leads")
-      .select("id")
-      .eq("seo_project_id", project_id)
-      .eq("source", "call_click")
-      .gte("created_at", thirtySecAgo)
-      .limit(1);
+      .from("seo_captured_leads").select("id")
+      .eq("seo_project_id", project_id).eq("source", "call_click")
+      .gte("created_at", thirtySecAgo).limit(1);
 
-    if (recent && recent.length > 0) {
-      return json({ message: "Duplicate click ignored" }, 200);
-    }
+    if (recent && recent.length > 0) return json({ message: "Duplicate click ignored" }, 200);
 
     const { data: lead, error: insertErr } = await supabase
       .from("seo_captured_leads")
@@ -86,8 +81,7 @@ Deno.serve(async (req) => {
         page_url: page_url || null,
         status: "new",
       })
-      .select()
-      .single();
+      .select().single();
 
     if (insertErr) {
       console.error("Call click insert error:", insertErr);
@@ -104,9 +98,6 @@ Deno.serve(async (req) => {
 function json(data: any, status: number) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: {
-      ...corsHeaders,
-      "Content-Type": "application/json",
-    },
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
