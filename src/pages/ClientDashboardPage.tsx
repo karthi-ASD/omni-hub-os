@@ -166,7 +166,7 @@ const ClientDashboardPage = () => {
                 <TrendingUp className="h-4 w-4 text-success" /> Top Performing Keywords
               </CardTitle>
               {data.seoKeywords.length > 0 && (
-                <button onClick={() => navigate("/seo")} className="text-xs text-primary font-semibold flex items-center gap-1 hover:underline">
+                <button onClick={() => navigate("/client-seo-projects")} className="text-xs text-primary font-semibold flex items-center gap-1 hover:underline">
                   View All <ArrowRight className="h-3 w-3" />
                 </button>
               )}
@@ -288,7 +288,7 @@ const ClientDashboardPage = () => {
             <CardTitle className="text-sm font-bold flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-success" /> Work Done This Month
             </CardTitle>
-            <button onClick={() => navigate("/seo")} className="text-xs text-primary font-semibold flex items-center gap-1 hover:underline">
+            <button onClick={() => navigate("/client-seo-projects")} className="text-xs text-primary font-semibold flex items-center gap-1 hover:underline">
               View Full Report <ArrowRight className="h-3 w-3" />
             </button>
           </CardHeader>
@@ -446,9 +446,9 @@ const ClientDashboardPage = () => {
               { label: "Add Customer", icon: Plus, to: "/clients" },
               { label: "View Leads", icon: Target, to: "/leads" },
               { label: "My Deals", icon: FolderKanban, to: "/deals" },
-              { label: "SEO Dashboard", icon: Globe, to: "/seo" },
+              { label: "SEO Projects", icon: Globe, to: "/client-seo-projects" },
               { label: "View Reports", icon: BarChart3, to: "/client-reports" },
-              { label: "Invoices", icon: Receipt, to: "/invoices" },
+              { label: "Invoices", icon: Receipt, to: "/my-billing" },
               { label: "Raise Ticket", icon: Ticket, to: "/unified-tickets" },
               { label: "My Package", icon: Briefcase, to: "/my-billing" },
             ].map(action => (

@@ -87,8 +87,6 @@ export function useClientDashboardData() {
     const bid = profile.business_id;
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
 
     const result: ClientDashboardData = {
       totalLeads: 0, leadsThisMonth: 0, totalCalls: 0, callsThisMonth: 0,
@@ -98,10 +96,10 @@ export function useClientDashboardData() {
       recentLeads: [], workLog: [], services: [], websites: [],
     };
 
-    // Parallel fetch core stats
+    // ── CRM stats: scoped to client's own business_id ──
     const [
       leadsAll, leadsMonth, callsAll, callsMonth, deals, customers,
-      tickets, invoicesOpen, invoicesPaid, recentLeads
+      tickets, recentLeads
     ] = await Promise.all([
       supabase.from("leads").select("id", { count: "exact", head: true }).eq("business_id", bid).eq("is_deleted", false),
       supabase.from("leads").select("id", { count: "exact", head: true }).eq("business_id", bid).eq("is_deleted", false).gte("created_at", monthStart),
@@ -110,8 +108,6 @@ export function useClientDashboardData() {
       supabase.from("deals").select("id", { count: "exact", head: true }).eq("business_id", bid).eq("status", "open"),
       supabase.from("clients").select("id", { count: "exact", head: true }).eq("business_id", bid),
       supabase.from("support_tickets").select("id", { count: "exact", head: true }).eq("business_id", bid).in("status", ["open", "in_progress"]),
-      supabase.from("invoices").select("id, total_amount, status").eq("business_id", bid).in("status", ["open", "overdue"]),
-      supabase.from("invoices").select("id, total_amount").eq("business_id", bid).eq("status", "paid"),
       supabase.from("leads").select("id, name, email, phone, source, created_at, stage").eq("business_id", bid).eq("is_deleted", false).order("created_at", { ascending: false }).limit(5),
     ]);
 
@@ -122,23 +118,46 @@ export function useClientDashboardData() {
     result.openDeals = deals.count ?? 0;
     result.totalCustomers = customers.count ?? 0;
     result.openTickets = tickets.count ?? 0;
-    result.openInvoices = invoicesOpen.data?.length ?? 0;
-    result.outstandingAmount = invoicesOpen.data?.reduce((s, i) => s + Number((i as any).total_amount || 0), 0) ?? 0;
-    result.totalPaid = invoicesPaid.data?.reduce((s, i) => s + Number((i as any).total_amount || 0), 0) ?? 0;
     result.recentLeads = (recentLeads.data as any) ?? [];
 
-    // Fetch SEO data using client_id
+    // ── Invoices: fetch from xero_invoices by client_id (NextWeb's invoices FOR this client) ──
     if (clientId) {
-      const [seoProj, keywords, competitors, workLog, services, websites] = await Promise.all([
-        supabase.from("seo_projects").select("id, project_name, service_package, contract_start, project_status").eq("client_id", clientId).eq("project_status", "active").limit(1).maybeSingle(),
-        supabase.from("seo_keywords" as any).select("id, keyword, current_ranking, previous_ranking, search_volume").eq("client_id", clientId).order("current_ranking", { ascending: true, nullsFirst: false }).limit(20),
+      const [invoicesOpen, invoicesPaid] = await Promise.all([
+        supabase.from("xero_invoices").select("id, total_amount, amount_due, status").eq("client_id", clientId).in("status", ["AUTHORISED", "SUBMITTED", "OVERDUE"]),
+        supabase.from("xero_invoices").select("id, total_amount").eq("client_id", clientId).eq("status", "PAID"),
+      ]);
+
+      result.openInvoices = invoicesOpen.data?.length ?? 0;
+      result.outstandingAmount = invoicesOpen.data?.reduce((s, i) => s + Number((i as any).amount_due || (i as any).total_amount || 0), 0) ?? 0;
+      result.totalPaid = invoicesPaid.data?.reduce((s, i) => s + Number((i as any).total_amount || 0), 0) ?? 0;
+    }
+
+    // ── SEO + Services: fetch via client_id, then keywords via seo_project_id ──
+    if (clientId) {
+      // First get the SEO project
+      const seoProj = await supabase
+        .from("seo_projects")
+        .select("id, project_name, service_package, contract_start, project_status")
+        .eq("client_id", clientId)
+        .eq("project_status", "active")
+        .limit(1)
+        .maybeSingle();
+
+      result.seoProject = seoProj.data as any;
+
+      // Now fetch keywords by seo_project_id (NOT client_id — seo_keywords doesn't have client_id)
+      const projectId = seoProj.data?.id;
+
+      const [keywords, competitors, workLog, services, websites] = await Promise.all([
+        projectId
+          ? supabase.from("seo_keywords").select("id, keyword, current_ranking, previous_ranking, search_volume").eq("seo_project_id", projectId).order("current_ranking", { ascending: true, nullsFirst: false }).limit(20)
+          : Promise.resolve({ data: [] }),
         supabase.from("seo_competitors").select("id, competitor_name, competitor_domain, ranking_position").eq("client_id", clientId).limit(10),
         supabase.from("seo_tasks").select("id, task_title, task_category, status, updated_at").eq("client_id", clientId).eq("is_visible_to_client", true).order("updated_at", { ascending: false }).limit(10),
         supabase.from("client_services").select("id, service_type, service_name, service_status, price_amount, billing_cycle, next_billing_date").eq("client_id", clientId).eq("service_status", "active"),
         supabase.from("client_websites").select("website_url, website_status").eq("client_id", clientId),
       ]);
 
-      result.seoProject = seoProj.data as any;
       result.seoKeywords = (keywords.data as any) ?? [];
       result.seoCompetitors = (competitors.data as any) ?? [];
       result.workLog = (workLog.data as any) ?? [];

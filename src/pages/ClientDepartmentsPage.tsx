@@ -2,6 +2,7 @@ import { useState } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useClientWorkforce, ClientDepartment } from "@/hooks/useClientWorkforce";
 import { useClients } from "@/hooks/useClients";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,11 +16,16 @@ import { Building2, Plus, Pencil, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 
 const ClientDepartmentsPage = () => {
-  usePageTitle("Client Departments");
+  usePageTitle("Departments");
+  const { isClientUser, clientId } = useAuth();
   const { clients } = useClients();
   const [selectedClientId, setSelectedClientId] = useState<string>("");
+
+  // Client users auto-scope to their own clientId
+  const effectiveClientId = isClientUser ? (clientId || "") : selectedClientId;
+
   const { departments, employees, loading, createDepartment, updateDepartment, deleteDepartment } =
-    useClientWorkforce(selectedClientId || undefined);
+    useClientWorkforce(effectiveClientId || undefined);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ClientDepartment | null>(null);
   const [form, setForm] = useState({ department_name: "", manager_name: "", status: "active" });
@@ -54,28 +60,17 @@ const ClientDepartmentsPage = () => {
   };
 
   const empCount = (deptId: string) => employees.filter((e) => e.department_id === deptId).length;
+  const showClientSelector = !isClientUser;
+  const hasClient = !!effectiveClientId;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Client Departments</h1>
-          <p className="text-muted-foreground text-sm">Manage departments for your clients</p>
+          <h1 className="text-2xl font-bold text-foreground">{isClientUser ? "My Departments" : "Client Departments"}</h1>
+          <p className="text-muted-foreground text-sm">{isClientUser ? "Manage your business departments" : "Manage departments for your clients"}</p>
         </div>
-      </div>
-
-      <div className="flex items-center gap-4">
-        <div className="w-72">
-          <Select value={selectedClientId} onValueChange={setSelectedClientId}>
-            <SelectTrigger><SelectValue placeholder="Select a client" /></SelectTrigger>
-            <SelectContent>
-              {(clients || []).map((c: any) => (
-                <SelectItem key={c.id} value={c.id}>{c.contact_name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        {selectedClientId && (
+        {hasClient && (
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={openCreate}><Plus className="h-4 w-4 mr-1" /> Add Department</Button>
@@ -110,15 +105,31 @@ const ClientDepartmentsPage = () => {
         )}
       </div>
 
-      {!selectedClientId ? (
+      {showClientSelector && (
+        <div className="flex items-center gap-4">
+          <div className="w-72">
+            <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+              <SelectTrigger><SelectValue placeholder="Select a client" /></SelectTrigger>
+              <SelectContent>
+                {(clients || []).map((c: any) => (
+                  <SelectItem key={c.id} value={c.id}>{c.contact_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+
+      {!hasClient ? (
         <Card><CardContent className="py-12 text-center text-muted-foreground">
           <Building2 className="h-10 w-10 mx-auto mb-3 opacity-40" />
-          Select a client to manage departments
+          {isClientUser ? "Loading your departments..." : "Select a client to manage departments"}
         </CardContent></Card>
       ) : loading ? (
         <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full" />)}</div>
       ) : departments.length === 0 ? (
         <Card><CardContent className="py-12 text-center text-muted-foreground">
+          <Building2 className="h-10 w-10 mx-auto mb-3 opacity-40" />
           No departments yet. Click "Add Department" to create one.
         </CardContent></Card>
       ) : (
