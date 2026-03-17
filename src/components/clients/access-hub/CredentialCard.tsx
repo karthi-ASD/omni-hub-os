@@ -89,13 +89,8 @@ export function CredentialCard({
         onCopy(credential.id, "password");
         toast.success("Password copied");
       }
-    } catch {
-      // Fallback
-      if (credential.password_encrypted) {
-        navigator.clipboard.writeText(credential.password_encrypted);
-        onCopy(credential.id, "password");
-        toast.success("Password copied");
-      }
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to decrypt password. Access denied.");
     }
   };
 

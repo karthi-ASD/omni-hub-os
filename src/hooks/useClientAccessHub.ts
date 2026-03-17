@@ -81,12 +81,8 @@ async function encryptObjectFields(data: Record<string, any>, fields: readonly s
   const result = { ...data };
   for (const field of fields) {
     if (result[field] && typeof result[field] === "string" && result[field].trim() !== "") {
-      try {
-        result[field] = await encryptField(result[field]);
-      } catch {
-        // If encryption fails, store as-is (graceful degradation)
-        console.warn(`Encryption failed for field ${field}, storing as plaintext`);
-      }
+      // CRITICAL: Never store plaintext - throw on encryption failure
+      result[field] = await encryptField(result[field]);
     }
   }
   return result;
