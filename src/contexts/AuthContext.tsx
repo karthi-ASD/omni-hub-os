@@ -52,6 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [allBusinesses, setAllBusinesses] = useState<TenantBusiness[]>([]);
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
+  const [clientUserId, setClientUserId] = useState<string | null>(null);
 
   const fetchProfile = async (userId: string) => {
     try {
