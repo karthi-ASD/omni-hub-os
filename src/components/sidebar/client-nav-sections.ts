@@ -1,7 +1,7 @@
 import {
   Home, Users, Receipt, Search, BarChart3, Ticket,
   Target, Phone, Settings, Briefcase, Calendar,
-  Building2, GitBranch, TrendingUp,
+  Building2, GitBranch, TrendingUp, Zap,
 } from "lucide-react";
 import type { NavSection } from "./nav-sections";
 
