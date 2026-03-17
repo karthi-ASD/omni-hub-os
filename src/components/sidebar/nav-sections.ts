@@ -111,6 +111,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Client Reports", icon: BarChart3, to: "/seo-client-reports" },
       { label: "Dev Requests", icon: Code, to: "/internal-tickets?dept=development" },
       { label: "Content Requests", icon: FileEdit, to: "/internal-tickets?dept=content" },
+      { label: "Integrations", icon: Plug, to: "/integrations-overview" },
     ],
   },
   {
