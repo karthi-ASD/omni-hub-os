@@ -204,7 +204,7 @@ export function ProjectIntegrationsTab({ projectId, businessId }: Props) {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "active": return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Connected</Badge>;
+      case "active": return <Badge className="bg-primary/10 text-primary border-primary/20">Connected</Badge>;
       case "error": return <Badge variant="destructive">Error</Badge>;
       case "disconnected": return <Badge variant="secondary">Disconnected</Badge>;
       default: return <Badge variant="outline">Not Connected</Badge>;
