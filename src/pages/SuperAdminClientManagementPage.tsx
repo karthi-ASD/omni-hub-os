@@ -64,14 +64,20 @@ const SuperAdminClientManagementPage = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkFixLoading, setBulkFixLoading] = useState(false);
+  const [showBulkFixConfirm, setShowBulkFixConfirm] = useState(false);
+  const [bulkFixResult, setBulkFixResult] = useState<{ total: number; fixed: number; skipped: number; errors: number } | null>(null);
 
   const handleBulkFixIsolation = async () => {
+    setShowBulkFixConfirm(false);
     setBulkFixLoading(true);
+    setBulkFixResult(null);
     try {
       const { data, error } = await supabase.functions.invoke("bulk-fix-client-isolation");
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success(`Isolation fix complete: ${data.fixed} fixed, ${data.errors || 0} errors out of ${data.total} clients.`);
+      const result = { total: data.total, fixed: data.fixed, skipped: data.skipped || 0, errors: data.errors || 0 };
+      setBulkFixResult(result);
+      toast.success(`Isolation fix complete: ${result.fixed} fixed, ${result.skipped} skipped, ${result.errors} errors.`);
       refetch();
     } catch (err: any) {
       toast.error(err.message || "Bulk fix failed");
