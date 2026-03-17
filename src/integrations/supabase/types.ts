@@ -18286,6 +18286,7 @@ export type Database = {
           execution_time_ms: number | null
           id: string
           lead_id: string | null
+          request_payload: Json | null
           response_json: Json | null
           seo_project_id: string
           status: string
@@ -18298,6 +18299,7 @@ export type Database = {
           execution_time_ms?: number | null
           id?: string
           lead_id?: string | null
+          request_payload?: Json | null
           response_json?: Json | null
           seo_project_id: string
           status?: string
@@ -18310,6 +18312,7 @@ export type Database = {
           execution_time_ms?: number | null
           id?: string
           lead_id?: string | null
+          request_payload?: Json | null
           response_json?: Json | null
           seo_project_id?: string
           status?: string

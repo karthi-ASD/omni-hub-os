@@ -850,6 +850,9 @@ function IntegrationsTab({ project }: { project: SeoProject }) {
             <span className="text-sm text-muted-foreground">Last Sync</span>
             <span className="text-sm">{ga4Sync?.last_sync_at ? new Date(ga4Sync.last_sync_at).toLocaleString() : "Never"}</span>
           </div>
+          {ga4Sync?.last_sync_at && (Date.now() - new Date(ga4Sync.last_sync_at).getTime()) > 24 * 60 * 60 * 1000 && (
+            <p className="text-xs text-yellow-600 dark:text-yellow-400 flex items-center gap-1">⚠️ Last sync was over 24 hours ago. Data may be stale.</p>
+          )}
           {ga4Sync?.sync_status === "error" && (
             <p className="text-xs text-destructive">⚠️ {ga4Sync.error_message || "Sync error"}</p>
           )}
@@ -894,6 +897,9 @@ function IntegrationsTab({ project }: { project: SeoProject }) {
             <span className="text-sm text-muted-foreground">Last Sync</span>
             <span className="text-sm">{gbpSync?.last_sync_at ? new Date(gbpSync.last_sync_at).toLocaleString() : "Never"}</span>
           </div>
+          {gbpSync?.last_sync_at && (Date.now() - new Date(gbpSync.last_sync_at).getTime()) > 24 * 60 * 60 * 1000 && (
+            <p className="text-xs text-yellow-600 dark:text-yellow-400 flex items-center gap-1">⚠️ Last sync was over 24 hours ago. Data may be stale.</p>
+          )}
           {gbpSync?.sync_status === "error" && (
             <p className="text-xs text-destructive">⚠️ {gbpSync.error_message || "Sync error"}</p>
           )}

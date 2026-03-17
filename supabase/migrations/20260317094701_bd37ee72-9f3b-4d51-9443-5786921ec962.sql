@@ -1,0 +1,1 @@
+ALTER TABLE public.seo_automation_logs ADD COLUMN IF NOT EXISTS request_payload jsonb DEFAULT NULL;
