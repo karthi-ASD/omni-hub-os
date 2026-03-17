@@ -124,7 +124,7 @@ const ClientLocalPresencePage = () => {
                 <Navigation className="h-5 w-5 text-primary/60" />
                 <GrowthBadge pct={directionsGrowth} />
               </div>
-              <p className="text-3xl font-bold"><AnimatedCounter value={totalDirections} /></p>
+              <p className="text-3xl font-bold"><AnimatedCounter end={totalDirections} /></p>
               <p className="text-xs text-muted-foreground mt-1">Direction Requests</p>
             </CardContent>
           </Card>
