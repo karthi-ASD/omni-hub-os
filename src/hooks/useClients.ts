@@ -89,7 +89,9 @@ export function useClients(options?: UseClientsOptions) {
     let countQuery = supabase
       .from("clients")
       .select("id", { count: "exact", head: true })
-      .neq("client_status", "reverted");
+      .neq("client_status", "reverted")
+      .neq("client_status", "deleted")
+      .neq("client_status", "merged");
 
     if (searchTerm) {
       countQuery = countQuery.or(
