@@ -111,6 +111,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Client Reports", icon: BarChart3, to: "/seo-client-reports" },
       { label: "Dev Requests", icon: Code, to: "/internal-tickets?dept=development" },
       { label: "Content Requests", icon: FileEdit, to: "/internal-tickets?dept=content" },
+      { label: "Integrations", icon: Plug, to: "/integrations-overview" },
     ],
   },
   {
@@ -122,6 +123,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Website Dev", icon: Globe, to: "/website-dev-stages" },
       { label: "Content Mgmt", icon: FileText, to: "/content-management" },
       { label: "Job CRM", icon: Wrench, to: "/job-crm" },
+      { label: "Integrations", icon: Plug, to: "/integrations-overview" },
     ],
   },
   {
