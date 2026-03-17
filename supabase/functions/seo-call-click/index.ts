@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { project_id, page_url, source } = body;
+    const { project_id, page_url } = body;
 
     if (!project_id) {
       return new Response(JSON.stringify({ error: "project_id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -29,6 +29,23 @@ Deno.serve(async (req) => {
 
     if (projErr || !project) {
       return new Response(JSON.stringify({ error: "Invalid project_id" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Spam protection: ignore duplicate clicks within 30 seconds
+    const thirtySecAgo = new Date(Date.now() - 30 * 1000).toISOString();
+    const { data: recent } = await supabase
+      .from("seo_captured_leads")
+      .select("id")
+      .eq("seo_project_id", project_id)
+      .eq("source", "call_click")
+      .gte("created_at", thirtySecAgo)
+      .limit(1);
+
+    if (recent && recent.length > 0) {
+      return new Response(JSON.stringify({ message: "Duplicate click ignored" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const { data: lead, error: insertErr } = await supabase
