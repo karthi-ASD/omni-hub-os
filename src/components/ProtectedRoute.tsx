@@ -13,17 +13,17 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles }) => {
-  const { session, loading, roles, user } = useAuth();
+  const { session, loading, roles, user, tenantValidationError } = useAuth();
   const [securityCheck, setSecurityCheck] = useState<"loading" | "pass" | "required">("pass");
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || tenantValidationError) return;
     if (!user) {
       setSecurityCheck("pass");
       return;
     }
     checkFirstLoginSecurity();
-  }, [user?.id, loading]);
+  }, [user?.id, loading, tenantValidationError]);
 
   const checkFirstLoginSecurity = async () => {
     if (!user) { setSecurityCheck("pass"); return; }
@@ -62,6 +62,19 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
 
   if (!session) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (tenantValidationError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-6">
+        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-elevated">
+          <h1 className="text-xl font-bold text-foreground">Tenant mapping error</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Your account is linked to the wrong tenant context, so access has been blocked to prevent data leakage.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   if (securityCheck === "required") {
