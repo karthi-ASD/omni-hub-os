@@ -132,7 +132,7 @@ const SuperAdminClientManagementPage = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Client Management" description="Super Admin client control — delete, restore, merge" />
+      <PageHeader title="Client Management" subtitle="Super Admin client control — delete, restore, merge" />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard label="Active Clients" value={allClients.filter(c => c.client_status === "active").length} icon={Users} gradient="from-primary to-accent" />
