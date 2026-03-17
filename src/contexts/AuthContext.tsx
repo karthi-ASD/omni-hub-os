@@ -197,6 +197,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setRoles([]);
     setAllBusinesses([]);
     setSelectedTenantId(null);
+    setClientUserId(null);
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
