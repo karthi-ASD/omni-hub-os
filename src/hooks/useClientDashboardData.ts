@@ -55,6 +55,7 @@ export interface ClientDashboardData {
   totalCustomers: number;
   openTickets: number;
   openInvoices: number;
+  totalInvoices: number;
   outstandingAmount: number;
   totalPaid: number;
   // SEO
@@ -76,7 +77,7 @@ export function useClientDashboardData() {
   const [data, setData] = useState<ClientDashboardData>({
     totalLeads: 0, leadsThisMonth: 0, totalCalls: 0, callsThisMonth: 0,
     openDeals: 0, totalCustomers: 0, openTickets: 0, openInvoices: 0,
-    outstandingAmount: 0, totalPaid: 0,
+    totalInvoices: 0, outstandingAmount: 0, totalPaid: 0,
     seoKeywords: [], seoCompetitors: [], seoProject: null,
     recentLeads: [], workLog: [], services: [], websites: [],
   });
@@ -91,7 +92,7 @@ export function useClientDashboardData() {
     const result: ClientDashboardData = {
       totalLeads: 0, leadsThisMonth: 0, totalCalls: 0, callsThisMonth: 0,
       openDeals: 0, totalCustomers: 0, openTickets: 0, openInvoices: 0,
-      outstandingAmount: 0, totalPaid: 0,
+      totalInvoices: 0, outstandingAmount: 0, totalPaid: 0,
       seoKeywords: [], seoCompetitors: [], seoProject: null,
       recentLeads: [], workLog: [], services: [], websites: [],
     };
@@ -122,11 +123,13 @@ export function useClientDashboardData() {
 
     // ── Invoices: fetch from xero_invoices by client_id (NextWeb's invoices FOR this client) ──
     if (clientId) {
-      const [invoicesOpen, invoicesPaid] = await Promise.all([
+      const [invoicesAll, invoicesOpen, invoicesPaid] = await Promise.all([
+        supabase.from("xero_invoices").select("id", { count: "exact", head: true }).eq("client_id", clientId),
         supabase.from("xero_invoices").select("id, total_amount, amount_due, status").eq("client_id", clientId).in("status", ["AUTHORISED", "SUBMITTED", "OVERDUE"]),
         supabase.from("xero_invoices").select("id, total_amount").eq("client_id", clientId).eq("status", "PAID"),
       ]);
 
+      result.totalInvoices = invoicesAll.count ?? 0;
       result.openInvoices = invoicesOpen.data?.length ?? 0;
       result.outstandingAmount = invoicesOpen.data?.reduce((s, i) => s + Number((i as any).amount_due || (i as any).total_amount || 0), 0) ?? 0;
       result.totalPaid = invoicesPaid.data?.reduce((s, i) => s + Number((i as any).total_amount || 0), 0) ?? 0;
@@ -139,7 +142,7 @@ export function useClientDashboardData() {
         .from("seo_projects")
         .select("id, project_name, service_package, contract_start, project_status")
         .eq("client_id", clientId)
-        .eq("project_status", "active")
+        .in("project_status", ["active", "ACTIVE", "Active"])
         .limit(1)
         .maybeSingle();
 
@@ -168,7 +171,7 @@ export function useClientDashboardData() {
     // Debug logging for data visibility issues
     if (clientId) {
       console.debug("[ClientDashboard] clientId:", clientId, "business_id:", bid);
-      console.debug("[ClientDashboard] invoices:", result.openInvoices, "paid:", result.totalPaid, "outstanding:", result.outstandingAmount);
+      console.debug("[ClientDashboard] totalInvoices:", result.totalInvoices, "openInvoices:", result.openInvoices, "paid:", result.totalPaid, "outstanding:", result.outstandingAmount);
       console.debug("[ClientDashboard] seoKeywords:", result.seoKeywords.length, "seoProject:", result.seoProject?.id ?? "none");
       console.debug("[ClientDashboard] tickets:", result.openTickets, "leads:", result.totalLeads, "services:", result.services.length);
     }
