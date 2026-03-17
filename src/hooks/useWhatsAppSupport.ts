@@ -158,12 +158,16 @@ export function useWhatsAppSupport() {
     // Create identity mapping
     const conv = conversations.find(c => c.id === conversationId);
     if (conv) {
-      await supabase.from("client_whatsapp_identity").insert({
-        client_id: clientId,
-        whatsapp_phone_e164: conv.client_whatsapp_phone,
-        whatsapp_phone_normalized: conv.client_whatsapp_phone.replace(/\D/g, ""),
-        is_primary: true,
-      }).then(() => {}).catch(() => {});
+      try {
+        await supabase.from("client_whatsapp_identity").insert({
+          client_id: clientId,
+          whatsapp_phone_e164: conv.client_whatsapp_phone,
+          whatsapp_phone_normalized: conv.client_whatsapp_phone.replace(/\D/g, ""),
+          is_primary: true,
+        } as any);
+      } catch {
+        // Ignore duplicate
+      }
     }
 
     toast.success("Conversation linked to client");

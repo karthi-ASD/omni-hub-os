@@ -216,7 +216,7 @@ export default function WhatsAppSupportPage() {
                       </span>
                       <div className="flex gap-1">
                         {!conv.client_id && (
-                          <Badge variant="outline" className="text-[9px] h-4 px-1 border-amber-500 text-amber-600">
+                          <Badge variant="outline" className="text-[9px] h-4 px-1 border-[hsl(var(--warning))] text-[hsl(var(--warning))]">
                             Unmatched
                           </Badge>
                         )}
