@@ -246,6 +246,7 @@ import SalesClientsPage from "./pages/SalesClientsPage";
 import SalesProposalsPage from "./pages/SalesProposalsPage";
 import SalesActivitiesPage from "./pages/SalesActivitiesPage";
 import SalesToolsPage from "./pages/SalesToolsPage";
+import SeoLeadCapturePage from "./pages/SeoLeadCapturePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -373,6 +374,7 @@ const App = () => (
               <Route path="/seo-ops/:projectId" element={<SeoProjectDetailPage />} />
               <Route path="/seo-team" element={<SeoTeamDashboardPage />} />
               <Route path="/seo-intel/:projectId" element={<SeoIntelligencePage />} />
+              <Route path="/seo-lead-capture" element={<SeoLeadCapturePage />} />
               <Route path="/seo-exec/:projectId" element={<Navigate to="/seo" replace />} />
               <Route path="/sales-seo-intel" element={<SalesSeoPitchPage />} />
               <Route path="/seo-client-reports" element={<SeoClientReportsPage />} />

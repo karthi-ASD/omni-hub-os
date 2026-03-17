@@ -1,0 +1,596 @@
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import {
+  BarChart3, Phone, Mail, MessageSquare, Globe, Settings, Users,
+  Plus, Trash2, GripVertical, Copy, Check, ArrowLeft, Zap, TrendingUp,
+  PhoneCall, FileText, Activity, Eye
+} from "lucide-react";
+
+interface SeoProject {
+  id: string;
+  project_name: string;
+  website_domain: string;
+  client_id: string;
+  clients?: { contact_name: string; phone: string; email: string; whatsapp_number?: string } | null;
+}
+
+interface LeadForm {
+  id: string;
+  form_name: string;
+  is_active: boolean;
+  seo_project_id: string;
+  fields?: FormField[];
+}
+
+interface FormField {
+  id: string;
+  field_label: string;
+  field_type: string;
+  field_options: any;
+  is_required: boolean;
+  sort_order: number;
+}
+
+interface AutomationSettings {
+  id?: string;
+  seo_project_id: string;
+  whatsapp_number: string;
+  whatsapp_connected: boolean;
+  enable_email: boolean;
+  enable_whatsapp: boolean;
+  enable_call: boolean;
+  enable_acknowledgment: boolean;
+}
+
+interface CapturedLead {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+  source: string;
+  status: string;
+  page_url: string;
+  created_at: string;
+}
+
+export default function SeoLeadCapturePage() {
+  const { profile } = useAuth();
+  const { toast } = useToast();
+  const [projects, setProjects] = useState<SeoProject[]>([]);
+  const [selectedProject, setSelectedProject] = useState<SeoProject | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (profile?.business_id) fetchProjects();
+  }, [profile?.business_id]);
+
+  const fetchProjects = async () => {
+    const { data } = await supabase
+      .from("seo_projects")
+      .select("id, project_name, website_domain, client_id, clients(contact_name, phone, email, whatsapp_number)")
+      .eq("business_id", profile!.business_id!)
+      .eq("project_status", "active")
+      .order("project_name");
+    setProjects((data as any) || []);
+    setLoading(false);
+  };
+
+  if (selectedProject) {
+    return <ClientDashboard project={selectedProject} onBack={() => setSelectedProject(null)} businessId={profile!.business_id!} />;
+  }
+
+  return (
+    <div className="p-6 space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Lead Capture & Automation</h1>
+        <p className="text-muted-foreground">Manage forms, call tracking, and automations per SEO client</p>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {loading ? (
+          <p className="text-muted-foreground col-span-full">Loading projects…</p>
+        ) : projects.length === 0 ? (
+          <p className="text-muted-foreground col-span-full">No active SEO projects found.</p>
+        ) : (
+          projects.map((p) => (
+            <Card key={p.id} className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => setSelectedProject(p)}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">{p.project_name}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-1 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1.5"><Globe className="h-3.5 w-3.5" />{p.website_domain || "No domain"}</div>
+                <div className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" />{(p.clients as any)?.contact_name || "No client"}</div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Client Dashboard ─── */
+function ClientDashboard({ project, onBack, businessId }: { project: SeoProject; onBack: () => void; businessId: string }) {
+  const { toast } = useToast();
+  const [leads, setLeads] = useState<CapturedLead[]>([]);
+  const [forms, setForms] = useState<LeadForm[]>([]);
+  const [settings, setSettings] = useState<AutomationSettings | null>(null);
+  const [tab, setTab] = useState("overview");
+
+  useEffect(() => {
+    fetchAll();
+    const channel = supabase
+      .channel(`seo-leads-${project.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "seo_captured_leads", filter: `seo_project_id=eq.${project.id}` }, () => fetchLeads())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [project.id]);
+
+  const fetchAll = () => { fetchLeads(); fetchForms(); fetchSettings(); };
+
+  const fetchLeads = async () => {
+    const { data } = await supabase
+      .from("seo_captured_leads")
+      .select("*")
+      .eq("seo_project_id", project.id)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    setLeads((data as any) || []);
+  };
+
+  const fetchForms = async () => {
+    const { data } = await supabase.from("seo_lead_forms").select("*").eq("seo_project_id", project.id);
+    setForms((data as any) || []);
+  };
+
+  const fetchSettings = async () => {
+    const { data } = await supabase.from("seo_automation_settings").select("*").eq("seo_project_id", project.id).maybeSingle();
+    setSettings(data as any || { seo_project_id: project.id, whatsapp_number: "", whatsapp_connected: false, enable_email: false, enable_whatsapp: false, enable_call: false, enable_acknowledgment: false });
+  };
+
+  const client = project.clients as any;
+  const formLeads = leads.filter(l => l.source === "form").length;
+  const callLeads = leads.filter(l => l.source === "call_click").length;
+  const apiLeads = leads.filter(l => l.source === "api").length;
+  const lastLead = leads[0]?.created_at;
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="h-4 w-4" /></Button>
+        <div>
+          <h1 className="text-xl font-bold">{project.project_name}</h1>
+          <p className="text-sm text-muted-foreground">{client?.contact_name} • {project.website_domain}</p>
+        </div>
+      </div>
+
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="flex-wrap">
+          <TabsTrigger value="overview"><Eye className="h-3.5 w-3.5 mr-1" />Overview</TabsTrigger>
+          <TabsTrigger value="forms"><FileText className="h-3.5 w-3.5 mr-1" />Form Builder</TabsTrigger>
+          <TabsTrigger value="api"><Globe className="h-3.5 w-3.5 mr-1" />API & Tracking</TabsTrigger>
+          <TabsTrigger value="automation"><Zap className="h-3.5 w-3.5 mr-1" />Automation</TabsTrigger>
+          <TabsTrigger value="leads"><Users className="h-3.5 w-3.5 mr-1" />Leads</TabsTrigger>
+          <TabsTrigger value="reports"><BarChart3 className="h-3.5 w-3.5 mr-1" />Reports</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview">
+          <OverviewTab project={project} client={client} settings={settings} leads={leads} formLeads={formLeads} callLeads={callLeads} lastLead={lastLead} />
+        </TabsContent>
+        <TabsContent value="forms">
+          <FormBuilderTab project={project} businessId={businessId} forms={forms} onRefresh={fetchForms} />
+        </TabsContent>
+        <TabsContent value="api">
+          <ApiTrackingTab project={project} />
+        </TabsContent>
+        <TabsContent value="automation">
+          <AutomationTab project={project} businessId={businessId} settings={settings} onRefresh={fetchSettings} />
+        </TabsContent>
+        <TabsContent value="leads">
+          <LeadsTab leads={leads} />
+        </TabsContent>
+        <TabsContent value="reports">
+          <ReportsTab leads={leads} formLeads={formLeads} callLeads={callLeads} apiLeads={apiLeads} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+/* ─── Overview Tab ─── */
+function OverviewTab({ project, client, settings, leads, formLeads, callLeads, lastLead }: any) {
+  return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
+      <Card><CardContent className="pt-6 text-center">
+        <div className="text-3xl font-bold text-primary">{leads.length}</div>
+        <p className="text-sm text-muted-foreground">Total Leads</p>
+      </CardContent></Card>
+      <Card><CardContent className="pt-6 text-center">
+        <div className="text-3xl font-bold text-blue-500">{formLeads}</div>
+        <p className="text-sm text-muted-foreground">Form Leads</p>
+      </CardContent></Card>
+      <Card><CardContent className="pt-6 text-center">
+        <div className="text-3xl font-bold text-emerald-500">{callLeads}</div>
+        <p className="text-sm text-muted-foreground">Call Clicks</p>
+      </CardContent></Card>
+      <Card><CardContent className="pt-6 text-center">
+        <div className="text-sm font-medium">{lastLead ? new Date(lastLead).toLocaleDateString() : "—"}</div>
+        <p className="text-sm text-muted-foreground">Last Lead</p>
+      </CardContent></Card>
+
+      <Card className="md:col-span-2"><CardHeader><CardTitle className="text-sm">Client Info</CardTitle></CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <div><span className="text-muted-foreground">Website:</span> {project.website_domain}</div>
+          <div><span className="text-muted-foreground">Phone:</span> {client?.phone || "—"}</div>
+          <div><span className="text-muted-foreground">Email:</span> {client?.email || "—"}</div>
+          <div><span className="text-muted-foreground">WhatsApp:</span> {settings?.whatsapp_number || "—"}</div>
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-2"><CardHeader><CardTitle className="text-sm">Automation Status</CardTitle></CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <div className="flex justify-between"><span>Email</span><Badge variant={settings?.enable_email ? "default" : "secondary"}>{settings?.enable_email ? "ON" : "OFF"}</Badge></div>
+          <div className="flex justify-between"><span>WhatsApp</span><Badge variant={settings?.enable_whatsapp ? "default" : "secondary"}>{settings?.enable_whatsapp ? "ON" : "OFF"}</Badge></div>
+          <div className="flex justify-between"><span>Call</span><Badge variant={settings?.enable_call ? "default" : "secondary"}>{settings?.enable_call ? "ON" : "OFF"}</Badge></div>
+          <div className="flex justify-between"><span>Acknowledgment</span><Badge variant={settings?.enable_acknowledgment ? "default" : "secondary"}>{settings?.enable_acknowledgment ? "ON" : "OFF"}</Badge></div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+/* ─── Form Builder Tab ─── */
+function FormBuilderTab({ project, businessId, forms, onRefresh }: { project: SeoProject; businessId: string; forms: LeadForm[]; onRefresh: () => void }) {
+  const { toast } = useToast();
+  const [creating, setCreating] = useState(false);
+  const [formName, setFormName] = useState("Contact Form");
+  const [fields, setFields] = useState<Array<{ label: string; type: string; required: boolean }>>([
+    { label: "Name", type: "text", required: true },
+    { label: "Email", type: "email", required: true },
+    { label: "Phone", type: "phone", required: false },
+    { label: "Message", type: "textarea", required: false },
+  ]);
+
+  const addField = () => setFields([...fields, { label: "", type: "text", required: false }]);
+  const removeField = (i: number) => setFields(fields.filter((_, idx) => idx !== i));
+
+  const saveForm = async () => {
+    setCreating(true);
+    const { data: form, error } = await supabase.from("seo_lead_forms").insert({
+      business_id: businessId,
+      seo_project_id: project.id,
+      client_id: project.client_id,
+      form_name: formName,
+    } as any).select().single();
+
+    if (error || !form) { toast({ title: "Error", description: error?.message, variant: "destructive" }); setCreating(false); return; }
+
+    const fieldRows = fields.map((f, i) => ({
+      form_id: (form as any).id,
+      field_label: f.label,
+      field_type: f.type,
+      is_required: f.required,
+      sort_order: i,
+    }));
+
+    await supabase.from("seo_lead_form_fields").insert(fieldRows as any);
+    toast({ title: "Form saved" });
+    setCreating(false);
+    onRefresh();
+  };
+
+  return (
+    <div className="mt-4 space-y-6">
+      <Card>
+        <CardHeader><CardTitle className="text-sm">Create New Form</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div><Label>Form Name</Label><Input value={formName} onChange={e => setFormName(e.target.value)} /></div>
+          <div className="space-y-2">
+            <Label>Fields</Label>
+            {fields.map((f, i) => (
+              <div key={i} className="flex gap-2 items-center">
+                <GripVertical className="h-4 w-4 text-muted-foreground" />
+                <Input value={f.label} onChange={e => { const n = [...fields]; n[i].label = e.target.value; setFields(n); }} placeholder="Field label" className="flex-1" />
+                <Select value={f.type} onValueChange={v => { const n = [...fields]; n[i].type = v; setFields(n); }}>
+                  <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="text">Text</SelectItem>
+                    <SelectItem value="email">Email</SelectItem>
+                    <SelectItem value="phone">Phone</SelectItem>
+                    <SelectItem value="textarea">Textarea</SelectItem>
+                    <SelectItem value="dropdown">Dropdown</SelectItem>
+                    <SelectItem value="checkbox">Checkbox</SelectItem>
+                  </SelectContent>
+                </Select>
+                <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={f.required} onChange={e => { const n = [...fields]; n[i].required = e.target.checked; setFields(n); }} />Req</label>
+                <Button variant="ghost" size="icon" onClick={() => removeField(i)}><Trash2 className="h-3.5 w-3.5" /></Button>
+              </div>
+            ))}
+            <Button variant="outline" size="sm" onClick={addField}><Plus className="h-3.5 w-3.5 mr-1" />Add Field</Button>
+          </div>
+          <Button onClick={saveForm} disabled={creating}>{creating ? "Saving…" : "Save Form"}</Button>
+        </CardContent>
+      </Card>
+
+      {forms.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-sm">Existing Forms</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {forms.map(f => (
+                <div key={f.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium text-sm">{f.form_name}</p>
+                    <p className="text-xs text-muted-foreground">ID: {f.id}</p>
+                  </div>
+                  <Badge variant={f.is_active ? "default" : "secondary"}>{f.is_active ? "Active" : "Inactive"}</Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+/* ─── API & Tracking Tab ─── */
+function ApiTrackingTab({ project }: { project: SeoProject }) {
+  const [copied, setCopied] = useState<string | null>(null);
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
+
+  const formEndpoint = `${supabaseUrl}/functions/v1/seo-lead-capture`;
+  const callEndpoint = `${supabaseUrl}/functions/v1/seo-call-click`;
+
+  const formPayload = JSON.stringify({
+    name: "John Doe",
+    email: "john@example.com",
+    phone: "0412345678",
+    message: "I need SEO help",
+    project_id: project.id,
+    source: "form"
+  }, null, 2);
+
+  const callPayload = JSON.stringify({
+    project_id: project.id,
+    source: "call_click",
+    page_url: "https://example.com/contact"
+  }, null, 2);
+
+  const callTrackingSnippet = `<script>
+document.querySelectorAll('a[href^="tel:"]').forEach(link => {
+  link.addEventListener('click', () => {
+    fetch('${callEndpoint}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        project_id: '${project.id}',
+        source: 'call_click',
+        page_url: window.location.href
+      })
+    });
+  });
+});
+</script>`;
+
+  const copyText = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(label);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  return (
+    <div className="mt-4 space-y-6">
+      <Card>
+        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Globe className="h-4 w-4" />Form API Endpoint</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-2">
+            <code className="flex-1 text-xs bg-muted p-2 rounded">{formEndpoint}</code>
+            <Button variant="outline" size="sm" onClick={() => copyText(formEndpoint, "form-url")}>
+              {copied === "form-url" ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+            </Button>
+          </div>
+          <div>
+            <Label className="text-xs">Payload Format</Label>
+            <pre className="text-xs bg-muted p-3 rounded mt-1 overflow-auto">{formPayload}</pre>
+            <Button variant="outline" size="sm" className="mt-2" onClick={() => copyText(formPayload, "form-payload")}>
+              {copied === "form-payload" ? <><Check className="h-3.5 w-3.5 mr-1" />Copied</> : <><Copy className="h-3.5 w-3.5 mr-1" />Copy Payload</>}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><PhoneCall className="h-4 w-4" />Call Click Tracking</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-2">
+            <code className="flex-1 text-xs bg-muted p-2 rounded">{callEndpoint}</code>
+            <Button variant="outline" size="sm" onClick={() => copyText(callEndpoint, "call-url")}>
+              {copied === "call-url" ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+            </Button>
+          </div>
+          <div>
+            <Label className="text-xs">Embed This Script On Client Website</Label>
+            <pre className="text-xs bg-muted p-3 rounded mt-1 overflow-auto max-h-48">{callTrackingSnippet}</pre>
+            <Button variant="outline" size="sm" className="mt-2" onClick={() => copyText(callTrackingSnippet, "call-snippet")}>
+              {copied === "call-snippet" ? <><Check className="h-3.5 w-3.5 mr-1" />Copied</> : <><Copy className="h-3.5 w-3.5 mr-1" />Copy Snippet</>}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+/* ─── Automation Tab ─── */
+function AutomationTab({ project, businessId, settings, onRefresh }: { project: SeoProject; businessId: string; settings: AutomationSettings | null; onRefresh: () => void }) {
+  const { toast } = useToast();
+  const [local, setLocal] = useState<AutomationSettings>(settings || {
+    seo_project_id: project.id, whatsapp_number: "", whatsapp_connected: false,
+    enable_email: false, enable_whatsapp: false, enable_call: false, enable_acknowledgment: false
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (settings) setLocal(settings);
+  }, [settings]);
+
+  const save = async () => {
+    setSaving(true);
+    const payload = {
+      business_id: businessId,
+      seo_project_id: project.id,
+      client_id: project.client_id,
+      whatsapp_number: local.whatsapp_number,
+      whatsapp_connected: local.whatsapp_connected,
+      enable_email: local.enable_email,
+      enable_whatsapp: local.enable_whatsapp,
+      enable_call: local.enable_call,
+      enable_acknowledgment: local.enable_acknowledgment,
+    };
+
+    if (local.id) {
+      await supabase.from("seo_automation_settings").update(payload as any).eq("id", local.id);
+    } else {
+      await supabase.from("seo_automation_settings").insert(payload as any);
+    }
+    toast({ title: "Settings saved" });
+    setSaving(false);
+    onRefresh();
+  };
+
+  return (
+    <div className="mt-4 space-y-6">
+      <Card>
+        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><MessageSquare className="h-4 w-4" />WhatsApp Integration</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <div><Label>WhatsApp Number</Label><Input value={local.whatsapp_number} onChange={e => setLocal({ ...local, whatsapp_number: e.target.value })} placeholder="+61412345678" /></div>
+          <div className="flex items-center gap-2">
+            <Switch checked={local.whatsapp_connected} onCheckedChange={v => setLocal({ ...local, whatsapp_connected: v })} />
+            <Label>Connected</Label>
+            <Badge variant={local.whatsapp_connected ? "default" : "secondary"}>{local.whatsapp_connected ? "Connected" : "Not Connected"}</Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Settings className="h-4 w-4" />Automation Toggles</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          {([
+            { key: "enable_email", label: "Automated Email", icon: Mail, desc: "Send email on new lead" },
+            { key: "enable_whatsapp", label: "WhatsApp Automation", icon: MessageSquare, desc: "Send WhatsApp on new lead" },
+            { key: "enable_call", label: "Automated Call", icon: Phone, desc: "Trigger call flow on new lead" },
+            { key: "enable_acknowledgment", label: "Lead Acknowledgment", icon: Check, desc: "Send acknowledgment to lead" },
+          ] as const).map(item => (
+            <div key={item.key} className="flex items-center justify-between p-3 border rounded-lg">
+              <div className="flex items-center gap-3">
+                <item.icon className="h-4 w-4 text-muted-foreground" />
+                <div><p className="text-sm font-medium">{item.label}</p><p className="text-xs text-muted-foreground">{item.desc}</p></div>
+              </div>
+              <Switch checked={(local as any)[item.key]} onCheckedChange={v => setLocal({ ...local, [item.key]: v })} />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save Settings"}</Button>
+    </div>
+  );
+}
+
+/* ─── Leads Tab ─── */
+function LeadsTab({ leads }: { leads: CapturedLead[] }) {
+  return (
+    <div className="mt-4">
+      <Card>
+        <CardHeader><CardTitle className="text-sm">Captured Leads ({leads.length})</CardTitle></CardHeader>
+        <CardContent>
+          {leads.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No leads captured yet.</p>
+          ) : (
+            <div className="space-y-2 max-h-[500px] overflow-auto">
+              {leads.map(lead => (
+                <div key={lead.id} className="flex items-start justify-between p-3 border rounded-lg">
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium">{lead.name || "Anonymous"}</p>
+                    <p className="text-xs text-muted-foreground">{lead.email} • {lead.phone}</p>
+                    {lead.message && <p className="text-xs text-muted-foreground truncate max-w-md">{lead.message}</p>}
+                    {lead.page_url && <p className="text-xs text-muted-foreground">{lead.page_url}</p>}
+                  </div>
+                  <div className="text-right space-y-1">
+                    <Badge variant={lead.source === "call_click" ? "outline" : "default"} className="text-xs">
+                      {lead.source === "call_click" ? "📞 Call Click" : lead.source === "api" ? "🔗 API" : "📝 Form"}
+                    </Badge>
+                    <p className="text-xs text-muted-foreground">{new Date(lead.created_at).toLocaleString()}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+/* ─── Reports Tab ─── */
+function ReportsTab({ leads, formLeads, callLeads, apiLeads }: { leads: CapturedLead[]; formLeads: number; callLeads: number; apiLeads: number }) {
+  const today = new Date();
+  const last30 = leads.filter(l => new Date(l.created_at) > new Date(today.getTime() - 30 * 86400000));
+  const last7 = leads.filter(l => new Date(l.created_at) > new Date(today.getTime() - 7 * 86400000));
+
+  return (
+    <div className="mt-4 space-y-4">
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card><CardContent className="pt-6 text-center">
+          <div className="text-2xl font-bold">{last7.length}</div>
+          <p className="text-xs text-muted-foreground">Last 7 Days</p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-6 text-center">
+          <div className="text-2xl font-bold">{last30.length}</div>
+          <p className="text-xs text-muted-foreground">Last 30 Days</p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-6 text-center">
+          <div className="text-2xl font-bold">{leads.length}</div>
+          <p className="text-xs text-muted-foreground">All Time</p>
+        </CardContent></Card>
+      </div>
+
+      <Card>
+        <CardHeader><CardTitle className="text-sm">Lead Sources Breakdown</CardTitle></CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2"><FileText className="h-4 w-4 text-blue-500" /><span className="text-sm">Form Submissions</span></div>
+              <span className="font-bold">{formLeads}</span>
+            </div>
+            <div className="w-full bg-muted rounded-full h-2"><div className="bg-blue-500 h-2 rounded-full" style={{ width: `${leads.length ? (formLeads / leads.length) * 100 : 0}%` }} /></div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2"><PhoneCall className="h-4 w-4 text-emerald-500" /><span className="text-sm">Call Clicks</span></div>
+              <span className="font-bold">{callLeads}</span>
+            </div>
+            <div className="w-full bg-muted rounded-full h-2"><div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${leads.length ? (callLeads / leads.length) * 100 : 0}%` }} /></div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-amber-500" /><span className="text-sm">API / External</span></div>
+              <span className="font-bold">{apiLeads}</span>
+            </div>
+            <div className="w-full bg-muted rounded-full h-2"><div className="bg-amber-500 h-2 rounded-full" style={{ width: `${leads.length ? (apiLeads / leads.length) * 100 : 0}%` }} /></div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
