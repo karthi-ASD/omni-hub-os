@@ -2,8 +2,15 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+// Origin validation
+function validateOrigin(req: Request, allowedDomains: string[] | null): boolean {
+  if (!allowedDomains || allowedDomains.length === 0) return true;
+  const origin = req.headers.get("origin") || req.headers.get("referer") || "";
+  return allowedDomains.some((d) => origin.includes(d));
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -23,7 +30,7 @@ Deno.serve(async (req) => {
 
     const { data: project, error: projErr } = await supabase
       .from("seo_projects")
-      .select("id, business_id, client_id, api_key")
+      .select("id, business_id, client_id, api_key, website_domain")
       .eq("id", project_id)
       .single();
 
@@ -34,6 +41,12 @@ Deno.serve(async (req) => {
     // API key validation
     if (!api_key || api_key !== project.api_key) {
       return json({ error: "Unauthorized: invalid or missing api_key" }, 401);
+    }
+
+    // Origin validation
+    const allowedDomains = project.website_domain ? [project.website_domain] : null;
+    if (!validateOrigin(req, allowedDomains)) {
+      return json({ error: "Origin not allowed" }, 403);
     }
 
     // Rate limiting: max 20 call clicks per minute per project
@@ -92,8 +105,7 @@ function json(data: any, status: number) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+      ...corsHeaders,
       "Content-Type": "application/json",
     },
   });
