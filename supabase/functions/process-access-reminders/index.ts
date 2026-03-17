@@ -63,6 +63,11 @@ Deno.serve(async (req) => {
         ? `EXPIRED ${Math.abs(daysUntilExpiry)} day(s) ago`
         : `expiring in ${daysUntilExpiry} day(s)`;
 
+      // ESCALATION: If expired > 3 days, mark as HIGH PRIORITY
+      const isHighPriority = daysUntilExpiry < -3;
+      const notificationType = isHighPriority ? "warning" : (daysUntilExpiry <= 0 ? "warning" : "info");
+      const priorityPrefix = isHighPriority ? "🔴 HIGH PRIORITY: " : "";
+
       // Log the reminder
       remindersToSend.push({
         client_id: cred.client_id,
@@ -78,10 +83,30 @@ Deno.serve(async (req) => {
       // Create internal notification for business users
       notificationsToInsert.push({
         business_id: cred.business_id,
-        type: daysUntilExpiry <= 0 ? "warning" : "info",
-        title: `${cred.credential_type.charAt(0).toUpperCase() + cred.credential_type.slice(1)} ${statusText}`,
-        message: `${itemLabel} for client project is ${statusText}. Expiry: ${cred.expiry_date}.`,
+        type: notificationType,
+        title: `${priorityPrefix}${cred.credential_type.charAt(0).toUpperCase() + cred.credential_type.slice(1)} ${statusText}`,
+        message: `${itemLabel} for client project is ${statusText}. Expiry: ${cred.expiry_date}.${isHighPriority ? " Immediate action required!" : ""}`,
       });
+
+      // Also create client notification if applicable
+      if (cred.client_id) {
+        const { data: clientUsers } = await supabase
+          .from("client_users")
+          .select("user_id")
+          .eq("client_id", cred.client_id)
+          .limit(5);
+        
+        for (const cu of (clientUsers || [])) {
+          await supabase.from("notifications").insert({
+            business_id: cred.business_id,
+            user_id: cu.user_id,
+            type: notificationType,
+            title: `${cred.credential_type.charAt(0).toUpperCase() + cred.credential_type.slice(1)} ${statusText}`,
+            message: `Your ${itemLabel} is ${statusText}.`,
+            client_id: cred.client_id,
+          });
+        }
+      }
 
       // Audit log
       await supabase.from("client_access_audit_logs").insert({
