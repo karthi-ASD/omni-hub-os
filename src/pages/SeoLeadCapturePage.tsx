@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import {
   BarChart3, Phone, Mail, MessageSquare, Globe, Settings, Users,
   Plus, Trash2, GripVertical, Copy, Check, ArrowLeft, Zap, TrendingUp,
-  PhoneCall, FileText, Eye, ArrowUpRight, ArrowDownRight, Rocket, Send
+  PhoneCall, FileText, Eye, ArrowUpRight, ArrowDownRight, Rocket, Send,
+  Link2, Wifi, WifiOff, ShieldCheck
 } from "lucide-react";
 
 // ─── Types ───
@@ -165,7 +166,6 @@ function ClientDashboard({ project, onBack, businessId }: { project: SeoProject;
     if (data) {
       setSettings(data as any);
     } else {
-      // Auto-create default settings
       const { data: created } = await supabase.from("seo_automation_settings").insert({
         business_id: businessId,
         seo_project_id: project.id,
@@ -203,6 +203,7 @@ function ClientDashboard({ project, onBack, businessId }: { project: SeoProject;
           <TabsTrigger value="automation"><Zap className="h-3.5 w-3.5 mr-1" />Automation</TabsTrigger>
           <TabsTrigger value="leads"><Users className="h-3.5 w-3.5 mr-1" />Leads</TabsTrigger>
           <TabsTrigger value="reports"><BarChart3 className="h-3.5 w-3.5 mr-1" />Reports</TabsTrigger>
+          <TabsTrigger value="integrations"><Link2 className="h-3.5 w-3.5 mr-1" />Integrations</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -222,6 +223,9 @@ function ClientDashboard({ project, onBack, businessId }: { project: SeoProject;
         </TabsContent>
         <TabsContent value="reports">
           <ReportsTab leads={leads} formLeads={formLeads} callLeads={callLeads} apiLeads={apiLeads} />
+        </TabsContent>
+        <TabsContent value="integrations">
+          <IntegrationsTab project={project} />
         </TabsContent>
       </Tabs>
     </div>
@@ -263,7 +267,7 @@ function OverviewTab({ project, client, settings, leads, formLeads, callLeads, l
       <Card className="md:col-span-2"><CardHeader><CardTitle className="text-sm">Automation Status</CardTitle></CardHeader>
         <CardContent className="space-y-2 text-sm">
           <div className="flex justify-between"><span>Email</span><Badge variant={settings?.enable_email ? "default" : "secondary"}>{settings?.enable_email ? "ON" : "OFF"}</Badge></div>
-          <div className="flex justify-between"><span>WhatsApp</span><Badge variant={settings?.enable_whatsapp ? "default" : "secondary"}>{settings?.enable_whatsapp ? "ON" : "OFF"}</Badge></div>
+          <div className="flex justify-between"><span>WhatsApp</span><Badge variant={settings?.enable_whatsapp && settings?.whatsapp_connected ? "default" : "secondary"}>{settings?.enable_whatsapp && settings?.whatsapp_connected ? "ON" : "OFF"}</Badge></div>
           <div className="flex justify-between"><span>Call</span><Badge variant={settings?.enable_call ? "default" : "secondary"}>{settings?.enable_call ? "ON" : "OFF"}</Badge></div>
           <div className="flex justify-between"><span>Acknowledgment</span><Badge variant={settings?.enable_acknowledgment ? "default" : "secondary"}>{settings?.enable_acknowledgment ? "ON" : "OFF"}</Badge></div>
         </CardContent>
@@ -518,7 +522,7 @@ document.querySelectorAll('a[href^="tel:"]').forEach(link => {
   );
 }
 
-// ─── Automation Tab ───
+// ─── Automation Tab (Admin-level WhatsApp control) ───
 function AutomationTab({ project, businessId, settings, onRefresh }: { project: SeoProject; businessId: string; settings: AutomationSettings | null; onRefresh: () => void }) {
   const { toast } = useToast();
   const [local, setLocal] = useState<AutomationSettings>(settings || {
@@ -532,9 +536,19 @@ function AutomationTab({ project, businessId, settings, onRefresh }: { project: 
   }, [settings]);
 
   const save = async () => {
-    // WhatsApp validation
     if (local.whatsapp_number && !local.whatsapp_number.startsWith("+")) {
       toast({ title: "Invalid WhatsApp number", description: "Number must start with + (e.g., +61412345678)", variant: "destructive" });
+      return;
+    }
+
+    // WhatsApp automation requires connection
+    if (local.enable_whatsapp && !local.whatsapp_connected) {
+      toast({ title: "WhatsApp not connected", description: "Connect WhatsApp first before enabling automation", variant: "destructive" });
+      return;
+    }
+
+    if (local.enable_whatsapp && !local.whatsapp_number) {
+      toast({ title: "WhatsApp number required", description: "Enter a WhatsApp number before enabling automation", variant: "destructive" });
       return;
     }
 
@@ -564,18 +578,31 @@ function AutomationTab({ project, businessId, settings, onRefresh }: { project: 
   return (
     <div className="mt-4 space-y-6">
       <Card>
-        <CardHeader><CardTitle className="text-sm flex items-center gap-2"><MessageSquare className="h-4 w-4" />WhatsApp Integration</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2">
+            <MessageSquare className="h-4 w-4" />WhatsApp Integration
+            <Badge variant="outline" className="ml-auto text-xs">Admin Control</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div>
             <Label>WhatsApp Number</Label>
             <Input value={local.whatsapp_number} onChange={e => setLocal({ ...local, whatsapp_number: e.target.value })} placeholder="+61412345678" />
-            <p className="text-xs text-muted-foreground mt-1">Must include country code (e.g., +61)</p>
+            <p className="text-xs text-muted-foreground mt-1">Must include country code (e.g., +61). Only admin/SEO staff can edit this.</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Switch checked={local.whatsapp_connected} onCheckedChange={v => setLocal({ ...local, whatsapp_connected: v })} />
-            <Label>Connected</Label>
-            <Badge variant={local.whatsapp_connected ? "default" : "secondary"}>{local.whatsapp_connected ? "Connected" : "Not Connected"}</Badge>
+          <div className="flex items-center gap-3 p-3 border rounded-lg">
+            <Switch checked={local.whatsapp_connected} onCheckedChange={v => setLocal({ ...local, whatsapp_connected: v, enable_whatsapp: v ? local.enable_whatsapp : false })} />
+            <div className="flex-1">
+              <p className="text-sm font-medium">Connection Status</p>
+              <p className="text-xs text-muted-foreground">Mark as connected when WhatsApp Business API is configured</p>
+            </div>
+            <Badge variant={local.whatsapp_connected ? "default" : "secondary"} className="gap-1">
+              {local.whatsapp_connected ? <><Wifi className="h-3 w-3" />Connected</> : <><WifiOff className="h-3 w-3" />Not Connected</>}
+            </Badge>
           </div>
+          {!local.whatsapp_connected && local.enable_whatsapp && (
+            <p className="text-xs text-destructive">⚠️ WhatsApp automation is enabled but not connected. Messages will not be sent.</p>
+          )}
         </CardContent>
       </Card>
 
@@ -584,16 +611,23 @@ function AutomationTab({ project, businessId, settings, onRefresh }: { project: 
         <CardContent className="space-y-4">
           {([
             { key: "enable_email", label: "Automated Email", icon: Mail, desc: "Send email on new lead" },
-            { key: "enable_whatsapp", label: "WhatsApp Automation", icon: MessageSquare, desc: "Send WhatsApp on new lead" },
+            { key: "enable_whatsapp", label: "WhatsApp Automation", icon: MessageSquare, desc: "Send WhatsApp on new lead (requires connection)", disabled: !local.whatsapp_connected },
             { key: "enable_call", label: "Automated Call", icon: Phone, desc: "Trigger call flow on new lead" },
             { key: "enable_acknowledgment", label: "Lead Acknowledgment", icon: Check, desc: "Send acknowledgment to lead" },
           ] as const).map(item => (
             <div key={item.key} className="flex items-center justify-between p-3 border rounded-lg">
               <div className="flex items-center gap-3">
                 <item.icon className="h-4 w-4 text-muted-foreground" />
-                <div><p className="text-sm font-medium">{item.label}</p><p className="text-xs text-muted-foreground">{item.desc}</p></div>
+                <div>
+                  <p className="text-sm font-medium">{item.label}</p>
+                  <p className="text-xs text-muted-foreground">{item.desc}</p>
+                </div>
               </div>
-              <Switch checked={(local as any)[item.key]} onCheckedChange={v => setLocal({ ...local, [item.key]: v })} />
+              <Switch
+                checked={(local as any)[item.key]}
+                onCheckedChange={v => setLocal({ ...local, [item.key]: v })}
+                disabled={'disabled' in item && item.disabled}
+              />
             </div>
           ))}
         </CardContent>
@@ -717,6 +751,160 @@ function ReportsTab({ leads, formLeads, callLeads, apiLeads }: { leads: Captured
                 </div>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ─── Integrations Tab (GA4 + GBP status per client) ───
+function IntegrationsTab({ project }: { project: SeoProject }) {
+  const [connections, setConnections] = useState<any[]>([]);
+  const [syncStatuses, setSyncStatuses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchIntegrations();
+  }, [project.id]);
+
+  const fetchIntegrations = async () => {
+    setLoading(true);
+    const [connRes, syncRes] = await Promise.all([
+      supabase
+        .from("analytics_connections")
+        .select("*")
+        .eq("project_id", project.id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("analytics_sync_status")
+        .select("*")
+        .eq("project_id", project.id)
+        .order("last_sync_at", { ascending: false }),
+    ]);
+    setConnections((connRes.data as any) || []);
+    setSyncStatuses((syncRes.data as any) || []);
+    setLoading(false);
+  };
+
+  const ga4Conn = connections.find((c: any) => c.provider === "GA4");
+  const gbpConn = connections.find((c: any) => c.provider === "GBP");
+  const ga4Sync = syncStatuses.find((s: any) => s.source === "google_analytics");
+  const gbpSync = syncStatuses.find((s: any) => s.source === "google_maps");
+
+  if (loading) return <div className="mt-4 grid gap-4 md:grid-cols-2">{Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-48" />)}</div>;
+
+  return (
+    <div className="mt-4 grid gap-6 md:grid-cols-2">
+      {/* GA4 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Google Analytics (GA4)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Status</span>
+            <Badge variant={ga4Conn?.is_active ? "default" : "secondary"} className="gap-1">
+              {ga4Conn?.is_active ? <><Wifi className="h-3 w-3" />Connected</> : <><WifiOff className="h-3 w-3" />Not Connected</>}
+            </Badge>
+          </div>
+          {ga4Conn && (
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Property / Account</span>
+                <span className="text-sm font-mono">{ga4Conn.external_account_id || "—"}</span>
+              </div>
+              {ga4Conn.location_id && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Property ID</span>
+                  <span className="text-sm font-mono">{ga4Conn.location_id}</span>
+                </div>
+              )}
+            </>
+          )}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Last Sync</span>
+            <span className="text-sm">{ga4Sync?.last_sync_at ? new Date(ga4Sync.last_sync_at).toLocaleString() : "Never"}</span>
+          </div>
+          {ga4Sync?.sync_status === "error" && (
+            <p className="text-xs text-destructive">⚠️ {ga4Sync.error_message || "Sync error"}</p>
+          )}
+          {!ga4Conn && (
+            <p className="text-xs text-muted-foreground mt-2">GA4 has not been connected for this project. Configure it from the Integrations Overview.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* GBP */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Globe className="h-4 w-4" />
+            Google Business Profile
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Status</span>
+            <Badge variant={gbpConn?.is_active ? "default" : "secondary"} className="gap-1">
+              {gbpConn?.is_active ? <><Wifi className="h-3 w-3" />Connected</> : <><WifiOff className="h-3 w-3" />Not Connected</>}
+            </Badge>
+          </div>
+          {gbpConn && (
+            <>
+              {gbpConn.location_id && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Location</span>
+                  <span className="text-sm font-mono text-right max-w-[200px] truncate">{gbpConn.location_id}</span>
+                </div>
+              )}
+              {gbpConn.external_account_id && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Account ID</span>
+                  <span className="text-sm font-mono">{gbpConn.external_account_id}</span>
+                </div>
+              )}
+            </>
+          )}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Last Sync</span>
+            <span className="text-sm">{gbpSync?.last_sync_at ? new Date(gbpSync.last_sync_at).toLocaleString() : "Never"}</span>
+          </div>
+          {gbpSync?.sync_status === "error" && (
+            <p className="text-xs text-destructive">⚠️ {gbpSync.error_message || "Sync error"}</p>
+          )}
+          {!gbpConn && (
+            <p className="text-xs text-muted-foreground mt-2">Google Business Profile has not been connected for this project. Configure it from the Integrations Overview.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Summary */}
+      <Card className="md:col-span-2">
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2"><ShieldCheck className="h-4 w-4" />Integration Health</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div>
+              <div className="text-lg font-bold">{connections.filter((c: any) => c.is_active).length}</div>
+              <p className="text-xs text-muted-foreground">Active Connections</p>
+            </div>
+            <div>
+              <div className="text-lg font-bold">{connections.length}</div>
+              <p className="text-xs text-muted-foreground">Total Connections</p>
+            </div>
+            <div>
+              <div className="text-lg font-bold">{syncStatuses.filter((s: any) => s.sync_status === "synced").length}</div>
+              <p className="text-xs text-muted-foreground">Synced</p>
+            </div>
+            <div>
+              <div className="text-lg font-bold text-destructive">{syncStatuses.filter((s: any) => s.sync_status === "error").length}</div>
+              <p className="text-xs text-muted-foreground">Errors</p>
+            </div>
           </div>
         </CardContent>
       </Card>
