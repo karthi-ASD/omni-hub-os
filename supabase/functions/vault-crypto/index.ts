@@ -5,6 +5,23 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Simple in-memory rate limiter
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 10; // max decrypt calls per minute per user
+const RATE_WINDOW_MS = 60_000;
+
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(userId);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT) return false;
+  entry.count++;
+  return true;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -32,11 +49,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { action, value, record_id, record_type } = await req.json();
+    const { action, value, record_id } = await req.json();
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     if (action === "encrypt") {
-      // Encrypt a value
+      if (!value || typeof value !== "string" || value.trim() === "") {
+        return new Response(JSON.stringify({ error: "Value is required for encryption" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const { data, error } = await adminClient.rpc("encrypt_sensitive_field", {
         plain_text: value,
       });
@@ -47,10 +68,53 @@ Deno.serve(async (req) => {
     }
 
     if (action === "decrypt") {
-      // Decrypt a value - requires record_id for audit logging
       if (!record_id) {
         return new Response(JSON.stringify({ error: "record_id required for decrypt" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Rate limit decrypt operations
+      if (!checkRateLimit(user.id)) {
+        return new Response(JSON.stringify({ error: "Rate limit exceeded. Max 10 decrypt calls per minute." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Authorization: verify user belongs to the same business as the record
+      const { data: userProfile } = await adminClient
+        .from("profiles")
+        .select("business_id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!userProfile?.business_id) {
+        return new Response(JSON.stringify({ error: "User profile not found" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Check credential belongs to same business
+      const { data: credRecord } = await adminClient
+        .from("client_access_credentials")
+        .select("business_id")
+        .eq("id", record_id)
+        .single();
+
+      // Also check integrations if not found in credentials
+      let authorized = credRecord?.business_id === userProfile.business_id;
+      if (!credRecord) {
+        const { data: intRecord } = await adminClient
+          .from("client_project_integrations")
+          .select("business_id")
+          .eq("id", record_id)
+          .single();
+        authorized = intRecord?.business_id === userProfile.business_id;
+      }
+
+      if (!authorized) {
+        return new Response(JSON.stringify({ error: "Access denied" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -58,6 +122,23 @@ Deno.serve(async (req) => {
         cipher_text: value,
       });
       if (error) throw error;
+
+      // Update last_decrypted_at on the credential
+      await adminClient
+        .from("client_access_credentials")
+        .update({ last_decrypted_at: new Date().toISOString() } as any)
+        .eq("id", record_id);
+
+      // Audit log
+      await adminClient.from("client_access_audit_logs").insert({
+        client_id: null,
+        business_id: userProfile.business_id,
+        record_type: "credential",
+        record_id: record_id,
+        action_type: "decrypt",
+        action_by: user.id,
+        action_note: `Decrypted sensitive field`,
+      });
 
       return new Response(JSON.stringify({ decrypted: data }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
