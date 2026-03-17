@@ -20,7 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import {
   ArrowLeft, Globe, Smartphone, Search, FileText, Ticket, Clock,
   Mail, Phone, Building2, MapPin, Plus, ExternalLink, DollarSign, CreditCard, TrendingUp, AlertTriangle,
-  ClipboardCheck, CheckCircle2, MessageSquare, PhoneCall, CalendarCheck, Pencil
+  ClipboardCheck, CheckCircle2, MessageSquare, PhoneCall, CalendarCheck, Pencil, Key
 } from "lucide-react";
 import { useOnboardingChecklist } from "@/hooks/useOnboardingChecklist";
 import { ClientActivityTimeline } from "@/components/clients/ClientActivityTimeline";
@@ -28,6 +28,7 @@ import { AddServiceDialog, ServiceFormData } from "@/components/clients/AddServi
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useClientFinancials } from "@/hooks/useClientFinancials";
+import { ClientAccessHubTab } from "@/components/clients/access-hub/ClientAccessHubTab";
 import { useSalesTeam } from "@/hooks/useSalesTeam";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, parseISO, isToday, isTomorrow, isPast } from "date-fns";
@@ -216,13 +217,14 @@ const ClientProfilePage = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="details" className="space-y-4">
-        <TabsList className="grid grid-cols-4 lg:grid-cols-12">
+        <TabsList className="grid grid-cols-4 lg:grid-cols-14 xl:grid-cols-14">
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="conversations"><MessageSquare className="h-3.5 w-3.5 mr-1" />Notes</TabsTrigger>
           <TabsTrigger value="callbacks"><PhoneCall className="h-3.5 w-3.5 mr-1" />Callbacks</TabsTrigger>
           <TabsTrigger value="onboarding"><ClipboardCheck className="h-3.5 w-3.5 mr-1" />Onboarding</TabsTrigger>
           <TabsTrigger value="finance"><DollarSign className="h-3.5 w-3.5 mr-1" />Finance</TabsTrigger>
           <TabsTrigger value="services">Services</TabsTrigger>
+          <TabsTrigger value="access" className="hidden lg:inline-flex"><Key className="h-3.5 w-3.5 mr-1" />Access</TabsTrigger>
           <TabsTrigger value="websites" className="hidden lg:inline-flex">Websites</TabsTrigger>
           <TabsTrigger value="seo" className="hidden lg:inline-flex">SEO</TabsTrigger>
           <TabsTrigger value="apps" className="hidden lg:inline-flex">Apps</TabsTrigger>
@@ -757,6 +759,11 @@ const ClientProfilePage = () => {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        {/* ── Access & Integrations ── */}
+        <TabsContent value="access">
+          {id && <ClientAccessHubTab clientId={id} />}
         </TabsContent>
 
         {/* ── Client Activity Log (Internal) ── */}

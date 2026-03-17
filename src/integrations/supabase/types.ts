@@ -5208,6 +5208,165 @@ export type Database = {
           },
         ]
       }
+      client_access_audit_logs: {
+        Row: {
+          action_by: string | null
+          action_note: string | null
+          action_type: string
+          business_id: string
+          client_id: string
+          created_at: string | null
+          id: string
+          record_id: string
+          record_type: string
+        }
+        Insert: {
+          action_by?: string | null
+          action_note?: string | null
+          action_type: string
+          business_id: string
+          client_id: string
+          created_at?: string | null
+          id?: string
+          record_id: string
+          record_type: string
+        }
+        Update: {
+          action_by?: string | null
+          action_note?: string | null
+          action_type?: string
+          business_id?: string
+          client_id?: string
+          created_at?: string | null
+          id?: string
+          record_id?: string
+          record_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_access_audit_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_access_audit_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_access_credentials: {
+        Row: {
+          account_email: string | null
+          admin_email: string | null
+          auto_renew_status: string | null
+          backup_contact: string | null
+          business_id: string
+          client_id: string
+          created_at: string | null
+          created_by: string | null
+          credential_type: string
+          domain_name: string | null
+          expiry_date: string | null
+          id: string
+          is_archived: boolean | null
+          is_client_visible: boolean | null
+          login_url: string | null
+          notes: string | null
+          password_encrypted: string | null
+          platform_type: string | null
+          provider_name: string | null
+          recovery_email: string | null
+          reminder_days: number | null
+          reminder_email: string | null
+          status: string | null
+          two_fa_enabled: boolean | null
+          updated_at: string | null
+          updated_by: string | null
+          url: string | null
+          username: string | null
+        }
+        Insert: {
+          account_email?: string | null
+          admin_email?: string | null
+          auto_renew_status?: string | null
+          backup_contact?: string | null
+          business_id: string
+          client_id: string
+          created_at?: string | null
+          created_by?: string | null
+          credential_type: string
+          domain_name?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_archived?: boolean | null
+          is_client_visible?: boolean | null
+          login_url?: string | null
+          notes?: string | null
+          password_encrypted?: string | null
+          platform_type?: string | null
+          provider_name?: string | null
+          recovery_email?: string | null
+          reminder_days?: number | null
+          reminder_email?: string | null
+          status?: string | null
+          two_fa_enabled?: boolean | null
+          updated_at?: string | null
+          updated_by?: string | null
+          url?: string | null
+          username?: string | null
+        }
+        Update: {
+          account_email?: string | null
+          admin_email?: string | null
+          auto_renew_status?: string | null
+          backup_contact?: string | null
+          business_id?: string
+          client_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          credential_type?: string
+          domain_name?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_archived?: boolean | null
+          is_client_visible?: boolean | null
+          login_url?: string | null
+          notes?: string | null
+          password_encrypted?: string | null
+          platform_type?: string | null
+          provider_name?: string | null
+          recovery_email?: string | null
+          reminder_days?: number | null
+          reminder_email?: string | null
+          status?: string | null
+          two_fa_enabled?: boolean | null
+          updated_at?: string | null
+          updated_by?: string | null
+          url?: string | null
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_access_credentials_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_access_credentials_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_activity_log: {
         Row: {
           activity_source: string
@@ -5909,6 +6068,105 @@ export type Database = {
           },
           {
             foreignKeyName: "client_profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_project_integrations: {
+        Row: {
+          access_token_encrypted: string | null
+          account_id: string | null
+          api_key_encrypted: string | null
+          api_url: string | null
+          business_id: string
+          business_manager_id: string | null
+          client_id: string
+          connected_account_name: string | null
+          connected_email: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          integration_type: string
+          is_client_visible: boolean | null
+          is_enabled: boolean | null
+          last_sync_at: string | null
+          measurement_id: string | null
+          notes: string | null
+          property_id: string | null
+          provider_name: string | null
+          refresh_token_encrypted: string | null
+          status: string | null
+          updated_at: string | null
+          updated_by: string | null
+          verification_status: string | null
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          account_id?: string | null
+          api_key_encrypted?: string | null
+          api_url?: string | null
+          business_id: string
+          business_manager_id?: string | null
+          client_id: string
+          connected_account_name?: string | null
+          connected_email?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          integration_type: string
+          is_client_visible?: boolean | null
+          is_enabled?: boolean | null
+          last_sync_at?: string | null
+          measurement_id?: string | null
+          notes?: string | null
+          property_id?: string | null
+          provider_name?: string | null
+          refresh_token_encrypted?: string | null
+          status?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          verification_status?: string | null
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          account_id?: string | null
+          api_key_encrypted?: string | null
+          api_url?: string | null
+          business_id?: string
+          business_manager_id?: string | null
+          client_id?: string
+          connected_account_name?: string | null
+          connected_email?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          integration_type?: string
+          is_client_visible?: boolean | null
+          is_enabled?: boolean | null
+          last_sync_at?: string | null
+          measurement_id?: string | null
+          notes?: string | null
+          property_id?: string | null
+          provider_name?: string | null
+          refresh_token_encrypted?: string | null
+          status?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          verification_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_project_integrations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_project_integrations_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -16293,6 +16551,63 @@ export type Database = {
             columns: ["calendar_event_id"]
             isOneToOne: false
             referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      renewal_reminder_logs: {
+        Row: {
+          business_id: string
+          client_id: string
+          created_at: string | null
+          failure_reason: string | null
+          id: string
+          reminder_email: string | null
+          scheduled_date: string | null
+          sent_at: string | null
+          source_record_id: string
+          source_type: string
+          status: string | null
+        }
+        Insert: {
+          business_id: string
+          client_id: string
+          created_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          reminder_email?: string | null
+          scheduled_date?: string | null
+          sent_at?: string | null
+          source_record_id: string
+          source_type: string
+          status?: string | null
+        }
+        Update: {
+          business_id?: string
+          client_id?: string
+          created_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          reminder_email?: string | null
+          scheduled_date?: string | null
+          sent_at?: string | null
+          source_record_id?: string
+          source_type?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "renewal_reminder_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "renewal_reminder_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]

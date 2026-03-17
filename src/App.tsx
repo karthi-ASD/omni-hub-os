@@ -41,6 +41,7 @@ import ProposalsPage from "./pages/ProposalsPage";
 import ContractsPage from "./pages/ContractsPage";
 import ClientsPage from "./pages/ClientsPage";
 import ClientProfilePage from "./pages/ClientProfilePage";
+import ClientAccessHubPage from "./pages/ClientAccessHubPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import InvoicesPage from "./pages/InvoicesPage";
 import PaymentsPage from "./pages/PaymentsPage";
@@ -344,6 +345,7 @@ const App = () => (
               <Route path="/contracts" element={<ContractsPage />} />
               <Route path="/clients" element={<ClientsPage />} />
               <Route path="/clients/:id" element={<ClientProfilePage />} />
+              <Route path="/clients/:id/access" element={<ClientAccessHubPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/invoices" element={<InvoicesPage />} />
               <Route path="/payments" element={<PaymentsPage />} />
@@ -557,6 +559,7 @@ const App = () => (
               <Route path="/client-employees" element={<ClientEmployeesPage />} />
               <Route path="/client-seo-projects" element={<ClientSeoProjectsPage />} />
               <Route path="/client-seo-projects/:projectId" element={<ClientSeoProjectDetailPage />} />
+              <Route path="/my-access" element={<ClientAccessHubPage />} />
               <Route path="/my-appointments" element={<CustomerAppointmentPage />} />
               <Route path="/staff-app" element={<StaffMobileAppPage />} />
               <Route path="/hr/departments" element={
