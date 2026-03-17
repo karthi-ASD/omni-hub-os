@@ -480,6 +480,40 @@ const SuperAdminClientManagementPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* RESET CLIENT PASSWORD DIALOG */}
+      <Dialog open={!!resetTarget} onOpenChange={open => { if (!open) { setResetTarget(null); setNewPassword(""); setConfirmPassword(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Client Password</DialogTitle>
+            <DialogDescription>
+              Reset the login password for <strong>{resetTarget?.contact_name}</strong> ({resetTarget?.email}).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>New Password</Label>
+              <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Minimum 8 characters" />
+            </div>
+            <div>
+              <Label>Confirm Password</Label>
+              <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Re-enter password" />
+            </div>
+            {newPassword && confirmPassword && newPassword !== confirmPassword && (
+              <p className="text-xs text-destructive">Passwords do not match.</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setResetTarget(null); setNewPassword(""); setConfirmPassword(""); }}>Cancel</Button>
+            <Button
+              disabled={!newPassword || newPassword.length < 8 || newPassword !== confirmPassword || resetLoading}
+              onClick={handleResetPassword}
+            >
+              {resetLoading ? "Updating..." : "Update Password"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
