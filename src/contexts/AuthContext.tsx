@@ -210,10 +210,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, nextSession) => {
+        setLoading(true);
+        setTenantValidationError(null);
         setSession(nextSession);
         setUser(nextSession?.user ?? null);
 
         if (nextSession?.user) {
+          setRawProfile(null);
+          setRoles([]);
+          setAllBusinesses([]);
+          setSelectedTenantId(null);
+          setClientUserId(null);
+
           setTimeout(() => {
             if (!isMounted) return;
             void hydrateUserState(nextSession);
@@ -224,6 +232,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setAllBusinesses([]);
           setSelectedTenantId(null);
           setClientUserId(null);
+          setTenantValidationError(null);
           finalizeLoading();
         }
       }
@@ -231,12 +240,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     supabase.auth.getSession()
       .then(({ data: { session: currentSession } }) => {
+        setLoading(true);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
 
         if (currentSession?.user) {
           void hydrateUserState(currentSession);
         } else {
+          setTenantValidationError(null);
           finalizeLoading();
         }
       })
