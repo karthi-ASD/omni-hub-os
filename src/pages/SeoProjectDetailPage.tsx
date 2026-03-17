@@ -28,7 +28,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import {
   ArrowLeft, Plus, ListChecks, FileText, Globe, MapPin, Share2, MessageSquare,
-  BarChart3, Brain, Send, Sparkles, Instagram, Facebook,
+  BarChart3, Brain, Send, Sparkles, Instagram, Facebook, Key, Plug,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -93,6 +93,16 @@ const SeoProjectDetailPage = () => {
             {project?.target_location && <><MapPin className="h-3 w-3 ml-2" />{project.target_location}</>}
           </div>
         </div>
+        {project?.client_id && (
+          <>
+            <Button variant="outline" size="sm" onClick={() => navigate(`/clients/${project.client_id}/access`)}>
+              <Key className="h-3 w-3 mr-1" /> Client Login Access
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate(`/clients/${project.client_id}/access`)}>
+              <Plug className="h-3 w-3 mr-1" /> Client Integrations
+            </Button>
+          </>
+        )}
         <Button variant="outline" size="sm" onClick={() => navigate(`/seo-intel/${projectId}`)}>
           <Sparkles className="h-3 w-3 mr-1" /> SEO Intelligence
         </Button>
