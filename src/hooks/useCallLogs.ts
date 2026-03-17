@@ -25,15 +25,16 @@ export function useCallLogs(entityType?: string, entityId?: string) {
   const [loading, setLoading] = useState(true);
 
   const fetchCallLogs = useCallback(async () => {
+    if (!profile?.business_id) return;
     setLoading(true);
-    let query = supabase.from("call_logs").select("*").order("call_time", { ascending: false });
+    let query = supabase.from("call_logs").select("*").eq("business_id", profile.business_id).order("call_time", { ascending: false });
     if (entityType && entityId) {
       query = query.eq("related_entity_type", entityType).eq("related_entity_id", entityId);
     }
     const { data } = await query.limit(200);
     setCallLogs((data as CallLog[]) || []);
     setLoading(false);
-  }, [entityType, entityId]);
+  }, [entityType, entityId, profile?.business_id]);
 
   useEffect(() => { fetchCallLogs(); }, [fetchCallLogs]);
 

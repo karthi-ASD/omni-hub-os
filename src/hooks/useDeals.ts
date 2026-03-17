@@ -76,15 +76,17 @@ export function useDeals() {
   const [loading, setLoading] = useState(true);
 
   const fetchDeals = useCallback(async () => {
+    if (!profile?.business_id) return;
     setLoading(true);
     const { data } = await supabase
       .from("deals")
       .select("*")
+      .eq("business_id", profile.business_id)
       .order("created_at", { ascending: false })
       .limit(500);
     setDeals((data as Deal[]) || []);
     setLoading(false);
-  }, []);
+  }, [profile?.business_id]);
 
   useEffect(() => {
     fetchDeals();

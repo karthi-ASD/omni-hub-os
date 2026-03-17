@@ -81,14 +81,17 @@ export function useClients(options?: UseClientsOptions) {
   const statusFilter = options?.statusFilter;
 
   const fetchClients = useCallback(async (pageNum = 0, searchTerm = "", append = false) => {
+    if (!profile?.business_id) return;
     if (!append) setLoading(true);
     const from = pageNum * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
+    const bid = profile.business_id;
 
     // Get count first
     let countQuery = supabase
       .from("clients")
       .select("id", { count: "exact", head: true })
+      .eq("business_id", bid)
       .neq("client_status", "reverted")
       .neq("client_status", "deleted")
       .neq("client_status", "merged");
@@ -112,7 +115,7 @@ export function useClients(options?: UseClientsOptions) {
     const statusValues = ["active", "cancelled", "pending", "prospect", "suspended", "reverted"];
     const statusCountResults: Record<string, number> = {};
     await Promise.all(statusValues.map(async (s) => {
-      let sq = supabase.from("clients").select("id", { count: "exact", head: true }).eq("client_status", s);
+      let sq = supabase.from("clients").select("id", { count: "exact", head: true }).eq("business_id", bid).eq("client_status", s);
       if (searchTerm) {
         sq = sq.or(`contact_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,company_name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
       }
@@ -128,6 +131,7 @@ export function useClients(options?: UseClientsOptions) {
     let dataQuery = supabase
       .from("clients")
       .select("*")
+      .eq("business_id", bid)
       .neq("client_status", "reverted")
       .neq("client_status", "deleted")
       .neq("client_status", "merged")
@@ -158,7 +162,7 @@ export function useClients(options?: UseClientsOptions) {
     setHasMore(batch.length === PAGE_SIZE);
     setPage(pageNum);
     setLoading(false);
-  }, [salesOwnerId, statusFilter]);
+  }, [salesOwnerId, statusFilter, profile?.business_id]);
 
   useEffect(() => {
     fetchClients(0, search);
