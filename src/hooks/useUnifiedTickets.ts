@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -79,19 +79,26 @@ export function useUnifiedTickets(departmentFilter?: string) {
   const fetchTickets = useCallback(async () => {
     if (!bid) return;
     setLoading(true);
+
+    // CRITICAL: Admin sees ALL tickets - no restrictive filters on initial load
+    // Only scope by business_id for tenant isolation
     let query = supabase
       .from("support_tickets")
       .select("*")
       .eq("business_id", bid)
       .order("created_at", { ascending: false })
-      .limit(500);
+      .limit(200);
 
+    // Only apply department filter for non-admin staff
     if (departmentFilter && !isSuperAdmin && !isBusinessAdmin) {
       query = query.eq("department", departmentFilter);
     }
 
     const { data, error } = await query;
-    if (!error) {
+    if (error) {
+      console.error("[Tickets] Fetch error:", error);
+    } else {
+      console.log("[Tickets] Fetched:", data?.length, "tickets");
       setTickets((data as any[]) || []);
     }
     setLoading(false);
@@ -99,12 +106,16 @@ export function useUnifiedTickets(departmentFilter?: string) {
 
   useEffect(() => { fetchTickets(); }, [fetchTickets]);
 
-  // Realtime
+  // Realtime — scoped to support_tickets table globally
   useEffect(() => {
     if (!bid) return;
     const ch = supabase
       .channel("unified-tickets-rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "support_tickets" }, (p) => {
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "support_tickets",
+      }, (p) => {
         if ((p.new as any)?.business_id === bid) fetchTickets();
       })
       .subscribe();
@@ -117,7 +128,7 @@ export function useUnifiedTickets(departmentFilter?: string) {
     total: tickets.length,
     open: tickets.filter(t => t.status === "open").length,
     in_progress: tickets.filter(t => t.status === "in_progress" || t.status === "assigned").length,
-    unmatched: tickets.filter(t => (t as any).client_match_status === "unmatched" || (t as any).client_match_status === "suggested").length,
+    unmatched: tickets.filter(t => t.client_match_status === "unmatched" || t.client_match_status === "suggested").length,
     escalated: tickets.filter(t => t.status === "escalated").length,
     resolved: tickets.filter(t => t.status === "resolved").length,
     closed: tickets.filter(t => t.status === "closed").length,
@@ -125,9 +136,10 @@ export function useUnifiedTickets(departmentFilter?: string) {
       t.sla_due_at && new Date(t.sla_due_at) < now &&
       !["resolved", "closed"].includes(t.status)
     ).length,
+    unassigned: tickets.filter(t => !t.assigned_to_user_id && !["resolved", "closed"].includes(t.status)).length,
   };
 
-  // Create ticket
+  // Create ticket with duplicate prevention
   const createTicket = useCallback(async (data: {
     subject: string;
     description?: string;
@@ -140,7 +152,22 @@ export function useUnifiedTickets(departmentFilter?: string) {
     source_type?: string;
   }) => {
     if (!bid || !profile?.user_id) return null;
-    const { data: inserted, error } = await supabase.from("support_tickets").insert({
+
+    // Duplicate prevention: same subject within 2 minutes
+    const twoMinAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+    const { data: dupes } = await supabase
+      .from("support_tickets")
+      .select("id")
+      .eq("business_id", bid)
+      .eq("subject", data.subject)
+      .gte("created_at", twoMinAgo)
+      .limit(1);
+    if (dupes && dupes.length > 0) {
+      toast.error("Duplicate ticket detected — same subject within 2 minutes");
+      return null;
+    }
+
+    const payload = {
       business_id: bid,
       created_by_user_id: profile.user_id,
       subject: data.subject,
@@ -154,10 +181,19 @@ export function useUnifiedTickets(departmentFilter?: string) {
       source_type: data.source_type || "manual",
       client_match_status: data.client_id ? "matched" : "unmatched",
       channel: "portal",
-    } as any).select().single();
+      status: "open",
+    };
+    console.log("[Tickets] Creating ticket:", payload);
+
+    const { data: inserted, error } = await supabase
+      .from("support_tickets")
+      .insert(payload as any)
+      .select()
+      .single();
     if (error) { toast.error("Failed to create ticket"); return null; }
 
     const ticket = inserted as any;
+    console.log("[Tickets] Created:", ticket.ticket_number, ticket.id);
 
     // Log audit
     await supabase.from("ticket_audit_log").insert({
@@ -241,7 +277,6 @@ export function useUnifiedTickets(departmentFilter?: string) {
       updated_at: new Date().toISOString(),
     } as any).eq("id", ticketId);
 
-    // Save alternate email if requested
     if (saveAlternateEmail && ticket?.sender_email && bid) {
       await supabase.from("client_alternate_emails" as any).insert({
         business_id: bid,
@@ -318,7 +353,7 @@ export function useUnifiedTickets(departmentFilter?: string) {
     return (data as any[]) || [];
   }, []);
 
-  // Add message
+  // Add message with first_response_at tracking
   const addMessage = useCallback(async (ticketId: string, content: string, isInternal: boolean) => {
     if (!bid || !profile?.user_id) return;
     await supabase.from("ticket_messages").insert({
@@ -331,13 +366,15 @@ export function useUnifiedTickets(departmentFilter?: string) {
       is_internal: isInternal,
     });
 
+    // Auto first response tracking — only on non-internal replies
     if (!isInternal) {
-      // Mark first response
       const ticket = tickets.find(t => t.id === ticketId);
       if (ticket && !ticket.first_response_at) {
         await supabase.from("support_tickets").update({
           first_response_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         }).eq("id", ticketId);
+        console.log("[Tickets] First response recorded for", ticket.ticket_number);
       }
     }
 

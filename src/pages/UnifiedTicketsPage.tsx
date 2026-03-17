@@ -84,6 +84,8 @@ const UnifiedTicketsPage = () => {
     const now = new Date();
     if (activeTab === "unmatched") {
       list = list.filter(t => (t as any).client_match_status === "unmatched" || (t as any).client_match_status === "suggested");
+    } else if (activeTab === "unassigned") {
+      list = list.filter(t => !t.assigned_to_user_id && !["resolved", "closed"].includes(t.status));
     } else if (activeTab === "sla_breached") {
       list = list.filter(t =>
         t.sla_due_at && new Date(t.sla_due_at) < now &&
@@ -136,11 +138,11 @@ const UnifiedTicketsPage = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
         <StatCard label="Open" value={stats.open} icon={Inbox} gradient="from-primary to-accent" />
         <StatCard label="In Progress" value={stats.in_progress} icon={Clock} gradient="from-[hsl(var(--warning))] to-orange-500" />
+        <StatCard label="Unassigned" value={(stats as any).unassigned || 0} icon={Users} gradient="from-purple-500 to-violet-600" />
         <StatCard label="SLA Breached" value={(stats as any).sla_breached || 0} icon={AlertTriangle} gradient="from-destructive to-red-600" />
         <StatCard label="Unmatched" value={stats.unmatched} icon={LinkIcon} gradient="from-destructive to-red-400" />
         <StatCard label="Escalated" value={stats.escalated} icon={AlertTriangle} gradient="from-destructive to-orange-600" />
         <StatCard label="Resolved" value={stats.resolved} icon={CheckCircle} gradient="from-[hsl(var(--success))] to-emerald-500" />
-        <StatCard label="Closed" value={stats.closed} icon={CheckCircle} gradient="from-muted to-muted" />
         <StatCard label="Total" value={stats.total} icon={Ticket} gradient="from-secondary to-muted" />
       </div>
 
@@ -151,6 +153,9 @@ const UnifiedTicketsPage = () => {
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="open">Open</TabsTrigger>
             <TabsTrigger value="in_progress">In Progress</TabsTrigger>
+            <TabsTrigger value="unassigned">
+              Unassigned ({(stats as any).unassigned || 0})
+            </TabsTrigger>
             <TabsTrigger value="sla_breached" className="text-destructive">
               SLA Breached ({(stats as any).sla_breached || 0})
             </TabsTrigger>
