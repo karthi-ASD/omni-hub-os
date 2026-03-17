@@ -12,6 +12,7 @@ import { useKeywordRankingHistory } from "@/hooks/useKeywordRankingHistory";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { SeoAuditPanel } from "@/components/seo/SeoAuditPanel";
+import { WebsiteTreePanel } from "@/components/seo/WebsiteTreePanel";
 import { SeoTechnicalPanel } from "@/components/seo/SeoTechnicalPanel";
 import { KeywordCsvImportDialog } from "@/components/seo/KeywordCsvImportDialog";
 import { SeoRankingPanel } from "@/components/seo/SeoRankingPanel";
