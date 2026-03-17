@@ -69,7 +69,13 @@ const SeoProjectDetailPage = () => {
   const [updateOpen, setUpdateOpen] = useState(false);
   const [updateForm, setUpdateForm] = useState({ update_type: "TECHNICAL_FIX", title: "", description: "" });
   const [msgInput, setMsgInput] = useState("");
-  const [activeTab, setActiveTab] = useState("tasks");
+  const tabFromUrl = new URLSearchParams(location.search).get("tab");
+  const [activeTab, setActiveTab] = useState(tabFromUrl || "tasks");
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    navigate(`?tab=${tab}`, { replace: true });
+  };
 
   const statusBadge = (status: string) => {
     const colors: Record<string, string> = {
