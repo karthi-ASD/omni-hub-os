@@ -20,7 +20,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import {
   ArrowLeft, Globe, Smartphone, Search, FileText, Ticket, Clock,
   Mail, Phone, Building2, MapPin, Plus, ExternalLink, DollarSign, CreditCard, TrendingUp, AlertTriangle,
-  ClipboardCheck, CheckCircle2, MessageSquare, PhoneCall, CalendarCheck, Pencil, Key, GitBranch, User
+  ClipboardCheck, CheckCircle2, MessageSquare, PhoneCall, CalendarCheck, Pencil, Key, GitBranch, User,
+  Plug, Target
 } from "lucide-react";
 import { useOnboardingChecklist } from "@/hooks/useOnboardingChecklist";
 import { ClientActivityTimeline } from "@/components/clients/ClientActivityTimeline";
@@ -29,6 +30,9 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useClientFinancials } from "@/hooks/useClientFinancials";
 import { ClientAccessHubTab } from "@/components/clients/access-hub/ClientAccessHubTab";
+import { ClientIntegrationsTab } from "@/components/clients/ClientIntegrationsTab";
+import { ClientLeadsTab } from "@/components/clients/ClientLeadsTab";
+import { ClientCallsTab } from "@/components/clients/ClientCallsTab";
 import { WebsiteTreeTab } from "@/components/clients/WebsiteTreeTab";
 import { ClientProfileTab } from "@/components/clients/ClientProfileTab";
 import { ClientWhatsAppHistoryTab } from "@/components/clients/ClientWhatsAppHistoryTab";
@@ -471,6 +475,9 @@ const ClientProfilePage = () => {
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="activity"><Clock className="h-3.5 w-3.5 mr-1" />Activity</TabsTrigger>
           <TabsTrigger value="whatsapp"><MessageSquare className="h-3.5 w-3.5 mr-1" />WhatsApp</TabsTrigger>
+          <TabsTrigger value="integrations"><Plug className="h-3.5 w-3.5 mr-1" />Integrations</TabsTrigger>
+          <TabsTrigger value="leads"><Target className="h-3.5 w-3.5 mr-1" />Leads</TabsTrigger>
+          <TabsTrigger value="calls"><Phone className="h-3.5 w-3.5 mr-1" />Calls</TabsTrigger>
         </TabsList>
 
         {/* ── Conversations / Notes ── */}
@@ -1034,6 +1041,21 @@ const ClientProfilePage = () => {
           {id && client && (
             <ClientWhatsAppHistoryTab clientId={id} businessId={client.business_id} />
           )}
+        </TabsContent>
+
+        {/* ── Integrations ── */}
+        <TabsContent value="integrations">
+          {id && <ClientIntegrationsTab clientId={id} />}
+        </TabsContent>
+
+        {/* ── Leads ── */}
+        <TabsContent value="leads">
+          {id && <ClientLeadsTab clientId={id} />}
+        </TabsContent>
+
+        {/* ── Calls & Communication ── */}
+        <TabsContent value="calls">
+          {id && <ClientCallsTab clientId={id} />}
         </TabsContent>
       </Tabs>
 
