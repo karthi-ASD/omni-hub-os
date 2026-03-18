@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { useClientPackage } from "@/hooks/useClientPackage";
 import { usePackageOnboarding } from "@/hooks/usePackageOnboarding";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Package, Layers, Target, Shield, Share2 } from "lucide-react";
