@@ -257,17 +257,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      const previousSession = sessionRef.current;
+      const previousHydrationKey = getSessionHydrationKey(previousSession);
+      const nextHydrationKey = getSessionHydrationKey(nextSession);
+      const previousAccessToken = previousSession?.access_token ?? null;
+      const nextAccessToken = nextSession?.access_token ?? null;
+
+      console.log("[Auth Event]", event, {
+        previousHydrationKey,
+        nextHydrationKey,
+        previousUserId: previousSession?.user.id ?? null,
+        nextUserId: nextSession?.user.id ?? null,
+      });
+
       switch (event) {
         case "TOKEN_REFRESHED": {
           hasInitializedRef.current = true;
-          const previousSession = sessionRef.current;
           sessionRef.current = nextSession;
-          const previousUserId = previousSession?.user.id ?? null;
-          const nextUserId = nextSession?.user.id ?? null;
-          const previousAccessToken = previousSession?.access_token ?? null;
-          const nextAccessToken = nextSession?.access_token ?? null;
 
-          if (previousUserId !== nextUserId || previousAccessToken !== nextAccessToken) {
+          if (previousAccessToken !== nextAccessToken || previousHydrationKey !== nextHydrationKey) {
             setSession(nextSession);
             setUser(nextSession?.user ?? null);
           }
@@ -279,22 +287,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         case "SIGNED_IN": {
           hasInitializedRef.current = true;
-          const previousSession = sessionRef.current;
           sessionRef.current = nextSession;
-          const previousUserId = previousSession?.user.id ?? null;
-          const nextUserId = nextSession?.user.id ?? null;
-          const previousAccessToken = previousSession?.access_token ?? null;
-          const nextAccessToken = nextSession?.access_token ?? null;
-          const isSameAuthenticatedSession = !!previousSession && !!nextSession && previousUserId === nextUserId;
+          const isSameAuthenticatedSession = !!previousSession && !!nextSession && previousHydrationKey === nextHydrationKey;
+          const alreadyHydratedSession = !!nextHydrationKey && hydratedSessionKeyRef.current === nextHydrationKey;
 
           setSession(nextSession);
           setUser(nextSession?.user ?? null);
 
           if (nextSession?.user) {
-            if (isSameAuthenticatedSession || hasHydratedRef.current) {
-              if (previousAccessToken !== nextAccessToken) {
-                finalizeLoading();
-              }
+            if (isSameAuthenticatedSession || alreadyHydratedSession) {
+              finalizeLoading();
               break;
             }
 
@@ -309,6 +311,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         case "SIGNED_OUT":
           hasInitializedRef.current = true;
+          sessionRef.current = null;
           setSession(null);
           setUser(null);
           clearAllUserState();
