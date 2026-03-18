@@ -235,7 +235,7 @@ Deno.serve(async (req) => {
         const waPayload = {
           from: autoSettings.whatsapp_number,
           to: normalizedPhone,
-          message: `Hi ${name || "there"}, thank you for your inquiry! We'll get back to you shortly.`,
+          message: `Hi ${cleanName || "there"}, thank you for your inquiry! We'll get back to you shortly.`,
           business_id: project.business_id,
         };
         try {
