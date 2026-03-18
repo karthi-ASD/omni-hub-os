@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useClientPackage } from "@/hooks/useClientPackage";
+import { usePackageOnboarding } from "@/hooks/usePackageOnboarding";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,6 +12,7 @@ import PackageAssetsTab from "@/components/packages/PackageAssetsTab";
 import PackageSocialLinksTab from "@/components/packages/PackageSocialLinksTab";
 import CreatePackageDialog from "@/components/packages/CreatePackageDialog";
 import GenerateInstallmentsDialog from "@/components/packages/GenerateInstallmentsDialog";
+import PackageOnboardingProgress from "@/components/packages/PackageOnboardingProgress";
 
 export default function ClientPackagePage() {
   const { clientId } = useParams<{ clientId: string }>();
@@ -27,8 +29,20 @@ export default function ClientPackagePage() {
   } = useClientPackage(resolvedClientId);
 
   const isClient = roles.includes("client");
+  const isAccounts = roles.some(r => ["super_admin", "business_admin", "accounts"].includes(r));
   const isReadOnly = isClient;
-  const canManagePayments = roles.some(r => ["super_admin", "business_admin", "accounts"].includes(r));
+  const canManagePayments = isAccounts;
+
+  const {
+    steps: onboardingSteps,
+    progress: onboardingProgress,
+    completedCount: onboardingCompleted,
+    updateStepStatus,
+    allComplete: onboardingComplete,
+  } = usePackageOnboarding(pkg?.id);
+
+  // Prevent role timing flicker
+  if (!roles || roles.length === 0) return null;
 
   if (loading) {
     return (
@@ -46,29 +60,38 @@ export default function ClientPackagePage() {
     if (isClient) {
       return (
         <div className="p-6">
-          <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="flex flex-col items-center justify-center py-28 text-center">
             <Package className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-            <div className="text-2xl font-semibold mb-2 text-foreground">We're Getting Things Ready</div>
-            <p className="text-muted-foreground max-w-md">
-              Your package is being prepared. It will be available here shortly.
+            <div className="text-2xl font-semibold mb-2 text-foreground">
+              We're Setting Up Your Services
+            </div>
+            <p className="text-muted-foreground max-w-md mb-3">
+              Your onboarding is in progress. You'll be able to view your full dashboard once setup is complete.
             </p>
-            <span className="text-xs text-muted-foreground mt-4">Managed by NextWeb Team</span>
+            <span className="text-xs text-muted-foreground/70">
+              Managed and optimized by NextWeb
+            </span>
           </div>
         </div>
       );
     }
-    return (
-      <div className="p-6">
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <Package className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-          <div className="text-2xl font-semibold mb-2 text-foreground">No Package Found</div>
-          <p className="text-muted-foreground mb-4 max-w-md">
-            This client does not have a package yet. Create one to get started.
-          </p>
-          <CreatePackageDialog onCreate={createPackage} />
+
+    if (isAccounts) {
+      return (
+        <div className="p-6">
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <Package className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+            <div className="text-2xl font-semibold mb-2 text-foreground">No Package Found</div>
+            <p className="text-muted-foreground mb-4 max-w-md">
+              This client does not have a package yet. Create one to get started.
+            </p>
+            <CreatePackageDialog onCreate={createPackage} />
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
+
+    return null;
   }
 
   return (
@@ -91,6 +114,19 @@ export default function ClientPackagePage() {
           />
         )}
       </div>
+
+      {/* Onboarding progress — visible to all when not fully complete */}
+      {!onboardingComplete && onboardingSteps.length > 0 && (
+        <div className="rounded-xl border border-border bg-card p-5">
+          <PackageOnboardingProgress
+            steps={onboardingSteps}
+            progress={onboardingProgress}
+            completedCount={onboardingCompleted}
+            isReadOnly={isClient}
+            onUpdateStatus={!isClient ? updateStepStatus : undefined}
+          />
+        </div>
+      )}
 
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="w-full justify-start bg-muted/30 p-1 rounded-xl">
