@@ -106,21 +106,23 @@ export function useClientPortalTickets() {
       throw new Error("Duplicate ticket detected — please wait before resubmitting");
     }
 
-    console.log("[ClientTickets] Submitting ticket:", { clientId, subject: input.subject, department: input.department });
+    const payload = {
+      clientId,
+      requesterUserId: user.id,
+      requesterName: profile?.full_name,
+      requesterEmail: profile?.email,
+      subject: input.subject,
+      description: input.description,
+      department: input.department,
+      priority: input.priority,
+      category: input.category,
+    };
+
+    console.log("[ClientTickets] Submitting ticket payload:", payload);
 
     setSubmitting(true);
     try {
-      const inserted = await createClientPortalTicket({
-        clientId,
-        requesterUserId: user.id,
-        requesterName: profile?.full_name,
-        requesterEmail: profile?.email,
-        subject: input.subject,
-        description: input.description,
-        department: input.department,
-        priority: input.priority,
-        category: input.category,
-      });
+      const inserted = await createClientPortalTicket(payload);
       console.log("[ClientTickets] Ticket created:", inserted);
       await fetchTickets();
       return inserted;

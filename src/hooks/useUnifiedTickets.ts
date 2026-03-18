@@ -70,6 +70,28 @@ const TICKET_STATUSES = [
   "pending_client_mapping", "escalated", "resolved", "closed",
 ];
 
+function normalizeDepartmentFilter(department?: string) {
+  const normalized = department?.trim().toLowerCase();
+
+  if (!normalized) return undefined;
+  if (["accounts", "finance", "accounting"].includes(normalized)) return "accounts";
+  if (["development", "dev", "web"].includes(normalized)) return "development";
+  if (normalized === "general") return "support";
+
+  return normalized;
+}
+
+function getDepartmentFilterValues(department?: string) {
+  const normalized = normalizeDepartmentFilter(department);
+
+  if (!normalized) return [];
+  if (normalized === "accounts") return ["accounts", "finance", "accounting"];
+  if (normalized === "development") return ["development", "dev", "web"];
+  if (normalized === "support") return ["support", "general"];
+
+  return [normalized];
+}
+
 export function useUnifiedTickets(departmentFilter?: string) {
   const { profile, isSuperAdmin, isBusinessAdmin } = useAuth();
   const bid = profile?.business_id;
@@ -80,8 +102,8 @@ export function useUnifiedTickets(departmentFilter?: string) {
     if (!bid) return;
     setLoading(true);
 
-    // CRITICAL: Admin sees ALL tickets - no restrictive filters on initial load
-    // Only scope by business_id for tenant isolation
+    const departmentValues = getDepartmentFilterValues(departmentFilter);
+
     let query = supabase
       .from("support_tickets")
       .select("*")
@@ -89,16 +111,22 @@ export function useUnifiedTickets(departmentFilter?: string) {
       .order("created_at", { ascending: false })
       .limit(200);
 
-    // Only apply department filter for non-admin staff
-    if (departmentFilter && !isSuperAdmin && !isBusinessAdmin) {
-      query = query.eq("department", departmentFilter);
+    if (departmentValues.length > 0 && !isSuperAdmin && !isBusinessAdmin) {
+      query = departmentValues.length === 1
+        ? query.eq("department", departmentValues[0])
+        : query.in("department", departmentValues);
     }
 
     const { data, error } = await query;
     if (error) {
       console.error("[Tickets] Fetch error:", error);
     } else {
-      console.log("[Tickets] Fetched:", data?.length, "tickets");
+      console.log("[AdminTickets] Fetched tickets:", {
+        count: data?.length || 0,
+        businessId: bid,
+        departmentFilter: normalizeDepartmentFilter(departmentFilter) || null,
+        appliedDepartmentValues: departmentValues,
+      });
       setTickets((data as any[]) || []);
     }
     setLoading(false);

@@ -26201,6 +26201,18 @@ export type Database = {
       }
     }
     Functions: {
+      can_access_ticket_as_client: {
+        Args: { _ticket_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_insert_client_ticket: {
+        Args: { _business_id: string; _client_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_insert_ticket_audit_as_client: {
+        Args: { _business_id: string; _ticket_id: string; _user_id: string }
+        Returns: boolean
+      }
       decrypt_sensitive_field: {
         Args: { cipher_text: string; passphrase?: string }
         Returns: string
@@ -26214,6 +26226,10 @@ export type Database = {
         Returns: string
       }
       get_client_id_for_user: { Args: { _user_id: string }; Returns: string }
+      get_provider_business_id_for_client_user: {
+        Args: { _user_id: string }
+        Returns: string
+      }
       get_system_mode: { Args: { _business_id: string }; Returns: string }
       get_user_business_id: { Args: { _user_id: string }; Returns: string }
       handle_business_registration: {
