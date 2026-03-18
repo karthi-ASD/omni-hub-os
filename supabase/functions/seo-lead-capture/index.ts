@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
       .eq("seo_project_id", project_id).maybeSingle();
 
     const automationResults: Array<{ type: string; status: string }> = [];
-    const requestPayload = { name, email, phone: normalizedPhone, message, source, form_id };
+    const requestPayload = { name: cleanName, email: cleanEmail, phone: normalizedPhone, message: cleanMessage, source, form_id };
 
     const logAutomation = async (type: string, status: string, execMs: number, errMsg?: string, response?: any) => {
       await supabase.from("seo_automation_logs").insert({
