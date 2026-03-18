@@ -43,15 +43,29 @@ export default function ClientPackagePage() {
   }
 
   if (!pkg) {
+    if (isClient) {
+      return (
+        <div className="p-6">
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <Package className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+            <div className="text-2xl font-semibold mb-2 text-foreground">We're Getting Things Ready</div>
+            <p className="text-muted-foreground max-w-md">
+              Your package is being prepared. It will be available here shortly.
+            </p>
+            <span className="text-xs text-muted-foreground mt-4">Managed by NextWeb Team</span>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="p-6">
-        <div className="max-w-md mx-auto text-center py-16 space-y-4">
-          <Package className="h-12 w-12 mx-auto text-muted-foreground/50" />
-          <h2 className="text-xl font-bold text-foreground">No Package Found</h2>
-          <p className="text-sm text-muted-foreground">
-            This client doesn't have a package yet. Create one to manage services, billing, and assets.
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <Package className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+          <div className="text-2xl font-semibold mb-2 text-foreground">No Package Found</div>
+          <p className="text-muted-foreground mb-4 max-w-md">
+            This client does not have a package yet. Create one to get started.
           </p>
-          {!isReadOnly && <CreatePackageDialog onCreate={createPackage} />}
+          <CreatePackageDialog onCreate={createPackage} />
         </div>
       </div>
     );
