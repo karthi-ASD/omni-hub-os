@@ -37,7 +37,7 @@ export default function PackageOverviewTab({
     return <Clock className="h-3.5 w-3.5" />;
   };
 
-  // Auto-detect overdue
+  // Auto-detect overdue on client side as well (server already synced)
   const enriched = installments.map(i => ({
     ...i,
     status: i.status === "pending" && new Date(i.due_date) < new Date() ? "overdue" : i.status,
@@ -46,7 +46,7 @@ export default function PackageOverviewTab({
   return (
     <div className="space-y-6">
       {/* Package Info */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border border-border/50">
           <CardContent className="pt-5">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Package</p>
@@ -63,6 +63,14 @@ export default function PackageOverviewTab({
             <p className="text-lg font-bold text-foreground">{new Date(pkg.start_date).toLocaleDateString("en-AU")}</p>
           </CardContent>
         </Card>
+        {pkg.end_date && (
+          <Card className="border border-border/50">
+            <CardContent className="pt-5">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">End Date</p>
+              <p className="text-lg font-bold text-foreground">{new Date(pkg.end_date).toLocaleDateString("en-AU")}</p>
+            </CardContent>
+          </Card>
+        )}
         <Card className="border border-border/50">
           <CardContent className="pt-5">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Value</p>
@@ -112,7 +120,7 @@ export default function PackageOverviewTab({
                     inst.status === "skipped" ? "bg-amber-400 text-white border-amber-500" :
                     "bg-sky-100 text-sky-700 border-sky-300"
                   }`}
-                  title={`#${inst.installment_number} - ${inst.status}`}
+                  title={`#${inst.installment_number} - ${inst.status}${inst.is_missed ? " (missed)" : ""}`}
                 >
                   {inst.installment_number}
                 </div>

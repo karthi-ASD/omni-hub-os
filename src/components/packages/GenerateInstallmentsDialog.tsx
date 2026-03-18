@@ -9,16 +9,19 @@ interface Props {
   packageId: string;
   totalValue: number;
   startDate: string;
-  onGenerate: (packageId: string, totalValue: number, count: number, startDate: string) => void;
+  endDate?: string | null;
+  onGenerate: (packageId: string, totalValue: number, count: number, startDate: string, endDate?: string) => void;
 }
 
-export default function GenerateInstallmentsDialog({ packageId, totalValue, startDate, onGenerate }: Props) {
+export default function GenerateInstallmentsDialog({ packageId, totalValue, startDate, endDate, onGenerate }: Props) {
   const [open, setOpen] = useState(false);
   const [count, setCount] = useState(12);
   const [value, setValue] = useState(totalValue);
   const [start, setStart] = useState(startDate);
+  const [end, setEnd] = useState(endDate || "");
 
-  const perInstallment = count > 0 ? (value / count) : 0;
+  const baseAmount = count > 0 ? Math.floor((value / count) * 100) / 100 : 0;
+  const remainder = count > 0 ? Math.round((value - baseAmount * count) * 100) / 100 : 0;
   const fmt = (n: number) => `$${n.toLocaleString("en-AU", { minimumFractionDigits: 2 })}`;
 
   return (
@@ -43,11 +46,18 @@ export default function GenerateInstallmentsDialog({ packageId, totalValue, star
             <Label>Start Date</Label>
             <Input type="date" value={start} onChange={e => setStart(e.target.value)} />
           </div>
-          <div className="p-3 rounded-lg bg-muted/30 text-center">
-            <p className="text-xs text-muted-foreground">Each installment</p>
-            <p className="text-lg font-bold text-primary">{fmt(perInstallment)}</p>
+          <div className="space-y-1.5">
+            <Label>End Date (optional)</Label>
+            <Input type="date" value={end} onChange={e => setEnd(e.target.value)} />
           </div>
-          <Button className="w-full" onClick={() => { onGenerate(packageId, value, count, start); setOpen(false); }}>
+          <div className="p-3 rounded-lg bg-muted/30 text-center space-y-1">
+            <p className="text-xs text-muted-foreground">Each installment</p>
+            <p className="text-lg font-bold text-primary">{fmt(baseAmount)}</p>
+            {remainder !== 0 && (
+              <p className="text-[11px] text-muted-foreground">Last installment adjusted by {fmt(remainder)} to match total</p>
+            )}
+          </div>
+          <Button className="w-full" onClick={() => { onGenerate(packageId, value, count, start, end || undefined); setOpen(false); }}>
             Generate {count} Installments
           </Button>
         </div>

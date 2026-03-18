@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ export interface ClientPackage {
   business_id: string;
   package_name: string;
   start_date: string;
+  end_date: string | null;
   contract_type: string;
   payment_type: string;
   total_value: number;
@@ -58,6 +59,7 @@ export interface PackageInstallment {
   amount: number;
   status: string;
   paid_date: string | null;
+  is_missed: boolean;
 }
 
 export interface ClientGmb {
@@ -78,6 +80,18 @@ export interface PackageEvent {
   status: string;
 }
 
+export interface PaymentLog {
+  id: string;
+  installment_id: string;
+  package_id: string;
+  business_id: string;
+  amount: number;
+  paid_date: string;
+  payment_method: string;
+  notes: string | null;
+  created_at: string;
+}
+
 export const SERVICE_ENUM = [
   "SEO", "Website Development", "Social Media Marketing", "Google Ads",
   "Meta Ads", "Content Marketing", "Local SEO", "Technical SEO",
@@ -94,7 +108,9 @@ export function useClientPackage(clientId: string | undefined) {
   const [gmb, setGmb] = useState<ClientGmb | null>(null);
   const [installments, setInstallments] = useState<PackageInstallment[]>([]);
   const [events, setEvents] = useState<PackageEvent[]>([]);
+  const [paymentLogs, setPaymentLogs] = useState<PaymentLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
 
   const fetchAll = useCallback(async () => {
     if (!clientId) return;
@@ -112,7 +128,11 @@ export function useClientPackage(clientId: string | undefined) {
 
     if (pkgData?.id) {
       const pid = pkgData.id;
-      const [svcR, seoR, assetR, slR, gmbR, instR, evtR] = await Promise.all([
+
+      // Auto-sync overdue installments server-side
+      await supabase.rpc("sync_overdue_installments", { _package_id: pid } as any);
+
+      const [svcR, seoR, assetR, slR, gmbR, instR, evtR, logR] = await Promise.all([
         supabase.from("package_services").select("*").eq("package_id", pid) as any,
         supabase.from("seo_package_data").select("*").eq("package_id", pid).maybeSingle() as any,
         supabase.from("client_package_assets").select("*").eq("package_id", pid).maybeSingle() as any,
@@ -120,6 +140,7 @@ export function useClientPackage(clientId: string | undefined) {
         supabase.from("client_gmb").select("*").eq("package_id", pid).maybeSingle() as any,
         supabase.from("package_installments").select("*").eq("package_id", pid).order("installment_number") as any,
         supabase.from("package_events").select("*").eq("package_id", pid).order("event_date") as any,
+        supabase.from("package_payment_logs").select("*").eq("package_id", pid).order("created_at", { ascending: false }) as any,
       ]);
       setServices(svcR.data || []);
       setSeoData(seoR.data);
@@ -128,6 +149,7 @@ export function useClientPackage(clientId: string | undefined) {
       setGmb(gmbR.data);
       setInstallments(instR.data || []);
       setEvents(evtR.data || []);
+      setPaymentLogs(logR.data || []);
     }
 
     setLoading(false);
@@ -142,6 +164,7 @@ export function useClientPackage(clientId: string | undefined) {
       business_id: profile.business_id,
       package_name: data.package_name || "Standard Package",
       start_date: data.start_date || new Date().toISOString().split("T")[0],
+      end_date: (data as any).end_date || null,
       contract_type: data.contract_type || "month_on_month",
       payment_type: data.payment_type || "monthly",
       total_value: data.total_value || 0,
@@ -159,100 +182,168 @@ export function useClientPackage(clientId: string | undefined) {
   const updatePackage = async (id: string, data: Partial<ClientPackage>) => {
     const { error } = await supabase.from("client_packages").update(data as any).eq("id", id);
     if (error) { toast.error("Failed to update package"); return; }
+    // Local state update instead of full refetch
+    setPkg(prev => prev ? { ...prev, ...data } : prev);
     toast.success("Package updated");
-    fetchAll();
   };
 
   const upsertService = async (packageId: string, serviceName: string, isActive: boolean, price: number) => {
-    const existing = services.find(s => s.service_name === serviceName);
-    if (existing) {
-      await supabase.from("package_services").update({ is_active: isActive, price } as any).eq("id", existing.id);
-    } else {
-      await supabase.from("package_services").insert({ package_id: packageId, service_name: serviceName, is_active: isActive, price } as any);
-    }
-    fetchAll();
+    // Debounce to avoid rapid-fire DB calls
+    const key = `svc-${serviceName}`;
+    if (debounceTimers.current[key]) clearTimeout(debounceTimers.current[key]);
+    debounceTimers.current[key] = setTimeout(async () => {
+      const existing = services.find(s => s.service_name === serviceName);
+      if (existing) {
+        await supabase.from("package_services").update({ is_active: isActive, price } as any).eq("id", existing.id);
+        setServices(prev => prev.map(s => s.id === existing.id ? { ...s, is_active: isActive, price } : s));
+      } else {
+        const { data } = await supabase.from("package_services").insert({
+          package_id: packageId, service_name: serviceName, is_active: isActive, price,
+        } as any).select().single();
+        if (data) setServices(prev => [...prev, data as any]);
+      }
+    }, 300);
   };
 
   const upsertSeoData = async (packageId: string, data: Partial<SeoPackageData>) => {
     if (seoData?.id) {
       await supabase.from("seo_package_data").update(data as any).eq("id", seoData.id);
+      setSeoData(prev => prev ? { ...prev, ...data } as SeoPackageData : prev);
     } else {
-      await supabase.from("seo_package_data").insert({ package_id: packageId, ...data } as any);
+      const { data: created } = await supabase.from("seo_package_data").insert({ package_id: packageId, ...data } as any).select().single();
+      if (created) setSeoData(created as any);
     }
-    fetchAll();
+    toast.success("SEO data saved");
   };
 
   const upsertAssets = async (packageId: string, data: Partial<PackageAsset>) => {
-    if (assets?.id) {
-      await supabase.from("client_package_assets").update(data as any).eq("id", assets.id);
-    } else {
-      await supabase.from("client_package_assets").insert({ package_id: packageId, ...data } as any);
+    // Encrypt sensitive fields via edge function before saving
+    const toSave = { ...data };
+    if (toSave.domain_login_encrypted) {
+      const { encryptField } = await import("@/lib/vault-crypto");
+      toSave.domain_login_encrypted = await encryptField(toSave.domain_login_encrypted);
     }
-    fetchAll();
+    if (toSave.hosting_login_encrypted) {
+      const { encryptField } = await import("@/lib/vault-crypto");
+      toSave.hosting_login_encrypted = await encryptField(toSave.hosting_login_encrypted);
+    }
+
+    if (assets?.id) {
+      await supabase.from("client_package_assets").update(toSave as any).eq("id", assets.id);
+      setAssets(prev => prev ? { ...prev, ...toSave } as PackageAsset : prev);
+    } else {
+      const { data: created } = await supabase.from("client_package_assets").insert({ package_id: packageId, ...toSave } as any).select().single();
+      if (created) setAssets(created as any);
+    }
+    toast.success("Assets saved");
   };
 
   const upsertSocialLinks = async (packageId: string, data: any) => {
     if (socialLinks?.id) {
       await supabase.from("client_social_links").update(data).eq("id", socialLinks.id);
+      setSocialLinks((prev: any) => ({ ...prev, ...data }));
     } else {
-      await supabase.from("client_social_links").insert({ package_id: packageId, ...data } as any);
+      const { data: created } = await supabase.from("client_social_links").insert({ package_id: packageId, ...data } as any).select().single();
+      if (created) setSocialLinks(created);
     }
-    fetchAll();
+    toast.success("Social links saved");
   };
 
   const upsertGmb = async (packageId: string, data: Partial<ClientGmb>) => {
     if (gmb?.id) {
       await supabase.from("client_gmb").update(data as any).eq("id", gmb.id);
+      setGmb(prev => prev ? { ...prev, ...data } as ClientGmb : prev);
     } else {
-      await supabase.from("client_gmb").insert({ package_id: packageId, ...data } as any);
+      const { data: created } = await supabase.from("client_gmb").insert({ package_id: packageId, ...data } as any).select().single();
+      if (created) setGmb(created as any);
     }
-    fetchAll();
+    toast.success("GMB saved");
   };
 
-  const generateInstallments = async (packageId: string, totalValue: number, count: number, startDate: string) => {
-    const amount = Math.round((totalValue / count) * 100) / 100;
+  const generateInstallments = async (packageId: string, totalValue: number, count: number, startDate: string, endDate?: string) => {
+    // Rounding fix: ensure sum = totalValue exactly
+    const baseAmount = Math.floor((totalValue / count) * 100) / 100;
+    const remainder = Math.round((totalValue - baseAmount * count) * 100) / 100;
+
     const start = new Date(startDate);
+    const end = endDate ? new Date(endDate) : null;
+
     const rows = Array.from({ length: count }, (_, i) => {
       const due = new Date(start);
-      due.setMonth(due.getMonth() + i);
+      if (end && count > 1) {
+        // Distribute evenly between start and end
+        const totalMs = end.getTime() - start.getTime();
+        const stepMs = totalMs / (count - 1);
+        due.setTime(start.getTime() + stepMs * i);
+      } else {
+        due.setMonth(due.getMonth() + i);
+      }
+      const isLast = i === count - 1;
       return {
         package_id: packageId,
         installment_number: i + 1,
         due_date: due.toISOString().split("T")[0],
-        amount,
+        amount: isLast ? baseAmount + remainder : baseAmount,
         status: "pending",
+        is_missed: false,
       };
     });
+
     // Clear existing
     await supabase.from("package_installments").delete().eq("package_id", packageId);
     await supabase.from("package_installments").insert(rows as any);
     toast.success(`${count} installments generated`);
-    fetchAll();
+    // Local update
+    setInstallments(rows.map((r, i) => ({ ...r, id: `temp-${i}`, paid_date: null })) as any);
+    // Then refetch to get real IDs
+    const { data } = await supabase.from("package_installments").select("*").eq("package_id", packageId).order("installment_number") as any;
+    if (data) setInstallments(data);
   };
 
-  const markInstallmentPaid = async (id: string) => {
+  const markInstallmentPaid = async (id: string, paymentMethod?: string, notes?: string) => {
+    const inst = installments.find(i => i.id === id);
+    if (!inst || !profile?.business_id) return;
+
+    const paidDate = new Date().toISOString().split("T")[0];
     await supabase.from("package_installments").update({
       status: "paid",
-      paid_date: new Date().toISOString().split("T")[0],
+      paid_date: paidDate,
+      is_missed: false,
     } as any).eq("id", id);
+
+    // Log payment
+    await supabase.from("package_payment_logs").insert({
+      installment_id: id,
+      package_id: inst.package_id,
+      business_id: profile.business_id,
+      amount: inst.amount,
+      paid_date: paidDate,
+      payment_method: paymentMethod || "bank_transfer",
+      notes: notes || null,
+    } as any);
+
+    // Local state update
+    setInstallments(prev => prev.map(i => i.id === id ? { ...i, status: "paid", paid_date: paidDate, is_missed: false } : i));
     toast.success("Installment marked as paid");
-    fetchAll();
   };
 
   const markInstallmentSkipped = async (id: string) => {
     await supabase.from("package_installments").update({ status: "skipped" } as any).eq("id", id);
+    setInstallments(prev => prev.map(i => i.id === id ? { ...i, status: "skipped" } : i));
     toast.success("Installment marked as skipped");
-    fetchAll();
   };
 
-  // Computed payment summary
+  // Computed payment summary - next due includes pending, overdue, skipped (excludes only paid)
   const totalPaid = installments.filter(i => i.status === "paid").reduce((s, i) => s + Number(i.amount), 0);
   const totalOutstanding = installments.filter(i => ["pending", "overdue", "skipped"].includes(i.status)).reduce((s, i) => s + Number(i.amount), 0);
   const overdueAmount = installments.filter(i => i.status === "overdue" || (i.status === "pending" && new Date(i.due_date) < new Date())).reduce((s, i) => s + Number(i.amount), 0);
-  const nextDueDate = installments.filter(i => i.status === "pending").sort((a, b) => a.due_date.localeCompare(b.due_date))[0]?.due_date || null;
+  // Next due: earliest unpaid (pending, overdue, or skipped)
+  const nextDueDate = installments
+    .filter(i => ["pending", "overdue", "skipped"].includes(i.status))
+    .sort((a, b) => a.due_date.localeCompare(b.due_date))[0]?.due_date || null;
 
   return {
-    pkg, services, seoData, assets, socialLinks, gmb, installments, events,
+    pkg, services, seoData, assets, socialLinks, gmb, installments, events, paymentLogs,
     loading, fetchAll,
     createPackage, updatePackage, upsertService, upsertSeoData,
     upsertAssets, upsertSocialLinks, upsertGmb,

@@ -15,6 +15,7 @@ export default function CreatePackageDialog({ onCreate }: Props) {
   const [form, setForm] = useState({
     package_name: "Standard Package",
     start_date: new Date().toISOString().split("T")[0],
+    end_date: "",
     contract_type: "month_on_month",
     payment_type: "monthly",
     total_value: 0,
@@ -23,7 +24,7 @@ export default function CreatePackageDialog({ onCreate }: Props) {
 
   const handleSubmit = async () => {
     setSaving(true);
-    await onCreate(form);
+    await onCreate({ ...form, end_date: form.end_date || null });
     setSaving(false);
     setOpen(false);
   };
@@ -42,9 +43,15 @@ export default function CreatePackageDialog({ onCreate }: Props) {
             <Label>Package Name</Label>
             <Input value={form.package_name} onChange={e => setForm(p => ({ ...p, package_name: e.target.value }))} />
           </div>
-          <div className="space-y-1.5">
-            <Label>Start Date</Label>
-            <Input type="date" value={form.start_date} onChange={e => setForm(p => ({ ...p, start_date: e.target.value }))} />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Start Date</Label>
+              <Input type="date" value={form.start_date} onChange={e => setForm(p => ({ ...p, start_date: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>End Date</Label>
+              <Input type="date" value={form.end_date} onChange={e => setForm(p => ({ ...p, end_date: e.target.value }))} />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">

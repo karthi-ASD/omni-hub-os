@@ -16,7 +16,6 @@ export default function ClientPackagePage() {
   const { clientId } = useParams<{ clientId: string }>();
   const { roles, clientId: authClientId } = useAuth();
 
-  // Use URL param for staff, or auth clientId for client users
   const resolvedClientId = clientId || authClientId || undefined;
 
   const {
@@ -73,6 +72,7 @@ export default function ClientPackagePage() {
             packageId={pkg.id}
             totalValue={Number(pkg.total_value)}
             startDate={pkg.start_date}
+            endDate={pkg.end_date}
             onGenerate={generateInstallments}
           />
         )}

@@ -6580,6 +6580,7 @@ export type Database = {
           competitor_visibility: boolean
           contract_type: string
           created_at: string
+          end_date: string | null
           id: string
           package_name: string
           payment_type: string
@@ -6597,6 +6598,7 @@ export type Database = {
           competitor_visibility?: boolean
           contract_type?: string
           created_at?: string
+          end_date?: string | null
           id?: string
           package_name?: string
           payment_type?: string
@@ -6614,6 +6616,7 @@ export type Database = {
           competitor_visibility?: boolean
           contract_type?: string
           created_at?: string
+          end_date?: string | null
           id?: string
           package_name?: string
           payment_type?: string
@@ -16238,6 +16241,7 @@ export type Database = {
           due_date: string
           id: string
           installment_number: number
+          is_missed: boolean
           package_id: string
           paid_date: string | null
           status: string
@@ -16248,6 +16252,7 @@ export type Database = {
           due_date: string
           id?: string
           installment_number: number
+          is_missed?: boolean
           package_id: string
           paid_date?: string | null
           status?: string
@@ -16258,6 +16263,7 @@ export type Database = {
           due_date?: string
           id?: string
           installment_number?: number
+          is_missed?: boolean
           package_id?: string
           paid_date?: string | null
           status?: string
@@ -16265,6 +16271,64 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "package_installments_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "client_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_payment_logs: {
+        Row: {
+          amount: number
+          business_id: string
+          created_at: string
+          id: string
+          installment_id: string
+          notes: string | null
+          package_id: string
+          paid_date: string
+          payment_method: string | null
+        }
+        Insert: {
+          amount?: number
+          business_id: string
+          created_at?: string
+          id?: string
+          installment_id: string
+          notes?: string | null
+          package_id: string
+          paid_date?: string
+          payment_method?: string | null
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          created_at?: string
+          id?: string
+          installment_id?: string
+          notes?: string | null
+          package_id?: string
+          paid_date?: string
+          payment_method?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_payment_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_payment_logs_installment_id_fkey"
+            columns: ["installment_id"]
+            isOneToOne: false
+            referencedRelation: "package_installments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_payment_logs_package_id_fkey"
             columns: ["package_id"]
             isOneToOne: false
             referencedRelation: "client_packages"
@@ -26088,6 +26152,10 @@ export type Database = {
           _phone?: string
         }
         Returns: string
+      }
+      sync_overdue_installments: {
+        Args: { _package_id: string }
+        Returns: undefined
       }
     }
     Enums: {
