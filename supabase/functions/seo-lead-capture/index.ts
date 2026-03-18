@@ -210,12 +210,12 @@ Deno.serve(async (req) => {
 
     if (autoSettings) {
       // Email automation
-      if (autoSettings.enable_email && email) {
+      if (autoSettings.enable_email && cleanEmail) {
         const start = Date.now();
         const emailPayload = {
-          to: email,
+          to: cleanEmail,
           subject: "Thank you for your enquiry",
-          message: `Hi ${name || "there"}, we received your enquiry and will contact you shortly.`,
+          message: `Hi ${cleanName || "there"}, we received your enquiry and will contact you shortly.`,
           business_id: project.business_id,
         };
         try {
