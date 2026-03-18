@@ -187,6 +187,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTenantValidationError(null);
     hasHydratedRef.current = false;
     isHydratingRef.current = false;
+    hydratedSessionKeyRef.current = null;
   }, []);
 
   useEffect(() => {
