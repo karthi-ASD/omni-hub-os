@@ -246,8 +246,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           sessionRef.current = nextSession;
           const previousUserId = previousSession?.user.id ?? null;
           const nextUserId = nextSession?.user.id ?? null;
+          const previousAccessToken = previousSession?.access_token ?? null;
+          const nextAccessToken = nextSession?.access_token ?? null;
 
-          if (!previousSession || !nextSession || previousUserId !== nextUserId) {
+          if (previousUserId !== nextUserId || previousAccessToken !== nextAccessToken) {
             setSession(nextSession);
             setUser(nextSession?.user ?? null);
           }
@@ -257,11 +259,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         case "INITIAL_SESSION":
           break;
 
-        case "SIGNED_IN":
+        case "SIGNED_IN": {
           hasInitializedRef.current = true;
+          const previousSession = sessionRef.current;
+          sessionRef.current = nextSession;
+          const previousUserId = previousSession?.user.id ?? null;
+          const nextUserId = nextSession?.user.id ?? null;
+          const previousAccessToken = previousSession?.access_token ?? null;
+          const nextAccessToken = nextSession?.access_token ?? null;
+          const isSameAuthenticatedSession = !!previousSession && !!nextSession && previousUserId === nextUserId;
+
           setSession(nextSession);
           setUser(nextSession?.user ?? null);
+
           if (nextSession?.user) {
+            if (isSameAuthenticatedSession || hasHydratedRef.current) {
+              if (previousAccessToken !== nextAccessToken) {
+                finalizeLoading();
+              }
+              break;
+            }
+
             clearAllUserState();
             setLoading(true);
             queueHydration(nextSession, "sign_in");
@@ -269,6 +287,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             finalizeLoading();
           }
           break;
+        }
 
         case "SIGNED_OUT":
           hasInitializedRef.current = true;
