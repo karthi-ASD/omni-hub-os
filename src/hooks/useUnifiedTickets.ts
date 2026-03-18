@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -34,7 +34,6 @@ export interface UnifiedTicket {
   escalated_at: string | null;
   created_at: string;
   updated_at: string;
-  // Joined
   client_name?: string;
   client_company?: string;
   assigned_to_name?: string;
@@ -70,29 +69,8 @@ const TICKET_STATUSES = [
   "pending_client_mapping", "escalated", "resolved", "closed",
 ];
 
-function normalizeDepartmentFilter(department?: string) {
-  const normalized = department?.trim().toLowerCase();
-
-  if (!normalized) return undefined;
-  if (["accounts", "finance", "accounting"].includes(normalized)) return "accounts";
-  if (["development", "dev", "web"].includes(normalized)) return "development";
-  if (normalized === "general") return "support";
-
-  return normalized;
-}
-
-function getDepartmentFilterValues(department?: string) {
-  const normalized = normalizeDepartmentFilter(department);
-
-  if (!normalized) return [];
-  if (normalized === "accounts") return ["accounts", "finance", "accounting"];
-  if (normalized === "development") return ["development", "dev", "web"];
-  if (normalized === "support") return ["support", "general"];
-
-  return [normalized];
-}
-
-export function useUnifiedTickets(departmentFilter?: string) {
+// STABILIZATION: All tickets go to support — no department filtering needed
+export function useUnifiedTickets(_departmentFilter?: string) {
   const { profile, isSuperAdmin, isBusinessAdmin } = useAuth();
   const bid = profile?.business_id;
   const [tickets, setTickets] = useState<UnifiedTicket[]>([]);
@@ -102,39 +80,25 @@ export function useUnifiedTickets(departmentFilter?: string) {
     if (!bid) return;
     setLoading(true);
 
-    const departmentValues = getDepartmentFilterValues(departmentFilter);
-
-    let query = supabase
+    // STABILIZATION: Fetch ALL tickets, no department filter
+    const { data, error } = await supabase
       .from("support_tickets")
       .select("*")
       .eq("business_id", bid)
       .order("created_at", { ascending: false })
       .limit(200);
 
-    if (departmentValues.length > 0 && !isSuperAdmin && !isBusinessAdmin) {
-      query = departmentValues.length === 1
-        ? query.eq("department", departmentValues[0])
-        : query.in("department", departmentValues);
-    }
-
-    const { data, error } = await query;
     if (error) {
       console.error("[Tickets] Fetch error:", error);
     } else {
-      console.log("[AdminTickets] Fetched tickets:", {
-        count: data?.length || 0,
-        businessId: bid,
-        departmentFilter: normalizeDepartmentFilter(departmentFilter) || null,
-        appliedDepartmentValues: departmentValues,
-      });
+      console.log("[AdminTickets] Fetched tickets:", data?.length || 0, "for business:", bid);
       setTickets((data as any[]) || []);
     }
     setLoading(false);
-  }, [bid, departmentFilter, isSuperAdmin, isBusinessAdmin]);
+  }, [bid]);
 
   useEffect(() => { fetchTickets(); }, [fetchTickets]);
 
-  // Realtime — scoped to support_tickets table globally
   useEffect(() => {
     if (!bid) return;
     const ch = supabase
@@ -150,7 +114,6 @@ export function useUnifiedTickets(departmentFilter?: string) {
     return () => { supabase.removeChannel(ch); };
   }, [bid, fetchTickets]);
 
-  // Stats
   const now = new Date();
   const stats = {
     total: tickets.length,
@@ -167,7 +130,6 @@ export function useUnifiedTickets(departmentFilter?: string) {
     unassigned: tickets.filter(t => !t.assigned_to_user_id && !["resolved", "closed"].includes(t.status)).length,
   };
 
-  // Create ticket with duplicate prevention
   const createTicket = useCallback(async (data: {
     subject: string;
     description?: string;
@@ -181,12 +143,13 @@ export function useUnifiedTickets(departmentFilter?: string) {
   }) => {
     if (!bid || !profile?.user_id) return null;
 
-    // CRITICAL: For client users, resolve the correct provider business_id
-    // profile.business_id for client users is their TENANT business, not the provider's
+    // STABILIZATION: Force department to support
+    const forcedDepartment = "support";
+    console.log("[Tickets] Forced department:", forcedDepartment);
+
     let effectiveBusinessId = bid;
     let effectiveClientId = data.client_id || null;
 
-    // Check if the current user is a client user and resolve correct business_id
     const { data: clientLink } = await supabase
       .from("client_users")
       .select("client_id")
@@ -206,7 +169,7 @@ export function useUnifiedTickets(departmentFilter?: string) {
       }
     }
 
-    // Duplicate prevention: same subject within 2 minutes
+    // Duplicate prevention
     const twoMinAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
     const { data: dupes } = await supabase
       .from("support_tickets")
@@ -227,7 +190,7 @@ export function useUnifiedTickets(departmentFilter?: string) {
       description: data.description || null,
       category: data.category || "general",
       priority: data.priority || "medium",
-      department: data.department || "support",
+      department: forcedDepartment,
       sender_email: data.sender_email || null,
       sender_name: data.sender_name || null,
       client_id: effectiveClientId,
@@ -235,8 +198,9 @@ export function useUnifiedTickets(departmentFilter?: string) {
       client_match_status: effectiveClientId ? "matched" : "unmatched",
       channel: "portal",
       status: "open",
+      assigned_to_user_id: null,
     };
-    console.log("[Tickets] Creating ticket:", payload);
+    console.log("[Tickets] Final payload:", payload);
 
     const { data: inserted, error } = await supabase
       .from("support_tickets")
@@ -248,17 +212,15 @@ export function useUnifiedTickets(departmentFilter?: string) {
     const ticket = inserted as any;
     console.log("[Tickets] Created:", ticket.ticket_number, ticket.id);
 
-    // Log audit
     await supabase.from("ticket_audit_log").insert({
       business_id: bid,
       ticket_id: ticket.id,
       user_id: profile.user_id,
       user_name: profile.full_name || profile.email,
       action_type: "ticket_created",
-      details: `Manually created. Department: ${data.department || "support"}.`,
+      details: `Created. Department forced to support.`,
     } as any);
 
-    // Trigger auto-reply notification to client
     try {
       await supabase.functions.invoke("ticket-auto-reply", {
         body: {
@@ -278,7 +240,6 @@ export function useUnifiedTickets(departmentFilter?: string) {
     return inserted;
   }, [bid, profile, fetchTickets]);
 
-  // Update status
   const updateStatus = useCallback(async (id: string, newStatus: string) => {
     const current = tickets.find(t => t.id === id);
     const updates: any = { status: newStatus, updated_at: new Date().toISOString() };
@@ -288,167 +249,118 @@ export function useUnifiedTickets(departmentFilter?: string) {
 
     await supabase.from("support_tickets").update(updates).eq("id", id);
     await supabase.from("ticket_audit_log").insert({
-      business_id: bid,
-      ticket_id: id,
-      user_id: profile?.user_id,
-      user_name: profile?.full_name || profile?.email,
-      action_type: "status_changed",
-      old_value: current?.status,
-      new_value: newStatus,
+      business_id: bid, ticket_id: id,
+      user_id: profile?.user_id, user_name: profile?.full_name || profile?.email,
+      action_type: "status_changed", old_value: current?.status, new_value: newStatus,
     } as any);
     toast.success(`Status → ${newStatus.replace(/_/g, " ")}`);
     fetchTickets();
   }, [bid, profile, tickets, fetchTickets]);
 
-  // Assign ticket
   const assignTicket = useCallback(async (id: string, userId: string, userName?: string) => {
     await supabase.from("support_tickets").update({
-      assigned_to_user_id: userId,
-      status: "assigned",
-      updated_at: new Date().toISOString(),
+      assigned_to_user_id: userId, status: "assigned", updated_at: new Date().toISOString(),
     }).eq("id", id);
     await supabase.from("ticket_audit_log").insert({
-      business_id: bid,
-      ticket_id: id,
-      user_id: profile?.user_id,
-      user_name: profile?.full_name || profile?.email,
-      action_type: "assigned",
-      new_value: userName || userId,
+      business_id: bid, ticket_id: id,
+      user_id: profile?.user_id, user_name: profile?.full_name || profile?.email,
+      action_type: "assigned", new_value: userName || userId,
     } as any);
     toast.success("Ticket assigned");
     fetchTickets();
   }, [bid, profile, fetchTickets]);
 
-  // Link ticket to client
   const linkToClient = useCallback(async (ticketId: string, clientId: string, saveAlternateEmail?: boolean) => {
     const ticket = tickets.find(t => t.id === ticketId);
     await supabase.from("support_tickets").update({
-      client_id: clientId,
-      client_match_status: "matched",
-      linked_by_user_id: profile?.user_id,
-      linked_at: new Date().toISOString(),
+      client_id: clientId, client_match_status: "matched",
+      linked_by_user_id: profile?.user_id, linked_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     } as any).eq("id", ticketId);
 
     if (saveAlternateEmail && ticket?.sender_email && bid) {
       await supabase.from("client_alternate_emails" as any).insert({
-        business_id: bid,
-        client_id: clientId,
-        email: ticket.sender_email,
-        label: "alternate",
-        added_by_user_id: profile?.user_id,
+        business_id: bid, client_id: clientId, email: ticket.sender_email,
+        label: "alternate", added_by_user_id: profile?.user_id,
       }).then(({ error }) => {
-        if (error && !error.message.includes("duplicate")) {
-          console.warn("Could not save alternate email:", error);
-        }
+        if (error && !error.message.includes("duplicate")) console.warn("Could not save alternate email:", error);
       });
     }
 
     await supabase.from("ticket_audit_log").insert({
-      business_id: bid,
-      ticket_id: ticketId,
-      user_id: profile?.user_id,
-      user_name: profile?.full_name || profile?.email,
-      action_type: "client_linked",
-      new_value: clientId,
+      business_id: bid, ticket_id: ticketId,
+      user_id: profile?.user_id, user_name: profile?.full_name || profile?.email,
+      action_type: "client_linked", new_value: clientId,
       details: saveAlternateEmail ? `Alternate email saved: ${ticket?.sender_email}` : undefined,
     } as any);
-
     toast.success("Ticket linked to client");
     fetchTickets();
   }, [bid, profile, tickets, fetchTickets]);
 
-  // Change department
   const changeDepartment = useCallback(async (id: string, dept: string) => {
     const current = tickets.find(t => t.id === id);
     await supabase.from("support_tickets").update({
       department: dept, updated_at: new Date().toISOString(),
     }).eq("id", id);
     await supabase.from("ticket_audit_log").insert({
-      business_id: bid,
-      ticket_id: id,
-      user_id: profile?.user_id,
-      user_name: profile?.full_name || profile?.email,
-      action_type: "department_changed",
-      old_value: current?.department,
-      new_value: dept,
+      business_id: bid, ticket_id: id,
+      user_id: profile?.user_id, user_name: profile?.full_name || profile?.email,
+      action_type: "department_changed", old_value: current?.department, new_value: dept,
     } as any);
     toast.success(`Routed to ${dept}`);
     fetchTickets();
   }, [bid, profile, tickets, fetchTickets]);
 
-  // Change priority
   const changePriority = useCallback(async (id: string, priority: string) => {
     const current = tickets.find(t => t.id === id);
     await supabase.from("support_tickets").update({
       priority, updated_at: new Date().toISOString(),
     }).eq("id", id);
     await supabase.from("ticket_audit_log").insert({
-      business_id: bid,
-      ticket_id: id,
-      user_id: profile?.user_id,
-      user_name: profile?.full_name || profile?.email,
-      action_type: "priority_changed",
-      old_value: current?.priority,
-      new_value: priority,
+      business_id: bid, ticket_id: id,
+      user_id: profile?.user_id, user_name: profile?.full_name || profile?.email,
+      action_type: "priority_changed", old_value: current?.priority, new_value: priority,
     } as any);
     toast.success(`Priority → ${priority}`);
     fetchTickets();
   }, [bid, profile, tickets, fetchTickets]);
 
-  // Fetch messages
   const fetchMessages = useCallback(async (ticketId: string): Promise<TicketMessage[]> => {
     const { data } = await supabase
-      .from("ticket_messages")
-      .select("*")
-      .eq("ticket_id", ticketId)
-      .order("created_at", { ascending: true });
+      .from("ticket_messages").select("*")
+      .eq("ticket_id", ticketId).order("created_at", { ascending: true });
     return (data as any[]) || [];
   }, []);
 
-  // Add message with first_response_at tracking
   const addMessage = useCallback(async (ticketId: string, content: string, isInternal: boolean) => {
     if (!bid || !profile?.user_id) return;
     await supabase.from("ticket_messages").insert({
-      business_id: bid,
-      ticket_id: ticketId,
-      sender_type: "agent",
-      sender_user_id: profile.user_id,
-      sender_name: profile.full_name || profile.email,
-      content,
-      is_internal: isInternal,
+      business_id: bid, ticket_id: ticketId, sender_type: "agent",
+      sender_user_id: profile.user_id, sender_name: profile.full_name || profile.email,
+      content, is_internal: isInternal,
     });
 
-    // Auto first response tracking — only on non-internal replies
     if (!isInternal) {
       const ticket = tickets.find(t => t.id === ticketId);
       if (ticket && !ticket.first_response_at) {
         await supabase.from("support_tickets").update({
-          first_response_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          first_response_at: new Date().toISOString(), updated_at: new Date().toISOString(),
         }).eq("id", ticketId);
-        console.log("[Tickets] First response recorded for", ticket.ticket_number);
       }
     }
 
     await supabase.from("ticket_audit_log").insert({
-      business_id: bid,
-      ticket_id: ticketId,
-      user_id: profile.user_id,
-      user_name: profile.full_name || profile.email,
-      action_type: isInternal ? "internal_note" : "reply_sent",
-      details: content.slice(0, 200),
+      business_id: bid, ticket_id: ticketId,
+      user_id: profile.user_id, user_name: profile.full_name || profile.email,
+      action_type: isInternal ? "internal_note" : "reply_sent", details: content.slice(0, 200),
     } as any);
     toast.success(isInternal ? "Internal note added" : "Reply sent");
   }, [bid, profile, tickets]);
 
-  // Fetch audit log
   const fetchAuditLog = useCallback(async (ticketId: string): Promise<TicketAuditEntry[]> => {
     const { data } = await supabase
-      .from("ticket_audit_log")
-      .select("*")
-      .eq("ticket_id", ticketId)
-      .order("created_at", { ascending: true });
+      .from("ticket_audit_log").select("*")
+      .eq("ticket_id", ticketId).order("created_at", { ascending: true });
     return (data as any[]) || [];
   }, []);
 

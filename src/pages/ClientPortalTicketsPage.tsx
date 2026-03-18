@@ -18,7 +18,8 @@ import { Plus, Ticket, Clock, CheckCircle2, AlertTriangle, Send, ArrowLeft, Mess
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-const DEPARTMENTS = ["support", "seo", "accounts", "development", "general"];
+// STABILIZATION: All tickets forced to support — department list kept for display only
+const DEPARTMENTS = ["support"];
 
 const statusVariants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   open: "default",
@@ -338,14 +339,8 @@ export default function ClientPortalTicketsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Department</Label>
-                <Select value={form.department} onValueChange={(value) => setForm((prev) => ({ ...prev, department: value }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {DEPARTMENTS.map((dept) => (
-                      <SelectItem key={dept} value={dept}>{dept.charAt(0).toUpperCase() + dept.slice(1)}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input value="Support" disabled className="bg-muted" />
+                <p className="text-[10px] text-muted-foreground mt-1">All tickets go to Support</p>
               </div>
               <div>
                 <Label>Priority</Label>
