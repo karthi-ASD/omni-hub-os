@@ -6449,6 +6449,85 @@ export type Database = {
           },
         ]
       }
+      client_integrations: {
+        Row: {
+          business_id: string
+          call_tracking_number: string | null
+          client_id: string
+          created_at: string
+          facebook_ads_id: string | null
+          ga_property_id: string | null
+          google_ads_id: string | null
+          gsc_property: string | null
+          hosting_details: string | null
+          id: string
+          last_synced_at: string | null
+          status: string
+          updated_at: string
+          webhook_url: string | null
+          website_url: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          business_id: string
+          call_tracking_number?: string | null
+          client_id: string
+          created_at?: string
+          facebook_ads_id?: string | null
+          ga_property_id?: string | null
+          google_ads_id?: string | null
+          gsc_property?: string | null
+          hosting_details?: string | null
+          id?: string
+          last_synced_at?: string | null
+          status?: string
+          updated_at?: string
+          webhook_url?: string | null
+          website_url?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          business_id?: string
+          call_tracking_number?: string | null
+          client_id?: string
+          created_at?: string
+          facebook_ads_id?: string | null
+          ga_property_id?: string | null
+          google_ads_id?: string | null
+          gsc_property?: string | null
+          hosting_details?: string | null
+          id?: string
+          last_synced_at?: string | null
+          status?: string
+          updated_at?: string
+          webhook_url?: string | null
+          website_url?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_integrations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_integrations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "client_integrity_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_integrations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_mobile_apps: {
         Row: {
           app_category: string | null
