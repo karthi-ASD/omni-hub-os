@@ -263,7 +263,7 @@ const SeoTeamDashboardPage = () => {
                         <Button
                           size="sm"
                           variant={client.seo_step_status === "completed" ? "outline" : "default"}
-                          onClick={() => navigate(`/clients/${client.client_id}?tab=packages`)}
+                          onClick={() => navigate(`/client-package/${client.client_id}`)}
                           className="gap-1"
                         >
                           {getActionLabel(client.seo_step_status)}
