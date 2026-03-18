@@ -207,8 +207,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const hydrateUserState = async (nextSession: Session, source: "initial" | "sign_in") => {
-      if (isHydratingRef.current) return;
+      const hydrationKey = getSessionHydrationKey(nextSession);
 
+      if (isHydratingRef.current) return;
+      if (hydratedSessionKeyRef.current === hydrationKey) {
+        console.log("[Hydration] skipped duplicate", { source, hydrationKey });
+        hasHydratedRef.current = true;
+        finalizeLoading();
+        return;
+      }
+
+      console.log("[Hydration] start", { source, hydrationKey });
       isHydratingRef.current = true;
 
       try {
@@ -232,7 +241,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
+        hydratedSessionKeyRef.current = hydrationKey;
         hasHydratedRef.current = true;
+        console.log("[Hydration] complete", { source, hydrationKey });
       } finally {
         isHydratingRef.current = false;
         finalizeLoading();
