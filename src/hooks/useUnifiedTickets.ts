@@ -153,12 +153,37 @@ export function useUnifiedTickets(departmentFilter?: string) {
   }) => {
     if (!bid || !profile?.user_id) return null;
 
+    // CRITICAL: For client users, resolve the correct provider business_id
+    // profile.business_id for client users is their TENANT business, not the provider's
+    let effectiveBusinessId = bid;
+    let effectiveClientId = data.client_id || null;
+
+    // Check if the current user is a client user and resolve correct business_id
+    const { data: clientLink } = await supabase
+      .from("client_users")
+      .select("client_id")
+      .eq("user_id", profile.user_id)
+      .eq("is_primary", true)
+      .maybeSingle();
+
+    if (clientLink?.client_id) {
+      const { data: clientRecord } = await supabase
+        .from("clients")
+        .select("business_id")
+        .eq("id", clientLink.client_id)
+        .maybeSingle();
+      if (clientRecord?.business_id) {
+        effectiveBusinessId = clientRecord.business_id;
+        effectiveClientId = effectiveClientId || clientLink.client_id;
+      }
+    }
+
     // Duplicate prevention: same subject within 2 minutes
     const twoMinAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
     const { data: dupes } = await supabase
       .from("support_tickets")
       .select("id")
-      .eq("business_id", bid)
+      .eq("business_id", effectiveBusinessId)
       .eq("subject", data.subject)
       .gte("created_at", twoMinAgo)
       .limit(1);
@@ -168,7 +193,7 @@ export function useUnifiedTickets(departmentFilter?: string) {
     }
 
     const payload = {
-      business_id: bid,
+      business_id: effectiveBusinessId,
       created_by_user_id: profile.user_id,
       subject: data.subject,
       description: data.description || null,
@@ -177,9 +202,9 @@ export function useUnifiedTickets(departmentFilter?: string) {
       department: data.department || "support",
       sender_email: data.sender_email || null,
       sender_name: data.sender_name || null,
-      client_id: data.client_id || null,
+      client_id: effectiveClientId,
       source_type: data.source_type || "manual",
-      client_match_status: data.client_id ? "matched" : "unmatched",
+      client_match_status: effectiveClientId ? "matched" : "unmatched",
       channel: "portal",
       status: "open",
     };
