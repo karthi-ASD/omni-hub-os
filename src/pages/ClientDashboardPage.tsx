@@ -468,7 +468,7 @@ const ClientDashboardPage = () => {
               { label: "View Reports", icon: BarChart3, to: "/client-reports" },
               { label: "Invoices", icon: Receipt, to: "/my-billing" },
               { label: "Raise Ticket", icon: Ticket, to: "/unified-tickets" },
-              { label: "My Package", icon: Briefcase, to: "/my-billing" },
+              { label: "My Package", icon: Briefcase, to: "/my-package" },
             ].map(action => (
               <button
                 key={action.to + action.label}
