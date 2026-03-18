@@ -258,11 +258,32 @@ const queryClient = new QueryClient({
       staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
+      refetchOnMount: false,
       refetchInterval: false,
       retry: 1,
     },
   },
 });
+
+if (typeof window !== "undefined") {
+  queryClient.getQueryCache().subscribe((event) => {
+    const queryEvent = event as {
+      type?: string;
+      action?: { type?: string };
+      query?: { queryKey?: readonly unknown[] };
+    };
+
+    if (queryEvent.type !== "updated") return;
+
+    if (queryEvent.action?.type === "fetch") {
+      console.log("REFETCH TRIGGERED", queryEvent.query?.queryKey ?? []);
+    }
+
+    if (queryEvent.action?.type === "fetch" || queryEvent.action?.type === "success") {
+      console.log("QUERY RE-RUN", queryEvent.query?.queryKey ?? []);
+    }
+  });
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

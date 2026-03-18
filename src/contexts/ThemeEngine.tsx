@@ -703,45 +703,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     applyThemeVars(currentTheme);
   }, [currentTheme]);
 
-  // Timed auto-rotation should never mutate the app while the tab is hidden.
   useEffect(() => {
     if (rotateMode !== "timed" || isLocked || typeof document === "undefined") return;
+    if (document.visibilityState !== "visible") return;
 
-    let intervalId: ReturnType<typeof setInterval> | null = null;
-
-    const rotate = () => {
-      setThemeId(prev => {
-        const idx = THEMES.findIndex(t => t.id === prev);
+    const intervalId = window.setInterval(() => {
+      setThemeId((prev) => {
+        const idx = THEMES.findIndex((t) => t.id === prev);
         return THEMES[(idx + 1) % THEMES.length].id;
       });
-    };
-
-    const stopRotation = () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = null;
-      }
-    };
-
-    const startRotation = () => {
-      if (intervalId || document.visibilityState !== "visible") return;
-      intervalId = setInterval(rotate, rotateIntervalMs);
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        startRotation();
-      } else {
-        stopRotation();
-      }
-    };
-
-    startRotation();
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    }, rotateIntervalMs);
 
     return () => {
-      stopRotation();
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.clearInterval(intervalId);
     };
   }, [rotateMode, isLocked, rotateIntervalMs]);
 

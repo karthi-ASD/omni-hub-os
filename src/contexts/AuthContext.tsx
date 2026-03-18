@@ -328,11 +328,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (hasInitializedRef.current) return;
 
         hasInitializedRef.current = true;
+        sessionRef.current = currentSession;
         setLoading(true);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
 
         if (currentSession?.user) {
+          const hydrationKey = getSessionHydrationKey(currentSession);
+          if (hydrationKey && hydratedSessionKeyRef.current === hydrationKey) {
+            console.log("[Hydration] initial session already hydrated", { hydrationKey });
+            hasHydratedRef.current = true;
+            finalizeLoading();
+            return;
+          }
+
           queueHydration(currentSession, "initial");
         } else {
           setTenantValidationError(null);

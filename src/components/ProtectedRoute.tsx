@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,18 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles }) => {
   const { session, loading, roles, user, tenantValidationError } = useAuth();
   const [securityCheck, setSecurityCheck] = useState<"loading" | "pass" | "required">("pass");
+  const hasSettledAccessRef = useRef(false);
+
+  useEffect(() => {
+    if (!session) {
+      hasSettledAccessRef.current = false;
+      return;
+    }
+
+    if (!loading && !tenantValidationError && securityCheck !== "loading") {
+      hasSettledAccessRef.current = true;
+    }
+  }, [session, loading, tenantValidationError, securityCheck]);
 
   useEffect(() => {
     if (loading || tenantValidationError) return;
@@ -26,7 +38,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
   }, [user?.id, loading, tenantValidationError]);
 
   const checkFirstLoginSecurity = async () => {
-    if (!user) { setSecurityCheck("pass"); return; }
+    if (!user) {
+      setSecurityCheck("pass");
+      return;
+    }
 
     setSecurityCheck("loading");
     const safetyTimeout = window.setTimeout(() => {
@@ -39,6 +54,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
         .select("requires_security_setup")
         .eq("user_id", user.id)
         .single();
+
       if (data && (data as any).requires_security_setup) {
         setSecurityCheck("required");
       } else {
@@ -51,7 +67,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
     }
   };
 
-  if (loading || (user && securityCheck === "loading")) {
+  console.log("PROTECTED ROUTE RENDER", {
+    hasSession: !!session,
+    loading,
+    securityCheck,
+    tenantValidationError: !!tenantValidationError,
+    requiredRoles: requiredRoles ?? [],
+  });
+
+  const showBlockingLoader = !hasSettledAccessRef.current && (loading || (user && securityCheck === "loading"));
+
+  if (showBlockingLoader) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -79,6 +105,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
 
   if (securityCheck === "required") {
     return <Navigate to="/security-setup" replace />;
+  }
+
+  if (loading || securityCheck === "loading") {
+    return <>{children}</>;
   }
 
   if (requiredRoles && requiredRoles.length > 0) {
