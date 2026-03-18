@@ -62,6 +62,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const sessionRef = React.useRef<Session | null>(null);
   const hydratedSessionKeyRef = React.useRef<string | null>(null);
 
+  const getSessionHydrationKey = (currentSession: Session | null) => {
+    if (!currentSession) return null;
+    return `${currentSession.user.id}:${currentSession.refresh_token ?? currentSession.access_token}`;
+  };
+
   const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
