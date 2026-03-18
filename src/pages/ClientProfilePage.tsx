@@ -1059,6 +1059,11 @@ const ClientProfilePage = () => {
         <TabsContent value="calls">
           {id && <ClientCallsTab clientId={id} />}
         </TabsContent>
+
+        {/* ── Contact Form Creation ── */}
+        <TabsContent value="contact-forms">
+          {id && <ContactFormCreationTab clientId={id} />}
+        </TabsContent>
       </Tabs>
 
       {/* Add Website Dialog */}

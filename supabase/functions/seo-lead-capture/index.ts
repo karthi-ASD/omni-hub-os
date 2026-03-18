@@ -49,10 +49,34 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Limit payload size (50KB max)
+    const contentLength = parseInt(req.headers.get("content-length") || "0");
+    if (contentLength > 50000) return json({ error: "Payload too large" }, 413);
+
     const body = await req.json();
-    const { name, email, phone, message, project_id, source, form_id, extra_data, api_key } = body;
+    const { name, email, phone, message, project_id, source, form_id, extra_data, api_key,
+            utm_source, utm_medium, utm_campaign, page_url } = body;
 
     if (!project_id) return json({ error: "project_id is required" }, 400);
+
+    // Sanitize inputs
+    const cleanName = (name || "").toString().trim().replace(/[\u200B\u200C\u200D\uFEFF]/g, "").slice(0, 200);
+    const cleanEmail = (email || "").toString().trim().toLowerCase().slice(0, 255);
+    const cleanPhone = (phone || "").toString().trim().slice(0, 30);
+    const cleanMessage = (message || "").toString().trim().replace(/[\u200B\u200C\u200D\uFEFF]/g, "").slice(0, 5000);
+
+    // Require name and phone for form submissions
+    if (source !== "call_click") {
+      if (!cleanName) return json({ error: "Name is required" }, 400);
+      if (!cleanPhone) return json({ error: "Phone is required" }, 400);
+    }
+
+    // Capture IP and User-Agent
+    const ipAddress = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      || req.headers.get("cf-connecting-ip")
+      || req.headers.get("x-real-ip")
+      || "unknown";
+    const userAgent = (req.headers.get("user-agent") || "").slice(0, 500);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -72,13 +96,19 @@ Deno.serve(async (req) => {
       return json({ error: "Unauthorized: invalid or missing api_key" }, 401);
     }
 
+    // Validate client_id exists
+    if (project.client_id) {
+      const { data: clientCheck } = await supabase.from("clients").select("id").eq("id", project.client_id).single();
+      if (!clientCheck) return json({ error: "Invalid client mapping" }, 400);
+    }
+
     // Strict origin validation
     const allowedDomains = project.website_domain ? [project.website_domain] : null;
     if (!validateOrigin(req, allowedDomains)) {
       return json({ error: "Origin not allowed" }, 403);
     }
 
-    // Rate limiting
+    // Rate limiting (per IP, 20/min)
     const oneMinAgo = new Date(Date.now() - 60 * 1000).toISOString();
     const { count } = await supabase
       .from("seo_captured_leads")
@@ -96,19 +126,33 @@ Deno.serve(async (req) => {
       if (!form) return json({ error: "Invalid form_id for this project" }, 400);
     }
 
-    // Duplicate check
-    if (email) {
+    // Duplicate check: same phone within 60 seconds
+    if (cleanPhone) {
+      const countryCode = project.default_country_code || "+61";
+      const normPhone = normalizePhone(cleanPhone, countryCode);
+      if (normPhone) {
+        const oneMinAgoDedup = new Date(Date.now() - 60 * 1000).toISOString();
+        const { data: phoneDupes } = await supabase
+          .from("seo_captured_leads").select("id")
+          .eq("seo_project_id", project_id).eq("phone", normPhone)
+          .gte("created_at", oneMinAgoDedup).limit(1);
+        if (phoneDupes && phoneDupes.length > 0) return json({ error: "Duplicate lead detected" }, 409);
+      }
+    }
+
+    // Duplicate check: same email within 2 minutes
+    if (cleanEmail) {
       const twoMinAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
       const { data: dupes } = await supabase
         .from("seo_captured_leads").select("id")
-        .eq("seo_project_id", project_id).eq("email", email)
+        .eq("seo_project_id", project_id).eq("email", cleanEmail)
         .gte("created_at", twoMinAgo).limit(1);
       if (dupes && dupes.length > 0) return json({ error: "Duplicate lead detected" }, 409);
     }
 
     // Normalize phone with project country code
     const countryCode = project.default_country_code || "+61";
-    const normalizedPhone = normalizePhone(phone, countryCode);
+    const normalizedPhone = normalizePhone(cleanPhone, countryCode);
 
     const { data: lead, error: insertErr } = await supabase
       .from("seo_captured_leads")
@@ -116,13 +160,19 @@ Deno.serve(async (req) => {
         business_id: project.business_id,
         seo_project_id: project_id,
         client_id: project.client_id,
-        name: name || null,
-        email: email || null,
+        name: cleanName || null,
+        email: cleanEmail || null,
         phone: normalizedPhone,
-        message: message || null,
+        message: cleanMessage || null,
         source: source || "form",
         form_id: form_id || null,
         extra_data: extra_data || null,
+        page_url: page_url || null,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        utm_source: utm_source || null,
+        utm_medium: utm_medium || null,
+        utm_campaign: utm_campaign || null,
       })
       .select().single();
 
