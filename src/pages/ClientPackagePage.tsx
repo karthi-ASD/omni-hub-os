@@ -39,8 +39,9 @@ export default function ClientPackagePage() {
   const canAccessSEO = isAdmin || isSEODept;
   const isReadOnly = isClient;
   const canManagePayments = isFinance;
+  const canEditOnboarding = isAdmin || isSEODept;
 
-  console.log("SEO TAB DEBUG", { roles, departmentName, isSEODept, isAdmin, canAccessSEO });
+  console.log("SEO TAB DEBUG", { roles, departmentName, isSEODept, isAdmin, canAccessSEO, canEditOnboarding });
 
   const {
     steps: onboardingSteps,
@@ -131,8 +132,8 @@ export default function ClientPackagePage() {
             steps={onboardingSteps}
             progress={onboardingProgress}
             completedCount={onboardingCompleted}
-            isReadOnly={isClient}
-            onUpdateStatus={!isClient ? updateStepStatus : undefined}
+            canEditOnboarding={canEditOnboarding}
+            onUpdateStatus={canEditOnboarding ? updateStepStatus : undefined}
           />
         </div>
       )}

@@ -1,17 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Props {
   onCreate: (data: any) => Promise<any>;
 }
 
+interface StaffMember {
+  user_id: string;
+  full_name: string;
+}
+
 export default function CreatePackageDialog({ onCreate }: Props) {
+  const { profile } = useAuth();
   const [open, setOpen] = useState(false);
+  const [seoManagers, setSeoManagers] = useState<StaffMember[]>([]);
   const [form, setForm] = useState({
     package_name: "Standard Package",
     start_date: new Date().toISOString().split("T")[0],
@@ -19,12 +28,43 @@ export default function CreatePackageDialog({ onCreate }: Props) {
     contract_type: "month_on_month",
     payment_type: "monthly",
     total_value: 0,
+    seo_manager_id: "",
   });
   const [saving, setSaving] = useState(false);
 
+  // Fetch staff who are in SEO/Digital Marketing departments
+  useEffect(() => {
+    if (!open || !profile?.business_id) return;
+    const fetchSeoStaff = async () => {
+      const { data } = await supabase
+        .from("employees")
+        .select("user_id, first_name, last_name, department")
+        .eq("business_id", profile.business_id)
+        .eq("status", "active") as any;
+
+      const filtered = (data || [])
+        .filter((e: any) => {
+          const dept = (e.department || "").toLowerCase();
+          return dept.includes("seo") || dept.includes("digital marketing");
+        })
+        .map((e: any) => ({
+          user_id: e.user_id,
+          full_name: `${e.first_name || ""} ${e.last_name || ""}`.trim() || "Unnamed",
+        }))
+        .filter((e: StaffMember) => e.user_id);
+
+      setSeoManagers(filtered);
+    };
+    fetchSeoStaff();
+  }, [open, profile?.business_id]);
+
   const handleSubmit = async () => {
     setSaving(true);
-    await onCreate({ ...form, end_date: form.end_date || null });
+    await onCreate({
+      ...form,
+      end_date: form.end_date || null,
+      seo_manager_id: form.seo_manager_id || null,
+    });
     setSaving(false);
     setOpen(false);
   };
@@ -77,6 +117,19 @@ export default function CreatePackageDialog({ onCreate }: Props) {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>SEO Manager</Label>
+            <Select value={form.seo_manager_id} onValueChange={v => setForm(p => ({ ...p, seo_manager_id: v }))}>
+              <SelectTrigger><SelectValue placeholder="Select SEO Manager" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Unassigned</SelectItem>
+                {seoManagers.map(m => (
+                  <SelectItem key={m.user_id} value={m.user_id}>{m.full_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Required for SEO team visibility</p>
           </div>
           <div className="space-y-1.5">
             <Label>Total Value ($)</Label>
