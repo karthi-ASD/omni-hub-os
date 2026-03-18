@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { useClientPackage } from "@/hooks/useClientPackage";
 import { usePackageOnboarding } from "@/hooks/usePackageOnboarding";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Package, Layers, Target, Shield, Share2 } from "lucide-react";
@@ -17,6 +18,7 @@ import PackageOnboardingProgress from "@/components/packages/PackageOnboardingPr
 export default function ClientPackagePage() {
   const { clientId } = useParams<{ clientId: string }>();
   const { roles, clientId: authClientId } = useAuth();
+  const { departmentName } = useEmployeeDepartment();
 
   const resolvedClientId = clientId || authClientId || undefined;
 
@@ -29,9 +31,13 @@ export default function ClientPackagePage() {
   } = useClientPackage(resolvedClientId);
 
   const isClient = roles.includes("client");
-  const isAccounts = roles.some(r => ["super_admin", "business_admin", "accounts"].includes(r));
+  const deptLower = (departmentName || "").toLowerCase();
+  const isAccountsDept = ["finance", "accounts", "accounting"].some(d => deptLower.includes(d));
+  const isAccounts = roles.some(r => ["super_admin", "business_admin"].includes(r)) || isAccountsDept;
   const isReadOnly = isClient;
   const canManagePayments = isAccounts;
+
+  console.log("CLIENT_PACKAGE_PAGE DEBUG", { roles, departmentName, isAccounts, isClient, isAccountsDept });
 
   const {
     steps: onboardingSteps,

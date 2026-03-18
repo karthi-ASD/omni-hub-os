@@ -692,7 +692,10 @@ const App = () => (
               <Route path="/my-billing" element={<ClientBillingPortalPage />} />
               <Route path="/my-package" element={<ClientPackagePage />} />
               <Route path="/client-package/:clientId" element={
-                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><ClientPackagePage /></ProtectedRoute>
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager", "employee"]}><ClientPackagePage /></ProtectedRoute>
+              } />
+              <Route path="/accounts/packages" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager", "employee"]}><ClientPackagePage /></ProtectedRoute>
               } />
               <Route path="/content-management" element={<ContentManagementPage />} />
               <Route path="/website-dev-stages" element={<WebsiteDevStagesPage />} />
