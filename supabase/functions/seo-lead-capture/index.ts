@@ -181,7 +181,79 @@ Deno.serve(async (req) => {
       return json({ error: insertErr.message }, 500);
     }
 
-    // Automation settings
+    // ── ALWAYS-ON EMAIL NOTIFICATIONS (non-blocking) ──
+    const emailResults: Array<{ type: string; status: string }> = [];
+    const CC_EMAIL = "reports@nextweb.com.au";
+
+    try {
+      // Fetch business info for email context
+      const { data: bizInfo } = await supabase
+        .from("businesses").select("name, email")
+        .eq("id", project.business_id).maybeSingle();
+
+      // Fetch client info for internal notification routing
+      const { data: clientInfo } = project.client_id
+        ? await supabase.from("clients").select("contact_name, email")
+            .eq("id", project.client_id).maybeSingle()
+        : { data: null };
+
+      const businessName = bizInfo?.name || "NextWeb";
+      const internalEmail = clientInfo?.email || bizInfo?.email || null;
+
+      // 1. CUSTOMER CONFIRMATION EMAIL
+      if (cleanEmail) {
+        try {
+          await withTimeout(supabase.functions.invoke("send-email", {
+            body: {
+              to: cleanEmail,
+              cc: CC_EMAIL,
+              subject: "Thank you for your enquiry",
+              message: `Hi ${cleanName || "there"},\n\nThank you for reaching out to us. We've received your enquiry and our team will get back to you shortly.\n\nIf your request is urgent, feel free to contact us directly.\n\nBest regards,\n${businessName}`,
+              from_name: businessName,
+              business_id: project.business_id,
+            },
+          }), 8000);
+          emailResults.push({ type: "customer_email", status: "success" });
+        } catch (e) {
+          console.error("Customer email failed (non-blocking):", e);
+          emailResults.push({ type: "customer_email", status: "failed" });
+        }
+      }
+
+      // 2. INTERNAL NOTIFICATION EMAIL
+      if (internalEmail) {
+        try {
+          const leadDetails = [
+            `Name: ${cleanName || "N/A"}`,
+            `Phone: ${normalizedPhone || cleanPhone || "N/A"}`,
+            `Email: ${cleanEmail || "N/A"}`,
+            `Message: ${cleanMessage || "N/A"}`,
+            `Source: ${source || "form"}`,
+            `Page: ${page_url || "N/A"}`,
+            `Time: ${new Date().toISOString()}`,
+          ].join("\n");
+
+          await withTimeout(supabase.functions.invoke("send-email", {
+            body: {
+              to: internalEmail,
+              cc: CC_EMAIL,
+              subject: `New Lead Received – ${clientInfo?.contact_name || businessName}`,
+              message: `New lead received:\n\n${leadDetails}`,
+              from_name: "NextWeb Lead System",
+              business_id: project.business_id,
+            },
+          }), 8000);
+          emailResults.push({ type: "internal_email", status: "success" });
+        } catch (e) {
+          console.error("Internal email failed (non-blocking):", e);
+          emailResults.push({ type: "internal_email", status: "failed" });
+        }
+      }
+    } catch (emailErr) {
+      console.error("Email notification block failed (non-blocking):", emailErr);
+    }
+
+    // ── AUTOMATION SETTINGS (existing logic) ──
     const { data: autoSettings } = await supabase
       .from("seo_automation_settings").select("*")
       .eq("seo_project_id", project_id).maybeSingle();
@@ -198,7 +270,6 @@ Deno.serve(async (req) => {
       });
     };
 
-    // Queue failed automation for retry
     const queueRetry = async (type: string, payload: any, error: string) => {
       await supabase.from("seo_automation_queue").insert({
         lead_id: lead.id, seo_project_id: project_id, business_id: project.business_id,
@@ -209,26 +280,6 @@ Deno.serve(async (req) => {
     };
 
     if (autoSettings) {
-      // Email automation
-      if (autoSettings.enable_email && cleanEmail) {
-        const start = Date.now();
-        const emailPayload = {
-          to: cleanEmail,
-          subject: "Thank you for your enquiry",
-          message: `Hi ${cleanName || "there"}, we received your enquiry and will contact you shortly.`,
-          business_id: project.business_id,
-        };
-        try {
-          await withTimeout(supabase.functions.invoke("send-email", { body: emailPayload }));
-          automationResults.push({ type: "email", status: "success" });
-          await logAutomation("email", "success", Date.now() - start);
-        } catch (e) {
-          automationResults.push({ type: "email", status: "failed" });
-          await logAutomation("email", "failed", Date.now() - start, String(e));
-          await queueRetry("email", emailPayload, String(e));
-        }
-      }
-
       // WhatsApp automation
       if (autoSettings.enable_whatsapp && autoSettings.whatsapp_connected && autoSettings.whatsapp_number && normalizedPhone) {
         const start = Date.now();
@@ -246,22 +297,6 @@ Deno.serve(async (req) => {
           automationResults.push({ type: "whatsapp", status: "failed" });
           await logAutomation("whatsapp", "failed", Date.now() - start, String(e));
           await queueRetry("whatsapp", waPayload, String(e));
-
-          // Email fallback
-          if (email && !autoSettings.enable_email) {
-            const fbStart = Date.now();
-            try {
-              await withTimeout(supabase.functions.invoke("send-email", {
-                body: { to: email, subject: "Thank you for your enquiry",
-                  message: `Hi ${name || "there"}, we received your enquiry and will contact you shortly.`,
-                  business_id: project.business_id },
-              }));
-              automationResults.push({ type: "email_fallback", status: "success" });
-              await logAutomation("email_fallback", "success", Date.now() - fbStart);
-            } catch (fe) {
-              await logAutomation("email_fallback", "failed", Date.now() - fbStart, String(fe));
-            }
-          }
         }
       }
 
@@ -281,7 +316,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json({ success: true, lead_id: lead.id, automations: automationResults }, 200);
+    return json({
+      success: true,
+      lead_id: lead.id,
+      emails: emailResults,
+      automations: automationResults,
+    }, 200);
   } catch (error) {
     console.error("seo-lead-capture error:", error);
     return json({ error: "Internal server error" }, 500);
