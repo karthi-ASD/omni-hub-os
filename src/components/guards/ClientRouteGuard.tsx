@@ -8,6 +8,7 @@ import { Navigate, Outlet } from "react-router-dom";
 const CLIENT_ALLOWED_PREFIXES = [
   "/dashboard",
   "/my-billing",
+  "/my-package",
   "/invoices",
   "/seo",
   "/client-reports",
