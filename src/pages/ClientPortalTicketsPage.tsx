@@ -18,7 +18,8 @@ import { Plus, Ticket, Clock, CheckCircle2, AlertTriangle, Send, ArrowLeft, Mess
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-const DEPARTMENTS = ["support", "seo", "accounts", "development", "general"];
+// STABILIZATION: All tickets forced to support — department list kept for display only
+const DEPARTMENTS = ["support"];
 
 const statusVariants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   open: "default",
