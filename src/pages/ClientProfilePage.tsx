@@ -475,6 +475,9 @@ const ClientProfilePage = () => {
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="activity"><Clock className="h-3.5 w-3.5 mr-1" />Activity</TabsTrigger>
           <TabsTrigger value="whatsapp"><MessageSquare className="h-3.5 w-3.5 mr-1" />WhatsApp</TabsTrigger>
+          <TabsTrigger value="integrations"><Plug className="h-3.5 w-3.5 mr-1" />Integrations</TabsTrigger>
+          <TabsTrigger value="leads"><Target className="h-3.5 w-3.5 mr-1" />Leads</TabsTrigger>
+          <TabsTrigger value="calls"><Phone className="h-3.5 w-3.5 mr-1" />Calls</TabsTrigger>
         </TabsList>
 
         {/* ── Conversations / Notes ── */}
