@@ -89,7 +89,13 @@ export function useClientPortalTickets() {
     priority?: string;
     category?: string;
   }) => {
-    if (!clientId || !user?.id) return null;
+    if (!user?.id) {
+      throw new Error("You must be logged in to submit a ticket");
+    }
+    if (!clientId) {
+      console.error("[ClientTickets] clientId is null — user may not be linked to a client record");
+      throw new Error("Your account is not linked to a client profile. Please contact support.");
+    }
 
     // Duplicate prevention: same subject within 2 minutes
     const recentDupe = tickets.find(t =>
