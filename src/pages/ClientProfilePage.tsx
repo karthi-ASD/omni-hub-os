@@ -1042,6 +1042,21 @@ const ClientProfilePage = () => {
             <ClientWhatsAppHistoryTab clientId={id} businessId={client.business_id} />
           )}
         </TabsContent>
+
+        {/* ── Integrations ── */}
+        <TabsContent value="integrations">
+          {id && <ClientIntegrationsTab clientId={id} />}
+        </TabsContent>
+
+        {/* ── Leads ── */}
+        <TabsContent value="leads">
+          {id && <ClientLeadsTab clientId={id} />}
+        </TabsContent>
+
+        {/* ── Calls & Communication ── */}
+        <TabsContent value="calls">
+          {id && <ClientCallsTab clientId={id} />}
+        </TabsContent>
       </Tabs>
 
       {/* Add Website Dialog */}
