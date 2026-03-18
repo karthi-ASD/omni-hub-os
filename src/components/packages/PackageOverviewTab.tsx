@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle2, Clock, AlertTriangle, SkipForward, DollarSign, Calendar, CreditCard, TrendingUp } from "lucide-react";
+import { CheckCircle2, Clock, AlertTriangle, SkipForward, DollarSign, Calendar, CreditCard, TrendingUp, Undo2 } from "lucide-react";
 import type { ClientPackage, PackageInstallment } from "@/hooks/useClientPackage";
 
 const fmt = (n: number) => `$${n.toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -16,17 +16,19 @@ interface Props {
   nextDueDate: string | null;
   onMarkPaid: (id: string) => void;
   onMarkSkipped: (id: string) => void;
+  onReversePayment?: (id: string) => void;
   isReadOnly?: boolean;
 }
 
 export default function PackageOverviewTab({
   pkg, installments, totalPaid, totalOutstanding, overdueAmount, nextDueDate,
-  onMarkPaid, onMarkSkipped, isReadOnly,
+  onMarkPaid, onMarkSkipped, onReversePayment, isReadOnly,
 }: Props) {
   const statusColor = (s: string) => {
     if (s === "paid") return "bg-emerald-500/10 text-emerald-600 border-emerald-200";
     if (s === "overdue") return "bg-red-500/10 text-red-600 border-red-200";
     if (s === "skipped") return "bg-amber-500/10 text-amber-600 border-amber-200";
+    if (s === "partial") return "bg-violet-500/10 text-violet-600 border-violet-200";
     return "bg-sky-500/10 text-sky-600 border-sky-200";
   };
 
@@ -34,14 +36,9 @@ export default function PackageOverviewTab({
     if (s === "paid") return <CheckCircle2 className="h-3.5 w-3.5" />;
     if (s === "overdue") return <AlertTriangle className="h-3.5 w-3.5" />;
     if (s === "skipped") return <SkipForward className="h-3.5 w-3.5" />;
+    if (s === "partial") return <DollarSign className="h-3.5 w-3.5" />;
     return <Clock className="h-3.5 w-3.5" />;
   };
-
-  // Auto-detect overdue on client side as well (server already synced)
-  const enriched = installments.map(i => ({
-    ...i,
-    status: i.status === "pending" && new Date(i.due_date) < new Date() ? "overdue" : i.status,
-  }));
 
   return (
     <div className="space-y-6">
@@ -104,20 +101,21 @@ export default function PackageOverviewTab({
       </Card>
 
       {/* Timeline View */}
-      {enriched.length > 0 && (
+      {installments.length > 0 && (
         <Card className="border border-border/50">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Payment Timeline</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex gap-1 overflow-x-auto pb-2">
-              {enriched.map(inst => (
+              {installments.map(inst => (
                 <div
                   key={inst.id}
                   className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold border ${
                     inst.status === "paid" ? "bg-emerald-500 text-white border-emerald-600" :
                     inst.status === "overdue" ? "bg-red-500 text-white border-red-600" :
                     inst.status === "skipped" ? "bg-amber-400 text-white border-amber-500" :
+                    inst.status === "partial" ? "bg-violet-500 text-white border-violet-600" :
                     "bg-sky-100 text-sky-700 border-sky-300"
                   }`}
                   title={`#${inst.installment_number} - ${inst.status}${inst.is_missed ? " (missed)" : ""}`}
@@ -131,7 +129,7 @@ export default function PackageOverviewTab({
       )}
 
       {/* Installment Table */}
-      {enriched.length > 0 && (
+      {installments.length > 0 && (
         <Card className="border border-border/50">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Installments</CardTitle>
@@ -143,16 +141,18 @@ export default function PackageOverviewTab({
                   <TableHead className="w-16">#</TableHead>
                   <TableHead>Due Date</TableHead>
                   <TableHead>Amount</TableHead>
+                  <TableHead>Paid</TableHead>
                   <TableHead>Status</TableHead>
-                  {!isReadOnly && <TableHead className="w-40">Action</TableHead>}
+                  {!isReadOnly && <TableHead className="w-48">Action</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {enriched.map(inst => (
+                {installments.map(inst => (
                   <TableRow key={inst.id}>
                     <TableCell className="font-medium">{inst.installment_number}</TableCell>
                     <TableCell>{new Date(inst.due_date).toLocaleDateString("en-AU")}</TableCell>
                     <TableCell className="font-semibold">{fmt(Number(inst.amount))}</TableCell>
+                    <TableCell className="text-muted-foreground">{fmt(Number(inst.paid_amount))}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={`text-xs gap-1 ${statusColor(inst.status)}`}>
                         {statusIcon(inst.status)} {inst.status}
@@ -160,18 +160,25 @@ export default function PackageOverviewTab({
                     </TableCell>
                     {!isReadOnly && (
                       <TableCell>
-                        {inst.status !== "paid" && (
-                          <div className="flex gap-1">
-                            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => onMarkPaid(inst.id)}>
-                              Mark Paid
-                            </Button>
-                            {inst.status !== "skipped" && (
-                              <Button size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground" onClick={() => onMarkSkipped(inst.id)}>
-                                Skip
+                        <div className="flex gap-1">
+                          {inst.status !== "paid" && (
+                            <>
+                              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => onMarkPaid(inst.id)}>
+                                Mark Paid
                               </Button>
-                            )}
-                          </div>
-                        )}
+                              {inst.status !== "skipped" && (
+                                <Button size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground" onClick={() => onMarkSkipped(inst.id)}>
+                                  Skip
+                                </Button>
+                              )}
+                            </>
+                          )}
+                          {(inst.status === "paid" || inst.status === "partial") && onReversePayment && (
+                            <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive gap-1" onClick={() => onReversePayment(inst.id)}>
+                              <Undo2 className="h-3 w-3" /> Reverse
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     )}
                   </TableRow>

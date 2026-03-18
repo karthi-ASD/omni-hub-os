@@ -57,9 +57,11 @@ export interface PackageInstallment {
   installment_number: number;
   due_date: string;
   amount: number;
+  paid_amount: number;
   status: string;
   paid_date: string | null;
   is_missed: boolean;
+  is_active: boolean;
 }
 
 export interface ClientGmb {
@@ -89,6 +91,8 @@ export interface PaymentLog {
   paid_date: string;
   payment_method: string;
   notes: string | null;
+  log_type: string;
+  created_by: string | null;
   created_at: string;
 }
 
@@ -99,7 +103,7 @@ export const SERVICE_ENUM = [
 ] as const;
 
 export function useClientPackage(clientId: string | undefined) {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [pkg, setPkg] = useState<ClientPackage | null>(null);
   const [services, setServices] = useState<PackageService[]>([]);
   const [seoData, setSeoData] = useState<SeoPackageData | null>(null);
@@ -129,7 +133,7 @@ export function useClientPackage(clientId: string | undefined) {
     if (pkgData?.id) {
       const pid = pkgData.id;
 
-      // Auto-sync overdue installments server-side
+      // Server-side overdue sync — single source of truth
       await supabase.rpc("sync_overdue_installments", { _package_id: pid } as any);
 
       const [svcR, seoR, assetR, slR, gmbR, instR, evtR, logR] = await Promise.all([
@@ -138,13 +142,22 @@ export function useClientPackage(clientId: string | undefined) {
         supabase.from("client_package_assets").select("*").eq("package_id", pid).maybeSingle() as any,
         supabase.from("client_social_links").select("*").eq("package_id", pid).maybeSingle() as any,
         supabase.from("client_gmb").select("*").eq("package_id", pid).maybeSingle() as any,
-        supabase.from("package_installments").select("*").eq("package_id", pid).order("installment_number") as any,
+        supabase.from("package_installments").select("*").eq("package_id", pid).eq("is_active", true).order("installment_number") as any,
         supabase.from("package_events").select("*").eq("package_id", pid).order("event_date") as any,
         supabase.from("package_payment_logs").select("*").eq("package_id", pid).order("created_at", { ascending: false }) as any,
       ]);
+
       setServices(svcR.data || []);
       setSeoData(seoR.data);
-      setAssets(assetR.data);
+      // Never expose encrypted values — mask them
+      if (assetR.data) {
+        const masked = { ...assetR.data };
+        if (masked.domain_login_encrypted) masked.domain_login_encrypted = "••••••••";
+        if (masked.hosting_login_encrypted) masked.hosting_login_encrypted = "••••••••";
+        setAssets(masked);
+      } else {
+        setAssets(null);
+      }
       setSocialLinks(slR.data);
       setGmb(gmbR.data);
       setInstallments(instR.data || []);
@@ -182,13 +195,11 @@ export function useClientPackage(clientId: string | undefined) {
   const updatePackage = async (id: string, data: Partial<ClientPackage>) => {
     const { error } = await supabase.from("client_packages").update(data as any).eq("id", id);
     if (error) { toast.error("Failed to update package"); return; }
-    // Local state update instead of full refetch
     setPkg(prev => prev ? { ...prev, ...data } : prev);
     toast.success("Package updated");
   };
 
   const upsertService = async (packageId: string, serviceName: string, isActive: boolean, price: number) => {
-    // Debounce to avoid rapid-fire DB calls
     const key = `svc-${serviceName}`;
     if (debounceTimers.current[key]) clearTimeout(debounceTimers.current[key]);
     debounceTimers.current[key] = setTimeout(async () => {
@@ -217,23 +228,36 @@ export function useClientPackage(clientId: string | undefined) {
   };
 
   const upsertAssets = async (packageId: string, data: Partial<PackageAsset>) => {
-    // Encrypt sensitive fields via edge function before saving
     const toSave = { ...data };
-    if (toSave.domain_login_encrypted) {
+    // Encrypt sensitive fields via edge function
+    if (toSave.domain_login_encrypted && toSave.domain_login_encrypted !== "••••••••") {
       const { encryptField } = await import("@/lib/vault-crypto");
       toSave.domain_login_encrypted = await encryptField(toSave.domain_login_encrypted);
+    } else {
+      delete toSave.domain_login_encrypted;
     }
-    if (toSave.hosting_login_encrypted) {
+    if (toSave.hosting_login_encrypted && toSave.hosting_login_encrypted !== "••••••••") {
       const { encryptField } = await import("@/lib/vault-crypto");
       toSave.hosting_login_encrypted = await encryptField(toSave.hosting_login_encrypted);
+    } else {
+      delete toSave.hosting_login_encrypted;
     }
 
     if (assets?.id) {
       await supabase.from("client_package_assets").update(toSave as any).eq("id", assets.id);
-      setAssets(prev => prev ? { ...prev, ...toSave } as PackageAsset : prev);
+      // Mask encrypted fields in local state
+      const localUpdate = { ...toSave };
+      if (localUpdate.domain_login_encrypted) localUpdate.domain_login_encrypted = "••••••••";
+      if (localUpdate.hosting_login_encrypted) localUpdate.hosting_login_encrypted = "••••••••";
+      setAssets(prev => prev ? { ...prev, ...localUpdate } as PackageAsset : prev);
     } else {
       const { data: created } = await supabase.from("client_package_assets").insert({ package_id: packageId, ...toSave } as any).select().single();
-      if (created) setAssets(created as any);
+      if (created) {
+        const masked = { ...created } as any;
+        if (masked.domain_login_encrypted) masked.domain_login_encrypted = "••••••••";
+        if (masked.hosting_login_encrypted) masked.hosting_login_encrypted = "••••••••";
+        setAssets(masked);
+      }
     }
     toast.success("Assets saved");
   };
@@ -261,53 +285,53 @@ export function useClientPackage(clientId: string | undefined) {
   };
 
   const generateInstallments = async (packageId: string, totalValue: number, count: number, startDate: string, endDate?: string) => {
-    // Rounding fix: ensure sum = totalValue exactly
     const baseAmount = Math.floor((totalValue / count) * 100) / 100;
     const remainder = Math.round((totalValue - baseAmount * count) * 100) / 100;
-
     const start = new Date(startDate);
     const end = endDate ? new Date(endDate) : null;
 
     const rows = Array.from({ length: count }, (_, i) => {
       const due = new Date(start);
       if (end && count > 1) {
-        // Distribute evenly between start and end
         const totalMs = end.getTime() - start.getTime();
         const stepMs = totalMs / (count - 1);
         due.setTime(start.getTime() + stepMs * i);
       } else {
         due.setMonth(due.getMonth() + i);
       }
-      const isLast = i === count - 1;
       return {
         package_id: packageId,
         installment_number: i + 1,
         due_date: due.toISOString().split("T")[0],
-        amount: isLast ? baseAmount + remainder : baseAmount,
+        amount: i === count - 1 ? baseAmount + remainder : baseAmount,
+        paid_amount: 0,
         status: "pending",
         is_missed: false,
+        is_active: true,
       };
     });
 
-    // Clear existing
-    await supabase.from("package_installments").delete().eq("package_id", packageId);
+    // Soft delete existing installments
+    await supabase.from("package_installments").update({ is_active: false } as any).eq("package_id", packageId);
     await supabase.from("package_installments").insert(rows as any);
     toast.success(`${count} installments generated`);
-    // Local update
-    setInstallments(rows.map((r, i) => ({ ...r, id: `temp-${i}`, paid_date: null })) as any);
-    // Then refetch to get real IDs
-    const { data } = await supabase.from("package_installments").select("*").eq("package_id", packageId).order("installment_number") as any;
+
+    const { data } = await supabase.from("package_installments").select("*").eq("package_id", packageId).eq("is_active", true).order("installment_number") as any;
     if (data) setInstallments(data);
   };
 
-  const markInstallmentPaid = async (id: string, paymentMethod?: string, notes?: string) => {
+  const markInstallmentPaid = async (id: string, paidAmount?: number, paymentMethod?: string, notes?: string) => {
     const inst = installments.find(i => i.id === id);
     if (!inst || !profile?.business_id) return;
 
+    const effectiveAmount = paidAmount ?? inst.amount;
+    const isFullPayment = effectiveAmount >= Number(inst.amount);
     const paidDate = new Date().toISOString().split("T")[0];
+
     await supabase.from("package_installments").update({
-      status: "paid",
-      paid_date: paidDate,
+      status: isFullPayment ? "paid" : "partial",
+      paid_date: isFullPayment ? paidDate : null,
+      paid_amount: effectiveAmount,
       is_missed: false,
     } as any).eq("id", id);
 
@@ -316,15 +340,52 @@ export function useClientPackage(clientId: string | undefined) {
       installment_id: id,
       package_id: inst.package_id,
       business_id: profile.business_id,
-      amount: inst.amount,
+      amount: effectiveAmount,
       paid_date: paidDate,
       payment_method: paymentMethod || "bank_transfer",
       notes: notes || null,
+      log_type: "payment",
+      created_by: user?.id || null,
     } as any);
 
-    // Local state update
-    setInstallments(prev => prev.map(i => i.id === id ? { ...i, status: "paid", paid_date: paidDate, is_missed: false } : i));
-    toast.success("Installment marked as paid");
+    setInstallments(prev => prev.map(i => i.id === id ? {
+      ...i,
+      status: isFullPayment ? "paid" : "partial",
+      paid_date: isFullPayment ? paidDate : null,
+      paid_amount: effectiveAmount,
+      is_missed: false,
+    } : i));
+    toast.success(isFullPayment ? "Installment marked as paid" : "Partial payment recorded");
+  };
+
+  const reversePayment = async (id: string, reason?: string) => {
+    const inst = installments.find(i => i.id === id);
+    if (!inst || !profile?.business_id) return;
+
+    await supabase.from("package_installments").update({
+      status: "pending",
+      paid_date: null,
+      paid_amount: 0,
+      is_missed: false,
+    } as any).eq("id", id);
+
+    // Log reversal
+    await supabase.from("package_payment_logs").insert({
+      installment_id: id,
+      package_id: inst.package_id,
+      business_id: profile.business_id,
+      amount: -Number(inst.paid_amount || inst.amount),
+      paid_date: new Date().toISOString().split("T")[0],
+      payment_method: "reversal",
+      notes: reason || "Payment reversed",
+      log_type: "reversal",
+      created_by: user?.id || null,
+    } as any);
+
+    setInstallments(prev => prev.map(i => i.id === id ? {
+      ...i, status: "pending", paid_date: null, paid_amount: 0, is_missed: false,
+    } : i));
+    toast.success("Payment reversed");
   };
 
   const markInstallmentSkipped = async (id: string) => {
@@ -333,21 +394,32 @@ export function useClientPackage(clientId: string | undefined) {
     toast.success("Installment marked as skipped");
   };
 
-  // Computed payment summary - next due includes pending, overdue, skipped (excludes only paid)
-  const totalPaid = installments.filter(i => i.status === "paid").reduce((s, i) => s + Number(i.amount), 0);
-  const totalOutstanding = installments.filter(i => ["pending", "overdue", "skipped"].includes(i.status)).reduce((s, i) => s + Number(i.amount), 0);
-  const overdueAmount = installments.filter(i => i.status === "overdue" || (i.status === "pending" && new Date(i.due_date) < new Date())).reduce((s, i) => s + Number(i.amount), 0);
-  // Next due: earliest unpaid (pending, overdue, or skipped)
-  const nextDueDate = installments
-    .filter(i => ["pending", "overdue", "skipped"].includes(i.status))
-    .sort((a, b) => a.due_date.localeCompare(b.due_date))[0]?.due_date || null;
+  // All status comes from server after sync — no client-side overdue calculation
+  const activeInstallments = installments.filter(i => i.is_active);
+  const totalPaid = activeInstallments.filter(i => i.status === "paid").reduce((s, i) => s + Number(i.amount), 0)
+    + activeInstallments.filter(i => i.status === "partial").reduce((s, i) => s + Number(i.paid_amount), 0);
+  const totalOutstanding = activeInstallments.filter(i => ["pending", "overdue", "skipped", "partial"].includes(i.status))
+    .reduce((s, i) => s + (Number(i.amount) - Number(i.paid_amount)), 0);
+  const overdueAmount = activeInstallments.filter(i => i.status === "overdue")
+    .reduce((s, i) => s + (Number(i.amount) - Number(i.paid_amount)), 0);
+  // Next due: earliest unpaid that is due today or past due (immediate dues, not far future)
+  const today = new Date().toISOString().split("T")[0];
+  const thirtyDaysOut = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0];
+  const nextDueDate = activeInstallments
+    .filter(i => ["pending", "overdue", "partial"].includes(i.status) && i.due_date <= thirtyDaysOut)
+    .sort((a, b) => a.due_date.localeCompare(b.due_date))[0]?.due_date
+    || activeInstallments
+      .filter(i => ["pending", "overdue", "partial"].includes(i.status))
+      .sort((a, b) => a.due_date.localeCompare(b.due_date))[0]?.due_date
+    || null;
 
   return {
-    pkg, services, seoData, assets, socialLinks, gmb, installments, events, paymentLogs,
+    pkg, services, seoData, assets, socialLinks, gmb, installments: activeInstallments, events, paymentLogs,
     loading, fetchAll,
     createPackage, updatePackage, upsertService, upsertSeoData,
     upsertAssets, upsertSocialLinks, upsertGmb,
     generateInstallments, markInstallmentPaid, markInstallmentSkipped,
+    reversePayment,
     totalPaid, totalOutstanding, overdueAmount, nextDueDate,
   };
 }
