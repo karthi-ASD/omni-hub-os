@@ -33,12 +33,14 @@ export default function ClientPackagePage() {
   const isClient = roles.includes("client");
   const deptLower = (departmentName || "").toLowerCase();
   const isFinanceDept = deptLower.includes("finance") || deptLower.includes("accounts") || deptLower.includes("accounting");
+  const isSEODept = deptLower.includes("seo") || deptLower.includes("digital marketing");
   const isAdmin = roles.some(r => ["super_admin", "business_admin"].includes(r));
   const isFinance = isAdmin || isFinanceDept;
+  const canAccessSEO = isAdmin || isSEODept;
   const isReadOnly = isClient;
   const canManagePayments = isFinance;
 
-  console.log("FINANCE ACCESS DEBUG", { roles, departmentName, isFinanceDept, isAdmin, isFinance, isClient });
+  console.log("SEO TAB DEBUG", { roles, departmentName, isSEODept, isAdmin, canAccessSEO });
 
   const {
     steps: onboardingSteps,
@@ -139,7 +141,7 @@ export default function ClientPackagePage() {
         <TabsList className="w-full justify-start bg-muted/30 p-1 rounded-xl">
           <TabsTrigger value="overview" className="gap-1.5 data-[state=active]:bg-background"><Package className="h-3.5 w-3.5" /> Overview</TabsTrigger>
           <TabsTrigger value="services" className="gap-1.5 data-[state=active]:bg-background"><Layers className="h-3.5 w-3.5" /> Services</TabsTrigger>
-          <TabsTrigger value="seo" className="gap-1.5 data-[state=active]:bg-background"><Target className="h-3.5 w-3.5" /> SEO Data</TabsTrigger>
+          {canAccessSEO && <TabsTrigger value="seo" className="gap-1.5 data-[state=active]:bg-background"><Target className="h-3.5 w-3.5" /> SEO Data</TabsTrigger>}
           <TabsTrigger value="assets" className="gap-1.5 data-[state=active]:bg-background"><Shield className="h-3.5 w-3.5" /> Assets</TabsTrigger>
           <TabsTrigger value="social" className="gap-1.5 data-[state=active]:bg-background"><Share2 className="h-3.5 w-3.5" /> Social & GMB</TabsTrigger>
         </TabsList>
@@ -168,14 +170,16 @@ export default function ClientPackagePage() {
           />
         </TabsContent>
 
-        <TabsContent value="seo">
-          <PackageSeoTab
-            packageId={pkg.id}
-            seoData={seoData}
-            onSave={upsertSeoData}
-            isReadOnly={isReadOnly && !roles.some(r => ["super_admin", "business_admin", "seo"].includes(r))}
-          />
-        </TabsContent>
+        {canAccessSEO && (
+          <TabsContent value="seo">
+            <PackageSeoTab
+              packageId={pkg.id}
+              seoData={seoData}
+              onSave={upsertSeoData}
+              isReadOnly={isClient}
+            />
+          </TabsContent>
+        )}
 
         <TabsContent value="assets">
           <PackageAssetsTab
