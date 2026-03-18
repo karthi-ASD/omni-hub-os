@@ -19952,6 +19952,7 @@ export type Database = {
           extra_data: Json | null
           form_id: string | null
           id: string
+          ip_address: string | null
           message: string | null
           name: string | null
           page_url: string | null
@@ -19959,6 +19960,10 @@ export type Database = {
           seo_project_id: string
           source: string
           status: string | null
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
         }
         Insert: {
           business_id: string
@@ -19968,6 +19973,7 @@ export type Database = {
           extra_data?: Json | null
           form_id?: string | null
           id?: string
+          ip_address?: string | null
           message?: string | null
           name?: string | null
           page_url?: string | null
@@ -19975,6 +19981,10 @@ export type Database = {
           seo_project_id: string
           source?: string
           status?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Update: {
           business_id?: string
@@ -19984,6 +19994,7 @@ export type Database = {
           extra_data?: Json | null
           form_id?: string | null
           id?: string
+          ip_address?: string | null
           message?: string | null
           name?: string | null
           page_url?: string | null
@@ -19991,6 +20002,10 @@ export type Database = {
           seo_project_id?: string
           source?: string
           status?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Relationships: [
           {
@@ -21225,30 +21240,42 @@ export type Database = {
           business_id: string
           client_id: string | null
           created_at: string | null
+          created_by: string | null
+          fields_json: Json | null
           form_name: string
           id: string
           is_active: boolean | null
+          redirect_url: string | null
           seo_project_id: string
+          success_message: string | null
           updated_at: string | null
         }
         Insert: {
           business_id: string
           client_id?: string | null
           created_at?: string | null
+          created_by?: string | null
+          fields_json?: Json | null
           form_name?: string
           id?: string
           is_active?: boolean | null
+          redirect_url?: string | null
           seo_project_id: string
+          success_message?: string | null
           updated_at?: string | null
         }
         Update: {
           business_id?: string
           client_id?: string | null
           created_at?: string | null
+          created_by?: string | null
+          fields_json?: Json | null
           form_name?: string
           id?: string
           is_active?: boolean | null
+          redirect_url?: string | null
           seo_project_id?: string
+          success_message?: string | null
           updated_at?: string | null
         }
         Relationships: [
