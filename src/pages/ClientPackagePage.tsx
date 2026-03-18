@@ -33,12 +33,14 @@ export default function ClientPackagePage() {
   const isClient = roles.includes("client");
   const deptLower = (departmentName || "").toLowerCase();
   const isFinanceDept = deptLower.includes("finance") || deptLower.includes("accounts") || deptLower.includes("accounting");
+  const isSEODept = deptLower.includes("seo") || deptLower.includes("digital marketing");
   const isAdmin = roles.some(r => ["super_admin", "business_admin"].includes(r));
   const isFinance = isAdmin || isFinanceDept;
+  const canAccessSEO = isAdmin || isSEODept;
   const isReadOnly = isClient;
   const canManagePayments = isFinance;
 
-  console.log("FINANCE ACCESS DEBUG", { roles, departmentName, isFinanceDept, isAdmin, isFinance, isClient });
+  console.log("SEO TAB DEBUG", { roles, departmentName, isSEODept, isAdmin, canAccessSEO });
 
   const {
     steps: onboardingSteps,
