@@ -116,7 +116,18 @@ export default function ClientPackagePage() {
       );
     }
 
-    return null;
+    // Any other role — show a generic message instead of blank screen
+    return (
+      <div className="p-6">
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <Package className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+          <div className="text-2xl font-semibold mb-2 text-foreground">No Package Available</div>
+          <p className="text-muted-foreground max-w-md">
+            No package has been set up for this client yet.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
