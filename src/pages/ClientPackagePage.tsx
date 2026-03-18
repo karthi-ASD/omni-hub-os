@@ -83,7 +83,7 @@ export default function ClientPackagePage() {
       );
     }
 
-    if (isAccounts) {
+    if (isFinance) {
       return (
         <div className="p-6">
           <div className="flex flex-col items-center justify-center py-24 text-center">
