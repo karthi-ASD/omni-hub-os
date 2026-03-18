@@ -47,7 +47,7 @@ export default function PackageOnboardingProgress({ steps, progress, completedCo
                 {step.step_name}
               </span>
             </div>
-            {canEditOnboarding && onUpdateStatus ? (
+            {canEditOnboarding === true && onUpdateStatus ? (
               <Select
                 value={step.status}
                 onValueChange={(val) => onUpdateStatus(step.id, val as OnboardingStep["status"])}

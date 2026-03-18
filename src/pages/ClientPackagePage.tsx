@@ -158,8 +158,8 @@ export default function ClientPackagePage() {
             steps={onboardingSteps}
             progress={onboardingProgress}
             completedCount={onboardingCompleted}
-            canEditOnboarding={canEditOnboarding}
-            onUpdateStatus={canEditOnboarding ? updateStepStatus : undefined}
+            canEditOnboarding={!isClient && (isAdmin || isSEODept)}
+            onUpdateStatus={!isClient && (isAdmin || isSEODept) ? updateStepStatus : undefined}
           />
         </div>
       )}
