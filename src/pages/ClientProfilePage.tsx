@@ -21,7 +21,7 @@ import {
   ArrowLeft, Globe, Smartphone, Search, FileText, Ticket, Clock,
   Mail, Phone, Building2, MapPin, Plus, ExternalLink, DollarSign, CreditCard, TrendingUp, AlertTriangle,
   ClipboardCheck, CheckCircle2, MessageSquare, PhoneCall, CalendarCheck, Pencil, Key, GitBranch, User,
-  Plug, Target
+  Plug, Target, FormInput
 } from "lucide-react";
 import { useOnboardingChecklist } from "@/hooks/useOnboardingChecklist";
 import { ClientActivityTimeline } from "@/components/clients/ClientActivityTimeline";
@@ -36,6 +36,7 @@ import { ClientCallsTab } from "@/components/clients/ClientCallsTab";
 import { WebsiteTreeTab } from "@/components/clients/WebsiteTreeTab";
 import { ClientProfileTab } from "@/components/clients/ClientProfileTab";
 import { ClientWhatsAppHistoryTab } from "@/components/clients/ClientWhatsAppHistoryTab";
+import { ContactFormCreationTab } from "@/components/clients/ContactFormCreationTab";
 import { useSalesTeam } from "@/hooks/useSalesTeam";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, parseISO, isToday, isTomorrow, isPast } from "date-fns";
@@ -478,6 +479,7 @@ const ClientProfilePage = () => {
           <TabsTrigger value="integrations"><Plug className="h-3.5 w-3.5 mr-1" />Integrations</TabsTrigger>
           <TabsTrigger value="leads"><Target className="h-3.5 w-3.5 mr-1" />Leads</TabsTrigger>
           <TabsTrigger value="calls"><Phone className="h-3.5 w-3.5 mr-1" />Calls</TabsTrigger>
+          <TabsTrigger value="contact-forms"><FormInput className="h-3.5 w-3.5 mr-1" />Contact Forms</TabsTrigger>
         </TabsList>
 
         {/* ── Conversations / Notes ── */}
@@ -1056,6 +1058,11 @@ const ClientProfilePage = () => {
         {/* ── Calls & Communication ── */}
         <TabsContent value="calls">
           {id && <ClientCallsTab clientId={id} />}
+        </TabsContent>
+
+        {/* ── Contact Form Creation ── */}
+        <TabsContent value="contact-forms">
+          {id && <ContactFormCreationTab clientId={id} />}
         </TabsContent>
       </Tabs>
 
