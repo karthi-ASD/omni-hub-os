@@ -1,14 +1,14 @@
 import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import type { OnboardingStep } from "@/hooks/usePackageOnboarding";
 
 interface Props {
   steps: OnboardingStep[];
   progress: number;
   completedCount: number;
-  isReadOnly: boolean;
+  canEditOnboarding: boolean;
   onUpdateStatus?: (stepId: string, status: OnboardingStep["status"]) => void;
 }
 
@@ -20,7 +20,15 @@ const statusIcon = (status: OnboardingStep["status"]) => {
   }
 };
 
-export default function PackageOnboardingProgress({ steps, progress, completedCount, isReadOnly, onUpdateStatus }: Props) {
+const statusLabel = (status: string) => {
+  switch (status) {
+    case "completed": return <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30">Completed</Badge>;
+    case "in_progress": return <Badge className="bg-primary/15 text-primary border-primary/30">In Progress</Badge>;
+    default: return <Badge variant="outline" className="text-muted-foreground">Pending</Badge>;
+  }
+};
+
+export default function PackageOnboardingProgress({ steps, progress, completedCount, canEditOnboarding, onUpdateStatus }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -39,7 +47,7 @@ export default function PackageOnboardingProgress({ steps, progress, completedCo
                 {step.step_name}
               </span>
             </div>
-            {!isReadOnly && onUpdateStatus && (
+            {canEditOnboarding && onUpdateStatus ? (
               <Select
                 value={step.status}
                 onValueChange={(val) => onUpdateStatus(step.id, val as OnboardingStep["status"])}
@@ -53,6 +61,8 @@ export default function PackageOnboardingProgress({ steps, progress, completedCo
                   <SelectItem value="completed">Completed</SelectItem>
                 </SelectContent>
               </Select>
+            ) : (
+              statusLabel(step.status)
             )}
           </div>
         ))}

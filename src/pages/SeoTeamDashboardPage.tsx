@@ -76,7 +76,12 @@ const SeoTeamDashboardPage = () => {
         query = query.eq("seo_manager_id", user.id);
       }
 
-      const { data } = await query;
+      const { data, error } = await query;
+
+      console.log("[SEO Dashboard] USER ID:", user.id);
+      console.log("[SEO Dashboard] IS ADMIN:", isSuperAdmin || isBusinessAdmin);
+      console.log("[SEO Dashboard] RAW DATA:", data);
+      if (error) console.error("[SEO Dashboard] FETCH ERROR:", error);
 
       const mapped: AssignedClient[] = ((data as any[]) || []).map((pkg: any) => {
         const clientInfo = Array.isArray(pkg.clients) ? pkg.clients[0] : pkg.clients;
