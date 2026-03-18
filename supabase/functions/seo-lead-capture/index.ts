@@ -5,7 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Strict origin validation using hostname match
 function validateOrigin(req: Request, allowedDomains: string[] | null): boolean {
   if (!allowedDomains || allowedDomains.length === 0) return true;
   const origin = req.headers.get("origin") || "";
@@ -18,13 +17,10 @@ function validateOrigin(req: Request, allowedDomains: string[] | null): boolean 
       return originHost === clean || originHost.endsWith("." + clean) ||
              refererHost === clean || refererHost.endsWith("." + clean);
     });
-  } catch {
-    return false;
-  }
+  } catch { return false; }
 }
 
-// Phone normalization with country code support
-function normalizePhone(raw: string | null | undefined, defaultCountryCode: string = "+61"): string | null {
+function normalizePhone(raw: string | null | undefined, defaultCountryCode = "+61"): string | null {
   if (!raw) return null;
   let cleaned = raw.replace(/[\s\-\(\)\.]/g, "");
   if (cleaned.startsWith("00")) cleaned = "+" + cleaned.slice(2);
@@ -37,19 +33,46 @@ function normalizePhone(raw: string | null | undefined, defaultCountryCode: stri
   return cleaned;
 }
 
-// Timeout wrapper
-function withTimeout<T>(promise: Promise<T>, ms = 5000): Promise<T> {
+function withTimeout<T>(promise: Promise<T>, ms = 8000): Promise<T> {
   return Promise.race([
     promise,
     new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Timeout")), ms)),
   ]);
 }
 
+function json(data: any, status: number) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+async function sendEmailWithRetry(
+  supabase: any,
+  payload: any,
+  retries = 1,
+  timeoutMs = 8000
+): Promise<{ success: boolean; error?: string }> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const { error } = await withTimeout(
+        supabase.functions.invoke("send-email", { body: payload }),
+        timeoutMs
+      );
+      if (error) throw error;
+      return { success: true };
+    } catch (e) {
+      console.error(`Email attempt ${attempt + 1} failed:`, e);
+      if (attempt === retries) return { success: false, error: String(e) };
+    }
+  }
+  return { success: false, error: "Max retries exceeded" };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // Limit payload size (50KB max)
     const contentLength = parseInt(req.headers.get("content-length") || "0");
     if (contentLength > 50000) return json({ error: "Payload too large" }, 413);
 
@@ -71,7 +94,11 @@ Deno.serve(async (req) => {
       if (!cleanPhone) return json({ error: "Phone is required" }, 400);
     }
 
-    // Capture IP and User-Agent
+    // Email format validation
+    if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      return json({ error: "Invalid email format" }, 400);
+    }
+
     const ipAddress = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
       || req.headers.get("cf-connecting-ip")
       || req.headers.get("x-real-ip")
@@ -96,13 +123,7 @@ Deno.serve(async (req) => {
       return json({ error: "Unauthorized: invalid or missing api_key" }, 401);
     }
 
-    // Validate client_id exists
-    if (project.client_id) {
-      const { data: clientCheck } = await supabase.from("clients").select("id").eq("id", project.client_id).single();
-      if (!clientCheck) return json({ error: "Invalid client mapping" }, 400);
-    }
-
-    // Strict origin validation
+    // Origin validation
     const allowedDomains = project.website_domain ? [project.website_domain] : null;
     if (!validateOrigin(req, allowedDomains)) {
       return json({ error: "Origin not allowed" }, 403);
@@ -126,18 +147,18 @@ Deno.serve(async (req) => {
       if (!form) return json({ error: "Invalid form_id for this project" }, 400);
     }
 
+    // Normalize phone
+    const countryCode = project.default_country_code || "+61";
+    const normalizedPhone = normalizePhone(cleanPhone, countryCode);
+
     // Duplicate check: same phone within 60 seconds
-    if (cleanPhone) {
-      const countryCode = project.default_country_code || "+61";
-      const normPhone = normalizePhone(cleanPhone, countryCode);
-      if (normPhone) {
-        const oneMinAgoDedup = new Date(Date.now() - 60 * 1000).toISOString();
-        const { data: phoneDupes } = await supabase
-          .from("seo_captured_leads").select("id")
-          .eq("seo_project_id", project_id).eq("phone", normPhone)
-          .gte("created_at", oneMinAgoDedup).limit(1);
-        if (phoneDupes && phoneDupes.length > 0) return json({ error: "Duplicate lead detected" }, 409);
-      }
+    if (normalizedPhone) {
+      const oneMinAgoDedup = new Date(Date.now() - 60 * 1000).toISOString();
+      const { data: phoneDupes } = await supabase
+        .from("seo_captured_leads").select("id")
+        .eq("seo_project_id", project_id).eq("phone", normalizedPhone)
+        .gte("created_at", oneMinAgoDedup).limit(1);
+      if (phoneDupes && phoneDupes.length > 0) return json({ error: "Duplicate lead detected" }, 409);
     }
 
     // Duplicate check: same email within 2 minutes
@@ -150,10 +171,8 @@ Deno.serve(async (req) => {
       if (dupes && dupes.length > 0) return json({ error: "Duplicate lead detected" }, 409);
     }
 
-    // Normalize phone with project country code
-    const countryCode = project.default_country_code || "+61";
-    const normalizedPhone = normalizePhone(cleanPhone, countryCode);
-
+    // INSERT LEAD FIRST — always save before any email attempt
+    console.log("[seo-lead-capture] Saving lead...");
     const { data: lead, error: insertErr } = await supabase
       .from("seo_captured_leads")
       .insert({
@@ -177,21 +196,20 @@ Deno.serve(async (req) => {
       .select().single();
 
     if (insertErr) {
-      console.error("Lead insert error:", insertErr);
+      console.error("[seo-lead-capture] Lead insert error:", insertErr);
       return json({ error: insertErr.message }, 500);
     }
+    console.log("[seo-lead-capture] Lead saved:", lead.id);
 
-    // ── ALWAYS-ON EMAIL NOTIFICATIONS (non-blocking) ──
-    const emailResults: Array<{ type: string; status: string }> = [];
+    // ── EMAIL NOTIFICATIONS (non-blocking, with retry) ──
+    const emailResults: Array<{ type: string; status: string; error?: string }> = [];
     const CC_EMAIL = "reports@nextweb.com.au";
 
     try {
-      // Fetch business info for email context
       const { data: bizInfo } = await supabase
         .from("businesses").select("name, email")
         .eq("id", project.business_id).maybeSingle();
 
-      // Fetch client info for internal notification routing
       const { data: clientInfo } = project.client_id
         ? await supabase.from("clients").select("contact_name, email")
             .eq("id", project.client_id).maybeSingle()
@@ -202,58 +220,48 @@ Deno.serve(async (req) => {
 
       // 1. CUSTOMER CONFIRMATION EMAIL
       if (cleanEmail) {
-        try {
-          await withTimeout(supabase.functions.invoke("send-email", {
-            body: {
-              to: cleanEmail,
-              cc: CC_EMAIL,
-              subject: "Thank you for your enquiry",
-              message: `Hi ${cleanName || "there"},\n\nThank you for reaching out to us. We've received your enquiry and our team will get back to you shortly.\n\nIf your request is urgent, feel free to contact us directly.\n\nBest regards,\n${businessName}`,
-              from_name: businessName,
-              business_id: project.business_id,
-            },
-          }), 8000);
-          emailResults.push({ type: "customer_email", status: "success" });
-        } catch (e) {
-          console.error("Customer email failed (non-blocking):", e);
-          emailResults.push({ type: "customer_email", status: "failed" });
-        }
+        console.log("[seo-lead-capture] Sending customer email to:", cleanEmail);
+        const result = await sendEmailWithRetry(supabase, {
+          to: cleanEmail,
+          cc: CC_EMAIL,
+          subject: "Thank you for your enquiry",
+          message: `Hi ${cleanName || "there"},\n\nThank you for reaching out to us. We've received your enquiry and our team will get back to you shortly.\n\nIf your request is urgent, feel free to contact us directly.\n\nBest regards,\n${businessName}`,
+          from_name: businessName,
+          business_id: project.business_id,
+        });
+        emailResults.push({ type: "customer_email", status: result.success ? "success" : "failed", error: result.error });
+        console.log("[seo-lead-capture] Customer email:", result.success ? "success" : "failed");
       }
 
       // 2. INTERNAL NOTIFICATION EMAIL
       if (internalEmail) {
-        try {
-          const leadDetails = [
-            `Name: ${cleanName || "N/A"}`,
-            `Phone: ${normalizedPhone || cleanPhone || "N/A"}`,
-            `Email: ${cleanEmail || "N/A"}`,
-            `Message: ${cleanMessage || "N/A"}`,
-            `Source: ${source || "form"}`,
-            `Page: ${page_url || "N/A"}`,
-            `Time: ${new Date().toISOString()}`,
-          ].join("\n");
+        console.log("[seo-lead-capture] Sending internal email to:", internalEmail);
+        const leadDetails = [
+          `Name: ${cleanName || "N/A"}`,
+          `Phone: ${normalizedPhone || cleanPhone || "N/A"}`,
+          `Email: ${cleanEmail || "N/A"}`,
+          `Message: ${cleanMessage || "N/A"}`,
+          `Source: ${source || "form"}`,
+          `Page: ${page_url || "N/A"}`,
+          `Time: ${new Date().toISOString()}`,
+        ].join("\n");
 
-          await withTimeout(supabase.functions.invoke("send-email", {
-            body: {
-              to: internalEmail,
-              cc: CC_EMAIL,
-              subject: `New Lead Received – ${clientInfo?.contact_name || businessName}`,
-              message: `New lead received:\n\n${leadDetails}`,
-              from_name: "NextWeb Lead System",
-              business_id: project.business_id,
-            },
-          }), 8000);
-          emailResults.push({ type: "internal_email", status: "success" });
-        } catch (e) {
-          console.error("Internal email failed (non-blocking):", e);
-          emailResults.push({ type: "internal_email", status: "failed" });
-        }
+        const result = await sendEmailWithRetry(supabase, {
+          to: internalEmail,
+          cc: CC_EMAIL,
+          subject: `New Lead Received – ${clientInfo?.contact_name || businessName}`,
+          message: `New lead received:\n\n${leadDetails}`,
+          from_name: "NextWeb Lead System",
+          business_id: project.business_id,
+        });
+        emailResults.push({ type: "internal_email", status: result.success ? "success" : "failed", error: result.error });
+        console.log("[seo-lead-capture] Internal email:", result.success ? "success" : "failed");
       }
     } catch (emailErr) {
-      console.error("Email notification block failed (non-blocking):", emailErr);
+      console.error("[seo-lead-capture] Email block failed (non-blocking):", emailErr);
     }
 
-    // ── AUTOMATION SETTINGS (existing logic) ──
+    // ── AUTOMATION SETTINGS ──
     const { data: autoSettings } = await supabase
       .from("seo_automation_settings").select("*")
       .eq("seo_project_id", project_id).maybeSingle();
@@ -280,12 +288,10 @@ Deno.serve(async (req) => {
     };
 
     if (autoSettings) {
-      // WhatsApp automation
       if (autoSettings.enable_whatsapp && autoSettings.whatsapp_connected && autoSettings.whatsapp_number && normalizedPhone) {
         const start = Date.now();
         const waPayload = {
-          from: autoSettings.whatsapp_number,
-          to: normalizedPhone,
+          from: autoSettings.whatsapp_number, to: normalizedPhone,
           message: `Hi ${cleanName || "there"}, thank you for your inquiry! We'll get back to you shortly.`,
           business_id: project.business_id,
         };
@@ -300,7 +306,6 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Call automation
       if (autoSettings.enable_call && normalizedPhone) {
         const start = Date.now();
         const callPayload = { phone: normalizedPhone, project_id, type: "lead_followup" };
@@ -323,14 +328,7 @@ Deno.serve(async (req) => {
       automations: automationResults,
     }, 200);
   } catch (error) {
-    console.error("seo-lead-capture error:", error);
+    console.error("[seo-lead-capture] Unhandled error:", error);
     return json({ error: "Internal server error" }, 500);
   }
 });
-
-function json(data: any, status: number) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}

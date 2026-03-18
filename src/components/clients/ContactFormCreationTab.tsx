@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,9 +12,10 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Plus, Code, Settings, FormInput, Trash2, GripVertical, Copy, Check, Send,
-  AlertTriangle, CheckCircle2, Shield
+  AlertTriangle, CheckCircle2, Shield, Paintbrush, ArrowUp, ArrowDown, Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -25,11 +26,30 @@ interface FormField {
   required: boolean;
 }
 
+interface FormDesign {
+  button_text: string;
+  button_color: string;
+  bg_color: string;
+  text_color: string;
+  border_radius: string;
+  spacing: string;
+}
+
+const DEFAULT_DESIGN: FormDesign = {
+  button_text: "Submit",
+  button_color: "#2563eb",
+  bg_color: "#ffffff",
+  text_color: "#111827",
+  border_radius: "8",
+  spacing: "normal",
+};
+
 interface LeadForm {
   id: string;
   form_name: string;
   is_active: boolean;
   fields_json: FormField[];
+  design_json: FormDesign | null;
   success_message: string;
   redirect_url: string | null;
   seo_project_id: string;
@@ -62,32 +82,28 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
   const [createOpen, setCreateOpen] = useState(false);
   const [scriptOpen, setScriptOpen] = useState<LeadForm | null>(null);
   const [copied, setCopied] = useState(false);
-  const [testResult, setTestResult] = useState<{ status: string; message: string } | null>(null);
+  const [testResult, setTestResult] = useState<{ status: string; message: string; details?: string } | null>(null);
   const [testLoading, setTestLoading] = useState(false);
 
   // New form state
   const [newFormName, setNewFormName] = useState("Contact Form");
   const [newFields, setNewFields] = useState<FormField[]>([...DEFAULT_FIELDS]);
+  const [newDesign, setNewDesign] = useState<FormDesign>({ ...DEFAULT_DESIGN });
   const [newSuccessMsg, setNewSuccessMsg] = useState("Thank you! We will get back to you shortly.");
   const [newRedirect, setNewRedirect] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState("");
 
+  // Drag state
+  const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
+
   const fetchData = useCallback(async () => {
     if (!profile?.business_id) return;
     setLoading(true);
-
     const [formsRes, projRes] = await Promise.all([
-      supabase
-        .from("seo_lead_forms")
-        .select("*")
-        .eq("client_id", clientId)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("seo_projects")
-        .select("id, project_name, api_key, website_domain")
-        .eq("client_id", clientId),
+      supabase.from("seo_lead_forms").select("*").eq("client_id", clientId).order("created_at", { ascending: false }),
+      supabase.from("seo_projects").select("id, project_name, api_key, website_domain").eq("client_id", clientId),
     ]);
-
     setForms((formsRes.data as any) || []);
     setProjects((projRes.data as any) || []);
     if (projRes.data && projRes.data.length > 0 && !selectedProjectId) {
@@ -98,12 +114,33 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Drag and drop handlers
+  const handleDragStart = (index: number) => { dragItem.current = index; };
+  const handleDragEnter = (index: number) => { dragOverItem.current = index; };
+  const handleDragEnd = () => {
+    if (dragItem.current === null || dragOverItem.current === null) return;
+    const items = [...newFields];
+    const draggedItem = items[dragItem.current];
+    items.splice(dragItem.current, 1);
+    items.splice(dragOverItem.current, 0, draggedItem);
+    setNewFields(items);
+    dragItem.current = null;
+    dragOverItem.current = null;
+  };
+
+  const moveField = (index: number, direction: "up" | "down") => {
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= newFields.length) return;
+    const items = [...newFields];
+    [items[index], items[newIndex]] = [items[newIndex], items[index]];
+    setNewFields(items);
+  };
+
   const handleCreate = async () => {
     if (!profile?.business_id || !selectedProjectId) {
       toast.error("Please select an SEO project first");
       return;
     }
-
     const phoneField = newFields.find(f => f.name === "phone");
     if (!phoneField || !phoneField.required) {
       toast.error("Phone field must be required");
@@ -116,22 +153,19 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
       seo_project_id: selectedProjectId,
       form_name: newFormName,
       fields_json: newFields,
+      design_json: newDesign,
       success_message: newSuccessMsg,
       redirect_url: newRedirect || null,
       is_active: true,
       created_by: profile.user_id,
     } as any);
 
-    if (error) {
-      toast.error("Failed to create form");
-      console.error(error);
-      return;
-    }
-
+    if (error) { toast.error("Failed to create form"); console.error(error); return; }
     toast.success("Contact form created");
     setCreateOpen(false);
     setNewFormName("Contact Form");
     setNewFields([...DEFAULT_FIELDS]);
+    setNewDesign({ ...DEFAULT_DESIGN });
     setNewSuccessMsg("Thank you! We will get back to you shortly.");
     setNewRedirect("");
     fetchData();
@@ -143,7 +177,7 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
   };
 
   const toggleFieldRequired = (index: number) => {
-    if (newFields[index].name === "phone") return; // Phone always required
+    if (newFields[index].name === "phone") return;
     const updated = [...newFields];
     updated[index].required = !updated[index].required;
     setNewFields(updated);
@@ -155,17 +189,10 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
   };
 
   const addCustomField = () => {
-    setNewFields([...newFields, {
-      name: `custom_${Date.now()}`,
-      label: "Custom Field",
-      type: "text",
-      required: false,
-    }]);
+    setNewFields([...newFields, { name: `custom_${Date.now()}`, label: "Custom Field", type: "text", required: false }]);
   };
 
-  const getProjectForForm = (form: LeadForm) => {
-    return projects.find(p => p.id === form.seo_project_id);
-  };
+  const getProjectForForm = (form: LeadForm) => projects.find(p => p.id === form.seo_project_id);
 
   const generateScript = (form: LeadForm) => {
     const project = getProjectForForm(form);
@@ -173,6 +200,7 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
 
     const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || "equruhaugrbtqjixqgtg";
     const endpoint = `https://${projectId}.supabase.co/functions/v1/seo-lead-capture`;
+    const design = (form.design_json as FormDesign) || DEFAULT_DESIGN;
 
     return `<!-- NextWeb OS Contact Form Script -->
 <script>
@@ -181,13 +209,39 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
   var PROJECT_ID = "${project.id}";
   var API_KEY = "${project.api_key}";
   var FORM_ID = "${form.id}";
-  var SUCCESS_MSG = "${form.success_message || "Thank you!"}";
+  var SUCCESS_MSG = "${(form.success_message || "Thank you!").replace(/"/g, '\\"')}";
   var REDIRECT_URL = "${form.redirect_url || ""}";
+  var DESIGN = ${JSON.stringify(design)};
+  var _submitted = {};
 
   function init() {
-    var forms = document.querySelectorAll('[data-nw-form=\\' + FORM_ID + '\\"]');
+    var forms = document.querySelectorAll('[data-nw-form="' + FORM_ID + '"]');
     if (!forms.length) forms = document.querySelectorAll('form[data-nextweb]');
-    forms.forEach(function(form) { form.addEventListener('submit', handleSubmit); });
+    forms.forEach(function(form) {
+      form.addEventListener('submit', handleSubmit);
+      applyDesign(form);
+    });
+  }
+
+  function applyDesign(form) {
+    if (DESIGN.bg_color) form.style.backgroundColor = DESIGN.bg_color;
+    if (DESIGN.text_color) form.style.color = DESIGN.text_color;
+    if (DESIGN.border_radius) form.style.borderRadius = DESIGN.border_radius + 'px';
+    var spacing = DESIGN.spacing === 'compact' ? '8px' : DESIGN.spacing === 'spacious' ? '24px' : '16px';
+    form.style.padding = spacing;
+    var btn = form.querySelector('[type="submit"]');
+    if (btn) {
+      btn.style.backgroundColor = DESIGN.button_color || '#2563eb';
+      btn.style.color = '#fff';
+      btn.style.border = 'none';
+      btn.style.padding = '10px 24px';
+      btn.style.borderRadius = (DESIGN.border_radius || '8') + 'px';
+      btn.style.cursor = 'pointer';
+      btn.style.fontSize = '14px';
+      btn.style.fontWeight = '600';
+      btn.textContent = DESIGN.button_text || 'Submit';
+      btn.setAttribute('data-original-text', DESIGN.button_text || 'Submit');
+    }
   }
 
   function handleSubmit(e) {
@@ -201,62 +255,80 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
     var email = (fd.get('email') || '').toString().trim();
     var message = (fd.get('message') || '').toString().trim();
 
-    if (!name) { alert('Name is required'); return; }
-    if (!phone) { alert('Phone is required'); return; }
+    if (!name) { showMsg(form, 'Name is required', 'error'); return; }
+    if (!phone) { showMsg(form, 'Phone is required', 'error'); return; }
+    if (email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) { showMsg(form, 'Invalid email format', 'error'); return; }
+
+    // Duplicate prevention
+    var dedupKey = phone + '_' + FORM_ID;
+    if (_submitted[dedupKey] && (Date.now() - _submitted[dedupKey]) < 60000) {
+      showMsg(form, 'This submission was already received', 'error'); return;
+    }
 
     if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+    clearMsg(form);
 
     var payload = {
-      project_id: PROJECT_ID,
-      api_key: API_KEY,
-      form_id: FORM_ID,
-      name: name,
-      phone: phone,
-      email: email,
-      message: message,
-      source: 'form',
-      page_url: window.location.href,
-      extra_data: {}
+      project_id: PROJECT_ID, api_key: API_KEY, form_id: FORM_ID,
+      name: name, phone: phone, email: email, message: message,
+      source: 'form', page_url: window.location.href, extra_data: {}
     };
-
-    // Collect UTM params
     var params = new URLSearchParams(window.location.search);
     if (params.get('utm_source')) payload.utm_source = params.get('utm_source');
     if (params.get('utm_medium')) payload.utm_medium = params.get('utm_medium');
     if (params.get('utm_campaign')) payload.utm_campaign = params.get('utm_campaign');
 
-    sendRequest(payload, form, btn, 0);
+    // Collect custom fields
+    fd.forEach(function(v, k) {
+      if (!['name','phone','email','message'].includes(k)) payload.extra_data[k] = v;
+    });
+
+    sendRequest(payload, form, btn, 0, dedupKey);
   }
 
-  function sendRequest(payload, form, btn, attempt) {
+  function sendRequest(payload, form, btn, attempt, dedupKey) {
     fetch(ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
-    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, status: r.status, data: d }; }); })
     .then(function(res) {
-      if (btn) { btn.disabled = false; btn.textContent = 'Submit'; }
+      var origText = (btn && btn.getAttribute('data-original-text')) || DESIGN.button_text || 'Submit';
+      if (btn) { btn.disabled = false; btn.textContent = origText; }
       if (res.ok) {
+        _submitted[dedupKey] = Date.now();
         form.reset();
         if (REDIRECT_URL) { window.location.href = REDIRECT_URL; }
-        else {
-          var msg = document.createElement('div');
-          msg.style.cssText = 'padding:12px;background:#22c55e;color:#fff;border-radius:6px;margin-top:8px;text-align:center';
-          msg.textContent = SUCCESS_MSG;
-          form.appendChild(msg);
-          setTimeout(function() { msg.remove(); }, 5000);
-        }
+        else { showMsg(form, SUCCESS_MSG, 'success'); }
       } else {
-        if (attempt < 1) { sendRequest(payload, form, btn, attempt + 1); }
-        else { alert(res.data.error || 'Failed to submit. Please try again.'); }
+        if (attempt < 1 && res.status >= 500) { sendRequest(payload, form, btn, attempt + 1, dedupKey); }
+        else { showMsg(form, res.data.error || 'Failed to submit. Please try again.', 'error'); }
       }
     })
     .catch(function() {
-      if (btn) { btn.disabled = false; btn.textContent = 'Submit'; }
-      if (attempt < 1) { sendRequest(payload, form, btn, attempt + 1); }
-      else { alert('Network error. Please try again.'); }
+      var origText = (btn && btn.getAttribute('data-original-text')) || DESIGN.button_text || 'Submit';
+      if (btn) { btn.disabled = false; btn.textContent = origText; }
+      if (attempt < 1) { sendRequest(payload, form, btn, attempt + 1, dedupKey); }
+      else { showMsg(form, 'Network error. Please try again.', 'error'); }
     });
+  }
+
+  function showMsg(form, text, type) {
+    clearMsg(form);
+    var msg = document.createElement('div');
+    msg.className = 'nw-form-msg';
+    msg.style.cssText = 'padding:12px;border-radius:6px;margin-top:8px;text-align:center;font-size:14px;' +
+      (type === 'success' ? 'background:#dcfce7;color:#166534;' : 'background:#fee2e2;color:#991b1b;');
+    msg.textContent = text;
+    form.appendChild(msg);
+    if (type === 'success') setTimeout(function() { msg.remove(); }, 6000);
+    else setTimeout(function() { msg.remove(); }, 8000);
+  }
+
+  function clearMsg(form) {
+    var old = form.querySelectorAll('.nw-form-msg');
+    old.forEach(function(el) { el.remove(); });
   }
 
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); }
@@ -267,6 +339,7 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
 
   const generateHtmlForm = (form: LeadForm) => {
     const fields = (form.fields_json || DEFAULT_FIELDS) as FormField[];
+    const design = (form.design_json as FormDesign) || DEFAULT_DESIGN;
     const lines = [`<form data-nw-form="${form.id}" data-nextweb>`];
     fields.forEach(f => {
       const req = f.required ? ' required' : '';
@@ -278,7 +351,7 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
         lines.push(`  <input type="${f.type}" name="${f.name}" placeholder="${f.label}"${req} />`);
       }
     });
-    lines.push(`  <button type="submit">Submit</button>`);
+    lines.push(`  <button type="submit">${design.button_text || "Submit"}</button>`);
     lines.push(`</form>`);
     return lines.join('\n');
   };
@@ -292,38 +365,40 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
 
   const handleTestSubmission = async (form: LeadForm) => {
     const project = getProjectForForm(form);
-    if (!project) {
-      setTestResult({ status: "error", message: "No SEO project found" });
-      return;
-    }
-
+    if (!project) { setTestResult({ status: "error", message: "No SEO project found" }); return; }
     setTestLoading(true);
     setTestResult(null);
 
     try {
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || "equruhaugrbtqjixqgtg";
+      const payload = {
+        project_id: project.id,
+        api_key: project.api_key,
+        form_id: form.id,
+        name: "Test Lead (NextWeb OS)",
+        phone: "+61400000000",
+        email: "test@nextweb.test",
+        message: "Test submission from NextWeb OS",
+        source: "form",
+      };
+      console.log("[ContactForm] Test payload:", payload);
+
       const res = await fetch(
         `https://${projectId}.supabase.co/functions/v1/seo-lead-capture`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            project_id: project.id,
-            api_key: project.api_key,
-            form_id: form.id,
-            name: "Test Lead (NextWeb OS)",
-            phone: "+61400000000",
-            email: "test@nextweb.test",
-            message: "This is a test submission from NextWeb OS",
-            source: "form",
-          }),
-        }
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }
       );
       const data = await res.json();
+      console.log("[ContactForm] Test response:", data);
+
       if (res.ok) {
-        setTestResult({ status: "success", message: `Test lead created (ID: ${data.lead_id})` });
+        const emailStatus = data.emails?.map((e: any) => `${e.type}: ${e.status}`).join(", ") || "N/A";
+        setTestResult({
+          status: "success",
+          message: `✔ Lead created (ID: ${data.lead_id})`,
+          details: `Email status: ${emailStatus}`,
+        });
       } else {
-        setTestResult({ status: "error", message: data.error || "Test failed" });
+        setTestResult({ status: "error", message: data.error || "Test failed", details: JSON.stringify(data) });
       }
     } catch (e) {
       setTestResult({ status: "error", message: "Network error during test" });
@@ -349,7 +424,6 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-base font-semibold">Contact Form Management</h3>
@@ -362,7 +436,6 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
         )}
       </div>
 
-      {/* Existing Forms */}
       {forms.length === 0 ? (
         <Card className="rounded-xl">
           <CardContent className="py-12 text-center">
@@ -392,26 +465,18 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
                     </div>
                     <div className="flex items-center gap-2">
                       {canEdit && (
-                        <Switch
-                          checked={form.is_active ?? false}
-                          onCheckedChange={() => toggleFormActive(form.id, form.is_active ?? false)}
-                        />
+                        <Switch checked={form.is_active ?? false} onCheckedChange={() => toggleFormActive(form.id, form.is_active ?? false)} />
                       )}
                       <Button size="sm" variant="outline" onClick={() => setScriptOpen(form)}>
                         <Code className="h-3.5 w-3.5 mr-1" /> Get Script
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleTestSubmission(form)}
-                        disabled={testLoading}
-                      >
-                        <Send className="h-3.5 w-3.5 mr-1" /> Test
+                      <Button size="sm" variant="outline" onClick={() => handleTestSubmission(form)} disabled={testLoading}>
+                        {testLoading ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Send className="h-3.5 w-3.5 mr-1" />}
+                        Test
                       </Button>
                     </div>
                   </div>
 
-                  {/* Form details */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                     <div>
                       <span className="text-muted-foreground">Project:</span>
@@ -426,16 +491,20 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
                       <p className="font-medium truncate">{form.success_message || "—"}</p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Redirect:</span>
-                      <p className="font-medium truncate">{form.redirect_url || "None"}</p>
+                      <span className="text-muted-foreground">Design:</span>
+                      <p className="font-medium truncate">
+                        {(form.design_json as FormDesign)?.button_text || "Submit"} • {(form.design_json as FormDesign)?.spacing || "normal"}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Test result */}
                   {testResult && (
-                    <div className={`mt-3 p-2 rounded-lg text-xs flex items-center gap-2 ${testResult.status === "success" ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-600"}`}>
-                      {testResult.status === "success" ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
-                      {testResult.message}
+                    <div className={`mt-3 p-3 rounded-lg text-xs space-y-1 ${testResult.status === "success" ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-600"}`}>
+                      <div className="flex items-center gap-2">
+                        {testResult.status === "success" ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
+                        {testResult.message}
+                      </div>
+                      {testResult.details && <p className="text-[10px] opacity-80">{testResult.details}</p>}
                     </div>
                   )}
                 </CardContent>
@@ -455,6 +524,7 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
           <Tabs defaultValue="fields" className="space-y-4">
             <TabsList>
               <TabsTrigger value="fields"><FormInput className="h-3.5 w-3.5 mr-1" /> Fields</TabsTrigger>
+              <TabsTrigger value="design"><Paintbrush className="h-3.5 w-3.5 mr-1" /> Design</TabsTrigger>
               <TabsTrigger value="settings"><Settings className="h-3.5 w-3.5 mr-1" /> Settings</TabsTrigger>
             </TabsList>
 
@@ -462,7 +532,7 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-8"></TableHead>
+                    <TableHead className="w-16">Order</TableHead>
                     <TableHead>Label</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Required</TableHead>
@@ -471,8 +541,28 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
                 </TableHeader>
                 <TableBody>
                   {newFields.map((field, i) => (
-                    <TableRow key={i}>
-                      <TableCell><GripVertical className="h-3.5 w-3.5 text-muted-foreground" /></TableCell>
+                    <TableRow
+                      key={field.name + i}
+                      draggable
+                      onDragStart={() => handleDragStart(i)}
+                      onDragEnter={() => handleDragEnter(i)}
+                      onDragEnd={handleDragEnd}
+                      onDragOver={(e) => e.preventDefault()}
+                      className="cursor-grab active:cursor-grabbing"
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                          <div className="flex flex-col">
+                            <button onClick={() => moveField(i, "up")} disabled={i === 0} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
+                              <ArrowUp className="h-3 w-3" />
+                            </button>
+                            <button onClick={() => moveField(i, "down")} disabled={i === newFields.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
+                              <ArrowDown className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Input
                           value={field.label}
@@ -488,11 +578,7 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
                         <Badge variant="outline" className="text-[10px]">{field.type}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Switch
-                          checked={field.required}
-                          disabled={field.name === "phone"}
-                          onCheckedChange={() => toggleFieldRequired(i)}
-                        />
+                        <Switch checked={field.required} disabled={field.name === "phone"} onCheckedChange={() => toggleFieldRequired(i)} />
                         {field.name === "phone" && (
                           <span className="text-[10px] text-muted-foreground ml-1 flex items-center gap-0.5">
                             <Shield className="h-2.5 w-2.5" /> Always
@@ -513,6 +599,81 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
               <Button variant="outline" size="sm" onClick={addCustomField}>
                 <Plus className="h-3.5 w-3.5 mr-1" /> Add Custom Field
               </Button>
+            </TabsContent>
+
+            <TabsContent value="design" className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Button Text</Label>
+                  <Input value={newDesign.button_text} onChange={e => setNewDesign(d => ({ ...d, button_text: e.target.value }))} placeholder="Submit" />
+                </div>
+                <div>
+                  <Label>Spacing</Label>
+                  <Select value={newDesign.spacing} onValueChange={v => setNewDesign(d => ({ ...d, spacing: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="compact">Compact</SelectItem>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="spacious">Spacious</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Button Color</Label>
+                  <div className="flex gap-2 items-center">
+                    <input type="color" value={newDesign.button_color} onChange={e => setNewDesign(d => ({ ...d, button_color: e.target.value }))} className="h-9 w-12 rounded border cursor-pointer" />
+                    <Input value={newDesign.button_color} onChange={e => setNewDesign(d => ({ ...d, button_color: e.target.value }))} className="flex-1" />
+                  </div>
+                </div>
+                <div>
+                  <Label>Background Color</Label>
+                  <div className="flex gap-2 items-center">
+                    <input type="color" value={newDesign.bg_color} onChange={e => setNewDesign(d => ({ ...d, bg_color: e.target.value }))} className="h-9 w-12 rounded border cursor-pointer" />
+                    <Input value={newDesign.bg_color} onChange={e => setNewDesign(d => ({ ...d, bg_color: e.target.value }))} className="flex-1" />
+                  </div>
+                </div>
+                <div>
+                  <Label>Text Color</Label>
+                  <div className="flex gap-2 items-center">
+                    <input type="color" value={newDesign.text_color} onChange={e => setNewDesign(d => ({ ...d, text_color: e.target.value }))} className="h-9 w-12 rounded border cursor-pointer" />
+                    <Input value={newDesign.text_color} onChange={e => setNewDesign(d => ({ ...d, text_color: e.target.value }))} className="flex-1" />
+                  </div>
+                </div>
+                <div>
+                  <Label>Border Radius (px)</Label>
+                  <Input type="number" value={newDesign.border_radius} onChange={e => setNewDesign(d => ({ ...d, border_radius: e.target.value }))} min="0" max="30" />
+                </div>
+              </div>
+
+              {/* Live preview */}
+              <div>
+                <Label className="text-xs text-muted-foreground mb-2 block">Preview</Label>
+                <div
+                  className="border rounded-lg"
+                  style={{
+                    backgroundColor: newDesign.bg_color,
+                    color: newDesign.text_color,
+                    borderRadius: `${newDesign.border_radius}px`,
+                    padding: newDesign.spacing === "compact" ? "8px" : newDesign.spacing === "spacious" ? "24px" : "16px",
+                  }}
+                >
+                  <div className="space-y-2">
+                    <input placeholder="Name" className="w-full p-2 border rounded text-sm" style={{ borderRadius: `${newDesign.border_radius}px` }} readOnly />
+                    <input placeholder="Phone" className="w-full p-2 border rounded text-sm" style={{ borderRadius: `${newDesign.border_radius}px` }} readOnly />
+                    <button
+                      className="w-full text-sm font-semibold py-2"
+                      style={{
+                        backgroundColor: newDesign.button_color,
+                        color: "#fff",
+                        borderRadius: `${newDesign.border_radius}px`,
+                        border: "none",
+                      }}
+                    >
+                      {newDesign.button_text || "Submit"}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </TabsContent>
 
             <TabsContent value="settings" className="space-y-4">
@@ -569,12 +730,7 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
 
               <TabsContent value="script">
                 <div className="relative">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="absolute top-2 right-2 z-10"
-                    onClick={() => handleCopy(generateScript(scriptOpen))}
-                  >
+                  <Button size="sm" variant="outline" className="absolute top-2 right-2 z-10" onClick={() => handleCopy(generateScript(scriptOpen))}>
                     {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                   </Button>
                   <pre className="bg-muted rounded-lg p-4 text-xs overflow-x-auto max-h-96 whitespace-pre-wrap">
@@ -588,21 +744,13 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
 
               <TabsContent value="html">
                 <div className="relative">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="absolute top-2 right-2 z-10"
-                    onClick={() => handleCopy(generateHtmlForm(scriptOpen))}
-                  >
+                  <Button size="sm" variant="outline" className="absolute top-2 right-2 z-10" onClick={() => handleCopy(generateHtmlForm(scriptOpen))}>
                     {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                   </Button>
                   <pre className="bg-muted rounded-lg p-4 text-xs overflow-x-auto max-h-96 whitespace-pre-wrap">
                     {generateHtmlForm(scriptOpen)}
                   </pre>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Use this HTML structure. The JavaScript will auto-attach to forms with the <code>data-nw-form</code> or <code>data-nextweb</code> attribute.
-                </p>
               </TabsContent>
 
               <TabsContent value="api">
@@ -610,16 +758,8 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
                   <div>
                     <Label className="text-xs text-muted-foreground">Endpoint</Label>
                     <div className="flex gap-2">
-                      <Input
-                        readOnly
-                        value={`https://${import.meta.env.VITE_SUPABASE_PROJECT_ID || "equruhaugrbtqjixqgtg"}.supabase.co/functions/v1/seo-lead-capture`}
-                        className="text-xs font-mono"
-                      />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleCopy(`https://${import.meta.env.VITE_SUPABASE_PROJECT_ID || "equruhaugrbtqjixqgtg"}.supabase.co/functions/v1/seo-lead-capture`)}
-                      >
+                      <Input readOnly value={`https://${import.meta.env.VITE_SUPABASE_PROJECT_ID || "equruhaugrbtqjixqgtg"}.supabase.co/functions/v1/seo-lead-capture`} className="text-xs font-mono" />
+                      <Button size="sm" variant="outline" onClick={() => handleCopy(`https://${import.meta.env.VITE_SUPABASE_PROJECT_ID || "equruhaugrbtqjixqgtg"}.supabase.co/functions/v1/seo-lead-capture`)}>
                         <Copy className="h-3.5 w-3.5" />
                       </Button>
                     </div>
