@@ -11,7 +11,7 @@ export const CLIENT_NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "Dashboard", icon: Home, to: "/dashboard" },
       { label: "Performance Intelligence", icon: Zap, to: "/client-performance-intelligence" },
-      { label: "My Package", icon: Briefcase, to: "/my-billing" },
+      { label: "My Package", icon: Briefcase, to: "/my-package" },
       { label: "Billing & Invoices", icon: Receipt, to: "/my-billing" },
       { label: "SEO Projects", icon: Search, to: "/client-seo-projects" },
       { label: "Reports", icon: BarChart3, to: "/client-reports" },

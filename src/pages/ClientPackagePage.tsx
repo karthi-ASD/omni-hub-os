@@ -1,0 +1,144 @@
+import { useParams } from "react-router-dom";
+import { useClientPackage } from "@/hooks/useClientPackage";
+import { useAuth } from "@/contexts/AuthContext";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Package, Layers, Target, Shield, Share2 } from "lucide-react";
+import PackageOverviewTab from "@/components/packages/PackageOverviewTab";
+import PackageServicesTab from "@/components/packages/PackageServicesTab";
+import PackageSeoTab from "@/components/packages/PackageSeoTab";
+import PackageAssetsTab from "@/components/packages/PackageAssetsTab";
+import PackageSocialLinksTab from "@/components/packages/PackageSocialLinksTab";
+import CreatePackageDialog from "@/components/packages/CreatePackageDialog";
+import GenerateInstallmentsDialog from "@/components/packages/GenerateInstallmentsDialog";
+
+export default function ClientPackagePage() {
+  const { clientId } = useParams<{ clientId: string }>();
+  const { roles, clientId: authClientId } = useAuth();
+
+  // Use URL param for staff, or auth clientId for client users
+  const resolvedClientId = clientId || authClientId || undefined;
+
+  const {
+    pkg, services, seoData, assets, socialLinks, gmb, installments,
+    loading, createPackage, updatePackage, upsertService, upsertSeoData,
+    upsertAssets, upsertSocialLinks, upsertGmb,
+    generateInstallments, markInstallmentPaid, markInstallmentSkipped,
+    totalPaid, totalOutstanding, overdueAmount, nextDueDate,
+  } = useClientPackage(resolvedClientId);
+
+  const isClient = roles.includes("client");
+  const isReadOnly = isClient;
+  const canManagePayments = roles.some(r => ["super_admin", "business_admin", "accounts"].includes(r));
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-4">
+        <Skeleton className="h-8 w-64" />
+        <div className="grid grid-cols-3 gap-4">
+          <Skeleton className="h-28" /><Skeleton className="h-28" /><Skeleton className="h-28" />
+        </div>
+        <Skeleton className="h-64" />
+      </div>
+    );
+  }
+
+  if (!pkg) {
+    return (
+      <div className="p-6">
+        <div className="max-w-md mx-auto text-center py-16 space-y-4">
+          <Package className="h-12 w-12 mx-auto text-muted-foreground/50" />
+          <h2 className="text-xl font-bold text-foreground">No Package Found</h2>
+          <p className="text-sm text-muted-foreground">
+            This client doesn't have a package yet. Create one to manage services, billing, and assets.
+          </p>
+          {!isReadOnly && <CreatePackageDialog onCreate={createPackage} />}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <Package className="h-6 w-6 text-primary" />
+            {pkg.package_name}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Client Digital Intelligence & Revenue Dashboard</p>
+        </div>
+        {canManagePayments && pkg.payment_type === "installment" && (
+          <GenerateInstallmentsDialog
+            packageId={pkg.id}
+            totalValue={Number(pkg.total_value)}
+            startDate={pkg.start_date}
+            onGenerate={generateInstallments}
+          />
+        )}
+      </div>
+
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="w-full justify-start bg-muted/30 p-1 rounded-xl">
+          <TabsTrigger value="overview" className="gap-1.5 data-[state=active]:bg-background"><Package className="h-3.5 w-3.5" /> Overview</TabsTrigger>
+          <TabsTrigger value="services" className="gap-1.5 data-[state=active]:bg-background"><Layers className="h-3.5 w-3.5" /> Services</TabsTrigger>
+          <TabsTrigger value="seo" className="gap-1.5 data-[state=active]:bg-background"><Target className="h-3.5 w-3.5" /> SEO Data</TabsTrigger>
+          <TabsTrigger value="assets" className="gap-1.5 data-[state=active]:bg-background"><Shield className="h-3.5 w-3.5" /> Assets</TabsTrigger>
+          <TabsTrigger value="social" className="gap-1.5 data-[state=active]:bg-background"><Share2 className="h-3.5 w-3.5" /> Social & GMB</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview">
+          <PackageOverviewTab
+            pkg={pkg}
+            installments={installments}
+            totalPaid={totalPaid}
+            totalOutstanding={totalOutstanding}
+            overdueAmount={overdueAmount}
+            nextDueDate={nextDueDate}
+            onMarkPaid={markInstallmentPaid}
+            onMarkSkipped={markInstallmentSkipped}
+            isReadOnly={!canManagePayments}
+          />
+        </TabsContent>
+
+        <TabsContent value="services">
+          <PackageServicesTab
+            packageId={pkg.id}
+            services={services}
+            onUpsert={upsertService}
+            isReadOnly={isReadOnly}
+          />
+        </TabsContent>
+
+        <TabsContent value="seo">
+          <PackageSeoTab
+            packageId={pkg.id}
+            seoData={seoData}
+            onSave={upsertSeoData}
+            isReadOnly={isReadOnly && !roles.some(r => ["super_admin", "business_admin", "seo"].includes(r))}
+          />
+        </TabsContent>
+
+        <TabsContent value="assets">
+          <PackageAssetsTab
+            packageId={pkg.id}
+            assets={assets}
+            onSave={upsertAssets}
+            isReadOnly={isReadOnly}
+          />
+        </TabsContent>
+
+        <TabsContent value="social">
+          <PackageSocialLinksTab
+            packageId={pkg.id}
+            socialLinks={socialLinks}
+            gmb={gmb}
+            onSaveSocial={upsertSocialLinks}
+            onSaveGmb={upsertGmb}
+            isReadOnly={isReadOnly}
+          />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

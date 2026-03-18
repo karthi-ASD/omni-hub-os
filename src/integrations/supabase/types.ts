@@ -6290,6 +6290,41 @@ export type Database = {
           },
         ]
       }
+      client_gmb: {
+        Row: {
+          access_status: string | null
+          created_at: string
+          gmb_link: string | null
+          id: string
+          managed_by: string | null
+          package_id: string
+        }
+        Insert: {
+          access_status?: string | null
+          created_at?: string
+          gmb_link?: string | null
+          id?: string
+          managed_by?: string | null
+          package_id: string
+        }
+        Update: {
+          access_status?: string | null
+          created_at?: string
+          gmb_link?: string | null
+          id?: string
+          managed_by?: string | null
+          package_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_gmb_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "client_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_health_scores: {
         Row: {
           business_id: string
@@ -6480,6 +6515,132 @@ export type Database = {
           },
           {
             foreignKeyName: "client_mobile_apps_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_package_assets: {
+        Row: {
+          created_at: string
+          domain_login_encrypted: string | null
+          domain_name: string | null
+          domain_renewal_date: string | null
+          hosting_login_encrypted: string | null
+          hosting_provider: string | null
+          hosting_renewal_date: string | null
+          id: string
+          package_id: string
+          registrar: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          domain_login_encrypted?: string | null
+          domain_name?: string | null
+          domain_renewal_date?: string | null
+          hosting_login_encrypted?: string | null
+          hosting_provider?: string | null
+          hosting_renewal_date?: string | null
+          id?: string
+          package_id: string
+          registrar?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          domain_login_encrypted?: string | null
+          domain_name?: string | null
+          domain_renewal_date?: string | null
+          hosting_login_encrypted?: string | null
+          hosting_provider?: string | null
+          hosting_renewal_date?: string | null
+          id?: string
+          package_id?: string
+          registrar?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_package_assets_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "client_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_packages: {
+        Row: {
+          account_manager_id: string | null
+          business_id: string
+          client_id: string
+          competitor_visibility: boolean
+          contract_type: string
+          created_at: string
+          id: string
+          package_name: string
+          payment_type: string
+          ranking_mode: string
+          seo_manager_id: string | null
+          start_date: string
+          status: string
+          total_value: number
+          updated_at: string
+        }
+        Insert: {
+          account_manager_id?: string | null
+          business_id: string
+          client_id: string
+          competitor_visibility?: boolean
+          contract_type?: string
+          created_at?: string
+          id?: string
+          package_name?: string
+          payment_type?: string
+          ranking_mode?: string
+          seo_manager_id?: string | null
+          start_date?: string
+          status?: string
+          total_value?: number
+          updated_at?: string
+        }
+        Update: {
+          account_manager_id?: string | null
+          business_id?: string
+          client_id?: string
+          competitor_visibility?: boolean
+          contract_type?: string
+          created_at?: string
+          id?: string
+          package_name?: string
+          payment_type?: string
+          ranking_mode?: string
+          seo_manager_id?: string | null
+          start_date?: string
+          status?: string
+          total_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_packages_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_packages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_integrity_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_packages_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -6985,6 +7146,7 @@ export type Database = {
           client_id: string
           created_at: string
           id: string
+          package_id: string | null
           platform: string
           url: string
         }
@@ -6993,6 +7155,7 @@ export type Database = {
           client_id: string
           created_at?: string
           id?: string
+          package_id?: string | null
           platform: string
           url: string
         }
@@ -7001,6 +7164,7 @@ export type Database = {
           client_id?: string
           created_at?: string
           id?: string
+          package_id?: string | null
           platform?: string
           url?: string
         }
@@ -7024,6 +7188,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_social_links_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "client_packages"
             referencedColumns: ["id"]
           },
         ]
@@ -16019,6 +16190,126 @@ export type Database = {
         }
         Relationships: []
       }
+      package_events: {
+        Row: {
+          created_at: string
+          event_date: string | null
+          event_name: string
+          id: string
+          package_id: string
+          payment_type: string
+          status: string
+          total_cost: number
+        }
+        Insert: {
+          created_at?: string
+          event_date?: string | null
+          event_name: string
+          id?: string
+          package_id: string
+          payment_type?: string
+          status?: string
+          total_cost?: number
+        }
+        Update: {
+          created_at?: string
+          event_date?: string | null
+          event_name?: string
+          id?: string
+          package_id?: string
+          payment_type?: string
+          status?: string
+          total_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_events_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "client_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_installments: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string
+          id: string
+          installment_number: number
+          package_id: string
+          paid_date: string | null
+          status: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          due_date: string
+          id?: string
+          installment_number: number
+          package_id: string
+          paid_date?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string
+          id?: string
+          installment_number?: number
+          package_id?: string
+          paid_date?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_installments_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "client_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_services: {
+        Row: {
+          billing_cycle: string
+          created_at: string
+          id: string
+          is_active: boolean
+          package_id: string
+          price: number
+          service_name: string
+        }
+        Insert: {
+          billing_cycle?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          package_id: string
+          price?: number
+          service_name: string
+        }
+        Update: {
+          billing_cycle?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          package_id?: string
+          price?: number
+          service_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_services_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "client_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_attribution: {
         Row: {
           attribution_source: string
@@ -21028,6 +21319,44 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_package_data: {
+        Row: {
+          created_at: string
+          id: string
+          keyword_count: number | null
+          package_id: string
+          radius_km: number | null
+          strategy_type: string
+          suburbs: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          keyword_count?: number | null
+          package_id: string
+          radius_km?: number | null
+          strategy_type?: string
+          suburbs?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          keyword_count?: number | null
+          package_id?: string
+          radius_km?: number | null
+          strategy_type?: string
+          suburbs?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_package_data_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "client_packages"
             referencedColumns: ["id"]
           },
         ]
