@@ -86,6 +86,7 @@ export default function ClientPackagePage() {
       );
     }
 
+    // Finance/Admin can create, SEO sees waiting message, others see nothing
     if (isFinance) {
       return (
         <div className="p-6">
@@ -96,6 +97,20 @@ export default function ClientPackagePage() {
               This client does not have a package yet. Create one to get started.
             </p>
             <CreatePackageDialog onCreate={createPackage} />
+          </div>
+        </div>
+      );
+    }
+
+    if (isSEODept) {
+      return (
+        <div className="p-6">
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <Package className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+            <div className="text-2xl font-semibold mb-2 text-foreground">No Package Yet</div>
+            <p className="text-muted-foreground max-w-md">
+              This client's package hasn't been created yet. Please contact the Finance team.
+            </p>
           </div>
         </div>
       );
