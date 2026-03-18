@@ -36,6 +36,7 @@ import { ClientCallsTab } from "@/components/clients/ClientCallsTab";
 import { WebsiteTreeTab } from "@/components/clients/WebsiteTreeTab";
 import { ClientProfileTab } from "@/components/clients/ClientProfileTab";
 import { ClientWhatsAppHistoryTab } from "@/components/clients/ClientWhatsAppHistoryTab";
+import { ContactFormCreationTab } from "@/components/clients/ContactFormCreationTab";
 import { useSalesTeam } from "@/hooks/useSalesTeam";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, parseISO, isToday, isTomorrow, isPast } from "date-fns";
