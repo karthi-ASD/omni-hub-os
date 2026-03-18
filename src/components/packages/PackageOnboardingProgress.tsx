@@ -47,10 +47,10 @@ export default function PackageOnboardingProgress({ steps, progress, completedCo
                 {step.step_name}
               </span>
             </div>
-            {canEditOnboarding === true && onUpdateStatus ? (
+            {canEditOnboarding ? (
               <Select
                 value={step.status}
-                onValueChange={(val) => onUpdateStatus(step.id, val as OnboardingStep["status"])}
+                onValueChange={(val) => onUpdateStatus?.(step.id, val as OnboardingStep["status"])}
               >
                 <SelectTrigger className="w-[130px] h-8 text-xs">
                   <SelectValue />

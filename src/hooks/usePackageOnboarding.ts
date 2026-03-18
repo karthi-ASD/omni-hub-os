@@ -11,7 +11,7 @@ export interface OnboardingStep {
   updated_at: string;
 }
 
-export function usePackageOnboarding(packageId: string | undefined) {
+export function usePackageOnboarding(packageId: string | undefined, canEditOnboarding = false) {
   const [steps, setSteps] = useState<OnboardingStep[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,10 +29,21 @@ export function usePackageOnboarding(packageId: string | undefined) {
   useEffect(() => { fetchSteps(); }, [fetchSteps]);
 
   const updateStepStatus = async (stepId: string, status: OnboardingStep["status"]) => {
-    await supabase
+    if (!canEditOnboarding) {
+      console.warn("Unauthorized onboarding update blocked");
+      return;
+    }
+
+    const { error } = await supabase
       .from("package_onboarding_status" as any)
       .update({ status, updated_at: new Date().toISOString() } as any)
       .eq("id", stepId);
+
+    if (error) {
+      toast.error("Failed to update onboarding status");
+      return;
+    }
+
     setSteps(prev => prev.map(s => s.id === stepId ? { ...s, status } : s));
     toast.success(`Step marked as ${status}`);
   };

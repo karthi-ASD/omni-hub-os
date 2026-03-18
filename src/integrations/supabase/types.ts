@@ -26208,6 +26208,10 @@ export type Database = {
         Args: { _ticket_id: string; _user_id: string }
         Returns: boolean
       }
+      can_edit_package_onboarding: {
+        Args: { _package_id: string }
+        Returns: boolean
+      }
       can_insert_client_ticket: {
         Args: { _business_id: string; _client_id: string; _user_id: string }
         Returns: boolean
