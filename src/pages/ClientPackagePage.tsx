@@ -32,12 +32,13 @@ export default function ClientPackagePage() {
 
   const isClient = roles.includes("client");
   const deptLower = (departmentName || "").toLowerCase();
-  const isAccountsDept = ["finance", "accounts", "accounting"].some(d => deptLower.includes(d));
-  const isAccounts = roles.some(r => ["super_admin", "business_admin"].includes(r)) || isAccountsDept;
+  const isFinanceDept = deptLower.includes("finance") || deptLower.includes("accounts") || deptLower.includes("accounting");
+  const isAdmin = roles.some(r => ["super_admin", "business_admin"].includes(r));
+  const isFinance = isAdmin || isFinanceDept;
   const isReadOnly = isClient;
-  const canManagePayments = isAccounts;
+  const canManagePayments = isFinance;
 
-  console.log("CLIENT_PACKAGE_PAGE DEBUG", { roles, departmentName, isAccounts, isClient, isAccountsDept });
+  console.log("FINANCE ACCESS DEBUG", { roles, departmentName, isFinanceDept, isAdmin, isFinance, isClient });
 
   const {
     steps: onboardingSteps,
@@ -82,7 +83,7 @@ export default function ClientPackagePage() {
       );
     }
 
-    if (isAccounts) {
+    if (isFinance) {
       return (
         <div className="p-6">
           <div className="flex flex-col items-center justify-center py-24 text-center">

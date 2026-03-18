@@ -111,6 +111,7 @@ import FinanceDashboardPage from "./pages/FinanceDashboardPage";
 import XeroTestPage from "./pages/XeroTestPage";
 import ClientBillingPortalPage from "./pages/ClientBillingPortalPage";
 import ClientPackagePage from "./pages/ClientPackagePage";
+import FinancePackagesPage from "./pages/FinancePackagesPage";
 import ContentManagementPage from "./pages/ContentManagementPage";
 import WebsiteDevStagesPage from "./pages/WebsiteDevStagesPage";
 import ActivityTimelinePage from "./pages/ActivityTimelinePage";
@@ -694,8 +695,8 @@ const App = () => (
               <Route path="/client-package/:clientId" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager", "employee"]}><ClientPackagePage /></ProtectedRoute>
               } />
-              <Route path="/accounts/packages" element={
-                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager", "employee"]}><ClientPackagePage /></ProtectedRoute>
+              <Route path="/finance/packages" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager", "employee"]}><FinancePackagesPage /></ProtectedRoute>
               } />
               <Route path="/content-management" element={<ContentManagementPage />} />
               <Route path="/website-dev-stages" element={<WebsiteDevStagesPage />} />

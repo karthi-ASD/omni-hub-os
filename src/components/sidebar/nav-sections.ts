@@ -55,7 +55,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Finance", icon: PieChart, to: "/finance" },
       { label: "Statewide Clients", icon: MapPin, to: "/statewide-clients" },
       { label: "Client Intelligence", icon: Brain, to: "/accounts/client-intelligence-dashboard" },
-      { label: "Packages", icon: Layers, to: "/accounts/packages" },
+      { label: "Packages", icon: Layers, to: "/finance/packages" },
       { label: "Reports", icon: BarChart3, to: "/reports" },
     ],
   },
