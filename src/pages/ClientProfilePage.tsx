@@ -479,6 +479,7 @@ const ClientProfilePage = () => {
           <TabsTrigger value="integrations"><Plug className="h-3.5 w-3.5 mr-1" />Integrations</TabsTrigger>
           <TabsTrigger value="leads"><Target className="h-3.5 w-3.5 mr-1" />Leads</TabsTrigger>
           <TabsTrigger value="calls"><Phone className="h-3.5 w-3.5 mr-1" />Calls</TabsTrigger>
+          <TabsTrigger value="contact-forms"><FormInput className="h-3.5 w-3.5 mr-1" />Contact Forms</TabsTrigger>
         </TabsList>
 
         {/* ── Conversations / Notes ── */}
