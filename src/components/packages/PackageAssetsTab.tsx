@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Globe, Server, Calendar } from "lucide-react";
+import { Globe, Server, Calendar, Lock } from "lucide-react";
 import type { PackageAsset } from "@/hooks/useClientPackage";
 
 interface Props {
@@ -44,6 +44,9 @@ export default function PackageAssetsTab({ packageId, assets, onSave, isReadOnly
     onSave(packageId, data);
   };
 
+  const hasStoredDomainLogin = assets?.domain_login_encrypted === "••••••••";
+  const hasStoredHostingLogin = assets?.hosting_login_encrypted === "••••••••";
+
   return (
     <div className="space-y-4">
       <Card className="border border-border/50">
@@ -62,8 +65,28 @@ export default function PackageAssetsTab({ packageId, assets, onSave, isReadOnly
             </div>
             {!isReadOnly && (
               <div className="space-y-1.5">
-                <Label className="text-xs">Domain Login (will be encrypted)</Label>
-                <Input type="password" placeholder="Enter credentials…" value={form.domain_login_encrypted} onChange={e => setForm(p => ({ ...p, domain_login_encrypted: e.target.value }))} />
+                <Label className="text-xs flex items-center gap-1">
+                  <Lock className="h-3 w-3" /> Domain Login (encrypted at rest)
+                </Label>
+                <Input
+                  type="password"
+                  placeholder={hasStoredDomainLogin ? "••••••••  (stored securely)" : "Enter credentials…"}
+                  value={form.domain_login_encrypted}
+                  onChange={e => setForm(p => ({ ...p, domain_login_encrypted: e.target.value }))}
+                />
+                {hasStoredDomainLogin && (
+                  <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                    <Lock className="h-3 w-3" /> Credentials stored securely. Enter new value to replace.
+                  </p>
+                )}
+              </div>
+            )}
+            {isReadOnly && hasStoredDomainLogin && (
+              <div className="space-y-1.5">
+                <Label className="text-xs flex items-center gap-1"><Lock className="h-3 w-3" /> Domain Login</Label>
+                <div className="h-10 flex items-center px-3 rounded-md border bg-muted/50 text-sm text-muted-foreground">
+                  ••••••••
+                </div>
               </div>
             )}
             <div className="space-y-1.5">
@@ -86,8 +109,28 @@ export default function PackageAssetsTab({ packageId, assets, onSave, isReadOnly
             </div>
             {!isReadOnly && (
               <div className="space-y-1.5">
-                <Label className="text-xs">Hosting Login (will be encrypted)</Label>
-                <Input type="password" placeholder="Enter credentials…" value={form.hosting_login_encrypted} onChange={e => setForm(p => ({ ...p, hosting_login_encrypted: e.target.value }))} />
+                <Label className="text-xs flex items-center gap-1">
+                  <Lock className="h-3 w-3" /> Hosting Login (encrypted at rest)
+                </Label>
+                <Input
+                  type="password"
+                  placeholder={hasStoredHostingLogin ? "••••••••  (stored securely)" : "Enter credentials…"}
+                  value={form.hosting_login_encrypted}
+                  onChange={e => setForm(p => ({ ...p, hosting_login_encrypted: e.target.value }))}
+                />
+                {hasStoredHostingLogin && (
+                  <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                    <Lock className="h-3 w-3" /> Credentials stored securely. Enter new value to replace.
+                  </p>
+                )}
+              </div>
+            )}
+            {isReadOnly && hasStoredHostingLogin && (
+              <div className="space-y-1.5">
+                <Label className="text-xs flex items-center gap-1"><Lock className="h-3 w-3" /> Hosting Login</Label>
+                <div className="h-10 flex items-center px-3 rounded-md border bg-muted/50 text-sm text-muted-foreground">
+                  ••••••••
+                </div>
               </div>
             )}
             <div className="space-y-1.5">

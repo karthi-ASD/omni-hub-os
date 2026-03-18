@@ -22,7 +22,7 @@ export default function ClientPackagePage() {
     pkg, services, seoData, assets, socialLinks, gmb, installments,
     loading, createPackage, updatePackage, upsertService, upsertSeoData,
     upsertAssets, upsertSocialLinks, upsertGmb,
-    generateInstallments, markInstallmentPaid, markInstallmentSkipped,
+    generateInstallments, markInstallmentPaid, markInstallmentSkipped, reversePayment,
     totalPaid, totalOutstanding, overdueAmount, nextDueDate,
   } = useClientPackage(resolvedClientId);
 
@@ -97,6 +97,7 @@ export default function ClientPackagePage() {
             nextDueDate={nextDueDate}
             onMarkPaid={markInstallmentPaid}
             onMarkSkipped={markInstallmentSkipped}
+            onReversePayment={canManagePayments ? reversePayment : undefined}
             isReadOnly={!canManagePayments}
           />
         </TabsContent>

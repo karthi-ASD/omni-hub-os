@@ -16241,8 +16241,10 @@ export type Database = {
           due_date: string
           id: string
           installment_number: number
+          is_active: boolean
           is_missed: boolean
           package_id: string
+          paid_amount: number
           paid_date: string | null
           status: string
         }
@@ -16252,8 +16254,10 @@ export type Database = {
           due_date: string
           id?: string
           installment_number: number
+          is_active?: boolean
           is_missed?: boolean
           package_id: string
+          paid_amount?: number
           paid_date?: string | null
           status?: string
         }
@@ -16263,8 +16267,10 @@ export type Database = {
           due_date?: string
           id?: string
           installment_number?: number
+          is_active?: boolean
           is_missed?: boolean
           package_id?: string
+          paid_amount?: number
           paid_date?: string | null
           status?: string
         }
@@ -16283,8 +16289,10 @@ export type Database = {
           amount: number
           business_id: string
           created_at: string
+          created_by: string | null
           id: string
           installment_id: string
+          log_type: string
           notes: string | null
           package_id: string
           paid_date: string
@@ -16294,8 +16302,10 @@ export type Database = {
           amount?: number
           business_id: string
           created_at?: string
+          created_by?: string | null
           id?: string
           installment_id: string
+          log_type?: string
           notes?: string | null
           package_id: string
           paid_date?: string
@@ -16305,8 +16315,10 @@ export type Database = {
           amount?: number
           business_id?: string
           created_at?: string
+          created_by?: string | null
           id?: string
           installment_id?: string
+          log_type?: string
           notes?: string | null
           package_id?: string
           paid_date?: string
