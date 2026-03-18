@@ -1,0 +1,1 @@
+ALTER TABLE public.seo_lead_forms ADD COLUMN IF NOT EXISTS design_json jsonb DEFAULT '{"button_text":"Submit","button_color":"#2563eb","bg_color":"#ffffff","text_color":"#111827","border_radius":"8","spacing":"normal"}'::jsonb;
