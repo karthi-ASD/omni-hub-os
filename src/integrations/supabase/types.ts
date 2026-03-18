@@ -16284,6 +16284,44 @@ export type Database = {
           },
         ]
       }
+      package_onboarding_status: {
+        Row: {
+          created_at: string
+          id: string
+          package_id: string
+          sort_order: number
+          status: string
+          step_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          package_id: string
+          sort_order?: number
+          status?: string
+          step_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          package_id?: string
+          sort_order?: number
+          status?: string
+          step_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_onboarding_status_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "client_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       package_payment_logs: {
         Row: {
           amount: number
