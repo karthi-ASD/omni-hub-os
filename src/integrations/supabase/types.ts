@@ -21241,6 +21241,7 @@ export type Database = {
           client_id: string | null
           created_at: string | null
           created_by: string | null
+          design_json: Json | null
           fields_json: Json | null
           form_name: string
           id: string
@@ -21255,6 +21256,7 @@ export type Database = {
           client_id?: string | null
           created_at?: string | null
           created_by?: string | null
+          design_json?: Json | null
           fields_json?: Json | null
           form_name?: string
           id?: string
@@ -21269,6 +21271,7 @@ export type Database = {
           client_id?: string | null
           created_at?: string | null
           created_by?: string | null
+          design_json?: Json | null
           fields_json?: Json | null
           form_name?: string
           id?: string
