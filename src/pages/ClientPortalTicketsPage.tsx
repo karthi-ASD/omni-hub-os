@@ -127,13 +127,17 @@ export default function ClientPortalTicketsPage() {
   const handleSubmit = async () => {
     if (!form.subject.trim() || submitting) return;
     try {
-      await submitTicket({
+      const result = await submitTicket({
         subject: form.subject,
         description: form.description,
         department: form.department,
         priority: form.priority,
         category: form.department === "seo" ? "project_request" : "general",
       });
+      if (!result) {
+        toast.error("Ticket creation failed — please try again");
+        return;
+      }
       toast.success("Ticket submitted successfully");
       setForm({ subject: "", description: "", department: "support", priority: "medium" });
       setOpen(false);
