@@ -60,6 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const hasHydratedRef = React.useRef(false);
   const hasInitializedRef = React.useRef(false);
   const sessionRef = React.useRef<Session | null>(null);
+  const hydratedSessionKeyRef = React.useRef<string | null>(null);
 
   const fetchProfile = async (userId: string) => {
     try {
