@@ -170,14 +170,16 @@ export default function ClientPackagePage() {
           />
         </TabsContent>
 
-        <TabsContent value="seo">
-          <PackageSeoTab
-            packageId={pkg.id}
-            seoData={seoData}
-            onSave={upsertSeoData}
-            isReadOnly={isReadOnly && !roles.some(r => ["super_admin", "business_admin", "seo"].includes(r))}
-          />
-        </TabsContent>
+        {canAccessSEO && (
+          <TabsContent value="seo">
+            <PackageSeoTab
+              packageId={pkg.id}
+              seoData={seoData}
+              onSave={upsertSeoData}
+              isReadOnly={isClient}
+            />
+          </TabsContent>
+        )}
 
         <TabsContent value="assets">
           <PackageAssetsTab
