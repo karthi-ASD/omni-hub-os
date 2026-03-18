@@ -39,7 +39,7 @@ export default function ClientPackagePage() {
   const canAccessSEO = isAdmin || isSEODept;
   const isReadOnly = isClient;
   const canManagePayments = isFinance;
-  const canEditOnboarding = isAdmin || isSEODept;
+  const canEditOnboarding = !isClient && (isAdmin || isSEODept);
 
   console.log("SEO TAB DEBUG", { roles, departmentName, isSEODept, isAdmin, canAccessSEO, canEditOnboarding });
 
@@ -49,10 +49,19 @@ export default function ClientPackagePage() {
     completedCount: onboardingCompleted,
     updateStepStatus,
     allComplete: onboardingComplete,
-  } = usePackageOnboarding(pkg?.id);
+  } = usePackageOnboarding(pkg?.id, canEditOnboarding);
 
-  // Prevent role timing flicker
-  if (!roles || roles.length === 0) return null;
+  if (!roles || roles.length === 0) {
+    return (
+      <div className="p-6 space-y-4">
+        <Skeleton className="h-8 w-64" />
+        <div className="grid grid-cols-3 gap-4">
+          <Skeleton className="h-28" /><Skeleton className="h-28" /><Skeleton className="h-28" />
+        </div>
+        <Skeleton className="h-64" />
+      </div>
+    );
+  }
 
   if (loading) {
     return (
