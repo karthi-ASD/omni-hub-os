@@ -36,11 +36,11 @@ export default function CreatePackageDialog({ onCreate }: Props) {
   useEffect(() => {
     if (!open || !profile?.business_id) return;
     const fetchSeoStaff = async () => {
-      const { data } = await supabase
-        .from("employees")
+      const { data } = await (supabase
+        .from("employees" as any)
         .select("user_id, first_name, last_name, department")
         .eq("business_id", profile.business_id)
-        .eq("status", "active") as any;
+        .eq("status", "active") as any);
 
       const filtered = (data || [])
         .filter((e: any) => {
