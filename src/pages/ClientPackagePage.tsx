@@ -16,12 +16,18 @@ import GenerateInstallmentsDialog from "@/components/packages/GenerateInstallmen
 import PackageOnboardingProgress from "@/components/packages/PackageOnboardingProgress";
 import PackageSeoTasksTab from "@/components/packages/PackageSeoTasksTab";
 
-export default function ClientPackagePage() {
-  const { clientId } = useParams<{ clientId: string }>();
+interface ClientPackagePageProps {
+  clientIdProp?: string;
+}
+
+export default function ClientPackagePage({ clientIdProp }: ClientPackagePageProps = {}) {
+  const { clientId: routeClientId } = useParams<{ clientId: string }>();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get("tab") || "overview";
   const { roles, clientId: authClientId } = useAuth();
   const { departmentName } = useEmployeeDepartment();
 
-  const resolvedClientId = clientId || authClientId || undefined;
+  const resolvedClientId = clientIdProp || routeClientId || authClientId || undefined;
 
   const {
     pkg, services, seoData, assets, socialLinks, gmb, installments,
