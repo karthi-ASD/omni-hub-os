@@ -201,7 +201,7 @@ Deno.serve(async (req) => {
     if (form_id) {
       const { data: form } = await supabase
         .from("seo_lead_forms").select("id")
-        .eq("id", form_id).eq("seo_project_id", project_id).single();
+        .eq("id", form_id).eq("seo_project_id", project.id).single();
       if (!form) return json({ error: "Invalid form_id for this project" }, 400);
     }
 
