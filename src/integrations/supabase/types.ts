@@ -22222,6 +22222,7 @@ export type Database = {
           deadline: string | null
           id: string
           is_visible_to_client: boolean | null
+          package_id: string | null
           priority: string
           progress_percent: number | null
           result_notes: string | null
@@ -22240,6 +22241,7 @@ export type Database = {
           deadline?: string | null
           id?: string
           is_visible_to_client?: boolean | null
+          package_id?: string | null
           priority?: string
           progress_percent?: number | null
           result_notes?: string | null
@@ -22258,6 +22260,7 @@ export type Database = {
           deadline?: string | null
           id?: string
           is_visible_to_client?: boolean | null
+          package_id?: string | null
           priority?: string
           progress_percent?: number | null
           result_notes?: string | null
@@ -22288,6 +22291,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seo_tasks_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "client_packages"
             referencedColumns: ["id"]
           },
           {
