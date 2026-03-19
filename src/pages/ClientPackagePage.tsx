@@ -26,7 +26,7 @@ export default function ClientPackagePage({ clientIdProp }: ClientPackagePagePro
   const { clientId: routeClientId } = useParams<{ clientId: string }>();
   const [searchParams] = useSearchParams();
   const defaultTab = searchParams.get("tab") || "overview";
-  const { roles, clientId: authClientId } = useAuth();
+  const { roles, clientId: authClientId, isClientUser } = useAuth();
   const { departmentName } = useEmployeeDepartment();
 
   const resolvedClientId = clientIdProp || routeClientId || authClientId || undefined;
@@ -39,7 +39,8 @@ export default function ClientPackagePage({ clientIdProp }: ClientPackagePagePro
     totalPaid, totalOutstanding, overdueAmount, nextDueDate,
   } = useClientPackage(resolvedClientId);
 
-  const isClient = roles.includes("client");
+  const isClient = isClientUser || roles.includes("client");
+  console.log("[ClientPackagePage] ROLES:", roles, "isClientUser:", isClientUser, "isClient:", isClient);
   const deptLower = (departmentName || "").toLowerCase();
   const isFinanceDept = deptLower.includes("finance") || deptLower.includes("accounts") || deptLower.includes("accounting");
   const isSEODept = deptLower.includes("seo") || deptLower.includes("digital marketing");
