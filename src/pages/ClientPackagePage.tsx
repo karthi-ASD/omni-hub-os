@@ -235,7 +235,7 @@ export default function ClientPackagePage({ clientIdProp }: ClientPackagePagePro
           </TabsContent>
         )}
 
-
+        <TabsContent value="assets">
           <PackageAssetsTab
             packageId={pkg.id}
             assets={assets}
