@@ -39,7 +39,8 @@ export default function ClientPackagePage({ clientIdProp }: ClientPackagePagePro
     totalPaid, totalOutstanding, overdueAmount, nextDueDate,
   } = useClientPackage(resolvedClientId);
 
-  const isClient = roles.includes("client");
+  const isClient = isClientUser || roles.includes("client");
+  console.log("[ClientPackagePage] ROLES:", roles, "isClientUser:", isClientUser, "isClient:", isClient);
   const deptLower = (departmentName || "").toLowerCase();
   const isFinanceDept = deptLower.includes("finance") || deptLower.includes("accounts") || deptLower.includes("accounting");
   const isSEODept = deptLower.includes("seo") || deptLower.includes("digital marketing");
