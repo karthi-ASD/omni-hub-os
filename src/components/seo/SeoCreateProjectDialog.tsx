@@ -5,14 +5,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
-import { DraftRestoreBanner, CrossTabConflictBanner } from "@/components/ui/draft-restore-banner";
+import { DraftRestoreBanner } from "@/components/ui/draft-restore-banner";
 import { AutoSaveIndicator } from "@/components/ui/auto-save-indicator";
+import { ClientSelector } from "@/components/ui/client-selector";
 import { useAllClientsDropdown } from "@/hooks/useAllClientsDropdown";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  clients?: { id: string; contact_name: string }[]; // deprecated, ignored if provided
+  clients?: any[]; // deprecated
   onCreate: (form: {
     client_id?: string;
     website_domain: string;
@@ -76,21 +77,11 @@ export function SeoCreateProjectDialog({ open, onOpenChange, onCreate }: Props) 
           </div>
           <div>
             <Label>Client</Label>
-            <Select value={form.client_id} onValueChange={v => setForm({ ...form, client_id: v })}>
-              <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
-              <SelectContent>
-                {allClients.length === 0 ? (
-                  <div className="px-3 py-2 text-sm text-muted-foreground">No clients available. Please create a client first.</div>
-                ) : allClients.map(c => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.contact_name}
-                    {c.client_status !== "active" && (
-                      <span className="ml-2 text-xs text-muted-foreground capitalize">({c.client_status})</span>
-                    )}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ClientSelector
+              clients={allClients}
+              value={form.client_id}
+              onValueChange={v => setForm({ ...form, client_id: v })}
+            />
           </div>
           <div>
             <Label>Target Location</Label>

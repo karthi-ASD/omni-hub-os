@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ClientSelector } from "@/components/ui/client-selector";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Globe, TrendingUp, Search, Users, FolderKanban } from "lucide-react";
@@ -119,21 +120,11 @@ const SeoOperationsPage = () => {
             <div><Label>Project Name *</Label><Input value={form.project_name} onChange={e => setForm({ ...form, project_name: e.target.value })} placeholder="SEO for Client X" /></div>
             <div><Label>Website Domain *</Label><Input value={form.website_domain} onChange={e => setForm({ ...form, website_domain: e.target.value })} placeholder="example.com.au" /></div>
             <div><Label>Client</Label>
-              <Select value={form.client_id} onValueChange={v => setForm({ ...form, client_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
-                <SelectContent>
-                  {allClients.length === 0 ? (
-                    <div className="px-3 py-2 text-sm text-muted-foreground">No clients available. Please create a client first.</div>
-                  ) : allClients.map(c => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.contact_name}
-                      {c.client_status !== "active" && (
-                        <span className="ml-2 text-xs text-muted-foreground capitalize">({c.client_status})</span>
-                      )}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <ClientSelector
+                clients={allClients}
+                value={form.client_id}
+                onValueChange={v => setForm({ ...form, client_id: v })}
+              />
             </div>
             <div><Label>Target Location</Label><Input value={form.target_location} onChange={e => setForm({ ...form, target_location: e.target.value })} placeholder="Sydney, NSW" /></div>
             <div><Label>Primary Keyword</Label><Input value={form.primary_keyword} onChange={e => setForm({ ...form, primary_keyword: e.target.value })} /></div>
