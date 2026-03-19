@@ -9156,6 +9156,44 @@ export type Database = {
           },
         ]
       }
+      crm_dashboard_widgets: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          is_visible: boolean
+          sort_order: number
+          widget_key: string
+          widget_label: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          sort_order?: number
+          widget_key: string
+          widget_label: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          sort_order?: number
+          widget_key?: string
+          widget_label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_dashboard_widgets_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_deals: {
         Row: {
           accountant_id: string | null
@@ -10010,6 +10048,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "crm_tasks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_terminology: {
+        Row: {
+          business_id: string
+          created_at: string
+          custom_label: string
+          id: string
+          term_key: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          custom_label: string
+          id?: string
+          term_key: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          custom_label?: string
+          id?: string
+          term_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_terminology_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"

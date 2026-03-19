@@ -11,8 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowUp, ArrowDown, Pencil, Trash2, Plus, Save, GripVertical, Eye, EyeOff, Layers, GitBranch, Building2, Users, Palette } from "lucide-react";
+import { ArrowUp, ArrowDown, Pencil, Trash2, Plus, Save, GripVertical, Eye, EyeOff, Layers, GitBranch, Building2, Users, Palette, Settings2 } from "lucide-react";
 import { toast } from "sonner";
+import { CRMCustomizationPanel } from "./CRMCustomizationPanel";
 
 interface ConfigItem {
   id: string; config_type: string; module: string; key: string; label: string;
@@ -120,13 +121,15 @@ export function BusinessSettingsModule() {
     <div className="space-y-6 max-w-3xl">
       <div><h2 className="text-lg font-semibold text-foreground">Business Settings</h2><p className="text-sm text-muted-foreground">Manage your CRM workspace configuration</p></div>
 
-      <Tabs defaultValue="tabs">
+      <Tabs defaultValue="crm_customization">
         <TabsList className="bg-card border border-border flex-wrap h-auto gap-1 p-1">
-          <TabsTrigger value="tabs" className="gap-1.5 text-xs"><Layers className="h-3.5 w-3.5" />Tabs</TabsTrigger>
+          <TabsTrigger value="crm_customization" className="gap-1.5 text-xs"><Settings2 className="h-3.5 w-3.5" />CRM Customization</TabsTrigger>
+          <TabsTrigger value="tabs" className="gap-1.5 text-xs"><Layers className="h-3.5 w-3.5" />Quick Tabs</TabsTrigger>
           <TabsTrigger value="lead_stages" className="gap-1.5 text-xs"><GitBranch className="h-3.5 w-3.5" />Lead Stages</TabsTrigger>
           <TabsTrigger value="investor_stages" className="gap-1.5 text-xs"><Users className="h-3.5 w-3.5" />Investor Stages</TabsTrigger>
           <TabsTrigger value="deal_stages" className="gap-1.5 text-xs"><GitBranch className="h-3.5 w-3.5" />Deal Stages</TabsTrigger>
         </TabsList>
+        <TabsContent value="crm_customization" className="mt-4"><CRMCustomizationPanel /></TabsContent>
         <TabsContent value="tabs" className="mt-4">{renderList(tabs, "CRM Tabs")}</TabsContent>
         <TabsContent value="lead_stages" className="mt-4">{renderStageSection(leadStages, "leads", "Lead Pipeline Stages")}</TabsContent>
         <TabsContent value="investor_stages" className="mt-4">{renderStageSection(investorStages, "investors", "Investor Pipeline Stages")}</TabsContent>
