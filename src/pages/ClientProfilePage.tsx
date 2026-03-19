@@ -279,8 +279,15 @@ const ClientProfilePage = () => {
   const [appForm, setAppForm] = useState({ app_name: "", platform: "Android", app_category: "" });
   const [convForm, setConvForm] = useState({ conversation_type: "call", notes: "", next_callback_date: "" });
   
-  const { hasRole } = useAuth();
+  const { hasRole, roles } = useAuth();
+  const { departmentName } = useEmployeeDepartment();
   const canEditBilling = hasRole("super_admin") || hasRole("business_admin") || hasRole("manager");
+  
+  const deptLower = (departmentName || "").toLowerCase();
+  const isFinanceDept = deptLower.includes("finance") || deptLower.includes("accounts") || deptLower.includes("accounting");
+  const isSEODept = deptLower.includes("seo") || deptLower.includes("digital marketing");
+  const isAdminUser = hasRole("super_admin") || hasRole("business_admin");
+  const canViewPackageTab = isAdminUser || isFinanceDept || isSEODept;
 
   console.log({
     route_client_id: id,
