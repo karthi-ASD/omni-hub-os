@@ -36,6 +36,9 @@ interface AssignedClient {
     status: string;
   }[];
   seo_step_status: "pending" | "in_progress" | "completed" | "none";
+  task_total: number;
+  task_pending: number;
+  task_in_progress: number;
 }
 
 const SeoTeamDashboardPage = () => {
