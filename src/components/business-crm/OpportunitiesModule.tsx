@@ -128,12 +128,17 @@ export function OpportunitiesModule() {
                   <Badge className={`text-[10px] ${STATUS_COLORS[p.availability] || ""}`}>{(p.availability || "").replace("_", " ")}</Badge>
                   {p.is_off_market && <Badge variant="secondary" className="text-[10px]">Off-Market</Badge>}
                   {p.smsf_suitable && <Badge variant="secondary" className="text-[10px]">SMSF</Badge>}
+                  {p.urgency_tag && <Badge variant="destructive" className="text-[10px] animate-pulse">{p.urgency_tag === "limited" ? "🔥 Limited" : p.urgency_tag === "high_demand" ? "📈 High Demand" : p.urgency_tag === "eoi_closing" ? "⏰ EOI Closing" : p.urgency_tag}</Badge>}
+                  {p.demand_level === "high" && !p.urgency_tag && <Badge variant="secondary" className="text-[10px]">High Demand</Badge>}
                 </div>
                 <div className="grid grid-cols-2 gap-1.5 text-xs">
                   <div><span className="text-muted-foreground">Price:</span> <span className="font-medium text-foreground">{p.listing_price ? `$${p.listing_price.toLocaleString()}` : "—"}</span></div>
                   <div><span className="text-muted-foreground">Yield:</span> <span className="font-medium text-foreground">{p.estimated_yield ? `${p.estimated_yield}%` : "—"}</span></div>
                   {p.developer_name && <div className="col-span-2"><span className="text-muted-foreground">Developer:</span> {p.developer_name}</div>}
                 </div>
+                {p.urgency_deadline && (
+                  <p className="text-[10px] text-destructive font-medium">Deadline: {new Date(p.urgency_deadline).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}</p>
+                )}
               </CardContent>
             </Card>
           ))}

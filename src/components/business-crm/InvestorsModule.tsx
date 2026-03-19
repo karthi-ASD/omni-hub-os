@@ -13,10 +13,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Users, DollarSign, TrendingUp, Star } from "lucide-react";
+import { Plus, Search, Users, DollarSign, TrendingUp, Star, ChevronRight, X } from "lucide-react";
 import { toast } from "sonner";
+import { InvestorReadinessScore, calculateReadiness } from "./InvestorReadinessScore";
+import { InvestorJourneyTimeline } from "./InvestorJourneyTimeline";
 
 const TIER_COLORS: Record<string, string> = { platinum: "bg-purple-500/10 text-purple-400", gold: "bg-amber-500/10 text-amber-400", silver: "bg-zinc-400/10 text-zinc-400", standard: "bg-muted text-muted-foreground" };
+const OBJECTION_TYPES = ["finance", "timing", "trust", "partner_approval", "price", "location", "market_conditions", "other"];
 
 export function InvestorsModule() {
   const { profile } = useAuth();
@@ -26,6 +29,9 @@ export function InvestorsModule() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [filterTier, setFilterTier] = useState("all");
+  const [selectedInvestor, setSelectedInvestor] = useState<any>(null);
+  const [objectionDialog, setObjectionDialog] = useState<any>(null);
+  const [objForm, setObjForm] = useState({ objection_type: "", objection_notes: "" });
 
   const [form, setForm] = useState({
     full_name: "", preferred_name: "", email: "", phone: "", occupation: "",
@@ -54,6 +60,7 @@ export function InvestorsModule() {
 
   const handleSave = async () => {
     if (!form.full_name.trim()) { toast.error("Name required"); return; }
+    const readiness = calculateReadiness(form as any);
     const { error } = await supabase.from("crm_investors").insert({
       business_id: profile!.business_id!, full_name: form.full_name, preferred_name: form.preferred_name || null,
       email: form.email || null, phone: form.phone || null, occupation: form.occupation || null,
@@ -70,22 +77,36 @@ export function InvestorsModule() {
       preferred_meeting_mode: form.preferred_meeting_mode,
       long_term_goals: form.long_term_goals || null, investment_goals: form.investment_goals || null,
       pipeline_stage: form.pipeline_stage, source: form.source || null, notes: form.notes || null,
+      readiness_score: readiness.score, readiness_label: readiness.label,
     } as any);
     if (error) { toast.error("Failed"); console.error(error); return; }
-    toast.success("Investor added");
-    setOpen(false);
+    toast.success("Investor added"); setOpen(false);
+    qc.invalidateQueries({ queryKey: ["crm-investors"] });
+  };
+
+  const saveObjection = async () => {
+    if (!objectionDialog) return;
+    await supabase.from("crm_investors").update({
+      objection_type: objForm.objection_type || null,
+      objection_notes: objForm.objection_notes || null,
+    } as any).eq("id", objectionDialog.id);
+    toast.success("Objection saved");
+    setObjectionDialog(null);
     qc.invalidateQueries({ queryKey: ["crm-investors"] });
   };
 
   const totalBudget = investors.reduce((s: number, i: any) => s + (i.budget_max || 0), 0);
   const platGold = investors.filter((i: any) => ["platinum", "gold"].includes(i.investor_tier)).length;
+  const readyCount = investors.filter((i: any) => calculateReadiness(i).score >= 70).length;
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[{ label: "Total Investors", val: investors.length, icon: Users },
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {[
+          { label: "Total Investors", val: investors.length, icon: Users },
           { label: "Platinum/Gold", val: platGold, icon: Star },
           { label: "Pipeline Value", val: `$${(totalBudget / 1e6).toFixed(1)}M`, icon: DollarSign },
+          { label: "Ready to Convert", val: readyCount, icon: TrendingUp },
           { label: "Avg Properties", val: investors.length ? (investors.reduce((s: number, i: any) => s + (i.current_property_count || 0), 0) / investors.length).toFixed(1) : "0", icon: TrendingUp },
         ].map(k => (
           <Card key={k.label} className="bg-card border-border"><CardContent className="p-3 flex items-center gap-2.5"><div className="p-2 rounded-lg bg-primary/10"><k.icon className="h-4 w-4 text-primary" /></div><div><p className="text-lg font-bold text-foreground">{k.val}</p><p className="text-[10px] text-muted-foreground">{k.label}</p></div></CardContent></Card>
@@ -99,22 +120,112 @@ export function InvestorsModule() {
       </div>
 
       <Card className="bg-card border-border"><Table><TableHeader><TableRow>
-        <TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Tier</TableHead><TableHead>Budget</TableHead><TableHead>Finance</TableHead><TableHead>Stage</TableHead><TableHead>Properties</TableHead>
+        <TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Tier</TableHead><TableHead>Budget</TableHead><TableHead>Finance</TableHead><TableHead>Readiness</TableHead><TableHead>Stage</TableHead><TableHead></TableHead>
       </TableRow></TableHeader><TableBody>
         {filtered.map((i: any) => (
-          <TableRow key={i.id}>
-            <TableCell><div><p className="font-medium text-sm">{i.full_name}</p>{i.email && <p className="text-[10px] text-muted-foreground">{i.email}</p>}</div></TableCell>
+          <TableRow key={i.id} className="cursor-pointer hover:bg-secondary/30" onClick={() => setSelectedInvestor(i)}>
+            <TableCell>
+              <div>
+                <p className="font-medium text-sm">{i.full_name}</p>
+                {i.email && <p className="text-[10px] text-muted-foreground">{i.email}</p>}
+                {i.objection_type && <Badge variant="destructive" className="text-[9px] mt-0.5">⚠ {i.objection_type.replace(/_/g, " ")}</Badge>}
+              </div>
+            </TableCell>
             <TableCell><Badge variant="outline" className="text-[10px]">{i.investor_type}</Badge></TableCell>
             <TableCell><Badge className={`text-[10px] ${TIER_COLORS[i.investor_tier] || ""}`}>{i.investor_tier}</Badge></TableCell>
             <TableCell className="text-xs">{i.budget_min || i.budget_max ? `$${((i.budget_min || 0) / 1000).toFixed(0)}K–$${((i.budget_max || 0) / 1000).toFixed(0)}K` : "—"}</TableCell>
             <TableCell><Badge variant="outline" className="text-[10px]">{(i.finance_status || "unknown").replace("_", " ")}</Badge></TableCell>
+            <TableCell><InvestorReadinessScore investor={i} compact /></TableCell>
             <TableCell><Badge style={{ backgroundColor: stages.find((s: any) => s.key === i.pipeline_stage)?.color, color: "#fff" }} className="text-[10px]">{stages.find((s: any) => s.key === i.pipeline_stage)?.label || i.pipeline_stage}</Badge></TableCell>
-            <TableCell className="text-sm">{i.current_property_count || 0}</TableCell>
+            <TableCell><ChevronRight className="h-4 w-4 text-muted-foreground" /></TableCell>
           </TableRow>
         ))}
-        {filtered.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No investors found</TableCell></TableRow>}
+        {filtered.length === 0 && <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No investors found</TableCell></TableRow>}
       </TableBody></Table></Card>
 
+      {/* Investor Detail Drawer */}
+      <Dialog open={!!selectedInvestor} onOpenChange={() => setSelectedInvestor(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          {selectedInvestor && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center justify-between">
+                  <DialogTitle>{selectedInvestor.full_name}</DialogTitle>
+                  <Badge className={`text-[10px] ${TIER_COLORS[selectedInvestor.investor_tier] || ""}`}>{selectedInvestor.investor_tier}</Badge>
+                </div>
+              </DialogHeader>
+
+              <Tabs defaultValue="overview" className="mt-3">
+                <TabsList className="bg-secondary">
+                  <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
+                  <TabsTrigger value="journey" className="text-xs">Journey Timeline</TabsTrigger>
+                  <TabsTrigger value="objections" className="text-xs">Objections</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="overview" className="mt-3 space-y-4">
+                  <InvestorReadinessScore investor={selectedInvestor} />
+
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div><span className="text-muted-foreground">Email:</span> <span className="text-foreground">{selectedInvestor.email || "—"}</span></div>
+                    <div><span className="text-muted-foreground">Phone:</span> <span className="text-foreground">{selectedInvestor.phone || "—"}</span></div>
+                    <div><span className="text-muted-foreground">Finance:</span> <span className="text-foreground">{selectedInvestor.finance_status}</span></div>
+                    <div><span className="text-muted-foreground">Deposit:</span> <span className="text-foreground">{selectedInvestor.deposit_readiness}</span></div>
+                    <div><span className="text-muted-foreground">Budget:</span> <span className="text-foreground">{selectedInvestor.budget_min || selectedInvestor.budget_max ? `$${((selectedInvestor.budget_min || 0) / 1000).toFixed(0)}K–$${((selectedInvestor.budget_max || 0) / 1000).toFixed(0)}K` : "—"}</span></div>
+                    <div><span className="text-muted-foreground">Timeline:</span> <span className="text-foreground">{(selectedInvestor.timeline_to_invest || "—").replace(/_/g, " ")}</span></div>
+                    <div><span className="text-muted-foreground">Experience:</span> <span className="text-foreground">{selectedInvestor.investment_experience}</span></div>
+                    <div><span className="text-muted-foreground">Risk:</span> <span className="text-foreground">{selectedInvestor.risk_profile}</span></div>
+                  </div>
+
+                  {selectedInvestor.objection_type && (
+                    <div className="flex items-start gap-2 p-2.5 rounded-md bg-destructive/5 border border-destructive/10">
+                      <span className="text-[11px] text-destructive font-medium">⚠ Objection: {selectedInvestor.objection_type.replace(/_/g, " ")}</span>
+                      {selectedInvestor.objection_notes && <p className="text-[10px] text-muted-foreground">{selectedInvestor.objection_notes}</p>}
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="journey" className="mt-3">
+                  <InvestorJourneyTimeline investorId={selectedInvestor.id} />
+                </TabsContent>
+
+                <TabsContent value="objections" className="mt-3 space-y-3">
+                  <p className="text-xs text-muted-foreground">Track objections to address them proactively and improve conversion.</p>
+                  <div>
+                    <Label className="text-xs">Objection Type</Label>
+                    <Select
+                      value={objForm.objection_type || selectedInvestor.objection_type || ""}
+                      onValueChange={v => setObjForm(f => ({ ...f, objection_type: v }))}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select type..." /></SelectTrigger>
+                      <SelectContent>
+                        {OBJECTION_TYPES.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Notes</Label>
+                    <Textarea
+                      value={objForm.objection_notes || selectedInvestor.objection_notes || ""}
+                      onChange={e => setObjForm(f => ({ ...f, objection_notes: e.target.value }))}
+                      rows={3}
+                      placeholder="Details about the objection and how to address it..."
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setObjectionDialog(selectedInvestor);
+                      saveObjection();
+                    }}
+                  >Save Objection</Button>
+                </TabsContent>
+              </Tabs>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Investor Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Add New Investor</DialogTitle></DialogHeader>

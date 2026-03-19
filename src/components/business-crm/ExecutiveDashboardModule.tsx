@@ -1,5 +1,6 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { CRMInsightsPanel } from "./CRMInsightsPanel";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -135,6 +136,11 @@ export function ExecutiveDashboardModule() {
           {financeDelayed === 0 && depositPending === 0 && tasksDueToday === 0 && <p className="text-sm text-muted-foreground">No urgent actions — all clear</p>}
         </CardContent>
       </Card>
+
+      {/* Intelligence Insights */}
+      <div className="md:col-span-2">
+        <CRMInsightsPanel />
+      </div>
     </div>
   );
 }
