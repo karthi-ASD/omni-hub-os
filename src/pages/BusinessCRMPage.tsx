@@ -1,34 +1,56 @@
-import { useState, useEffect } from "react";
 import { useBusinessCRM } from "@/hooks/useBusinessCRM";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { InvestorPipelineModule } from "@/components/business-crm/InvestorPipelineModule";
-import { PropertyPortfolioModule } from "@/components/business-crm/PropertyPortfolioModule";
-import { DealsModule } from "@/components/business-crm/DealsModule";
-import { PartnerNetworkModule } from "@/components/business-crm/PartnerNetworkModule";
-import { ActivityFeedModule } from "@/components/business-crm/ActivityFeedModule";
-import { CRMSettingsModule } from "@/components/business-crm/CRMSettingsModule";
 import { useSearchParams } from "react-router-dom";
 import {
-  Users, Building2, Handshake, Network, Activity, Settings,
+  LayoutDashboard, UserPlus, Users, Building2, GitBranch, Landmark,
+  Network, CheckSquare, MessageSquare, FileText, TrendingUp, BarChart3,
+  Zap, Smartphone, Settings, Activity,
 } from "lucide-react";
 
+import { ExecutiveDashboardModule } from "@/components/business-crm/ExecutiveDashboardModule";
+import { LeadsModule } from "@/components/business-crm/LeadsModule";
+import { InvestorsModule } from "@/components/business-crm/InvestorsModule";
+import { OpportunitiesModule } from "@/components/business-crm/OpportunitiesModule";
+import { DealPipelineModule } from "@/components/business-crm/DealPipelineModule";
+import { ProjectsDevelopersModule } from "@/components/business-crm/ProjectsDevelopersModule";
+import { PartnersModule } from "@/components/business-crm/PartnersModule";
+import { TasksFollowupsModule } from "@/components/business-crm/TasksFollowupsModule";
+import { CommunicationsModule } from "@/components/business-crm/CommunicationsModule";
+import { DocumentsModule } from "@/components/business-crm/DocumentsModule";
+import { PortfolioGrowthModule } from "@/components/business-crm/PortfolioGrowthModule";
+import { ReportsModule } from "@/components/business-crm/ReportsModule";
+import { AutomationsModule } from "@/components/business-crm/AutomationsModule";
+import { MobileAppModule } from "@/components/business-crm/MobileAppModule";
+import { BusinessSettingsModule } from "@/components/business-crm/BusinessSettingsModule";
+
 const ICON_MAP: Record<string, React.ElementType> = {
-  Users, Building2, Handshake, Network, Activity, Settings,
+  LayoutDashboard, UserPlus, Users, Building2, GitBranch, Landmark,
+  Network, CheckSquare, MessageSquare, FileText, TrendingUp, BarChart3,
+  Zap, Smartphone, Settings, Activity,
 };
 
 const MODULE_MAP: Record<string, React.FC> = {
-  investor_pipeline: InvestorPipelineModule,
-  properties: PropertyPortfolioModule,
-  deals: DealsModule,
-  partners: PartnerNetworkModule,
-  activities: ActivityFeedModule,
-  settings: CRMSettingsModule,
+  executive_dashboard: ExecutiveDashboardModule,
+  leads: LeadsModule,
+  investors: InvestorsModule,
+  opportunities: OpportunitiesModule,
+  deal_pipeline: DealPipelineModule,
+  projects_developers: ProjectsDevelopersModule,
+  partners: PartnersModule,
+  tasks_followups: TasksFollowupsModule,
+  communications: CommunicationsModule,
+  documents: DocumentsModule,
+  portfolio_growth: PortfolioGrowthModule,
+  reports: ReportsModule,
+  automations: AutomationsModule,
+  mobile_app: MobileAppModule,
+  business_settings: BusinessSettingsModule,
 };
 
 export default function BusinessCRMPage() {
   const { tabs, hasCustomCRM } = useBusinessCRM();
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get("tab") || tabs[0]?.key || "investor_pipeline";
+  const activeTab = searchParams.get("tab") || tabs[0]?.key || "executive_dashboard";
 
   if (!hasCustomCRM) {
     return (
@@ -43,18 +65,12 @@ export default function BusinessCRMPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">My Business CRM</h1>
-          <p className="text-sm text-muted-foreground mt-1">Your dedicated workspace for managing investors, properties, and deals</p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">My Business CRM</h1>
+        <p className="text-sm text-muted-foreground mt-1">Your dedicated workspace for managing investors, properties, and deals</p>
       </div>
 
-      <Tabs
-        value={activeTab}
-        onValueChange={(v) => setSearchParams({ tab: v })}
-        className="w-full"
-      >
+      <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v })} className="w-full">
         <TabsList className="bg-card border border-border h-auto flex-wrap gap-1 p-1">
           {tabs.map((tab) => {
             const Icon = ICON_MAP[tab.icon || ""] || Activity;
@@ -62,9 +78,9 @@ export default function BusinessCRMPage() {
               <TabsTrigger
                 key={tab.key}
                 value={tab.key}
-                className="gap-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                className="gap-1.5 text-[11px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
-                <Icon className="h-3.5 w-3.5" />
+                <Icon className="h-3 w-3" />
                 {tab.label}
               </TabsTrigger>
             );
