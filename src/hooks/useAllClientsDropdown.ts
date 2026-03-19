@@ -10,6 +10,9 @@ export interface DropdownClient {
   email: string | null;
   client_status: string;
   has_seo_service: boolean;
+  is_active: boolean;
+  is_eligible_for_project: boolean;
+  priority_score: number;
 }
 
 /**
@@ -57,10 +60,11 @@ export function useAllClientsDropdown() {
 
     const result: DropdownClient[] = clientRows.map(c => {
       const status = (c.client_status || "").toLowerCase();
-      const services = Array.isArray(c.client_services) ? c.client_services : [];
+      const services = ((c.client_services || []) as any[]);
       const hasSeo = services.some(
-        (s: any) => s.service_type === "seo" && s.service_status === "active"
+        (s: any) => s.service_type?.toLowerCase() === "seo" && s.service_status?.toLowerCase() === "active"
       );
+      const isActive = status === "active";
 
       return {
         id: c.id,
@@ -69,8 +73,13 @@ export function useAllClientsDropdown() {
         email: c.email,
         client_status: status,
         has_seo_service: hasSeo,
+        is_active: isActive,
+        is_eligible_for_project: isActive,
+        priority_score: hasSeo ? 1 : 2,
       };
     });
+
+    result.sort((a, b) => a.priority_score - b.priority_score);
 
     console.log("[Dropdown Clients] Loaded:", result.length, "with SEO:", result.filter(r => r.has_seo_service).length);
     cacheRef.current = { businessId: profile.business_id, data: result };
