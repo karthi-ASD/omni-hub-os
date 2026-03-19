@@ -206,8 +206,6 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
 <script>
 (function() {
   var ENDPOINT = "${endpoint}";
-  var PROJECT_ID = "${project.id}";
-  var API_KEY = "${project.api_key}";
   var FORM_ID = "${form.id}";
   var SUCCESS_MSG = "${(form.success_message || "Thank you!").replace(/"/g, '\\"')}";
   var REDIRECT_URL = "${form.redirect_url || ""}";
