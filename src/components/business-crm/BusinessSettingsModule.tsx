@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowUp, ArrowDown, Pencil, Trash2, Plus, Save, GripVertical, Eye, EyeOff, Layers, GitBranch, Building2, Users, Palette, Settings2 } from "lucide-react";
+import { ArrowUp, ArrowDown, Pencil, Trash2, Plus, Save, GripVertical, Eye, EyeOff, Layers, GitBranch, Building2, Users, Palette, Settings2, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { CRMCustomizationPanel } from "./CRMCustomizationPanel";
 import { FollowupSettingsPanel } from "./FollowupSettingsPanel";
