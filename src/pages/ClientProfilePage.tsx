@@ -21,8 +21,10 @@ import {
   ArrowLeft, Globe, Smartphone, Search, FileText, Ticket, Clock,
   Mail, Phone, Building2, MapPin, Plus, ExternalLink, DollarSign, CreditCard, TrendingUp, AlertTriangle,
   ClipboardCheck, CheckCircle2, MessageSquare, PhoneCall, CalendarCheck, Pencil, Key, GitBranch, User,
-  Plug, Target, FormInput
+  Plug, Target, FormInput, Package
 } from "lucide-react";
+import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
+import ClientPackagePage from "@/pages/ClientPackagePage";
 import { useOnboardingChecklist } from "@/hooks/useOnboardingChecklist";
 import { ClientActivityTimeline } from "@/components/clients/ClientActivityTimeline";
 import { AddServiceDialog, ServiceFormData } from "@/components/clients/AddServiceDialog";
