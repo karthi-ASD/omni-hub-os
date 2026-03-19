@@ -366,7 +366,7 @@ Deno.serve(async (req) => {
 
       if (autoSettings.enable_call && normalizedPhone) {
         const start = Date.now();
-        const callPayload = { phone: normalizedPhone, project_id, type: "lead_followup" };
+        const callPayload = { phone: normalizedPhone, project_id: project.id, type: "lead_followup" };
         try {
           await withTimeout(supabase.functions.invoke("trigger-call", { body: callPayload }));
           automationResults.push({ type: "call", status: "success" });
