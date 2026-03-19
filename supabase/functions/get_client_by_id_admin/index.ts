@@ -57,10 +57,18 @@ serve(async (req) => {
     const userId = userData.user.id;
     const adminClient = supabaseAdmin;
 
+    // Fetch client by UUID or email
+    let clientQuery;
+    if (isUuidLookup) {
+      clientQuery = adminClient.from("clients").select("*").eq("id", clientId).maybeSingle();
+    } else {
+      clientQuery = adminClient.from("clients").select("*").ilike("email", emailLookup!).limit(1).maybeSingle();
+    }
+
     const [{ data: profile }, { data: roleRows }, { data: client, error: clientError }] = await Promise.all([
       adminClient.from("profiles").select("business_id").eq("user_id", userId).maybeSingle(),
       adminClient.from("user_roles").select("role").eq("user_id", userId),
-      adminClient.from("clients").select("*").eq("id", clientId).maybeSingle(),
+      clientQuery,
     ]);
 
     if (clientError) {
