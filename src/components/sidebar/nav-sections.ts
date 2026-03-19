@@ -191,6 +191,13 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Autopilot", icon: Cpu, to: "/autopilot/inbox" },
     ],
   },
+  // ── My Business CRM (per-business custom workspace) ──
+  {
+    title: "My Business CRM",
+    items: [
+      { label: "CRM Workspace", icon: Briefcase, to: "/my-crm" },
+    ],
+  },
   {
     title: "Admin",
     hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS, ...FINANCE_DEPTS],

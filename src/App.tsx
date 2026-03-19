@@ -252,6 +252,7 @@ import SalesActivitiesPage from "./pages/SalesActivitiesPage";
 import SalesToolsPage from "./pages/SalesToolsPage";
 import SeoLeadCapturePage from "./pages/SeoLeadCapturePage";
 import WhatsAppSupportPage from "./pages/WhatsAppSupportPage";
+import BusinessCRMPage from "./pages/BusinessCRMPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
