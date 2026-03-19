@@ -123,7 +123,10 @@ const SeoTeamDashboardPage = () => {
     const pending = clients.filter(c => c.seo_step_status === "pending" || c.seo_step_status === "none").length;
     const inProgress = clients.filter(c => c.seo_step_status === "in_progress").length;
     const completed = clients.filter(c => c.seo_step_status === "completed").length;
-    return { total, pending, inProgress, completed };
+    const tasksPending = clients.reduce((sum, c) => sum + c.task_pending, 0);
+    const tasksInProgress = clients.reduce((sum, c) => sum + c.task_in_progress, 0);
+    const tasksCompleted = clients.reduce((sum, c) => sum + (c.task_total - c.task_pending - c.task_in_progress), 0);
+    return { total, pending, inProgress, completed, tasksPending, tasksInProgress, tasksCompleted };
   }, [clients]);
 
   // Filtered clients
