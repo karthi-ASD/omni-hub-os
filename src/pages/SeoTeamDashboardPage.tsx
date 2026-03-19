@@ -92,6 +92,7 @@ const SeoTeamDashboardPage = () => {
         const seoData = Array.isArray(pkg.seo_package_data) ? pkg.seo_package_data[0] : pkg.seo_package_data;
         const steps = (pkg.package_onboarding_status || []) as any[];
         const seoStep = steps.find((s: any) => s.step_name === "SEO Setup");
+        const taskList = (pkg.seo_tasks || []) as any[];
 
         return {
           id: pkg.id,
@@ -103,6 +104,9 @@ const SeoTeamDashboardPage = () => {
           seo_data: seoData || null,
           onboarding_steps: steps,
           seo_step_status: seoStep?.status || "none",
+          task_total: taskList.length,
+          task_pending: taskList.filter((t: any) => t.status === "PENDING").length,
+          task_in_progress: taskList.filter((t: any) => t.status === "IN_PROGRESS").length,
         };
       });
 
