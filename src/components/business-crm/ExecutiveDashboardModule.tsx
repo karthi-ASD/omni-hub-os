@@ -136,6 +136,11 @@ export function ExecutiveDashboardModule() {
           {financeDelayed === 0 && depositPending === 0 && tasksDueToday === 0 && <p className="text-sm text-muted-foreground">No urgent actions — all clear</p>}
         </CardContent>
       </Card>
+
+      {/* Intelligence Insights */}
+      <div className="md:col-span-2">
+        <CRMInsightsPanel />
+      </div>
     </div>
   );
 }
