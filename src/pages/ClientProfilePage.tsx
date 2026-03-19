@@ -114,9 +114,30 @@ const ClientProfilePage = () => {
       profile_business_id: profile?.business_id,
     });
 
-    // Step 0: Validate UUID — if not UUID, attempt identity resolution
+    // Step 0: Validate UUID — if not UUID, attempt identity resolution (slug/name/email)
     if (!UUID_REGEX.test(clientId)) {
       console.log("[ClientProfile] Non-UUID route param, attempting resolve:", clientId);
+
+      // Try direct DB lookup by company_name, email, or domain first
+      try {
+        const slug = decodeURIComponent(clientId);
+        const { data: directMatch } = await supabase
+          .from("clients")
+          .select("id")
+          .or(`company_name.ilike.%${slug}%,email.ilike.%${slug}%`)
+          .limit(1)
+          .maybeSingle();
+
+        if (directMatch?.id) {
+          console.log("[ClientProfile] Resolved slug to UUID via DB:", directMatch.id);
+          navigate(`/clients/${directMatch.id}`, { replace: true });
+          return;
+        }
+      } catch (e) {
+        console.log("[ClientProfile] Direct DB resolve failed:", e);
+      }
+
+      // Fallback: edge function resolver
       try {
         const { data: resolveData } = await supabase.functions.invoke("client-identity-resolver", {
           body: { action: "resolve", email: clientId, external_id: clientId },
@@ -127,8 +148,9 @@ const ClientProfilePage = () => {
           return;
         }
       } catch (e) {
-        console.log("[ClientProfile] Resolve attempt failed:", e);
+        console.log("[ClientProfile] Edge function resolve failed:", e);
       }
+
       setFetchState("invalid_id");
       return;
     }
