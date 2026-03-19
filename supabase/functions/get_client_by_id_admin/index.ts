@@ -24,12 +24,16 @@ serve(async (req) => {
 
     const body = await req.json();
     const clientId = (body?.client_id ?? body?.clientId) as string | undefined;
-    if (!clientId || !UUID_REGEX.test(clientId)) {
-      return new Response(JSON.stringify({ error: "Invalid client ID" }), {
+    const emailLookup = (body?.email as string | undefined)?.trim().toLowerCase();
+
+    if (!clientId && !emailLookup) {
+      return new Response(JSON.stringify({ error: "client_id or email required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const isUuidLookup = clientId && UUID_REGEX.test(clientId);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
