@@ -1,11 +1,11 @@
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useClientPackage } from "@/hooks/useClientPackage";
 import { usePackageOnboarding } from "@/hooks/usePackageOnboarding";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Package, Layers, Target, Shield, Share2 } from "lucide-react";
+import { Package, Layers, Target, Shield, Share2, ListTodo } from "lucide-react";
 import PackageOverviewTab from "@/components/packages/PackageOverviewTab";
 import PackageServicesTab from "@/components/packages/PackageServicesTab";
 import PackageSeoTab from "@/components/packages/PackageSeoTab";
@@ -14,6 +14,7 @@ import PackageSocialLinksTab from "@/components/packages/PackageSocialLinksTab";
 import CreatePackageDialog from "@/components/packages/CreatePackageDialog";
 import GenerateInstallmentsDialog from "@/components/packages/GenerateInstallmentsDialog";
 import PackageOnboardingProgress from "@/components/packages/PackageOnboardingProgress";
+import PackageSeoTasksTab from "@/components/packages/PackageSeoTasksTab";
 
 export default function ClientPackagePage() {
   const { clientId } = useParams<{ clientId: string }>();
