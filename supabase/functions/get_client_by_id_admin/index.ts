@@ -77,8 +77,15 @@ serve(async (req) => {
     const canAccess = Boolean(isSuperAdmin || (profile?.business_id && client.business_id === profile.business_id));
 
     return new Response(JSON.stringify({
+      success: true,
       exists: true,
       can_access: canAccess,
+      data: canAccess ? client : {
+        id: client.id,
+        business_id: client.business_id,
+        merged_into: client.merged_into,
+        deleted_at: client.deleted_at,
+      },
       client: canAccess ? client : {
         id: client.id,
         business_id: client.business_id,
