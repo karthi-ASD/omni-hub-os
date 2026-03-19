@@ -78,7 +78,7 @@ const SeoOperationsPage = () => {
 
   const getClientName = (id: string | null) => {
     if (!id) return "—";
-    return clients.find(c => c.id === id)?.contact_name || "Unknown";
+    return allClients.find(c => c.id === id)?.contact_name || "Unknown";
   };
 
   const active = projects.filter(p => p.project_status === "ACTIVE").length;
