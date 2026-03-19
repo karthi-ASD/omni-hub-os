@@ -1,11 +1,11 @@
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useClientPackage } from "@/hooks/useClientPackage";
 import { usePackageOnboarding } from "@/hooks/usePackageOnboarding";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Package, Layers, Target, Shield, Share2 } from "lucide-react";
+import { Package, Layers, Target, Shield, Share2, ListTodo } from "lucide-react";
 import PackageOverviewTab from "@/components/packages/PackageOverviewTab";
 import PackageServicesTab from "@/components/packages/PackageServicesTab";
 import PackageSeoTab from "@/components/packages/PackageSeoTab";
@@ -14,13 +14,20 @@ import PackageSocialLinksTab from "@/components/packages/PackageSocialLinksTab";
 import CreatePackageDialog from "@/components/packages/CreatePackageDialog";
 import GenerateInstallmentsDialog from "@/components/packages/GenerateInstallmentsDialog";
 import PackageOnboardingProgress from "@/components/packages/PackageOnboardingProgress";
+import PackageSeoTasksTab from "@/components/packages/PackageSeoTasksTab";
 
-export default function ClientPackagePage() {
-  const { clientId } = useParams<{ clientId: string }>();
+interface ClientPackagePageProps {
+  clientIdProp?: string;
+}
+
+export default function ClientPackagePage({ clientIdProp }: ClientPackagePageProps = {}) {
+  const { clientId: routeClientId } = useParams<{ clientId: string }>();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get("tab") || "overview";
   const { roles, clientId: authClientId } = useAuth();
   const { departmentName } = useEmployeeDepartment();
 
-  const resolvedClientId = clientId || authClientId || undefined;
+  const resolvedClientId = clientIdProp || routeClientId || authClientId || undefined;
 
   const {
     pkg, services, seoData, assets, socialLinks, gmb, installments,
@@ -173,11 +180,12 @@ export default function ClientPackagePage() {
         </div>
       )}
 
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="w-full justify-start bg-muted/30 p-1 rounded-xl">
+      <Tabs defaultValue={defaultTab} className="w-full">
+        <TabsList className="w-full justify-start bg-muted/30 p-1 rounded-xl flex-wrap">
           <TabsTrigger value="overview" className="gap-1.5 data-[state=active]:bg-background"><Package className="h-3.5 w-3.5" /> Overview</TabsTrigger>
           <TabsTrigger value="services" className="gap-1.5 data-[state=active]:bg-background"><Layers className="h-3.5 w-3.5" /> Services</TabsTrigger>
           {canAccessSEO && <TabsTrigger value="seo" className="gap-1.5 data-[state=active]:bg-background"><Target className="h-3.5 w-3.5" /> SEO Data</TabsTrigger>}
+          {canAccessSEO && <TabsTrigger value="seo_tasks" className="gap-1.5 data-[state=active]:bg-background"><ListTodo className="h-3.5 w-3.5" /> SEO Tasks</TabsTrigger>}
           <TabsTrigger value="assets" className="gap-1.5 data-[state=active]:bg-background"><Shield className="h-3.5 w-3.5" /> Assets</TabsTrigger>
           <TabsTrigger value="social" className="gap-1.5 data-[state=active]:bg-background"><Share2 className="h-3.5 w-3.5" /> Social & GMB</TabsTrigger>
         </TabsList>
@@ -212,6 +220,16 @@ export default function ClientPackagePage() {
               packageId={pkg.id}
               seoData={seoData}
               onSave={upsertSeoData}
+              isReadOnly={isClient}
+            />
+          </TabsContent>
+        )}
+
+        {canAccessSEO && (
+          <TabsContent value="seo_tasks">
+            <PackageSeoTasksTab
+              packageId={pkg.id}
+              clientId={resolvedClientId}
               isReadOnly={isClient}
             />
           </TabsContent>

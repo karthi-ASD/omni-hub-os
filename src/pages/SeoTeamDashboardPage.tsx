@@ -36,6 +36,9 @@ interface AssignedClient {
     status: string;
   }[];
   seo_step_status: "pending" | "in_progress" | "completed" | "none";
+  task_total: number;
+  task_pending: number;
+  task_in_progress: number;
 }
 
 const SeoTeamDashboardPage = () => {
@@ -69,7 +72,8 @@ const SeoTeamDashboardPage = () => {
           seo_manager_id,
           clients(contact_name, email),
           seo_package_data(radius_km, suburbs, keyword_count, strategy_type),
-          package_onboarding_status(id, step_name, status)
+          package_onboarding_status(id, step_name, status),
+          seo_tasks(id, status)
         `);
 
       if (!isSuperAdmin && !isBusinessAdmin) {
@@ -88,6 +92,7 @@ const SeoTeamDashboardPage = () => {
         const seoData = Array.isArray(pkg.seo_package_data) ? pkg.seo_package_data[0] : pkg.seo_package_data;
         const steps = (pkg.package_onboarding_status || []) as any[];
         const seoStep = steps.find((s: any) => s.step_name === "SEO Setup");
+        const taskList = (pkg.seo_tasks || []) as any[];
 
         return {
           id: pkg.id,
@@ -99,6 +104,9 @@ const SeoTeamDashboardPage = () => {
           seo_data: seoData || null,
           onboarding_steps: steps,
           seo_step_status: seoStep?.status || "none",
+          task_total: taskList.length,
+          task_pending: taskList.filter((t: any) => t.status === "PENDING").length,
+          task_in_progress: taskList.filter((t: any) => t.status === "IN_PROGRESS").length,
         };
       });
 
@@ -115,7 +123,10 @@ const SeoTeamDashboardPage = () => {
     const pending = clients.filter(c => c.seo_step_status === "pending" || c.seo_step_status === "none").length;
     const inProgress = clients.filter(c => c.seo_step_status === "in_progress").length;
     const completed = clients.filter(c => c.seo_step_status === "completed").length;
-    return { total, pending, inProgress, completed };
+    const tasksPending = clients.reduce((sum, c) => sum + c.task_pending, 0);
+    const tasksInProgress = clients.reduce((sum, c) => sum + c.task_in_progress, 0);
+    const tasksCompleted = clients.reduce((sum, c) => sum + (c.task_total - c.task_pending - c.task_in_progress), 0);
+    return { total, pending, inProgress, completed, tasksPending, tasksInProgress, tasksCompleted };
   }, [clients]);
 
   // Filtered clients
@@ -181,11 +192,14 @@ const SeoTeamDashboardPage = () => {
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
         </div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
           <StatCard label="Total Assigned" value={stats.total} icon={Users} gradient="from-primary to-accent" />
           <StatCard label="SEO Pending" value={stats.pending} icon={AlertCircle} gradient="from-amber-500 to-orange-500" alert={stats.pending > 0} />
           <StatCard label="In Progress" value={stats.inProgress} icon={Clock} gradient="from-blue-500 to-cyan-500" />
           <StatCard label="Completed" value={stats.completed} icon={CheckCircle2} gradient="from-emerald-500 to-green-500" />
+          <StatCard label="Tasks Pending" value={stats.tasksPending} icon={AlertCircle} gradient="from-rose-500 to-pink-500" alert={stats.tasksPending > 0} />
+          <StatCard label="Tasks Active" value={stats.tasksInProgress} icon={Clock} gradient="from-violet-500 to-purple-500" />
+          <StatCard label="Tasks Done" value={stats.tasksCompleted} icon={CheckCircle2} gradient="from-teal-500 to-cyan-500" />
         </div>
       )}
 
@@ -237,8 +251,9 @@ const SeoTeamDashboardPage = () => {
                     <TableHead>Client</TableHead>
                     <TableHead>Package</TableHead>
                     <TableHead>SEO Status</TableHead>
-                    <TableHead className="text-center">Suburbs</TableHead>
-                    <TableHead className="text-center">Keywords</TableHead>
+                    <TableHead className="text-center">Tasks</TableHead>
+                    <TableHead className="text-center">Pending</TableHead>
+                    <TableHead className="text-center">Active</TableHead>
                     <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -255,20 +270,25 @@ const SeoTeamDashboardPage = () => {
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{client.package_name}</TableCell>
                       <TableCell>{getStatusBadge(client.seo_step_status)}</TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1 text-sm">
-                          <MapPin className="h-3 w-3 text-muted-foreground" />
-                          {(client.seo_data?.suburbs as string[])?.length || 0}
-                        </div>
+                      <TableCell className="text-center text-sm">{client.task_total}</TableCell>
+                      <TableCell className="text-center text-sm">
+                        {client.task_pending > 0 ? (
+                          <Badge variant="outline" className="text-amber-600">{client.task_pending}</Badge>
+                        ) : "0"}
                       </TableCell>
                       <TableCell className="text-center text-sm">
-                        {client.seo_data?.keyword_count || 0}
+                        {client.task_in_progress > 0 ? (
+                          <Badge className="bg-primary/15 text-primary border-primary/30">{client.task_in_progress}</Badge>
+                        ) : "0"}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
                           size="sm"
                           variant={client.seo_step_status === "completed" ? "outline" : "default"}
-                          onClick={() => navigate(`/client-package/${client.client_id}`)}
+                          onClick={() => {
+                            const tab = client.seo_step_status === "none" || client.seo_step_status === "pending" ? "seo" : "seo_tasks";
+                            navigate(`/client-package/${client.client_id}?tab=${tab}`);
+                          }}
                           className="gap-1"
                         >
                           {getActionLabel(client.seo_step_status)}

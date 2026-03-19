@@ -21,8 +21,10 @@ import {
   ArrowLeft, Globe, Smartphone, Search, FileText, Ticket, Clock,
   Mail, Phone, Building2, MapPin, Plus, ExternalLink, DollarSign, CreditCard, TrendingUp, AlertTriangle,
   ClipboardCheck, CheckCircle2, MessageSquare, PhoneCall, CalendarCheck, Pencil, Key, GitBranch, User,
-  Plug, Target, FormInput
+  Plug, Target, FormInput, Package
 } from "lucide-react";
+import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
+import ClientPackagePage from "@/pages/ClientPackagePage";
 import { useOnboardingChecklist } from "@/hooks/useOnboardingChecklist";
 import { ClientActivityTimeline } from "@/components/clients/ClientActivityTimeline";
 import { AddServiceDialog, ServiceFormData } from "@/components/clients/AddServiceDialog";
@@ -277,8 +279,15 @@ const ClientProfilePage = () => {
   const [appForm, setAppForm] = useState({ app_name: "", platform: "Android", app_category: "" });
   const [convForm, setConvForm] = useState({ conversation_type: "call", notes: "", next_callback_date: "" });
   
-  const { hasRole } = useAuth();
+  const { hasRole, roles } = useAuth();
+  const { departmentName } = useEmployeeDepartment();
   const canEditBilling = hasRole("super_admin") || hasRole("business_admin") || hasRole("manager");
+  
+  const deptLower = (departmentName || "").toLowerCase();
+  const isFinanceDept = deptLower.includes("finance") || deptLower.includes("accounts") || deptLower.includes("accounting");
+  const isSEODept = deptLower.includes("seo") || deptLower.includes("digital marketing");
+  const isAdminUser = hasRole("super_admin") || hasRole("business_admin");
+  const canViewPackageTab = isAdminUser || isFinanceDept || isSEODept;
 
   console.log({
     route_client_id: id,
@@ -480,6 +489,7 @@ const ClientProfilePage = () => {
           <TabsTrigger value="leads"><Target className="h-3.5 w-3.5 mr-1" />Leads</TabsTrigger>
           <TabsTrigger value="calls"><Phone className="h-3.5 w-3.5 mr-1" />Calls</TabsTrigger>
           <TabsTrigger value="contact-forms"><FormInput className="h-3.5 w-3.5 mr-1" />Contact Forms</TabsTrigger>
+          {canViewPackageTab && <TabsTrigger value="package"><Package className="h-3.5 w-3.5 mr-1" />Package</TabsTrigger>}
         </TabsList>
 
         {/* ── Conversations / Notes ── */}
@@ -1064,6 +1074,13 @@ const ClientProfilePage = () => {
         <TabsContent value="contact-forms">
           {id && <ContactFormCreationTab clientId={id} />}
         </TabsContent>
+
+        {/* ── Package ── */}
+        {canViewPackageTab && (
+          <TabsContent value="package">
+            {id && <ClientPackagePage clientIdProp={id} />}
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Add Website Dialog */}
