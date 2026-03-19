@@ -26,7 +26,7 @@ const statusColors: Record<string, string> = {
 
 const SeoOperationsPage = () => {
   const { projects, loading, create } = useSeoProjects();
-  const { clients: allClients } = useAllClientsDropdown();
+  const { clients: allClients, loading: clientsLoading } = useAllClientsDropdown();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -122,6 +122,7 @@ const SeoOperationsPage = () => {
             <div><Label>Client</Label>
               <ClientSelector
                 clients={allClients}
+                loading={clientsLoading}
                 value={form.client_id}
                 onValueChange={v => setForm({ ...form, client_id: v })}
               />

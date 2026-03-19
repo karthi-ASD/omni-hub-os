@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Search, X, ChevronDown, ChevronRight, ChevronsUpDown, AlertTriangle, Check } from "lucide-react";
+import { Search, X, ChevronDown, ChevronRight, ChevronsUpDown, AlertTriangle, Check, Loader2 } from "lucide-react";
 import { DropdownClient } from "@/hooks/useAllClientsDropdown";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface ClientSelectorProps {
   clients: DropdownClient[];
+  loading?: boolean;
   value: string;
   onValueChange: (id: string) => void;
   placeholder?: string;
@@ -23,13 +24,14 @@ interface GroupedClients {
   noSeo: DropdownClient[];
 }
 
-function groupClients(clients: DropdownClient[]): GroupedClients {
+function groupClients(clients: DropdownClient[], selectedId: string): GroupedClients {
   const active: DropdownClient[] = [];
   const inactive: DropdownClient[] = [];
   const noSeo: DropdownClient[] = [];
 
   for (const c of clients) {
-    if (c.client_status === "active") {
+    const status = c.client_status.toLowerCase();
+    if (status === "active") {
       if (!c.has_seo_service) {
         noSeo.push(c);
       } else {
@@ -40,7 +42,21 @@ function groupClients(clients: DropdownClient[]): GroupedClients {
     }
   }
 
-  return { active, inactive, noSeo };
+  // Move selected client to top of its group
+  const moveSelectedToTop = (arr: DropdownClient[]) => {
+    const idx = arr.findIndex(c => c.id === selectedId);
+    if (idx > 0) {
+      const [item] = arr.splice(idx, 1);
+      arr.unshift(item);
+    }
+    return arr;
+  };
+
+  return {
+    active: moveSelectedToTop(active),
+    inactive: moveSelectedToTop(inactive),
+    noSeo: moveSelectedToTop(noSeo),
+  };
 }
 
 function highlightMatch(text: string, query: string): React.ReactNode {
@@ -57,16 +73,17 @@ function highlightMatch(text: string, query: string): React.ReactNode {
 }
 
 function statusBadge(client: DropdownClient) {
-  if (client.client_status === "active" && client.has_seo_service) {
+  const status = client.client_status.toLowerCase();
+  if (status === "active" && client.has_seo_service) {
     return <Badge variant="secondary" className="ml-auto text-[10px] px-1.5 py-0 h-4 bg-success/15 text-success border-0 shrink-0">Active</Badge>;
   }
-  if (client.client_status === "active" && !client.has_seo_service) {
+  if (status === "active" && !client.has_seo_service) {
     return <Badge variant="secondary" className="ml-auto text-[10px] px-1.5 py-0 h-4 bg-warning/15 text-warning border-0 shrink-0">No SEO</Badge>;
   }
   return <Badge variant="secondary" className="ml-auto text-[10px] px-1.5 py-0 h-4 bg-muted text-muted-foreground border-0 shrink-0 capitalize">{client.client_status}</Badge>;
 }
 
-export function ClientSelector({ clients, value, onValueChange, placeholder = "Select client..." }: ClientSelectorProps) {
+export function ClientSelector({ clients, loading = false, value, onValueChange, placeholder = "Select client..." }: ClientSelectorProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -76,12 +93,15 @@ export function ClientSelector({ clients, value, onValueChange, placeholder = "S
   const [focusIndex, setFocusIndex] = useState(-1);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Debounce search
+  // Debounce search — stable ref
   useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => setDebouncedSearch(search), 300);
-    return () => clearTimeout(debounceRef.current);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [search]);
 
   // Filter clients
@@ -95,27 +115,28 @@ export function ClientSelector({ clients, value, onValueChange, placeholder = "S
     );
   }, [clients, debouncedSearch]);
 
-  // Group
+  // Group with selected-client priority
   const grouped = useMemo(() => {
-    const g = groupClients(filtered);
+    const g = groupClients([...filtered], value);
     console.log("[Client Dropdown Groups]", { active: g.active.length, inactive: g.inactive.length, noSeo: g.noSeo.length });
     return g;
-  }, [filtered]);
+  }, [filtered, value]);
 
   // Flat list for keyboard nav
   const flatList = useMemo(() => {
     const list: DropdownClient[] = [];
     if (activeGroupOpen) list.push(...grouped.active);
-    if (inactiveGroupOpen) list.push(...grouped.inactive);
     if (noSeoGroupOpen) list.push(...grouped.noSeo);
+    if (inactiveGroupOpen) list.push(...grouped.inactive);
     return list;
   }, [grouped, activeGroupOpen, inactiveGroupOpen, noSeoGroupOpen]);
 
   const handleSelect = useCallback((client: DropdownClient) => {
     onValueChange(client.id);
-    if (!client.has_seo_service && client.client_status === "active") {
+    const status = client.client_status.toLowerCase();
+    if (!client.has_seo_service && status === "active") {
       toast.warning("This client does not have an active SEO package.", { duration: 4000 });
-    } else if (client.client_status !== "active") {
+    } else if (status !== "active") {
       toast.warning(`This client is currently "${client.client_status}".`, { duration: 4000 });
     }
     setOpen(false);
@@ -276,7 +297,12 @@ export function ClientSelector({ clients, value, onValueChange, placeholder = "S
         {/* Client list */}
         <ScrollArea className="max-h-[300px]">
           <div ref={listRef} className="p-1">
-            {clients.length === 0 ? (
+            {loading ? (
+              <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">Loading clients...</span>
+              </div>
+            ) : clients.length === 0 ? (
               <div className="flex flex-col items-center gap-2 py-8 text-center text-muted-foreground">
                 <AlertTriangle className="h-5 w-5 text-warning" />
                 <p className="text-sm">No clients found.<br />Please create a client first.</p>
@@ -300,7 +326,7 @@ export function ClientSelector({ clients, value, onValueChange, placeholder = "S
         </ScrollArea>
 
         {/* Footer count */}
-        {totalFiltered > 0 && (
+        {!loading && totalFiltered > 0 && (
           <div className="border-t border-border px-3 py-1.5 text-[11px] text-muted-foreground">
             {totalFiltered} client{totalFiltered !== 1 ? "s" : ""} found
           </div>
