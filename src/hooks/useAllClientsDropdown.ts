@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -16,14 +16,24 @@ export interface DropdownClient {
  * Single source of truth matching the Clients tab visibility rules.
  * Excludes only: reverted, deleted, merged.
  * Also fetches SEO service status for categorization.
+ * Cached in-memory to avoid refetching on every render.
  */
 export function useAllClientsDropdown() {
   const { profile } = useAuth();
   const [clients, setClients] = useState<DropdownClient[]>([]);
   const [loading, setLoading] = useState(true);
+  const cacheRef = useRef<{ businessId: string; data: DropdownClient[] } | null>(null);
 
-  const fetch = useCallback(async () => {
+  const fetchClients = useCallback(async (skipCache = false) => {
     if (!profile?.business_id) return;
+
+    // Return cached data if available for same business
+    if (!skipCache && cacheRef.current?.businessId === profile.business_id) {
+      setClients(cacheRef.current.data);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
     const { data, error } = await supabase
@@ -31,7 +41,8 @@ export function useAllClientsDropdown() {
       .select("id, contact_name, company_name, email, client_status")
       .eq("business_id", profile.business_id)
       .not("client_status", "in", '("reverted","deleted","merged")')
-      .order("contact_name", { ascending: true });
+      .order("contact_name", { ascending: true })
+      .limit(1000);
 
     if (error) {
       console.warn("[Dropdown Clients] Query failed:", error.message);
@@ -70,11 +81,14 @@ export function useAllClientsDropdown() {
     }));
 
     console.log("[Dropdown Clients] Loaded:", result.length, "with SEO:", seoClientIds.size);
+    cacheRef.current = { businessId: profile.business_id, data: result };
     setClients(result);
     setLoading(false);
   }, [profile?.business_id]);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { fetchClients(); }, [fetchClients]);
 
-  return { clients, loading, refetch: fetch };
+  const refetch = useCallback(() => fetchClients(true), [fetchClients]);
+
+  return { clients, loading, refetch };
 }
