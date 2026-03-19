@@ -79,6 +79,7 @@ export function SeoCreateProjectDialog({ open, onOpenChange, onCreate }: Props) 
             <Label>Client</Label>
             <ClientSelector
               clients={allClients}
+              loading={clientsLoading}
               value={form.client_id}
               onValueChange={v => setForm({ ...form, client_id: v })}
             />
