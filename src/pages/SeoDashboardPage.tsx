@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSeoOverviewStats } from "@/hooks/useSeoOverviewStats";
 import { useSeoProjects } from "@/hooks/useSeoProjects";
-import { useClients } from "@/hooks/useClients";
+import { useAllClientsDropdown } from "@/hooks/useAllClientsDropdown";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SeoOverviewCards } from "@/components/seo/SeoOverviewCards";
@@ -13,7 +13,7 @@ import { Globe, Plus, LayoutDashboard, FolderKanban } from "lucide-react";
 const SeoDashboardPage = () => {
   const { stats, loading } = useSeoOverviewStats();
   const { projects, create, updateProject } = useSeoProjects();
-  const { clients } = useClients();
+  const { clients } = useAllClientsDropdown();
   const [createOpen, setCreateOpen] = useState(false);
 
   const getClientName = (id: string | null) => {
@@ -28,22 +28,16 @@ const SeoDashboardPage = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        title="SEO Command Center"
-        subtitle="Unified SEO project management, keywords, rankings & performance"
+        title="SEO Dashboard"
+        subtitle="Overview of all SEO campaigns and performance"
         icon={Globe}
         actions={[{ label: "New Project", icon: Plus, onClick: () => setCreateOpen(true) }]}
       />
 
-      <Tabs defaultValue="overview" className="space-y-6">
+      <Tabs defaultValue="overview" className="w-full">
         <TabsList>
-          <TabsTrigger value="overview" className="gap-1.5">
-            <LayoutDashboard className="h-3.5 w-3.5" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="projects" className="gap-1.5">
-            <FolderKanban className="h-3.5 w-3.5" />
-            Projects
-          </TabsTrigger>
+          <TabsTrigger value="overview" className="gap-1.5"><LayoutDashboard className="h-3.5 w-3.5" />Overview</TabsTrigger>
+          <TabsTrigger value="projects" className="gap-1.5"><FolderKanban className="h-3.5 w-3.5" />Projects</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -51,12 +45,11 @@ const SeoDashboardPage = () => {
           <SeoOverviewCharts stats={stats} />
         </TabsContent>
 
-        <TabsContent value="projects" className="space-y-4">
+        <TabsContent value="projects">
           <SeoProjectsTable
             projects={projects}
-            loading={loading}
             getClientName={getClientName}
-            onStatusChange={(id, status) => updateProject(id, { project_status: status })}
+            onUpdateProject={updateProject}
           />
         </TabsContent>
       </Tabs>
@@ -64,7 +57,6 @@ const SeoDashboardPage = () => {
       <SeoCreateProjectDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        clients={clients}
         onCreate={handleCreate}
       />
     </div>

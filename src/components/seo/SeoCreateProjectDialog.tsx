@@ -7,16 +7,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import { DraftRestoreBanner, CrossTabConflictBanner } from "@/components/ui/draft-restore-banner";
 import { AutoSaveIndicator } from "@/components/ui/auto-save-indicator";
-
-interface Client {
-  id: string;
-  contact_name: string;
-}
+import { useAllClientsDropdown } from "@/hooks/useAllClientsDropdown";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  clients: Client[];
+  clients?: { id: string; contact_name: string }[]; // deprecated, ignored if provided
   onCreate: (form: {
     client_id?: string;
     website_domain: string;
@@ -34,8 +30,8 @@ const defaultForm = {
   primary_keyword: "", service_package: "basic", contract_start: "", contract_end: "",
 };
 
-export function SeoCreateProjectDialog({ open, onOpenChange, clients, onCreate }: Props) {
-
+export function SeoCreateProjectDialog({ open, onOpenChange, onCreate }: Props) {
+  const { clients: allClients } = useAllClientsDropdown();
   const [form, setForm] = useState(defaultForm);
   const [submitting, setSubmitting] = useState(false);
   const { isDirty, isSaving, clearDraft } = useUnsavedChanges("seo:new", form, { enabled: open });
@@ -82,7 +78,18 @@ export function SeoCreateProjectDialog({ open, onOpenChange, clients, onCreate }
             <Label>Client</Label>
             <Select value={form.client_id} onValueChange={v => setForm({ ...form, client_id: v })}>
               <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
-              <SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.contact_name}</SelectItem>)}</SelectContent>
+              <SelectContent>
+                {allClients.length === 0 ? (
+                  <div className="px-3 py-2 text-sm text-muted-foreground">No clients available. Please create a client first.</div>
+                ) : allClients.map(c => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.contact_name}
+                    {c.client_status !== "active" && (
+                      <span className="ml-2 text-xs text-muted-foreground capitalize">({c.client_status})</span>
+                    )}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
           <div>
