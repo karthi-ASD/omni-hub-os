@@ -292,7 +292,7 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
-    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, status: r.status, data: d }; }); })
+    .then(async function(r) { var data = {}; try { data = await r.json(); } catch(e) { console.error('[NW Form] Invalid JSON response'); } return { ok: r.ok, status: r.status, data: data }; })
     .then(function(res) {
       var origText = (btn && btn.getAttribute('data-original-text')) || DESIGN.button_text || 'Submit';
       if (btn) { btn.disabled = false; btn.textContent = origText; }
