@@ -67,6 +67,8 @@ export function FollowupSettingsPanel() {
     { key: "enable_mobile_push" as const, icon: Smartphone, label: "Mobile App Push Notifications", desc: "Push notification to investor mobile app for upcoming follow-ups" },
     { key: "enable_mobile_confirmation" as const, icon: Smartphone, label: "Mobile App Confirm/Reschedule", desc: "Allow customers to confirm or reschedule follow-ups from the mobile app" },
     { key: "enable_employee_reminders" as const, icon: Bell, label: "Employee Reminders", desc: "Send reminders to assigned employees before follow-up due dates" },
+    { key: "enable_auto_checkin" as const, icon: Clock, label: "Auto Check-in System", desc: "Automatically trigger check-in tasks when no contact for configured days" },
+    { key: "enable_call_summary_email" as const, icon: Mail, label: "Call Summary Emails", desc: "Allow sending communication summaries to clients after calls/meetings" },
   ];
 
   return (
