@@ -111,16 +111,59 @@ const ClientProfilePage = () => {
 
   // Safe client fetch — direct DB query, not from in-memory list
   const fetchClientSafe = useCallback(async (clientId: string) => {
+    console.log("[DEBUG] isSuperAdmin:", isSuperAdmin);
+    console.log("[DEBUG] clientId:", clientId);
     console.log("CLIENT_DEBUG", {
       route_client_id: clientId,
       profile_business_id: profile?.business_id,
+      is_super_admin: isSuperAdmin,
     });
+
+    setFetchState("loading");
+
+    if (isSuperAdmin) {
+      console.log("[ClientProfile] Super Admin FORCE LOAD");
+      const adminResult = await fetchClientDirectAdmin(clientId);
+      const adminClient = adminResult.client;
+
+      console.log("[ClientProfile] Loaded via FORCE ADMIN:", adminClient);
+      console.log("[ClientProfile] Admin fallback used:", adminResult.exists);
+
+      if (adminResult.error) {
+        setFetchState("fetch_error");
+        return;
+      }
+
+      if (adminClient?.merged_into) {
+        navigate(`/clients/${adminClient.merged_into}`, { replace: true });
+        return;
+      }
+
+      if (adminClient?.deleted_at) {
+        setFetchState("archived");
+        return;
+      }
+
+      if (adminResult.canAccess && adminClient) {
+        console.log("[ClientProfile] Final client data:", adminClient);
+        setClient(adminClient as unknown as Client);
+        setFetchState("ready");
+        return;
+      }
+
+      if (adminResult.exists) {
+        setFetchState("no_access");
+        return;
+      }
+
+      setFetchState("not_found");
+      return;
+    }
 
     // Step 0: Validate UUID — if not UUID, attempt identity resolution (slug/name/email)
     if (!UUID_REGEX.test(clientId)) {
       console.log("[ClientProfile] Non-UUID route param, attempting resolve:", clientId);
 
-      // Try direct DB lookup by company_name, email, or domain first
       try {
         const slug = decodeURIComponent(clientId);
         const { data: directMatch } = await supabase
@@ -139,7 +182,6 @@ const ClientProfilePage = () => {
         console.log("[ClientProfile] Direct DB resolve failed:", e);
       }
 
-      // Fallback: edge function resolver
       try {
         const { data: resolveData } = await supabase.functions.invoke("client-identity-resolver", {
           body: { action: "resolve", email: clientId, external_id: clientId },
@@ -157,8 +199,6 @@ const ClientProfilePage = () => {
       return;
     }
 
-    setFetchState("loading");
-
     const { data: raw, error } = await supabase
       .from("clients")
       .select("*")
@@ -172,14 +212,6 @@ const ClientProfilePage = () => {
 
     if (error) {
       console.error("[ClientProfile] Fetch error:", error);
-      console.log("CLIENT_FAILURE", {
-        route_client_id: clientId,
-        db_result: raw,
-        db_error: error,
-        debug_function_result: null,
-        business_mismatch: false,
-      });
-
       if (error.code === "PGRST116") {
         setFetchState("not_found");
       } else {
@@ -189,13 +221,10 @@ const ClientProfilePage = () => {
     }
 
     if (!raw) {
-      // RLS may have blocked — use admin fallback (service role)
-      const { data: adminResult, error: adminError } = await getClientByIdAdmin(clientId);
-      const adminClient = adminResult?.client ?? null;
+      const adminResult = await fetchClientDirectAdmin(clientId);
+      const adminClient = adminResult.client;
 
-      console.log("CLIENT_ADMIN_FALLBACK", { adminResult, adminError, isSuperAdmin });
-
-      if (adminError) {
+      if (adminResult.error) {
         setFetchState("fetch_error");
         return;
       }
@@ -210,15 +239,13 @@ const ClientProfilePage = () => {
         return;
       }
 
-      // Super Admin with full access — use the admin-fetched client data directly
-      if (isSuperAdmin && adminResult?.can_access && adminClient) {
-        console.log("[ClientProfile] Super Admin bypassing RLS with admin data");
+      if (adminResult.canAccess && adminClient) {
         setClient(adminClient as unknown as Client);
         setFetchState("ready");
         return;
       }
 
-      if (adminResult?.exists) {
+      if (adminResult.exists) {
         setFetchState("no_access");
         return;
       }
@@ -239,16 +266,16 @@ const ClientProfilePage = () => {
       return;
     }
 
-    // Business mismatch check — Super Admins bypass this
-    if (!isSuperAdmin && profile?.business_id && raw.business_id !== profile.business_id) {
+    if (profile?.business_id && raw.business_id !== profile.business_id) {
       console.log("[ClientProfile] Business mismatch (non-super-admin):", { client_biz: raw.business_id, user_biz: profile.business_id });
       setFetchState("no_access");
       return;
     }
 
+    console.log("[ClientProfile] Final client data:", raw);
     setClient(raw as unknown as Client);
     setFetchState("ready");
-  }, [getClientByIdAdmin, navigate, profile?.business_id, isSuperAdmin]);
+  }, [fetchClientDirectAdmin, isSuperAdmin, navigate, profile?.business_id]);
 
   useEffect(() => {
     if (id) {
