@@ -10,26 +10,13 @@ function validateOrigin(req: Request, allowedDomains: string[] | null): boolean 
   if (!allowedDomains || allowedDomains.length === 0) return true;
   const origin = req.headers.get("origin") || "";
   const referer = req.headers.get("referer") || "";
-
-  // Allow localhost for development/testing
-  if (origin.includes("localhost") || referer.includes("localhost")) {
-    return true;
-  }
-
+  if (origin.includes("localhost") || referer.includes("localhost")) return true;
   try {
     const originHost = origin ? new URL(origin).hostname : "";
     const refererHost = referer ? new URL(referer).hostname : "";
     return allowedDomains.some((domain) => {
-      const clean = domain
-        .replace(/^https?:\/\//, "")
-        .replace(/\/$/, "")
-        .toLowerCase();
-      return (
-        originHost === clean ||
-        originHost.endsWith("." + clean) ||
-        refererHost === clean ||
-        refererHost.endsWith("." + clean)
-      );
+      const clean = domain.replace(/^https?:\/\//, "").replace(/\/$/, "").toLowerCase();
+      return originHost === clean || originHost.endsWith("." + clean) || refererHost === clean || refererHost.endsWith("." + clean);
     });
   } catch { return false; }
 }
@@ -61,18 +48,136 @@ function json(data: any, status: number) {
   });
 }
 
+// ── SPAM SCORING ──
+function calculateSpamScore(
+  name: string,
+  email: string,
+  phone: string,
+  message: string,
+  submissionTimestamp: number,
+  isDuplicate: boolean
+): { score: number; reasons: string[] } {
+  let score = 0;
+  const reasons: string[] = [];
+
+  // Suspicious email patterns (random strings like xkjf28@...)
+  if (email) {
+    const localPart = email.split("@")[0] || "";
+    const consonantRatio = (localPart.replace(/[aeiou0-9_.\-+]/gi, "").length) / Math.max(localPart.length, 1);
+    if (consonantRatio > 0.8 && localPart.length > 5) {
+      score += 30;
+      reasons.push("suspicious_email_pattern");
+    }
+    // Disposable email domains
+    const disposable = ["tempmail.com", "throwaway.email", "guerrillamail.com", "mailinator.com", "yopmail.com", "sharklasers.com"];
+    const domain = email.split("@")[1]?.toLowerCase() || "";
+    if (disposable.includes(domain)) {
+      score += 20;
+      reasons.push("disposable_email");
+    }
+  }
+
+  // Too fast submission (< 2 seconds from page load — approximated by timestamp proximity)
+  // We check if the submission came suspiciously fast
+  if (submissionTimestamp && (Date.now() - submissionTimestamp) < 2000) {
+    score += 20;
+    reasons.push("too_fast_submission");
+  }
+
+  // Duplicate submission (same IP within 1 min)
+  if (isDuplicate) {
+    score += 20;
+    reasons.push("duplicate_ip");
+  }
+
+  // Spam keywords in message
+  if (message) {
+    const spamKeywords = ["buy now", "click here", "free money", "congratulations", "winner", "bitcoin", "crypto", "viagra", "casino", "lottery", "prize"];
+    const lowerMsg = message.toLowerCase();
+    if (spamKeywords.some(kw => lowerMsg.includes(kw))) {
+      score += 10;
+      reasons.push("spam_keywords");
+    }
+    // Excessive URLs
+    const urlCount = (message.match(/https?:\/\//g) || []).length;
+    if (urlCount > 2) {
+      score += 15;
+      reasons.push("excessive_urls");
+    }
+  }
+
+  // Invalid phone pattern
+  if (phone && !/^\+?\d{7,15}$/.test(phone.replace(/[\s\-\(\)\.]/g, ""))) {
+    score += 20;
+    reasons.push("invalid_phone_pattern");
+  }
+
+  // All same character name
+  if (name && /^(.)\1+$/.test(name.replace(/\s/g, ""))) {
+    score += 25;
+    reasons.push("gibberish_name");
+  }
+
+  return { score: Math.min(score, 100), reasons };
+}
+
+// ── GEO LOOKUP (ipapi.co free tier) ──
+async function lookupGeo(ip: string): Promise<{
+  country: string | null; city: string | null; region: string | null;
+  latitude: number | null; longitude: number | null;
+}> {
+  const empty = { country: null, city: null, region: null, latitude: null, longitude: null };
+  if (!ip || ip === "unknown" || ip === "127.0.0.1" || ip.startsWith("192.168.") || ip.startsWith("10.")) return empty;
+  try {
+    const res = await withTimeout(fetch(`https://ipapi.co/${ip}/json/`, {
+      headers: { "User-Agent": "NextWebOS/1.0" },
+    }), 3000);
+    if (!res.ok) return empty;
+    const data = await res.json();
+    if (data.error) return empty;
+    return {
+      country: data.country_name || null,
+      city: data.city || null,
+      region: data.region || null,
+      latitude: data.latitude || null,
+      longitude: data.longitude || null,
+    };
+  } catch (e) {
+    console.warn("[geo-lookup] Failed:", e);
+    return empty;
+  }
+}
+
+// ── DEVICE INFO PARSER ──
+function parseDeviceInfo(userAgent: string): { device_type: string; browser: string; os: string } {
+  const ua = userAgent.toLowerCase();
+  let device_type = "desktop";
+  if (/mobile|android|iphone|ipod/.test(ua)) device_type = "mobile";
+  else if (/tablet|ipad/.test(ua)) device_type = "tablet";
+
+  let browser = "unknown";
+  if (ua.includes("chrome") && !ua.includes("edg")) browser = "Chrome";
+  else if (ua.includes("firefox")) browser = "Firefox";
+  else if (ua.includes("safari") && !ua.includes("chrome")) browser = "Safari";
+  else if (ua.includes("edg")) browser = "Edge";
+  else if (ua.includes("opera") || ua.includes("opr")) browser = "Opera";
+
+  let os = "unknown";
+  if (ua.includes("windows")) os = "Windows";
+  else if (ua.includes("mac os")) os = "macOS";
+  else if (ua.includes("linux")) os = "Linux";
+  else if (ua.includes("android")) os = "Android";
+  else if (ua.includes("iphone") || ua.includes("ipad")) os = "iOS";
+
+  return { device_type, browser, os };
+}
+
 async function sendEmailWithRetry(
-  supabase: any,
-  payload: any,
-  retries = 1,
-  timeoutMs = 8000
+  supabase: any, payload: any, retries = 1, timeoutMs = 8000
 ): Promise<{ success: boolean; error?: string }> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const { error } = await withTimeout(
-        supabase.functions.invoke("send-email", { body: payload }),
-        timeoutMs
-      );
+      const { error } = await withTimeout(supabase.functions.invoke("send-email", { body: payload }), timeoutMs);
       if (error) throw error;
       return { success: true };
     } catch (e) {
@@ -92,7 +197,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { name, email, phone, message, domain, project_id, source, form_id, extra_data, api_key,
-            utm_source, utm_medium, utm_campaign, page_url } = body;
+            utm_source, utm_medium, utm_campaign, page_url, _submission_ts } = body;
 
     // Sanitize inputs
     const cleanName = (name || "").toString().trim().replace(/[\u200B\u200C\u200D\uFEFF]/g, "").slice(0, 200);
@@ -123,11 +228,9 @@ Deno.serve(async (req) => {
     );
 
     // === AUTO PROJECT DETECTION ===
-    // Support both: new domain-based detection AND legacy project_id+api_key
     let project: any = null;
 
     if (domain && !project_id) {
-      // New: auto-detect project from domain
       const cleanDomain = domain.toLowerCase().replace(/^www\./, "");
       console.log("[Auto Project Detection] Looking up domain:", cleanDomain);
 
@@ -146,7 +249,6 @@ Deno.serve(async (req) => {
       project = matchedProject;
       console.log("[Auto Project Detection] Matched project:", project.id);
     } else if (project_id) {
-      // Legacy: use project_id + api_key
       const { data: legacyProject, error: projErr } = await supabase
         .from("seo_projects")
         .select("id, business_id, client_id, api_key, website_domain, default_country_code")
@@ -155,7 +257,6 @@ Deno.serve(async (req) => {
 
       if (projErr || !legacyProject) return json({ error: "Invalid project_id" }, 404);
 
-      // Validate API key for legacy mode
       if (!api_key || api_key !== legacyProject.api_key) {
         return json({ error: "Unauthorized: invalid or missing api_key" }, 401);
       }
@@ -165,13 +266,10 @@ Deno.serve(async (req) => {
       return json({ error: "Either domain or project_id is required" }, 400);
     }
 
-    // Origin validation using project's configured domain
+    // Origin validation
     let allowedDomains: string[] | null = null;
     if (project.website_domain) {
-      const projectDomain = project.website_domain
-        .replace(/^https?:\/\//, "")
-        .replace(/\/$/, "")
-        .toLowerCase();
+      const projectDomain = project.website_domain.replace(/^https?:\/\//, "").replace(/\/$/, "").toLowerCase();
       allowedDomains = [projectDomain];
     } else {
       console.warn("[seo-lead-capture] No domain configured for project — allowing request");
@@ -190,20 +288,25 @@ Deno.serve(async (req) => {
 
     // Rate limiting (per IP, 20/min)
     const oneMinAgo = new Date(Date.now() - 60 * 1000).toISOString();
-    const { count } = await supabase
+    const { count: rateCount } = await supabase
       .from("seo_captured_leads")
       .select("*", { count: "exact", head: true })
       .eq("seo_project_id", project.id)
       .gte("created_at", oneMinAgo);
 
-    if ((count || 0) > 20) return json({ error: "Rate limit exceeded. Try again later." }, 429);
+    if ((rateCount || 0) > 20) return json({ error: "Rate limit exceeded. Try again later." }, 429);
 
-    // Form ID validation
+    // Form ID validation + fetch email routing config
+    let formConfig: { to_emails: string[]; cc_emails: string[] } | null = null;
     if (form_id) {
       const { data: form } = await supabase
-        .from("seo_lead_forms").select("id")
+        .from("seo_lead_forms").select("id, to_emails, cc_emails")
         .eq("id", form_id).eq("seo_project_id", project.id).single();
       if (!form) return json({ error: "Invalid form_id for this project" }, 400);
+      formConfig = {
+        to_emails: (form.to_emails as string[]) || [],
+        cc_emails: (form.cc_emails as string[]) || [],
+      };
     }
 
     // Normalize phone
@@ -230,7 +333,31 @@ Deno.serve(async (req) => {
       if (dupes && dupes.length > 0) return json({ error: "Duplicate lead detected" }, 409);
     }
 
-    // INSERT LEAD FIRST — always save before any email attempt
+    // Check IP duplicate for spam scoring
+    let isDuplicateIp = false;
+    if (ipAddress !== "unknown") {
+      const oneMinIp = new Date(Date.now() - 60 * 1000).toISOString();
+      const { count: ipCount } = await supabase
+        .from("seo_captured_leads").select("*", { count: "exact", head: true })
+        .eq("seo_project_id", project.id).eq("ip_address", ipAddress)
+        .gte("created_at", oneMinIp);
+      isDuplicateIp = (ipCount || 0) > 0;
+    }
+
+    // ── SPAM SCORING ──
+    const { score: spamScore, reasons: spamReasons } = calculateSpamScore(
+      cleanName, cleanEmail, cleanPhone, cleanMessage,
+      _submission_ts || 0, isDuplicateIp
+    );
+    const isSpam = spamScore >= 50;
+    console.log("[seo-lead-capture] Spam:", { score: spamScore, isSpam, reasons: spamReasons });
+
+    // ── GEO LOOKUP (non-blocking but awaited for data enrichment) ──
+    const geo = await lookupGeo(ipAddress);
+    const deviceInfo = parseDeviceInfo(userAgent);
+    console.log("[seo-lead-capture] Geo:", geo, "Device:", deviceInfo);
+
+    // INSERT LEAD
     console.log("[seo-lead-capture] Saving lead...");
     const { data: lead, error: insertErr } = await supabase
       .from("seo_captured_leads")
@@ -251,6 +378,15 @@ Deno.serve(async (req) => {
         utm_source: utm_source || null,
         utm_medium: utm_medium || null,
         utm_campaign: utm_campaign || null,
+        // New fields
+        country: geo.country,
+        city: geo.city,
+        region: geo.region,
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+        device_info: deviceInfo,
+        spam_score: spamScore,
+        is_spam: isSpam,
       })
       .select().single();
 
@@ -264,60 +400,78 @@ Deno.serve(async (req) => {
     const emailResults: Array<{ type: string; status: string; error?: string }> = [];
     const CC_EMAIL = "reports@nextweb.com.au";
 
-    try {
-      const { data: bizInfo } = await supabase
-        .from("businesses").select("name, email")
-        .eq("id", project.business_id).maybeSingle();
+    // Skip email for spam leads
+    if (!isSpam) {
+      try {
+        const { data: bizInfo } = await supabase
+          .from("businesses").select("name, email")
+          .eq("id", project.business_id).maybeSingle();
 
-      const { data: clientInfo } = project.client_id
-        ? await supabase.from("clients").select("contact_name, email")
-            .eq("id", project.client_id).maybeSingle()
-        : { data: null };
+        const { data: clientInfo } = project.client_id
+          ? await supabase.from("clients").select("contact_name, email")
+              .eq("id", project.client_id).maybeSingle()
+          : { data: null };
 
-      const businessName = bizInfo?.name || "NextWeb";
-      const internalEmail = clientInfo?.email || bizInfo?.email || null;
+        const businessName = bizInfo?.name || "NextWeb";
 
-      // 1. CUSTOMER CONFIRMATION EMAIL
-      if (cleanEmail) {
-        console.log("[seo-lead-capture] Sending customer email to:", cleanEmail);
-        const result = await sendEmailWithRetry(supabase, {
-          to: cleanEmail,
-          cc: CC_EMAIL,
-          subject: "Thank you for your enquiry",
-          message: `Hi ${cleanName || "there"},\n\nThank you for reaching out to us. We've received your enquiry and our team will get back to you shortly.\n\nIf your request is urgent, feel free to contact us directly.\n\nBest regards,\n${businessName}`,
-          from_name: businessName,
-          business_id: project.business_id,
-        });
-        emailResults.push({ type: "customer_email", status: result.success ? "success" : "failed", error: result.error });
-        console.log("[seo-lead-capture] Customer email:", result.success ? "success" : "failed");
+        // Build recipient lists from form config or fallback
+        const toRecipients = formConfig?.to_emails?.length
+          ? formConfig.to_emails
+          : [clientInfo?.email || bizInfo?.email].filter(Boolean) as string[];
+        const ccRecipients = [
+          ...(formConfig?.cc_emails || []),
+          CC_EMAIL,
+        ].filter((v, i, a) => v && a.indexOf(v) === i); // deduplicate
+
+        // 1. CUSTOMER CONFIRMATION EMAIL
+        if (cleanEmail) {
+          console.log("[seo-lead-capture] Sending customer email to:", cleanEmail);
+          const result = await sendEmailWithRetry(supabase, {
+            to: cleanEmail,
+            cc: CC_EMAIL,
+            subject: "Thank you for your enquiry",
+            message: `Hi ${cleanName || "there"},\n\nThank you for reaching out to us. We've received your enquiry and our team will get back to you shortly.\n\nIf your request is urgent, feel free to contact us directly.\n\nBest regards,\n${businessName}`,
+            from_name: businessName,
+            business_id: project.business_id,
+          });
+          emailResults.push({ type: "customer_email", status: result.success ? "success" : "failed", error: result.error });
+          console.log("[seo-lead-capture] Customer email:", result.success ? "success" : "failed");
+        }
+
+        // 2. INTERNAL NOTIFICATION EMAIL — send to all configured To + CC recipients
+        if (toRecipients.length > 0) {
+          const leadDetails = [
+            `Name: ${cleanName || "N/A"}`,
+            `Phone: ${normalizedPhone || cleanPhone || "N/A"}`,
+            `Email: ${cleanEmail || "N/A"}`,
+            `Message: ${cleanMessage || "N/A"}`,
+            `Source: ${source || "form"}`,
+            `Page: ${page_url || "N/A"}`,
+            `Location: ${[geo.city, geo.region, geo.country].filter(Boolean).join(", ") || "N/A"}`,
+            `Device: ${deviceInfo.device_type} / ${deviceInfo.browser} / ${deviceInfo.os}`,
+            `Spam Score: ${spamScore}/100`,
+            `Time: ${new Date().toISOString()}`,
+          ].join("\n");
+
+          for (const recipient of toRecipients) {
+            console.log("[seo-lead-capture] Sending internal email to:", recipient);
+            const result = await sendEmailWithRetry(supabase, {
+              to: recipient,
+              cc: ccRecipients.filter(c => c !== recipient).join(","),
+              subject: `New Lead Received – ${clientInfo?.contact_name || businessName}`,
+              message: `New lead received:\n\n${leadDetails}`,
+              from_name: "NextWeb Lead System",
+              business_id: project.business_id,
+            });
+            emailResults.push({ type: `internal_email_${recipient}`, status: result.success ? "success" : "failed", error: result.error });
+            console.log("[seo-lead-capture] Internal email to", recipient, ":", result.success ? "success" : "failed");
+          }
+        }
+      } catch (emailErr) {
+        console.error("[seo-lead-capture] Email block failed (non-blocking):", emailErr);
       }
-
-      // 2. INTERNAL NOTIFICATION EMAIL
-      if (internalEmail) {
-        console.log("[seo-lead-capture] Sending internal email to:", internalEmail);
-        const leadDetails = [
-          `Name: ${cleanName || "N/A"}`,
-          `Phone: ${normalizedPhone || cleanPhone || "N/A"}`,
-          `Email: ${cleanEmail || "N/A"}`,
-          `Message: ${cleanMessage || "N/A"}`,
-          `Source: ${source || "form"}`,
-          `Page: ${page_url || "N/A"}`,
-          `Time: ${new Date().toISOString()}`,
-        ].join("\n");
-
-        const result = await sendEmailWithRetry(supabase, {
-          to: internalEmail,
-          cc: CC_EMAIL,
-          subject: `New Lead Received – ${clientInfo?.contact_name || businessName}`,
-          message: `New lead received:\n\n${leadDetails}`,
-          from_name: "NextWeb Lead System",
-          business_id: project.business_id,
-        });
-        emailResults.push({ type: "internal_email", status: result.success ? "success" : "failed", error: result.error });
-        console.log("[seo-lead-capture] Internal email:", result.success ? "success" : "failed");
-      }
-    } catch (emailErr) {
-      console.error("[seo-lead-capture] Email block failed (non-blocking):", emailErr);
+    } else {
+      console.log("[seo-lead-capture] Skipping emails for spam lead (score:", spamScore, ")");
     }
 
     // ── AUTOMATION SETTINGS ──
@@ -346,7 +500,8 @@ Deno.serve(async (req) => {
       });
     };
 
-    if (autoSettings) {
+    // Skip automations for spam
+    if (autoSettings && !isSpam) {
       if (autoSettings.enable_whatsapp && autoSettings.whatsapp_connected && autoSettings.whatsapp_number && normalizedPhone) {
         const start = Date.now();
         const waPayload = {
@@ -383,6 +538,7 @@ Deno.serve(async (req) => {
     return json({
       success: true,
       lead_id: lead.id,
+      spam: { score: spamScore, is_spam: isSpam },
       emails: emailResults,
       automations: automationResults,
     }, 200);

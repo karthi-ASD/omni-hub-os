@@ -15,7 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Plus, Code, Settings, FormInput, Trash2, GripVertical, Copy, Check, Send,
-  AlertTriangle, CheckCircle2, Shield, Paintbrush, ArrowUp, ArrowDown, Loader2
+  AlertTriangle, CheckCircle2, Shield, Paintbrush, ArrowUp, ArrowDown, Loader2,
+  Mail, Pencil, X
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -54,6 +55,8 @@ interface LeadForm {
   redirect_url: string | null;
   seo_project_id: string;
   created_at: string;
+  to_emails?: string[];
+  cc_emails?: string[];
 }
 
 interface ContactFormCreationTabProps {
@@ -67,6 +70,48 @@ const DEFAULT_FIELDS: FormField[] = [
   { name: "message", label: "Message", type: "textarea", required: false },
 ];
 
+// ── Email Tag Input Component ──
+function EmailTagInput({ emails, onChange, placeholder }: { emails: string[]; onChange: (e: string[]) => void; placeholder?: string }) {
+  const [input, setInput] = useState("");
+  const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
+  const addEmail = () => {
+    const trimmed = input.trim().toLowerCase();
+    if (!trimmed) return;
+    if (!isValidEmail(trimmed)) { toast.error("Invalid email format"); return; }
+    if (emails.includes(trimmed)) { toast.error("Email already added"); return; }
+    onChange([...emails, trimmed]);
+    setInput("");
+  };
+
+  const removeEmail = (idx: number) => onChange(emails.filter((_, i) => i !== idx));
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-1">
+        {emails.map((email, i) => (
+          <Badge key={email} variant="secondary" className="text-xs gap-1">
+            {email}
+            <button onClick={() => removeEmail(i)} className="hover:text-destructive"><X className="h-3 w-3" /></button>
+          </Badge>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <Input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addEmail(); } }}
+          placeholder={placeholder || "Add email and press Enter"}
+          className="h-8 text-sm flex-1"
+        />
+        <Button type="button" size="sm" variant="outline" onClick={addEmail} className="h-8">
+          <Plus className="h-3 w-3" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps) => {
   const { profile, roles } = useAuth();
   const { departmentName } = useEmployeeDepartment();
@@ -79,19 +124,22 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
   const [forms, setForms] = useState<LeadForm[]>([]);
   const [projects, setProjects] = useState<{ id: string; project_name: string; api_key: string; website_domain: string }[]>([]);
   const [loading, setLoading] = useState(true);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingForm, setEditingForm] = useState<LeadForm | null>(null); // null = create mode
   const [scriptOpen, setScriptOpen] = useState<LeadForm | null>(null);
   const [copied, setCopied] = useState(false);
   const [testResult, setTestResult] = useState<{ status: string; message: string; details?: string } | null>(null);
   const [testLoading, setTestLoading] = useState(false);
 
-  // New form state
-  const [newFormName, setNewFormName] = useState("Contact Form");
-  const [newFields, setNewFields] = useState<FormField[]>([...DEFAULT_FIELDS]);
-  const [newDesign, setNewDesign] = useState<FormDesign>({ ...DEFAULT_DESIGN });
-  const [newSuccessMsg, setNewSuccessMsg] = useState("Thank you! We will get back to you shortly.");
-  const [newRedirect, setNewRedirect] = useState("");
+  // Form state (shared for create + edit)
+  const [formName, setFormName] = useState("Contact Form");
+  const [fields, setFields] = useState<FormField[]>([...DEFAULT_FIELDS]);
+  const [design, setDesign] = useState<FormDesign>({ ...DEFAULT_DESIGN });
+  const [successMsg, setSuccessMsg] = useState("Thank you! We will get back to you shortly.");
+  const [redirectUrl, setRedirectUrl] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState("");
+  const [toEmails, setToEmails] = useState<string[]>([]);
+  const [ccEmails, setCcEmails] = useState<string[]>([]);
 
   // Drag state
   const dragItem = useRef<number | null>(null);
@@ -114,60 +162,98 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Reset form state for creation
+  const openCreateDialog = () => {
+    setEditingForm(null);
+    setFormName("Contact Form");
+    setFields([...DEFAULT_FIELDS]);
+    setDesign({ ...DEFAULT_DESIGN });
+    setSuccessMsg("Thank you! We will get back to you shortly.");
+    setRedirectUrl("");
+    setToEmails([]);
+    setCcEmails([]);
+    setDialogOpen(true);
+  };
+
+  // Populate form state for editing
+  const openEditDialog = (form: LeadForm) => {
+    setEditingForm(form);
+    setFormName(form.form_name);
+    setFields((form.fields_json as FormField[]) || [...DEFAULT_FIELDS]);
+    setDesign((form.design_json as FormDesign) || { ...DEFAULT_DESIGN });
+    setSuccessMsg(form.success_message || "");
+    setRedirectUrl(form.redirect_url || "");
+    setSelectedProjectId(form.seo_project_id);
+    setToEmails((form.to_emails as string[]) || []);
+    setCcEmails((form.cc_emails as string[]) || []);
+    setDialogOpen(true);
+  };
+
   // Drag and drop handlers
   const handleDragStart = (index: number) => { dragItem.current = index; };
   const handleDragEnter = (index: number) => { dragOverItem.current = index; };
   const handleDragEnd = () => {
     if (dragItem.current === null || dragOverItem.current === null) return;
-    const items = [...newFields];
+    const items = [...fields];
     const draggedItem = items[dragItem.current];
     items.splice(dragItem.current, 1);
     items.splice(dragOverItem.current, 0, draggedItem);
-    setNewFields(items);
+    setFields(items);
     dragItem.current = null;
     dragOverItem.current = null;
   };
 
   const moveField = (index: number, direction: "up" | "down") => {
     const newIndex = direction === "up" ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= newFields.length) return;
-    const items = [...newFields];
+    if (newIndex < 0 || newIndex >= fields.length) return;
+    const items = [...fields];
     [items[index], items[newIndex]] = [items[newIndex], items[index]];
-    setNewFields(items);
+    setFields(items);
   };
 
-  const handleCreate = async () => {
+  const handleSave = async () => {
     if (!profile?.business_id || !selectedProjectId) {
       toast.error("Please select an SEO project first");
       return;
     }
-    const phoneField = newFields.find(f => f.name === "phone");
+    const phoneField = fields.find(f => f.name === "phone");
     if (!phoneField || !phoneField.required) {
       toast.error("Phone field must be required");
       return;
     }
 
-    const { error } = await supabase.from("seo_lead_forms").insert({
-      business_id: profile.business_id,
-      client_id: clientId,
-      seo_project_id: selectedProjectId,
-      form_name: newFormName,
-      fields_json: newFields,
-      design_json: newDesign,
-      success_message: newSuccessMsg,
-      redirect_url: newRedirect || null,
-      is_active: true,
-      created_by: profile.user_id,
-    } as any);
+    const payload = {
+      form_name: formName,
+      fields_json: fields,
+      design_json: design,
+      success_message: successMsg,
+      redirect_url: redirectUrl || null,
+      to_emails: toEmails,
+      cc_emails: ccEmails,
+    };
 
-    if (error) { toast.error("Failed to create form"); console.error(error); return; }
-    toast.success("Contact form created");
-    setCreateOpen(false);
-    setNewFormName("Contact Form");
-    setNewFields([...DEFAULT_FIELDS]);
-    setNewDesign({ ...DEFAULT_DESIGN });
-    setNewSuccessMsg("Thank you! We will get back to you shortly.");
-    setNewRedirect("");
+    if (editingForm) {
+      // UPDATE existing form
+      const { error } = await supabase.from("seo_lead_forms")
+        .update(payload as any)
+        .eq("id", editingForm.id);
+      if (error) { toast.error("Failed to update form"); console.error(error); return; }
+      toast.success("Form updated");
+    } else {
+      // CREATE new form
+      const { error } = await supabase.from("seo_lead_forms").insert({
+        ...payload,
+        business_id: profile.business_id,
+        client_id: clientId,
+        seo_project_id: selectedProjectId,
+        is_active: true,
+        created_by: profile.user_id,
+      } as any);
+      if (error) { toast.error("Failed to create form"); console.error(error); return; }
+      toast.success("Contact form created");
+    }
+
+    setDialogOpen(false);
     fetchData();
   };
 
@@ -177,19 +263,19 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
   };
 
   const toggleFieldRequired = (index: number) => {
-    if (newFields[index].name === "phone") return;
-    const updated = [...newFields];
+    if (fields[index].name === "phone") return;
+    const updated = [...fields];
     updated[index].required = !updated[index].required;
-    setNewFields(updated);
+    setFields(updated);
   };
 
   const removeField = (index: number) => {
-    if (["name", "phone"].includes(newFields[index].name)) return;
-    setNewFields(newFields.filter((_, i) => i !== index));
+    if (["name", "phone"].includes(fields[index].name)) return;
+    setFields(fields.filter((_, i) => i !== index));
   };
 
   const addCustomField = () => {
-    setNewFields([...newFields, { name: `custom_${Date.now()}`, label: "Custom Field", type: "text", required: false }]);
+    setFields([...fields, { name: `custom_${Date.now()}`, label: "Custom Field", type: "text", required: false }]);
   };
 
   const getProjectForForm = (form: LeadForm) => projects.find(p => p.id === form.seo_project_id);
@@ -200,7 +286,7 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
 
     const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || "equruhaugrbtqjixqgtg";
     const endpoint = `https://${projectId}.supabase.co/functions/v1/seo-lead-capture`;
-    const design = (form.design_json as FormDesign) || DEFAULT_DESIGN;
+    const formDesign = (form.design_json as FormDesign) || DEFAULT_DESIGN;
 
     return `<!-- NextWeb OS Contact Form Script -->
 <script>
@@ -209,8 +295,9 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
   var FORM_ID = "${form.id}";
   var SUCCESS_MSG = "${(form.success_message || "Thank you!").replace(/"/g, '\\"')}";
   var REDIRECT_URL = "${form.redirect_url || ""}";
-  var DESIGN = ${JSON.stringify(design)};
+  var DESIGN = ${JSON.stringify(formDesign)};
   var _submitted = {};
+  var _loadTime = Date.now();
 
   function init() {
     console.log('[NW Form] Initializing — FORM_ID:', FORM_ID);
@@ -260,8 +347,6 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
     var btn = form.querySelector('[type="submit"]');
     var fd = new FormData(form);
 
-    console.log('[NW Form] 🚀 Form submit triggered');
-
     var name = (fd.get('name') || fd.get('fullname') || fd.get('full_name') || fd.get('your-name') || '').toString().trim();
     var phone = (fd.get('phone') || fd.get('mobile') || fd.get('tel') || fd.get('contact') || fd.get('your-phone') || '').toString().trim();
     var email = (fd.get('email') || fd.get('your-email') || fd.get('mail') || '').toString().trim();
@@ -282,7 +367,8 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
     var payload = {
       domain: window.location.hostname, form_id: FORM_ID,
       name: name, phone: phone, email: email, message: message,
-      source: 'form', page_url: window.location.href, extra_data: {}
+      source: 'form', page_url: window.location.href, extra_data: {},
+      _submission_ts: _loadTime
     };
     var params = new URLSearchParams(window.location.search);
     if (params.get('utm_source')) payload.utm_source = params.get('utm_source');
@@ -293,19 +379,13 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
       if (!['name','fullname','full_name','your-name','phone','mobile','tel','contact','your-phone','email','your-email','mail','message','comments','your-message','enquiry'].includes(k)) payload.extra_data[k] = v;
     });
 
-    console.log('[NW Form] Payload:', JSON.stringify(payload));
     sendRequest(payload, form, btn, 0, dedupKey);
   }
 
   function sendRequest(payload, form, btn, attempt, dedupKey) {
-    fetch(ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-    .then(async function(r) { var data = {}; try { data = await r.json(); } catch(e) { console.error('[NW Form] Invalid JSON response'); } return { ok: r.ok, status: r.status, data: data }; })
+    fetch(ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    .then(async function(r) { var data = {}; try { data = await r.json(); } catch(e) {} return { ok: r.ok, status: r.status, data: data }; })
     .then(function(res) {
-      console.log('[NW Form] Response:', res.status, res.data);
       var origText = (btn && btn.getAttribute('data-original-text')) || DESIGN.button_text || 'Submit';
       if (btn) { btn.disabled = false; btn.textContent = origText; }
       if (res.ok) {
@@ -319,7 +399,6 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
       }
     })
     .catch(function(err) {
-      console.error('[NW Form] Network error:', err);
       var origText = (btn && btn.getAttribute('data-original-text')) || DESIGN.button_text || 'Submit';
       if (btn) { btn.disabled = false; btn.textContent = origText; }
       if (attempt < 1) { sendRequest(payload, form, btn, attempt + 1, dedupKey); }
@@ -353,10 +432,10 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
   };
 
   const generateHtmlForm = (form: LeadForm) => {
-    const fields = (form.fields_json || DEFAULT_FIELDS) as FormField[];
-    const design = (form.design_json as FormDesign) || DEFAULT_DESIGN;
+    const formFields = (form.fields_json || DEFAULT_FIELDS) as FormField[];
+    const formDesign = (form.design_json as FormDesign) || DEFAULT_DESIGN;
     const lines = [`<form data-nw-form="${form.id}" data-nextweb>`];
-    fields.forEach(f => {
+    formFields.forEach(f => {
       const req = f.required ? ' required' : '';
       if (f.type === "textarea") {
         lines.push(`  <label>${f.label}</label>`);
@@ -366,7 +445,7 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
         lines.push(`  <input type="${f.type}" name="${f.name}" placeholder="${f.label}"${req} />`);
       }
     });
-    lines.push(`  <button type="submit">${design.button_text || "Submit"}</button>`);
+    lines.push(`  <button type="submit">${formDesign.button_text || "Submit"}</button>`);
     lines.push(`</form>`);
     return lines.join('\n');
   };
@@ -387,30 +466,24 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
     try {
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || "equruhaugrbtqjixqgtg";
       const payload = {
-        project_id: project.id,
-        api_key: project.api_key,
-        form_id: form.id,
-        name: "Test Lead (NextWeb OS)",
-        phone: "+61400000000",
-        email: "test@nextweb.test",
-        message: "Test submission from NextWeb OS",
-        source: "form",
+        project_id: project.id, api_key: project.api_key, form_id: form.id,
+        name: "Test Lead (NextWeb OS)", phone: "+61400000000",
+        email: "test@nextweb.test", message: "Test submission from NextWeb OS", source: "form",
       };
-      console.log("[ContactForm] Test payload:", payload);
 
       const res = await fetch(
         `https://${projectId}.supabase.co/functions/v1/seo-lead-capture`,
         { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }
       );
       const data = await res.json();
-      console.log("[ContactForm] Test response:", data);
 
       if (res.ok) {
         const emailStatus = data.emails?.map((e: any) => `${e.type}: ${e.status}`).join(", ") || "N/A";
+        const spamInfo = data.spam ? ` | Spam: ${data.spam.score}/100` : "";
         setTestResult({
           status: "success",
           message: `✔ Lead created (ID: ${data.lead_id})`,
-          details: `Email status: ${emailStatus}`,
+          details: `Email status: ${emailStatus}${spamInfo}`,
         });
       } else {
         setTestResult({ status: "error", message: data.error || "Test failed", details: JSON.stringify(data) });
@@ -445,7 +518,7 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
           <p className="text-xs text-muted-foreground">Create and manage lead capture forms for this client's website</p>
         </div>
         {canEdit && (
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <Button size="sm" onClick={openCreateDialog}>
             <Plus className="h-4 w-4 mr-1" /> Create Form
           </Button>
         )}
@@ -457,7 +530,7 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
             <FormInput className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
             <p className="text-sm text-muted-foreground">No contact forms created yet</p>
             {canEdit && (
-              <Button size="sm" className="mt-3" onClick={() => setCreateOpen(true)}>
+              <Button size="sm" className="mt-3" onClick={openCreateDialog}>
                 <Plus className="h-4 w-4 mr-1" /> Create First Form
               </Button>
             )}
@@ -467,6 +540,8 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
         <div className="space-y-3">
           {forms.map(form => {
             const project = getProjectForForm(form);
+            const formToEmails = (form.to_emails as string[]) || [];
+            const formCcEmails = (form.cc_emails as string[]) || [];
             return (
               <Card key={form.id} className="rounded-xl">
                 <CardContent className="p-4">
@@ -477,10 +552,20 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
                       <Badge variant={form.is_active ? "default" : "secondary"} className="text-[10px]">
                         {form.is_active ? "Active" : "Inactive"}
                       </Badge>
+                      {formToEmails.length > 0 && (
+                        <Badge variant="outline" className="text-[10px] gap-1">
+                          <Mail className="h-2.5 w-2.5" /> {formToEmails.length} recipient{formToEmails.length > 1 ? "s" : ""}
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       {canEdit && (
-                        <Switch checked={form.is_active ?? false} onCheckedChange={() => toggleFormActive(form.id, form.is_active ?? false)} />
+                        <>
+                          <Switch checked={form.is_active ?? false} onCheckedChange={() => toggleFormActive(form.id, form.is_active ?? false)} />
+                          <Button size="sm" variant="outline" onClick={() => openEditDialog(form)}>
+                            <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                          </Button>
+                        </>
                       )}
                       <Button size="sm" variant="outline" onClick={() => setScriptOpen(form)}>
                         <Code className="h-3.5 w-3.5 mr-1" /> Get Script
@@ -502,14 +587,12 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
                       <p className="font-medium">{((form.fields_json as any) || []).length} fields</p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Success Message:</span>
-                      <p className="font-medium truncate">{form.success_message || "—"}</p>
+                      <span className="text-muted-foreground">Email To:</span>
+                      <p className="font-medium truncate">{formToEmails.length > 0 ? formToEmails.join(", ") : "Default"}</p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Design:</span>
-                      <p className="font-medium truncate">
-                        {(form.design_json as FormDesign)?.button_text || "Submit"} • {(form.design_json as FormDesign)?.spacing || "normal"}
-                      </p>
+                      <span className="text-muted-foreground">CC:</span>
+                      <p className="font-medium truncate">{formCcEmails.length > 0 ? formCcEmails.join(", ") : "reports@nextweb.com.au"}</p>
                     </div>
                   </div>
 
@@ -529,17 +612,18 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
         </div>
       )}
 
-      {/* Create Form Dialog */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      {/* Create / Edit Form Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create Contact Form</DialogTitle>
+            <DialogTitle>{editingForm ? "Edit Form" : "Create Contact Form"}</DialogTitle>
           </DialogHeader>
 
           <Tabs defaultValue="fields" className="space-y-4">
             <TabsList>
               <TabsTrigger value="fields"><FormInput className="h-3.5 w-3.5 mr-1" /> Fields</TabsTrigger>
               <TabsTrigger value="design"><Paintbrush className="h-3.5 w-3.5 mr-1" /> Design</TabsTrigger>
+              <TabsTrigger value="email"><Mail className="h-3.5 w-3.5 mr-1" /> Email Routing</TabsTrigger>
               <TabsTrigger value="settings"><Settings className="h-3.5 w-3.5 mr-1" /> Settings</TabsTrigger>
             </TabsList>
 
@@ -555,7 +639,7 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {newFields.map((field, i) => (
+                  {fields.map((field, i) => (
                     <TableRow
                       key={field.name + i}
                       draggable
@@ -572,7 +656,7 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
                             <button onClick={() => moveField(i, "up")} disabled={i === 0} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
                               <ArrowUp className="h-3 w-3" />
                             </button>
-                            <button onClick={() => moveField(i, "down")} disabled={i === newFields.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
+                            <button onClick={() => moveField(i, "down")} disabled={i === fields.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
                               <ArrowDown className="h-3 w-3" />
                             </button>
                           </div>
@@ -582,15 +666,34 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
                         <Input
                           value={field.label}
                           onChange={e => {
-                            const updated = [...newFields];
+                            const updated = [...fields];
                             updated[i].label = e.target.value;
-                            setNewFields(updated);
+                            setFields(updated);
                           }}
                           className="h-8 text-sm"
                         />
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-[10px]">{field.type}</Badge>
+                        <Select
+                          value={field.type}
+                          onValueChange={v => {
+                            const updated = [...fields];
+                            updated[i].type = v;
+                            setFields(updated);
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-28 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="text">Text</SelectItem>
+                            <SelectItem value="email">Email</SelectItem>
+                            <SelectItem value="tel">Phone</SelectItem>
+                            <SelectItem value="textarea">Textarea</SelectItem>
+                            <SelectItem value="number">Number</SelectItem>
+                            <SelectItem value="url">URL</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell>
                         <Switch checked={field.required} disabled={field.name === "phone"} onCheckedChange={() => toggleFieldRequired(i)} />
@@ -620,11 +723,11 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Button Text</Label>
-                  <Input value={newDesign.button_text} onChange={e => setNewDesign(d => ({ ...d, button_text: e.target.value }))} placeholder="Submit" />
+                  <Input value={design.button_text} onChange={e => setDesign(d => ({ ...d, button_text: e.target.value }))} placeholder="Submit" />
                 </div>
                 <div>
                   <Label>Spacing</Label>
-                  <Select value={newDesign.spacing} onValueChange={v => setNewDesign(d => ({ ...d, spacing: v }))}>
+                  <Select value={design.spacing} onValueChange={v => setDesign(d => ({ ...d, spacing: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="compact">Compact</SelectItem>
@@ -636,27 +739,27 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
                 <div>
                   <Label>Button Color</Label>
                   <div className="flex gap-2 items-center">
-                    <input type="color" value={newDesign.button_color} onChange={e => setNewDesign(d => ({ ...d, button_color: e.target.value }))} className="h-9 w-12 rounded border cursor-pointer" />
-                    <Input value={newDesign.button_color} onChange={e => setNewDesign(d => ({ ...d, button_color: e.target.value }))} className="flex-1" />
+                    <input type="color" value={design.button_color} onChange={e => setDesign(d => ({ ...d, button_color: e.target.value }))} className="h-9 w-12 rounded border cursor-pointer" />
+                    <Input value={design.button_color} onChange={e => setDesign(d => ({ ...d, button_color: e.target.value }))} className="flex-1" />
                   </div>
                 </div>
                 <div>
                   <Label>Background Color</Label>
                   <div className="flex gap-2 items-center">
-                    <input type="color" value={newDesign.bg_color} onChange={e => setNewDesign(d => ({ ...d, bg_color: e.target.value }))} className="h-9 w-12 rounded border cursor-pointer" />
-                    <Input value={newDesign.bg_color} onChange={e => setNewDesign(d => ({ ...d, bg_color: e.target.value }))} className="flex-1" />
+                    <input type="color" value={design.bg_color} onChange={e => setDesign(d => ({ ...d, bg_color: e.target.value }))} className="h-9 w-12 rounded border cursor-pointer" />
+                    <Input value={design.bg_color} onChange={e => setDesign(d => ({ ...d, bg_color: e.target.value }))} className="flex-1" />
                   </div>
                 </div>
                 <div>
                   <Label>Text Color</Label>
                   <div className="flex gap-2 items-center">
-                    <input type="color" value={newDesign.text_color} onChange={e => setNewDesign(d => ({ ...d, text_color: e.target.value }))} className="h-9 w-12 rounded border cursor-pointer" />
-                    <Input value={newDesign.text_color} onChange={e => setNewDesign(d => ({ ...d, text_color: e.target.value }))} className="flex-1" />
+                    <input type="color" value={design.text_color} onChange={e => setDesign(d => ({ ...d, text_color: e.target.value }))} className="h-9 w-12 rounded border cursor-pointer" />
+                    <Input value={design.text_color} onChange={e => setDesign(d => ({ ...d, text_color: e.target.value }))} className="flex-1" />
                   </div>
                 </div>
                 <div>
                   <Label>Border Radius (px)</Label>
-                  <Input type="number" value={newDesign.border_radius} onChange={e => setNewDesign(d => ({ ...d, border_radius: e.target.value }))} min="0" max="30" />
+                  <Input type="number" value={design.border_radius} onChange={e => setDesign(d => ({ ...d, border_radius: e.target.value }))} min="0" max="30" />
                 </div>
               </div>
 
@@ -666,27 +769,52 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
                 <div
                   className="border rounded-lg"
                   style={{
-                    backgroundColor: newDesign.bg_color,
-                    color: newDesign.text_color,
-                    borderRadius: `${newDesign.border_radius}px`,
-                    padding: newDesign.spacing === "compact" ? "8px" : newDesign.spacing === "spacious" ? "24px" : "16px",
+                    backgroundColor: design.bg_color,
+                    color: design.text_color,
+                    borderRadius: `${design.border_radius}px`,
+                    padding: design.spacing === "compact" ? "8px" : design.spacing === "spacious" ? "24px" : "16px",
                   }}
                 >
                   <div className="space-y-2">
-                    <input placeholder="Name" className="w-full p-2 border rounded text-sm" style={{ borderRadius: `${newDesign.border_radius}px` }} readOnly />
-                    <input placeholder="Phone" className="w-full p-2 border rounded text-sm" style={{ borderRadius: `${newDesign.border_radius}px` }} readOnly />
+                    <input placeholder="Name" className="w-full p-2 border rounded text-sm" style={{ borderRadius: `${design.border_radius}px` }} readOnly />
+                    <input placeholder="Phone" className="w-full p-2 border rounded text-sm" style={{ borderRadius: `${design.border_radius}px` }} readOnly />
                     <button
                       className="w-full text-sm font-semibold py-2"
                       style={{
-                        backgroundColor: newDesign.button_color,
+                        backgroundColor: design.button_color,
                         color: "#fff",
-                        borderRadius: `${newDesign.border_radius}px`,
+                        borderRadius: `${design.border_radius}px`,
                         border: "none",
                       }}
                     >
-                      {newDesign.button_text || "Submit"}
+                      {design.button_text || "Submit"}
                     </button>
                   </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* NEW: Email Routing Tab */}
+            <TabsContent value="email" className="space-y-4">
+              <div className="space-y-4">
+                <div>
+                  <Label className="flex items-center gap-1 mb-2">
+                    <Mail className="h-3.5 w-3.5" /> To Recipients <span className="text-destructive">*</span>
+                  </Label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Internal notification emails will be sent to these addresses. If empty, defaults to client/business email.
+                  </p>
+                  <EmailTagInput emails={toEmails} onChange={setToEmails} placeholder="Add recipient email..." />
+                </div>
+
+                <div>
+                  <Label className="flex items-center gap-1 mb-2">
+                    <Mail className="h-3.5 w-3.5" /> CC Recipients
+                  </Label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Additional CC recipients. <code className="text-[10px] bg-muted px-1 rounded">reports@nextweb.com.au</code> is always included.
+                  </p>
+                  <EmailTagInput emails={ccEmails} onChange={setCcEmails} placeholder="Add CC email..." />
                 </div>
               </div>
             </TabsContent>
@@ -695,35 +823,39 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
               <div className="space-y-3">
                 <div>
                   <Label>Form Name</Label>
-                  <Input value={newFormName} onChange={e => setNewFormName(e.target.value)} placeholder="Contact Form" />
+                  <Input value={formName} onChange={e => setFormName(e.target.value)} placeholder="Contact Form" />
                 </div>
-                <div>
-                  <Label>SEO Project</Label>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    value={selectedProjectId}
-                    onChange={e => setSelectedProjectId(e.target.value)}
-                  >
-                    {projects.map(p => (
-                      <option key={p.id} value={p.id}>{p.project_name} ({p.website_domain})</option>
-                    ))}
-                  </select>
-                </div>
+                {!editingForm && (
+                  <div>
+                    <Label>SEO Project</Label>
+                    <select
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={selectedProjectId}
+                      onChange={e => setSelectedProjectId(e.target.value)}
+                    >
+                      {projects.map(p => (
+                        <option key={p.id} value={p.id}>{p.project_name} ({p.website_domain})</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div>
                   <Label>Success Message</Label>
-                  <Textarea value={newSuccessMsg} onChange={e => setNewSuccessMsg(e.target.value)} />
+                  <Textarea value={successMsg} onChange={e => setSuccessMsg(e.target.value)} />
                 </div>
                 <div>
                   <Label>Redirect URL (optional)</Label>
-                  <Input value={newRedirect} onChange={e => setNewRedirect(e.target.value)} placeholder="https://example.com/thank-you" />
+                  <Input value={redirectUrl} onChange={e => setRedirectUrl(e.target.value)} placeholder="https://example.com/thank-you" />
                 </div>
               </div>
             </TabsContent>
           </Tabs>
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={!newFormName || !selectedProjectId}>Create Form</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSave} disabled={!formName || (!editingForm && !selectedProjectId)}>
+              {editingForm ? "Save Changes" : "Create Form"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
