@@ -322,7 +322,7 @@ Deno.serve(async (req) => {
     // ── AUTOMATION SETTINGS ──
     const { data: autoSettings } = await supabase
       .from("seo_automation_settings").select("*")
-      .eq("seo_project_id", project_id).maybeSingle();
+      .eq("seo_project_id", project.id).maybeSingle();
 
     const automationResults: Array<{ type: string; status: string }> = [];
     const requestPayload = { name: cleanName, email: cleanEmail, phone: normalizedPhone, message: cleanMessage, source, form_id };
