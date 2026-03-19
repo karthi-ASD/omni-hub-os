@@ -121,73 +121,67 @@ const ClientProfilePage = () => {
 
     setFetchState("loading");
 
-    if (isSuperAdmin) {
-      console.log("[ClientProfile] Super Admin FORCE LOAD");
-      const adminResult = await fetchClientDirectAdmin(clientId);
-      const adminClient = adminResult.client;
-
-      console.log("[ClientProfile] Loaded via FORCE ADMIN:", adminClient);
-      console.log("[ClientProfile] Admin fallback used:", adminResult.exists);
-
-      if (adminResult.error) {
-        setFetchState("fetch_error");
-        return;
-      }
-
-      if (adminClient?.merged_into) {
-        navigate(`/clients/${adminClient.merged_into}`, { replace: true });
-        return;
-      }
-
-      if (adminClient?.deleted_at) {
-        setFetchState("archived");
-        return;
-      }
-
-      if (adminResult.canAccess && adminClient) {
-        console.log("[ClientProfile] Final client data:", adminClient);
-        setClient(adminClient as unknown as Client);
-        setFetchState("ready");
-        return;
-      }
-
-      if (adminResult.exists) {
-        setFetchState("no_access");
-        return;
-      }
-
-      setFetchState("not_found");
-      return;
-    }
-
-    // Step 0: Validate UUID — if not UUID, attempt identity resolution (slug/name/email)
+    // Non-UUID → resolve to UUID first (email, slug, name)
     if (!UUID_REGEX.test(clientId)) {
-      console.log("[ClientProfile] Non-UUID route param, attempting resolve:", clientId);
+      console.log("[ClientProfile] Non-UUID route param, resolving:", clientId);
+      const normalized = decodeURIComponent(clientId).trim().toLowerCase();
+      console.log("[EMAIL LOOKUP] Normalized:", normalized);
 
+      // Try exact email match (case-insensitive via lower())
       try {
-        const slug = decodeURIComponent(clientId);
-        const { data: directMatch } = await supabase
+        const { data: emailMatch } = await supabase
           .from("clients")
           .select("id")
-          .or(`company_name.ilike.%${slug}%,email.ilike.%${slug}%`)
+          .ilike("email", normalized)
           .limit(1)
           .maybeSingle();
 
-        if (directMatch?.id) {
-          console.log("[ClientProfile] Resolved slug to UUID via DB:", directMatch.id);
-          navigate(`/clients/${directMatch.id}`, { replace: true });
+        if (emailMatch?.id) {
+          console.log("[EMAIL LOOKUP] Matched by email:", emailMatch.id);
+          navigate(`/clients/${emailMatch.id}`, { replace: true });
+          return;
+        }
+
+        // Fallback: company name
+        const { data: nameMatch } = await supabase
+          .from("clients")
+          .select("id")
+          .ilike("company_name", `%${normalized}%`)
+          .limit(1)
+          .maybeSingle();
+
+        if (nameMatch?.id) {
+          console.log("[EMAIL LOOKUP] Matched by company_name:", nameMatch.id);
+          navigate(`/clients/${nameMatch.id}`, { replace: true });
           return;
         }
       } catch (e) {
         console.log("[ClientProfile] Direct DB resolve failed:", e);
       }
 
+      // Super Admin: try admin edge function for email lookup
+      if (isSuperAdmin) {
+        try {
+          const { data: adminData } = await supabase.functions.invoke("get_client_by_id_admin", {
+            body: { email: normalized },
+          });
+          const resolved = adminData?.data || adminData?.client;
+          if (resolved?.id) {
+            console.log("[EMAIL LOOKUP] Resolved via admin function:", resolved.id);
+            navigate(`/clients/${resolved.id}`, { replace: true });
+            return;
+          }
+        } catch (e) {
+          console.log("[ClientProfile] Admin email resolve failed:", e);
+        }
+      }
+
+      // Edge function resolver fallback
       try {
         const { data: resolveData } = await supabase.functions.invoke("client-identity-resolver", {
-          body: { action: "resolve", email: clientId, external_id: clientId },
+          body: { action: "resolve", email: normalized, external_id: normalized },
         });
         if (resolveData?.client_id) {
-          console.log("[ClientProfile] Resolved non-UUID to client:", resolveData.client_id);
           navigate(`/clients/${resolveData.client_id}`, { replace: true });
           return;
         }
@@ -196,6 +190,26 @@ const ClientProfilePage = () => {
       }
 
       setFetchState("invalid_id");
+      return;
+    }
+
+    // UUID path — Super Admin uses direct admin fetch
+    if (isSuperAdmin) {
+      console.log("[ClientProfile] Super Admin FORCE LOAD");
+      const adminResult = await fetchClientDirectAdmin(clientId);
+      const adminClient = adminResult.client;
+
+      if (adminResult.error) { setFetchState("fetch_error"); return; }
+      if (adminClient?.merged_into) { navigate(`/clients/${adminClient.merged_into}`, { replace: true }); return; }
+      if (adminClient?.deleted_at) { setFetchState("archived"); return; }
+      if (adminResult.canAccess && adminClient) {
+        console.log("[ClientProfile] Final client data:", adminClient);
+        setClient(adminClient as unknown as Client);
+        setFetchState("ready");
+        return;
+      }
+      if (adminResult.exists) { setFetchState("no_access"); return; }
+      setFetchState("not_found");
       return;
     }
 
