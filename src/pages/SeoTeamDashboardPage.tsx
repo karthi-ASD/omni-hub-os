@@ -251,8 +251,9 @@ const SeoTeamDashboardPage = () => {
                     <TableHead>Client</TableHead>
                     <TableHead>Package</TableHead>
                     <TableHead>SEO Status</TableHead>
-                    <TableHead className="text-center">Suburbs</TableHead>
-                    <TableHead className="text-center">Keywords</TableHead>
+                    <TableHead className="text-center">Tasks</TableHead>
+                    <TableHead className="text-center">Pending</TableHead>
+                    <TableHead className="text-center">Active</TableHead>
                     <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -269,20 +270,25 @@ const SeoTeamDashboardPage = () => {
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{client.package_name}</TableCell>
                       <TableCell>{getStatusBadge(client.seo_step_status)}</TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1 text-sm">
-                          <MapPin className="h-3 w-3 text-muted-foreground" />
-                          {(client.seo_data?.suburbs as string[])?.length || 0}
-                        </div>
+                      <TableCell className="text-center text-sm">{client.task_total}</TableCell>
+                      <TableCell className="text-center text-sm">
+                        {client.task_pending > 0 ? (
+                          <Badge variant="outline" className="text-amber-600">{client.task_pending}</Badge>
+                        ) : "0"}
                       </TableCell>
                       <TableCell className="text-center text-sm">
-                        {client.seo_data?.keyword_count || 0}
+                        {client.task_in_progress > 0 ? (
+                          <Badge className="bg-primary/15 text-primary border-primary/30">{client.task_in_progress}</Badge>
+                        ) : "0"}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
                           size="sm"
                           variant={client.seo_step_status === "completed" ? "outline" : "default"}
-                          onClick={() => navigate(`/client-package/${client.client_id}`)}
+                          onClick={() => {
+                            const tab = client.seo_step_status === "none" || client.seo_step_status === "pending" ? "seo" : "seo_tasks";
+                            navigate(`/client-package/${client.client_id}?tab=${tab}`);
+                          }}
                           className="gap-1"
                         >
                           {getActionLabel(client.seo_step_status)}
