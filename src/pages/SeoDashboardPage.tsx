@@ -48,8 +48,9 @@ const SeoDashboardPage = () => {
         <TabsContent value="projects">
           <SeoProjectsTable
             projects={projects}
+            loading={false}
             getClientName={getClientName}
-            onUpdateProject={updateProject}
+            onStatusChange={(id, status) => updateProject(id, { project_status: status })}
           />
         </TabsContent>
       </Tabs>
