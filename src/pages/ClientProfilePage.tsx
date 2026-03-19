@@ -187,19 +187,11 @@ const ClientProfilePage = () => {
     }
 
     if (!raw) {
+      // RLS may have blocked — use admin fallback (service role)
       const { data: adminResult, error: adminError } = await getClientByIdAdmin(clientId);
       const adminClient = adminResult?.client ?? null;
-      const businessMismatch = Boolean(
-        adminClient?.business_id && profile?.business_id && adminClient.business_id !== profile.business_id
-      );
 
-      console.log("CLIENT_FAILURE", {
-        route_client_id: clientId,
-        db_result: raw,
-        db_error: error,
-        debug_function_result: adminResult,
-        business_mismatch: businessMismatch,
-      });
+      console.log("CLIENT_ADMIN_FALLBACK", { adminResult, adminError, isSuperAdmin });
 
       if (adminError) {
         setFetchState("fetch_error");
@@ -213,6 +205,14 @@ const ClientProfilePage = () => {
 
       if (adminClient?.deleted_at) {
         setFetchState("archived");
+        return;
+      }
+
+      // Super Admin with full access — use the admin-fetched client data directly
+      if (isSuperAdmin && adminResult?.can_access && adminClient) {
+        console.log("[ClientProfile] Super Admin bypassing RLS with admin data");
+        setClient(adminClient as unknown as Client);
+        setFetchState("ready");
         return;
       }
 
