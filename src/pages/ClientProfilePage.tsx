@@ -1074,6 +1074,13 @@ const ClientProfilePage = () => {
         <TabsContent value="contact-forms">
           {id && <ContactFormCreationTab clientId={id} />}
         </TabsContent>
+
+        {/* ── Package ── */}
+        {canViewPackageTab && (
+          <TabsContent value="package">
+            {id && <ClientPackagePage clientIdProp={id} />}
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Add Website Dialog */}
