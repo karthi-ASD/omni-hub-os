@@ -90,10 +90,8 @@ Deno.serve(async (req) => {
     if (contentLength > 50000) return json({ error: "Payload too large" }, 413);
 
     const body = await req.json();
-    const { name, email, phone, message, project_id, source, form_id, extra_data, api_key,
+    const { name, email, phone, message, domain, project_id, source, form_id, extra_data, api_key,
             utm_source, utm_medium, utm_campaign, page_url } = body;
-
-    if (!project_id) return json({ error: "project_id is required" }, 400);
 
     // Sanitize inputs
     const cleanName = (name || "").toString().trim().replace(/[\u200B\u200C\u200D\uFEFF]/g, "").slice(0, 200);
@@ -123,27 +121,57 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: project, error: projErr } = await supabase
-      .from("seo_projects")
-      .select("id, business_id, client_id, api_key, website_domain, default_country_code")
-      .eq("id", project_id)
-      .single();
+    // === AUTO PROJECT DETECTION ===
+    // Support both: new domain-based detection AND legacy project_id+api_key
+    let project: any = null;
 
-    if (projErr || !project) return json({ error: "Invalid project_id" }, 404);
+    if (domain && !project_id) {
+      // New: auto-detect project from domain
+      const cleanDomain = domain.toLowerCase().replace(/^www\./, "");
+      console.log("[Auto Project Detection] Looking up domain:", cleanDomain);
 
-    // API key validation
-    if (!api_key || api_key !== project.api_key) {
-      return json({ error: "Unauthorized: invalid or missing api_key" }, 401);
+      const { data: matchedProject, error: domainErr } = await supabase
+        .from("seo_projects")
+        .select("id, business_id, client_id, api_key, website_domain, default_country_code")
+        .or(`website_domain.ilike.%${cleanDomain}%,website_domain.ilike.%www.${cleanDomain}%`)
+        .limit(1)
+        .maybeSingle();
+
+      if (domainErr || !matchedProject) {
+        console.error("[Auto Project Detection] No project found for domain:", cleanDomain);
+        return json({ error: "No project found for this domain", debug: { domain: cleanDomain } }, 404);
+      }
+
+      project = matchedProject;
+      console.log("[Auto Project Detection] Matched project:", project.id);
+    } else if (project_id) {
+      // Legacy: use project_id + api_key
+      const { data: legacyProject, error: projErr } = await supabase
+        .from("seo_projects")
+        .select("id, business_id, client_id, api_key, website_domain, default_country_code")
+        .eq("id", project_id)
+        .single();
+
+      if (projErr || !legacyProject) return json({ error: "Invalid project_id" }, 404);
+
+      // Validate API key for legacy mode
+      if (!api_key || api_key !== legacyProject.api_key) {
+        return json({ error: "Unauthorized: invalid or missing api_key" }, 401);
+      }
+
+      project = legacyProject;
+    } else {
+      return json({ error: "Either domain or project_id is required" }, 400);
     }
 
-    // Auto-normalize domain from DB
+    // Origin validation using project's configured domain
     let allowedDomains: string[] | null = null;
     if (project.website_domain) {
-      const cleanDomain = project.website_domain
+      const projectDomain = project.website_domain
         .replace(/^https?:\/\//, "")
         .replace(/\/$/, "")
         .toLowerCase();
-      allowedDomains = [cleanDomain];
+      allowedDomains = [projectDomain];
     } else {
       console.warn("[seo-lead-capture] No domain configured for project — allowing request");
     }

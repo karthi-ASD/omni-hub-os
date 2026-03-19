@@ -267,7 +267,7 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
     clearMsg(form);
 
     var payload = {
-      project_id: PROJECT_ID, api_key: API_KEY, form_id: FORM_ID,
+      domain: window.location.hostname, form_id: FORM_ID,
       name: name, phone: phone, email: email, message: message,
       source: 'form', page_url: window.location.href, extra_data: {}
     };
