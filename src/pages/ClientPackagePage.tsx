@@ -1,6 +1,7 @@
 import { useParams, useSearchParams } from "react-router-dom";
 import { useClientPackage } from "@/hooks/useClientPackage";
 import { usePackageOnboarding } from "@/hooks/usePackageOnboarding";
+import { usePackageSeoTasks } from "@/hooks/usePackageSeoTasks";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +16,7 @@ import CreatePackageDialog from "@/components/packages/CreatePackageDialog";
 import GenerateInstallmentsDialog from "@/components/packages/GenerateInstallmentsDialog";
 import PackageOnboardingProgress from "@/components/packages/PackageOnboardingProgress";
 import PackageSeoTasksTab from "@/components/packages/PackageSeoTasksTab";
+import ClientPackageView from "@/components/packages/ClientPackageView";
 
 interface ClientPackagePageProps {
   clientIdProp?: string;
@@ -48,8 +50,6 @@ export default function ClientPackagePage({ clientIdProp }: ClientPackagePagePro
   const canManagePayments = isFinance;
   const canEditOnboarding = !isClient && (isAdmin || isSEODept);
 
-  console.log("SEO TAB DEBUG", { roles, departmentName, isSEODept, isAdmin, canAccessSEO, canEditOnboarding });
-
   const {
     steps: onboardingSteps,
     progress: onboardingProgress,
@@ -58,19 +58,10 @@ export default function ClientPackagePage({ clientIdProp }: ClientPackagePagePro
     allComplete: onboardingComplete,
   } = usePackageOnboarding(pkg?.id, canEditOnboarding);
 
-  if (!roles || roles.length === 0) {
-    return (
-      <div className="p-6 space-y-4">
-        <Skeleton className="h-8 w-64" />
-        <div className="grid grid-cols-3 gap-4">
-          <Skeleton className="h-28" /><Skeleton className="h-28" /><Skeleton className="h-28" />
-        </div>
-        <Skeleton className="h-64" />
-      </div>
-    );
-  }
+  // Fetch SEO tasks for client view
+  const { tasks: seoTasks } = usePackageSeoTasks(pkg?.id, resolvedClientId);
 
-  if (loading) {
+  if (!roles || roles.length === 0 || loading) {
     return (
       <div className="p-6 space-y-4">
         <Skeleton className="h-8 w-64" />
@@ -88,64 +79,75 @@ export default function ClientPackagePage({ clientIdProp }: ClientPackagePagePro
         <div className="p-6">
           <div className="flex flex-col items-center justify-center py-28 text-center">
             <Package className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-            <div className="text-2xl font-semibold mb-2 text-foreground">
-              We're Setting Up Your Services
-            </div>
+            <div className="text-2xl font-semibold mb-2 text-foreground">We're Setting Up Your Services</div>
             <p className="text-muted-foreground max-w-md mb-3">
               Your onboarding is in progress. You'll be able to view your full dashboard once setup is complete.
             </p>
-            <span className="text-xs text-muted-foreground/70">
-              Managed and optimized by NextWeb
-            </span>
+            <span className="text-xs text-muted-foreground/70">Managed and optimized by NextWeb</span>
           </div>
         </div>
       );
     }
-
-    // Finance/Admin can create, SEO sees waiting message, others see nothing
     if (isFinance) {
       return (
         <div className="p-6">
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <Package className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
             <div className="text-2xl font-semibold mb-2 text-foreground">No Package Found</div>
-            <p className="text-muted-foreground mb-4 max-w-md">
-              This client does not have a package yet. Create one to get started.
-            </p>
+            <p className="text-muted-foreground mb-4 max-w-md">This client does not have a package yet. Create one to get started.</p>
             <CreatePackageDialog onCreate={createPackage} />
           </div>
         </div>
       );
     }
-
     if (isSEODept) {
       return (
         <div className="p-6">
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <Package className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
             <div className="text-2xl font-semibold mb-2 text-foreground">No Package Yet</div>
-            <p className="text-muted-foreground max-w-md">
-              This client's package hasn't been created yet. Please contact the Finance team.
-            </p>
+            <p className="text-muted-foreground max-w-md">This client's package hasn't been created yet. Please contact the Finance team.</p>
           </div>
         </div>
       );
     }
-
-    // Any other role — show a generic message instead of blank screen
     return (
       <div className="p-6">
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <Package className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
           <div className="text-2xl font-semibold mb-2 text-foreground">No Package Available</div>
-          <p className="text-muted-foreground max-w-md">
-            No package has been set up for this client yet.
-          </p>
+          <p className="text-muted-foreground max-w-md">No package has been set up for this client yet.</p>
         </div>
       </div>
     );
   }
 
+  // ═══════════════════════════════════════════════
+  // CLIENT VIEW — Premium WOW Dashboard
+  // ═══════════════════════════════════════════════
+  if (isClient) {
+    return (
+      <div className="p-6">
+        <ClientPackageView
+          pkg={pkg}
+          services={services}
+          seoData={seoData}
+          assets={assets}
+          socialLinks={socialLinks}
+          gmb={gmb}
+          onboardingSteps={onboardingSteps}
+          onboardingProgress={onboardingProgress}
+          onboardingCompleted={onboardingCompleted}
+          onboardingComplete={onboardingComplete}
+          seoTasks={seoTasks.filter(t => t.is_visible_to_client)}
+        />
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════
+  // STAFF VIEW — Full Internal Controls
+  // ═══════════════════════════════════════════════
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -167,7 +169,6 @@ export default function ClientPackagePage({ clientIdProp }: ClientPackagePagePro
         )}
       </div>
 
-      {/* Onboarding progress — visible to all when not fully complete */}
       {!onboardingComplete && onboardingSteps.length > 0 && (
         <div className="rounded-xl border border-border bg-card p-5">
           <PackageOnboardingProgress
@@ -192,67 +193,32 @@ export default function ClientPackagePage({ clientIdProp }: ClientPackagePagePro
 
         <TabsContent value="overview">
           <PackageOverviewTab
-            pkg={pkg}
-            installments={installments}
-            totalPaid={totalPaid}
-            totalOutstanding={totalOutstanding}
-            overdueAmount={overdueAmount}
-            nextDueDate={nextDueDate}
-            onMarkPaid={markInstallmentPaid}
-            onMarkSkipped={markInstallmentSkipped}
+            pkg={pkg} installments={installments} totalPaid={totalPaid}
+            totalOutstanding={totalOutstanding} overdueAmount={overdueAmount} nextDueDate={nextDueDate}
+            onMarkPaid={markInstallmentPaid} onMarkSkipped={markInstallmentSkipped}
             onReversePayment={canManagePayments ? reversePayment : undefined}
             isReadOnly={!canManagePayments}
           />
         </TabsContent>
-
         <TabsContent value="services">
-          <PackageServicesTab
-            packageId={pkg.id}
-            services={services}
-            onUpsert={upsertService}
-            isReadOnly={isReadOnly}
-          />
+          <PackageServicesTab packageId={pkg.id} services={services} onUpsert={upsertService} isReadOnly={isReadOnly} />
         </TabsContent>
-
         {canAccessSEO && (
           <TabsContent value="seo">
-            <PackageSeoTab
-              packageId={pkg.id}
-              seoData={seoData}
-              onSave={upsertSeoData}
-              isReadOnly={isClient}
-            />
+            <PackageSeoTab packageId={pkg.id} seoData={seoData} onSave={upsertSeoData} isReadOnly={false} />
           </TabsContent>
         )}
-
         {canAccessSEO && (
           <TabsContent value="seo_tasks">
-            <PackageSeoTasksTab
-              packageId={pkg.id}
-              clientId={resolvedClientId}
-              isReadOnly={isClient}
-            />
+            <PackageSeoTasksTab packageId={pkg.id} clientId={resolvedClientId} isReadOnly={false} />
           </TabsContent>
         )}
-
         <TabsContent value="assets">
-          <PackageAssetsTab
-            packageId={pkg.id}
-            assets={assets}
-            onSave={upsertAssets}
-            isReadOnly={isReadOnly}
-          />
+          <PackageAssetsTab packageId={pkg.id} assets={assets} onSave={upsertAssets} isReadOnly={isReadOnly} />
         </TabsContent>
-
         <TabsContent value="social">
-          <PackageSocialLinksTab
-            packageId={pkg.id}
-            socialLinks={socialLinks}
-            gmb={gmb}
-            onSaveSocial={upsertSocialLinks}
-            onSaveGmb={upsertGmb}
-            isReadOnly={isReadOnly}
-          />
+          <PackageSocialLinksTab packageId={pkg.id} socialLinks={socialLinks} gmb={gmb}
+            onSaveSocial={upsertSocialLinks} onSaveGmb={upsertGmb} isReadOnly={isReadOnly} />
         </TabsContent>
       </Tabs>
     </div>
