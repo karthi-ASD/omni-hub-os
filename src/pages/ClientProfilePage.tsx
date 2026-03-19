@@ -246,7 +246,7 @@ const ClientProfilePage = () => {
 
     setClient(raw as unknown as Client);
     setFetchState("ready");
-  }, [getClientByIdAdmin, navigate, profile?.business_id]);
+  }, [getClientByIdAdmin, navigate, profile?.business_id, isSuperAdmin]);
 
   useEffect(() => {
     if (id) {
