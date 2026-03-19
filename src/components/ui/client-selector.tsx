@@ -93,7 +93,7 @@ export function ClientSelector({ clients, loading = false, value, onValueChange,
   const [focusIndex, setFocusIndex] = useState(-1);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Debounce search — stable ref
   useEffect(() => {
