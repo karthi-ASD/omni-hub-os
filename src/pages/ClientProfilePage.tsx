@@ -237,15 +237,9 @@ const ClientProfilePage = () => {
       return;
     }
 
-    if (profile?.business_id && raw.business_id !== profile.business_id) {
-      console.log("[ClientProfile] Business mismatch:", { client_biz: raw.business_id, user_biz: profile.business_id });
-      console.log("CLIENT_FAILURE", {
-        route_client_id: clientId,
-        db_result: raw,
-        db_error: null,
-        debug_function_result: null,
-        business_mismatch: true,
-      });
+    // Business mismatch check — Super Admins bypass this
+    if (!isSuperAdmin && profile?.business_id && raw.business_id !== profile.business_id) {
+      console.log("[ClientProfile] Business mismatch (non-super-admin):", { client_biz: raw.business_id, user_biz: profile.business_id });
       setFetchState("no_access");
       return;
     }
