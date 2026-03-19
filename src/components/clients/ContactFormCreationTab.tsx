@@ -217,10 +217,16 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
     var forms = document.querySelectorAll('[data-nw-form="' + FORM_ID + '"]');
     if (!forms.length) forms = document.querySelectorAll('form[data-nextweb]');
     if (!forms.length) {
-      console.log('[NW Form] No tagged form found, attaching to ALL forms on page');
-      forms = document.querySelectorAll('form');
+      var allForms = document.querySelectorAll('form');
+      if (allForms.length === 1) {
+        console.warn('[NW Form] No tagged form found — auto-binding to single form on page');
+        forms = allForms;
+      } else {
+        console.warn('[NW Form] No matching form found for FORM_ID:', FORM_ID, '— found', allForms.length, 'untagged forms, skipping');
+        return;
+      }
     }
-    console.log('[NW Form] Found', forms.length, 'form(s)');
+    console.log('[NW Form] Bound to', forms.length, 'form(s)');
     forms.forEach(function(form) {
       form.addEventListener('submit', handleSubmit);
       applyDesign(form);
