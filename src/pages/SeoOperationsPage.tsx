@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useSeoProjects } from "@/hooks/useSeoProjects";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useAllClientsDropdown } from "@/hooks/useAllClientsDropdown";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,12 +15,6 @@ import { Plus, Globe, TrendingUp, Search, Users, FolderKanban } from "lucide-rea
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 
-interface DropdownClient {
-  id: string;
-  contact_name: string;
-  client_status: string;
-}
-
 const statusColors: Record<string, string> = {
   ACTIVE: "bg-success/10 text-success",
   ONBOARDING: "bg-warning/10 text-warning",
@@ -32,10 +25,9 @@ const statusColors: Record<string, string> = {
 
 const SeoOperationsPage = () => {
   const { projects, loading, create } = useSeoProjects();
-  const { profile } = useAuth();
+  const { clients: allClients } = useAllClientsDropdown();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [allClients, setAllClients] = useState<DropdownClient[]>([]);
   const [form, setForm] = useState({
     client_id: "", website_domain: "", project_name: "", target_location: "",
     primary_keyword: "", service_package: "basic", contract_start: "", contract_end: "",
