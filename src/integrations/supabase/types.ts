@@ -9229,10 +9229,12 @@ export type Database = {
           deal_stage: string
           deal_type: string | null
           deal_value: number | null
+          delay_reason: string | null
           deposit_status: string | null
           eoi_status: string | null
           expected_milestone: string | null
           finance_approved: boolean | null
+          finance_status: string | null
           id: string
           investor_id: string | null
           lawyer_id: string | null
@@ -9240,7 +9242,11 @@ export type Database = {
           next_action_owner: string | null
           notes: string | null
           partner_id: string | null
+          pending_actions: string | null
           property_id: string | null
+          responsible_accountant: string | null
+          responsible_broker: string | null
+          responsible_lawyer: string | null
           risk_rating: string | null
           settlement_date: string | null
           settlement_target_date: string | null
@@ -9260,10 +9266,12 @@ export type Database = {
           deal_stage?: string
           deal_type?: string | null
           deal_value?: number | null
+          delay_reason?: string | null
           deposit_status?: string | null
           eoi_status?: string | null
           expected_milestone?: string | null
           finance_approved?: boolean | null
+          finance_status?: string | null
           id?: string
           investor_id?: string | null
           lawyer_id?: string | null
@@ -9271,7 +9279,11 @@ export type Database = {
           next_action_owner?: string | null
           notes?: string | null
           partner_id?: string | null
+          pending_actions?: string | null
           property_id?: string | null
+          responsible_accountant?: string | null
+          responsible_broker?: string | null
+          responsible_lawyer?: string | null
           risk_rating?: string | null
           settlement_date?: string | null
           settlement_target_date?: string | null
@@ -9291,10 +9303,12 @@ export type Database = {
           deal_stage?: string
           deal_type?: string | null
           deal_value?: number | null
+          delay_reason?: string | null
           deposit_status?: string | null
           eoi_status?: string | null
           expected_milestone?: string | null
           finance_approved?: boolean | null
+          finance_status?: string | null
           id?: string
           investor_id?: string | null
           lawyer_id?: string | null
@@ -9302,7 +9316,11 @@ export type Database = {
           next_action_owner?: string | null
           notes?: string | null
           partner_id?: string | null
+          pending_actions?: string | null
           property_id?: string | null
+          responsible_accountant?: string | null
+          responsible_broker?: string | null
+          responsible_lawyer?: string | null
           risk_rating?: string | null
           settlement_date?: string | null
           settlement_target_date?: string | null
@@ -9546,34 +9564,46 @@ export type Database = {
       crm_followup_settings: {
         Row: {
           business_id: string
+          checkin_after_days: number | null
           created_at: string | null
+          enable_auto_checkin: boolean | null
+          enable_call_summary_email: boolean | null
           enable_customer_email: boolean | null
           enable_employee_reminders: boolean | null
           enable_mobile_confirmation: boolean | null
           enable_mobile_push: boolean | null
           id: string
+          reengage_after_days: number | null
           reminder_hours_before: number | null
           updated_at: string | null
         }
         Insert: {
           business_id: string
+          checkin_after_days?: number | null
           created_at?: string | null
+          enable_auto_checkin?: boolean | null
+          enable_call_summary_email?: boolean | null
           enable_customer_email?: boolean | null
           enable_employee_reminders?: boolean | null
           enable_mobile_confirmation?: boolean | null
           enable_mobile_push?: boolean | null
           id?: string
+          reengage_after_days?: number | null
           reminder_hours_before?: number | null
           updated_at?: string | null
         }
         Update: {
           business_id?: string
+          checkin_after_days?: number | null
           created_at?: string | null
+          enable_auto_checkin?: boolean | null
+          enable_call_summary_email?: boolean | null
           enable_customer_email?: boolean | null
           enable_employee_reminders?: boolean | null
           enable_mobile_confirmation?: boolean | null
           enable_mobile_push?: boolean | null
           id?: string
+          reengage_after_days?: number | null
           reminder_hours_before?: number | null
           updated_at?: string | null
         }
@@ -9609,8 +9639,11 @@ export type Database = {
           investment_goals: string | null
           investor_tier: string | null
           investor_type: string | null
+          last_contact_date: string | null
           long_term_goals: string | null
           notes: string | null
+          objection_notes: string | null
+          objection_type: string | null
           occupation: string | null
           phone: string | null
           pipeline_stage: string
@@ -9618,6 +9651,8 @@ export type Database = {
           preferred_meeting_mode: string | null
           preferred_name: string | null
           preferred_property_types: string[] | null
+          readiness_label: string | null
+          readiness_score: number | null
           referred_by: string | null
           relationship_owner: string | null
           risk_profile: string | null
@@ -9649,8 +9684,11 @@ export type Database = {
           investment_goals?: string | null
           investor_tier?: string | null
           investor_type?: string | null
+          last_contact_date?: string | null
           long_term_goals?: string | null
           notes?: string | null
+          objection_notes?: string | null
+          objection_type?: string | null
           occupation?: string | null
           phone?: string | null
           pipeline_stage?: string
@@ -9658,6 +9696,8 @@ export type Database = {
           preferred_meeting_mode?: string | null
           preferred_name?: string | null
           preferred_property_types?: string[] | null
+          readiness_label?: string | null
+          readiness_score?: number | null
           referred_by?: string | null
           relationship_owner?: string | null
           risk_profile?: string | null
@@ -9689,8 +9729,11 @@ export type Database = {
           investment_goals?: string | null
           investor_tier?: string | null
           investor_type?: string | null
+          last_contact_date?: string | null
           long_term_goals?: string | null
           notes?: string | null
+          objection_notes?: string | null
+          objection_type?: string | null
           occupation?: string | null
           phone?: string | null
           pipeline_stage?: string
@@ -9698,6 +9741,8 @@ export type Database = {
           preferred_meeting_mode?: string | null
           preferred_name?: string | null
           preferred_property_types?: string[] | null
+          readiness_label?: string | null
+          readiness_score?: number | null
           referred_by?: string | null
           relationship_owner?: string | null
           risk_profile?: string | null
@@ -9739,6 +9784,8 @@ export type Database = {
           mobile: string | null
           next_followup: string | null
           notes: string | null
+          objection_notes: string | null
+          objection_type: string | null
           phone_verified: boolean | null
           preferred_callback_time: string | null
           property_interest_type: string | null
@@ -9770,6 +9817,8 @@ export type Database = {
           mobile?: string | null
           next_followup?: string | null
           notes?: string | null
+          objection_notes?: string | null
+          objection_type?: string | null
           phone_verified?: boolean | null
           preferred_callback_time?: string | null
           property_interest_type?: string | null
@@ -9801,6 +9850,8 @@ export type Database = {
           mobile?: string | null
           next_followup?: string | null
           notes?: string | null
+          objection_notes?: string | null
+          objection_type?: string | null
           phone_verified?: boolean | null
           preferred_callback_time?: string | null
           property_interest_type?: string | null
@@ -9988,6 +10039,7 @@ export type Database = {
           country: string | null
           created_at: string
           custom_fields_json: Json | null
+          demand_level: string | null
           description: string | null
           developer_name: string | null
           documents_json: Json | null
@@ -10014,6 +10066,8 @@ export type Database = {
           state: string | null
           suburb: string | null
           updated_at: string
+          urgency_deadline: string | null
+          urgency_tag: string | null
         }
         Insert: {
           address?: string | null
@@ -10029,6 +10083,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           custom_fields_json?: Json | null
+          demand_level?: string | null
           description?: string | null
           developer_name?: string | null
           documents_json?: Json | null
@@ -10055,6 +10110,8 @@ export type Database = {
           state?: string | null
           suburb?: string | null
           updated_at?: string
+          urgency_deadline?: string | null
+          urgency_tag?: string | null
         }
         Update: {
           address?: string | null
@@ -10070,6 +10127,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           custom_fields_json?: Json | null
+          demand_level?: string | null
           description?: string | null
           developer_name?: string | null
           documents_json?: Json | null
@@ -10096,6 +10154,8 @@ export type Database = {
           state?: string | null
           suburb?: string | null
           updated_at?: string
+          urgency_deadline?: string | null
+          urgency_tag?: string | null
         }
         Relationships: [
           {
