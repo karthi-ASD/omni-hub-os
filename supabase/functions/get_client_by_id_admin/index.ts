@@ -22,7 +22,8 @@ serve(async (req) => {
       });
     }
 
-    const clientId = (await req.json())?.client_id as string | undefined;
+    const body = await req.json();
+    const clientId = (body?.client_id ?? body?.clientId) as string | undefined;
     if (!clientId || !UUID_REGEX.test(clientId)) {
       return new Response(JSON.stringify({ error: "Invalid client ID" }), {
         status: 400,

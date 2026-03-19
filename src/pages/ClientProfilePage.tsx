@@ -83,10 +83,11 @@ const ClientProfilePage = () => {
   const [fetchState, setFetchState] = useState<ClientFetchState>("loading");
   const { profile, isSuperAdmin } = useAuth();
 
-  const getClientByIdAdmin = useCallback(async (routeClientId: string) => {
+  const fetchClientDirectAdmin = useCallback(async (routeClientId: string) => {
     try {
+      console.log("[FORCE ADMIN FETCH] Fetching:", routeClientId);
       const { data, error } = await supabase.functions.invoke("get_client_by_id_admin", {
-        body: { client_id: routeClientId },
+        body: { client_id: routeClientId, clientId: routeClientId },
       });
 
       console.log("CLIENT_ADMIN_RESULT", {
@@ -95,15 +96,16 @@ const ClientProfilePage = () => {
         error,
       });
 
-      return { data, error };
-    } catch (error) {
-      console.error("[ClientProfile] Admin debug invoke failed:", error);
-      console.log("CLIENT_ADMIN_RESULT", {
-        route_client_id: routeClientId,
-        data: null,
+      const adminClient = data?.data || data?.client || null;
+      return {
+        client: adminClient,
+        canAccess: Boolean(data?.can_access ?? data?.success),
+        exists: Boolean(data?.exists ?? adminClient),
         error,
-      });
-      return { data: null, error };
+      };
+    } catch (error) {
+      console.error("[FORCE ADMIN FETCH] Error:", error);
+      return { client: null, canAccess: false, exists: false, error };
     }
   }, []);
 
