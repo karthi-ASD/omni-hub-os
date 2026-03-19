@@ -10,6 +10,9 @@ export interface DropdownClient {
   email: string | null;
   client_status: string;
   has_seo_service: boolean;
+  is_active: boolean;
+  is_eligible_for_project: boolean;
+  priority_score: number;
 }
 
 /**
