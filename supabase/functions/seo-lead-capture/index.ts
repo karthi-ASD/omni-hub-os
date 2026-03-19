@@ -338,7 +338,7 @@ Deno.serve(async (req) => {
 
     const queueRetry = async (type: string, payload: any, error: string) => {
       await supabase.from("seo_automation_queue").insert({
-        lead_id: lead.id, seo_project_id: project_id, business_id: project.business_id,
+        lead_id: lead.id, seo_project_id: project.id, business_id: project.business_id,
         automation_type: type, payload,
         next_retry_at: new Date(Date.now() + 60 * 1000).toISOString(),
         last_error: error,
