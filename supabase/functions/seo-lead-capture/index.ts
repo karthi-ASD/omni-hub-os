@@ -235,7 +235,7 @@ Deno.serve(async (req) => {
       .from("seo_captured_leads")
       .insert({
         business_id: project.business_id,
-        seo_project_id: project_id,
+        seo_project_id: project.id,
         client_id: project.client_id,
         name: cleanName || null,
         email: cleanEmail || null,
