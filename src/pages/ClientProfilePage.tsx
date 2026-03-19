@@ -81,7 +81,7 @@ const ClientProfilePage = () => {
   // Direct client fetch state
   const [client, setClient] = useState<Client | null>(null);
   const [fetchState, setFetchState] = useState<ClientFetchState>("loading");
-  const { profile } = useAuth();
+  const { profile, isSuperAdmin } = useAuth();
 
   const getClientByIdAdmin = useCallback(async (routeClientId: string) => {
     try {
