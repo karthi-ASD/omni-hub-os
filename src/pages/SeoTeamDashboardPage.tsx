@@ -192,11 +192,14 @@ const SeoTeamDashboardPage = () => {
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
         </div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
           <StatCard label="Total Assigned" value={stats.total} icon={Users} gradient="from-primary to-accent" />
           <StatCard label="SEO Pending" value={stats.pending} icon={AlertCircle} gradient="from-amber-500 to-orange-500" alert={stats.pending > 0} />
           <StatCard label="In Progress" value={stats.inProgress} icon={Clock} gradient="from-blue-500 to-cyan-500" />
           <StatCard label="Completed" value={stats.completed} icon={CheckCircle2} gradient="from-emerald-500 to-green-500" />
+          <StatCard label="Tasks Pending" value={stats.tasksPending} icon={AlertCircle} gradient="from-rose-500 to-pink-500" alert={stats.tasksPending > 0} />
+          <StatCard label="Tasks Active" value={stats.tasksInProgress} icon={Clock} gradient="from-violet-500 to-purple-500" />
+          <StatCard label="Tasks Done" value={stats.tasksCompleted} icon={CheckCircle2} gradient="from-teal-500 to-cyan-500" />
         </div>
       )}
 
