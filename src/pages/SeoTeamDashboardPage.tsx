@@ -72,7 +72,8 @@ const SeoTeamDashboardPage = () => {
           seo_manager_id,
           clients(contact_name, email),
           seo_package_data(radius_km, suburbs, keyword_count, strategy_type),
-          package_onboarding_status(id, step_name, status)
+          package_onboarding_status(id, step_name, status),
+          seo_tasks(id, status)
         `);
 
       if (!isSuperAdmin && !isBusinessAdmin) {
