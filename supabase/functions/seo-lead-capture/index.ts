@@ -192,7 +192,7 @@ Deno.serve(async (req) => {
     const { count } = await supabase
       .from("seo_captured_leads")
       .select("*", { count: "exact", head: true })
-      .eq("seo_project_id", project_id)
+      .eq("seo_project_id", project.id)
       .gte("created_at", oneMinAgo);
 
     if ((count || 0) > 20) return json({ error: "Rate limit exceeded. Try again later." }, 429);
