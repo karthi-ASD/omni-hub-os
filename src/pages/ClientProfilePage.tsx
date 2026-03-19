@@ -489,6 +489,7 @@ const ClientProfilePage = () => {
           <TabsTrigger value="leads"><Target className="h-3.5 w-3.5 mr-1" />Leads</TabsTrigger>
           <TabsTrigger value="calls"><Phone className="h-3.5 w-3.5 mr-1" />Calls</TabsTrigger>
           <TabsTrigger value="contact-forms"><FormInput className="h-3.5 w-3.5 mr-1" />Contact Forms</TabsTrigger>
+          {canViewPackageTab && <TabsTrigger value="package"><Package className="h-3.5 w-3.5 mr-1" />Package</TabsTrigger>}
         </TabsList>
 
         {/* ── Conversations / Notes ── */}
