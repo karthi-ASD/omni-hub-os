@@ -9,13 +9,26 @@ function validateOrigin(req: Request, allowedDomains: string[] | null): boolean 
   if (!allowedDomains || allowedDomains.length === 0) return true;
   const origin = req.headers.get("origin") || "";
   const referer = req.headers.get("referer") || "";
+
+  // Allow localhost for development/testing
+  if (origin.includes("localhost") || referer.includes("localhost")) {
+    return true;
+  }
+
   try {
     const originHost = origin ? new URL(origin).hostname : "";
     const refererHost = referer ? new URL(referer).hostname : "";
-    return allowedDomains.some((d) => {
-      const clean = d.replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase();
-      return originHost === clean || originHost.endsWith("." + clean) ||
-             refererHost === clean || refererHost.endsWith("." + clean);
+    return allowedDomains.some((domain) => {
+      const clean = domain
+        .replace(/^https?:\/\//, "")
+        .replace(/\/$/, "")
+        .toLowerCase();
+      return (
+        originHost === clean ||
+        originHost.endsWith("." + clean) ||
+        refererHost === clean ||
+        refererHost.endsWith("." + clean)
+      );
     });
   } catch { return false; }
 }
@@ -123,10 +136,27 @@ Deno.serve(async (req) => {
       return json({ error: "Unauthorized: invalid or missing api_key" }, 401);
     }
 
-    // Origin validation
-    const allowedDomains = project.website_domain ? [project.website_domain] : null;
+    // Auto-normalize domain from DB
+    let allowedDomains: string[] | null = null;
+    if (project.website_domain) {
+      const cleanDomain = project.website_domain
+        .replace(/^https?:\/\//, "")
+        .replace(/\/$/, "")
+        .toLowerCase();
+      allowedDomains = [cleanDomain];
+    } else {
+      console.warn("[seo-lead-capture] No domain configured for project — allowing request");
+    }
+
+    const origin = req.headers.get("origin") || "";
+    const referer = req.headers.get("referer") || "";
+    console.log("[Origin Check]", { origin, referer, allowedDomains });
+
     if (!validateOrigin(req, allowedDomains)) {
-      return json({ error: "Origin not allowed" }, 403);
+      return json({
+        error: "Origin not allowed",
+        debug: { received_origin: origin, received_referer: referer, allowed_domains: allowedDomains }
+      }, 403);
     }
 
     // Rate limiting (per IP, 20/min)
