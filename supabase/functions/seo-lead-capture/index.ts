@@ -329,7 +329,7 @@ Deno.serve(async (req) => {
 
     const logAutomation = async (type: string, status: string, execMs: number, errMsg?: string, response?: any) => {
       await supabase.from("seo_automation_logs").insert({
-        lead_id: lead.id, seo_project_id: project_id, business_id: project.business_id,
+        lead_id: lead.id, seo_project_id: project.id, business_id: project.business_id,
         automation_type: type, status, execution_time_ms: execMs,
         error_message: errMsg || null, response_json: response || null,
         request_payload: requestPayload,
