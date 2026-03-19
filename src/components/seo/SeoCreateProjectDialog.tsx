@@ -32,7 +32,7 @@ const defaultForm = {
 };
 
 export function SeoCreateProjectDialog({ open, onOpenChange, onCreate }: Props) {
-  const { clients: allClients } = useAllClientsDropdown();
+  const { clients: allClients, loading: clientsLoading } = useAllClientsDropdown();
   const [form, setForm] = useState(defaultForm);
   const [submitting, setSubmitting] = useState(false);
   const { isDirty, isSaving, clearDraft } = useUnsavedChanges("seo:new", form, { enabled: open });
