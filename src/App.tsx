@@ -252,6 +252,7 @@ import SalesActivitiesPage from "./pages/SalesActivitiesPage";
 import SalesToolsPage from "./pages/SalesToolsPage";
 import SeoLeadCapturePage from "./pages/SeoLeadCapturePage";
 import WhatsAppSupportPage from "./pages/WhatsAppSupportPage";
+import BusinessCRMPage from "./pages/BusinessCRMPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -527,6 +528,7 @@ const App = () => (
               <Route path="/ai-reports" element={<AIReportsPage />} />
               <Route path="/custom-fields" element={<CustomFieldBuilderPage />} />
               <Route path="/conversations" element={<ConversationsPage />} />
+              <Route path="/my-crm" element={<BusinessCRMPage />} />
               <Route path="/agent-factory" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AgentFactoryPage /></ProtectedRoute>
               } />
