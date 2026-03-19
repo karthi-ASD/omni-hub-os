@@ -4,6 +4,7 @@ import { FloatingActionButton } from "@/components/mobile/FloatingActionButton";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { ChatWidget } from "@/components/chat/ChatWidget";
 import { AppSidebar } from "@/components/AppSidebar";
+import { BusinessThemeProvider } from "@/components/business-crm/BusinessThemeProvider";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
