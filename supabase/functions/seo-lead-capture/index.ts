@@ -9,13 +9,26 @@ function validateOrigin(req: Request, allowedDomains: string[] | null): boolean 
   if (!allowedDomains || allowedDomains.length === 0) return true;
   const origin = req.headers.get("origin") || "";
   const referer = req.headers.get("referer") || "";
+
+  // Allow localhost for development/testing
+  if (origin.includes("localhost") || referer.includes("localhost")) {
+    return true;
+  }
+
   try {
     const originHost = origin ? new URL(origin).hostname : "";
     const refererHost = referer ? new URL(referer).hostname : "";
-    return allowedDomains.some((d) => {
-      const clean = d.replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase();
-      return originHost === clean || originHost.endsWith("." + clean) ||
-             refererHost === clean || refererHost.endsWith("." + clean);
+    return allowedDomains.some((domain) => {
+      const clean = domain
+        .replace(/^https?:\/\//, "")
+        .replace(/\/$/, "")
+        .toLowerCase();
+      return (
+        originHost === clean ||
+        originHost.endsWith("." + clean) ||
+        refererHost === clean ||
+        refererHost.endsWith("." + clean)
+      );
     });
   } catch { return false; }
 }
