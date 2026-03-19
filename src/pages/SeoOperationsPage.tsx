@@ -145,7 +145,18 @@ const SeoOperationsPage = () => {
             <div><Label>Client</Label>
               <Select value={form.client_id} onValueChange={v => setForm({ ...form, client_id: v })}>
                 <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
-                <SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.contact_name}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  {allClients.length === 0 ? (
+                    <div className="px-3 py-2 text-sm text-muted-foreground">No clients available. Please create a client first.</div>
+                  ) : allClients.map(c => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.contact_name}
+                      {c.client_status !== "active" && (
+                        <span className="ml-2 text-xs text-muted-foreground capitalize">({c.client_status})</span>
+                      )}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
             <div><Label>Target Location</Label><Input value={form.target_location} onChange={e => setForm({ ...form, target_location: e.target.value })} placeholder="Sydney, NSW" /></div>
