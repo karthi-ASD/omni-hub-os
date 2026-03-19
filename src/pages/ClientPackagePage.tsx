@@ -225,7 +225,17 @@ export default function ClientPackagePage({ clientIdProp }: ClientPackagePagePro
           </TabsContent>
         )}
 
-        <TabsContent value="assets">
+        {canAccessSEO && (
+          <TabsContent value="seo_tasks">
+            <PackageSeoTasksTab
+              packageId={pkg.id}
+              clientId={resolvedClientId}
+              isReadOnly={isClient}
+            />
+          </TabsContent>
+        )}
+
+
           <PackageAssetsTab
             packageId={pkg.id}
             assets={assets}
