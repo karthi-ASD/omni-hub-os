@@ -41,6 +41,25 @@ const SeoOperationsPage = () => {
     primary_keyword: "", service_package: "basic", contract_start: "", contract_end: "",
   });
 
+  // Fetch ALL clients for dropdown — single source of truth, no pagination limits
+  const fetchAllClients = useCallback(async () => {
+    if (!profile?.business_id) return;
+    const { data, error } = await supabase
+      .from("clients")
+      .select("id, contact_name, client_status")
+      .eq("business_id", profile.business_id)
+      .not("client_status", "in", '("reverted","deleted","merged")')
+      .order("contact_name", { ascending: true });
+    if (error) {
+      console.warn("[Project Dropdown] Failed to fetch clients:", error.message);
+    }
+    const result = (data as any as DropdownClient[]) || [];
+    console.log("[Project Dropdown] Clients loaded:", result.length);
+    setAllClients(result);
+  }, [profile?.business_id]);
+
+  useEffect(() => { fetchAllClients(); }, [fetchAllClients]);
+
   const handleCreate = async () => {
     if (!form.website_domain || !form.project_name) return;
     await create({
