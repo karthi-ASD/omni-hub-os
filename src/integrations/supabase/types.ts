@@ -9106,9 +9106,16 @@ export type Database = {
       crm_communications: {
         Row: {
           action_required: boolean | null
+          auto_task_id: string | null
           business_id: string
           channel: string
           created_at: string
+          followup_action_type: string | null
+          followup_assigned_to: string | null
+          followup_date: string | null
+          followup_notes: string | null
+          followup_required: boolean | null
+          followup_time: string | null
           id: string
           linked_id: string
           linked_type: string
@@ -9120,9 +9127,16 @@ export type Database = {
         }
         Insert: {
           action_required?: boolean | null
+          auto_task_id?: string | null
           business_id: string
           channel?: string
           created_at?: string
+          followup_action_type?: string | null
+          followup_assigned_to?: string | null
+          followup_date?: string | null
+          followup_notes?: string | null
+          followup_required?: boolean | null
+          followup_time?: string | null
           id?: string
           linked_id: string
           linked_type: string
@@ -9134,9 +9148,16 @@ export type Database = {
         }
         Update: {
           action_required?: boolean | null
+          auto_task_id?: string | null
           business_id?: string
           channel?: string
           created_at?: string
+          followup_action_type?: string | null
+          followup_assigned_to?: string | null
+          followup_date?: string | null
+          followup_notes?: string | null
+          followup_required?: boolean | null
+          followup_time?: string | null
           id?: string
           linked_id?: string
           linked_type?: string
@@ -9459,6 +9480,108 @@ export type Database = {
             foreignKeyName: "crm_documents_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_followup_responses: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          customer_note: string | null
+          id: string
+          investor_id: string | null
+          new_date: string | null
+          responded_at: string | null
+          response_type: string
+          task_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          customer_note?: string | null
+          id?: string
+          investor_id?: string | null
+          new_date?: string | null
+          responded_at?: string | null
+          response_type?: string
+          task_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          customer_note?: string | null
+          id?: string
+          investor_id?: string | null
+          new_date?: string | null
+          responded_at?: string | null
+          response_type?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_followup_responses_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_followup_responses_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "crm_investors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_followup_responses_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "crm_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_followup_settings: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          enable_customer_email: boolean | null
+          enable_employee_reminders: boolean | null
+          enable_mobile_confirmation: boolean | null
+          enable_mobile_push: boolean | null
+          id: string
+          reminder_hours_before: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          enable_customer_email?: boolean | null
+          enable_employee_reminders?: boolean | null
+          enable_mobile_confirmation?: boolean | null
+          enable_mobile_push?: boolean | null
+          id?: string
+          reminder_hours_before?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          enable_customer_email?: boolean | null
+          enable_employee_reminders?: boolean | null
+          enable_mobile_confirmation?: boolean | null
+          enable_mobile_push?: boolean | null
+          id?: string
+          reminder_hours_before?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_followup_settings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
@@ -9989,17 +10112,22 @@ export type Database = {
           business_id: string
           completion_summary: string | null
           created_at: string
+          customer_response: string | null
           dependency: string | null
           due_date: string | null
+          followup_time: string | null
           id: string
+          linked_communication_id: string | null
           linked_deal_id: string | null
           linked_investor_id: string | null
           linked_lead_id: string | null
           linked_partner_id: string | null
           notes: string | null
+          original_due_date: string | null
           owner: string | null
           priority: string | null
           reminder_at: string | null
+          rescheduled_by: string | null
           status: string | null
           task_type: string | null
           title: string
@@ -10009,17 +10137,22 @@ export type Database = {
           business_id: string
           completion_summary?: string | null
           created_at?: string
+          customer_response?: string | null
           dependency?: string | null
           due_date?: string | null
+          followup_time?: string | null
           id?: string
+          linked_communication_id?: string | null
           linked_deal_id?: string | null
           linked_investor_id?: string | null
           linked_lead_id?: string | null
           linked_partner_id?: string | null
           notes?: string | null
+          original_due_date?: string | null
           owner?: string | null
           priority?: string | null
           reminder_at?: string | null
+          rescheduled_by?: string | null
           status?: string | null
           task_type?: string | null
           title: string
@@ -10029,17 +10162,22 @@ export type Database = {
           business_id?: string
           completion_summary?: string | null
           created_at?: string
+          customer_response?: string | null
           dependency?: string | null
           due_date?: string | null
+          followup_time?: string | null
           id?: string
+          linked_communication_id?: string | null
           linked_deal_id?: string | null
           linked_investor_id?: string | null
           linked_lead_id?: string | null
           linked_partner_id?: string | null
           notes?: string | null
+          original_due_date?: string | null
           owner?: string | null
           priority?: string | null
           reminder_at?: string | null
+          rescheduled_by?: string | null
           status?: string | null
           task_type?: string | null
           title?: string
@@ -10051,6 +10189,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_linked_communication_id_fkey"
+            columns: ["linked_communication_id"]
+            isOneToOne: false
+            referencedRelation: "crm_communications"
             referencedColumns: ["id"]
           },
         ]
