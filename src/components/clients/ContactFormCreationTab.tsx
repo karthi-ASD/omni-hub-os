@@ -301,7 +301,7 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
         else { showMsg(form, SUCCESS_MSG, 'success'); }
       } else {
         if (attempt < 1 && res.status >= 500) { sendRequest(payload, form, btn, attempt + 1, dedupKey); }
-        else { showMsg(form, res.data.error || 'Failed to submit. Please try again.', 'error'); }
+        else { showMsg(form, (res.data && res.data.error) || 'Failed to submit. Please try again.', 'error'); }
       }
     })
     .catch(function() {
