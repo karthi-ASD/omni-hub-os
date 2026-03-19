@@ -26,7 +26,7 @@ export default function ClientPackagePage({ clientIdProp }: ClientPackagePagePro
   const { clientId: routeClientId } = useParams<{ clientId: string }>();
   const [searchParams] = useSearchParams();
   const defaultTab = searchParams.get("tab") || "overview";
-  const { roles, clientId: authClientId } = useAuth();
+  const { roles, clientId: authClientId, isClientUser } = useAuth();
   const { departmentName } = useEmployeeDepartment();
 
   const resolvedClientId = clientIdProp || routeClientId || authClientId || undefined;
