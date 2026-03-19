@@ -180,11 +180,12 @@ export default function ClientPackagePage({ clientIdProp }: ClientPackagePagePro
         </div>
       )}
 
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="w-full justify-start bg-muted/30 p-1 rounded-xl">
+      <Tabs defaultValue={defaultTab} className="w-full">
+        <TabsList className="w-full justify-start bg-muted/30 p-1 rounded-xl flex-wrap">
           <TabsTrigger value="overview" className="gap-1.5 data-[state=active]:bg-background"><Package className="h-3.5 w-3.5" /> Overview</TabsTrigger>
           <TabsTrigger value="services" className="gap-1.5 data-[state=active]:bg-background"><Layers className="h-3.5 w-3.5" /> Services</TabsTrigger>
           {canAccessSEO && <TabsTrigger value="seo" className="gap-1.5 data-[state=active]:bg-background"><Target className="h-3.5 w-3.5" /> SEO Data</TabsTrigger>}
+          {canAccessSEO && <TabsTrigger value="seo_tasks" className="gap-1.5 data-[state=active]:bg-background"><ListTodo className="h-3.5 w-3.5" /> SEO Tasks</TabsTrigger>}
           <TabsTrigger value="assets" className="gap-1.5 data-[state=active]:bg-background"><Shield className="h-3.5 w-3.5" /> Assets</TabsTrigger>
           <TabsTrigger value="social" className="gap-1.5 data-[state=active]:bg-background"><Share2 className="h-3.5 w-3.5" /> Social & GMB</TabsTrigger>
         </TabsList>
