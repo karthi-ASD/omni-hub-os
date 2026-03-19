@@ -76,15 +76,15 @@ export const ClientLeadsTab = ({ clientId }: Props) => {
       .select("*", { count: "exact" })
       .eq("client_id", clientId)
       .order("created_at", { ascending: false })
-      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1) as any;
 
     if (statusFilter !== "all") {
       query = query.eq("status", statusFilter);
     }
     if (spamFilter === "genuine") {
-      query = query.eq("is_spam", false) as any;
+      query = query.eq("is_spam", false);
     } else if (spamFilter === "spam") {
-      query = query.eq("is_spam", true) as any;
+      query = query.eq("is_spam", true);
     }
     if (search) {
       query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
