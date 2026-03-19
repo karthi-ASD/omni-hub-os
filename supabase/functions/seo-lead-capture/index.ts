@@ -224,7 +224,7 @@ Deno.serve(async (req) => {
       const twoMinAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
       const { data: dupes } = await supabase
         .from("seo_captured_leads").select("id")
-        .eq("seo_project_id", project_id).eq("email", cleanEmail)
+        .eq("seo_project_id", project.id).eq("email", cleanEmail)
         .gte("created_at", twoMinAgo).limit(1);
       if (dupes && dupes.length > 0) return json({ error: "Duplicate lead detected" }, 409);
     }
