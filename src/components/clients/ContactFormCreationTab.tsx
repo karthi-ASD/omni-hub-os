@@ -213,8 +213,14 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
   var _submitted = {};
 
   function init() {
+    console.log('[NW Form] Initializing — FORM_ID:', FORM_ID);
     var forms = document.querySelectorAll('[data-nw-form="' + FORM_ID + '"]');
     if (!forms.length) forms = document.querySelectorAll('form[data-nextweb]');
+    if (!forms.length) {
+      console.log('[NW Form] No tagged form found, attaching to ALL forms on page');
+      forms = document.querySelectorAll('form');
+    }
+    console.log('[NW Form] Found', forms.length, 'form(s)');
     forms.forEach(function(form) {
       form.addEventListener('submit', handleSubmit);
       applyDesign(form);
@@ -248,16 +254,17 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
     var btn = form.querySelector('[type="submit"]');
     var fd = new FormData(form);
 
-    var name = (fd.get('name') || '').toString().trim();
-    var phone = (fd.get('phone') || '').toString().trim();
-    var email = (fd.get('email') || '').toString().trim();
-    var message = (fd.get('message') || '').toString().trim();
+    console.log('[NW Form] 🚀 Form submit triggered');
+
+    var name = (fd.get('name') || fd.get('fullname') || fd.get('full_name') || fd.get('your-name') || '').toString().trim();
+    var phone = (fd.get('phone') || fd.get('mobile') || fd.get('tel') || fd.get('contact') || fd.get('your-phone') || '').toString().trim();
+    var email = (fd.get('email') || fd.get('your-email') || fd.get('mail') || '').toString().trim();
+    var message = (fd.get('message') || fd.get('comments') || fd.get('your-message') || fd.get('enquiry') || '').toString().trim();
 
     if (!name) { showMsg(form, 'Name is required', 'error'); return; }
     if (!phone) { showMsg(form, 'Phone is required', 'error'); return; }
     if (email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) { showMsg(form, 'Invalid email format', 'error'); return; }
 
-    // Duplicate prevention
     var dedupKey = phone + '_' + FORM_ID;
     if (_submitted[dedupKey] && (Date.now() - _submitted[dedupKey]) < 60000) {
       showMsg(form, 'This submission was already received', 'error'); return;
@@ -276,11 +283,11 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
     if (params.get('utm_medium')) payload.utm_medium = params.get('utm_medium');
     if (params.get('utm_campaign')) payload.utm_campaign = params.get('utm_campaign');
 
-    // Collect custom fields
     fd.forEach(function(v, k) {
-      if (!['name','phone','email','message'].includes(k)) payload.extra_data[k] = v;
+      if (!['name','fullname','full_name','your-name','phone','mobile','tel','contact','your-phone','email','your-email','mail','message','comments','your-message','enquiry'].includes(k)) payload.extra_data[k] = v;
     });
 
+    console.log('[NW Form] Payload:', JSON.stringify(payload));
     sendRequest(payload, form, btn, 0, dedupKey);
   }
 
@@ -292,6 +299,7 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
     })
     .then(async function(r) { var data = {}; try { data = await r.json(); } catch(e) { console.error('[NW Form] Invalid JSON response'); } return { ok: r.ok, status: r.status, data: data }; })
     .then(function(res) {
+      console.log('[NW Form] Response:', res.status, res.data);
       var origText = (btn && btn.getAttribute('data-original-text')) || DESIGN.button_text || 'Submit';
       if (btn) { btn.disabled = false; btn.textContent = origText; }
       if (res.ok) {
@@ -304,7 +312,8 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
         else { showMsg(form, (res.data && res.data.error) || 'Failed to submit. Please try again.', 'error'); }
       }
     })
-    .catch(function() {
+    .catch(function(err) {
+      console.error('[NW Form] Network error:', err);
       var origText = (btn && btn.getAttribute('data-original-text')) || DESIGN.button_text || 'Submit';
       if (btn) { btn.disabled = false; btn.textContent = origText; }
       if (attempt < 1) { sendRequest(payload, form, btn, attempt + 1, dedupKey); }
@@ -330,7 +339,9 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
   }
 
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); }
+  else if (document.readyState === 'interactive') { document.addEventListener('DOMContentLoaded', init); }
   else { init(); }
+  window.addEventListener('load', function() { setTimeout(init, 500); });
 })();
 </script>`;
   };
