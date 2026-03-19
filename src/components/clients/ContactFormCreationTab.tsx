@@ -222,39 +222,74 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
       return;
     }
 
-    const payload = {
-      form_name: formName,
-      fields_json: fields,
-      design_json: design,
-      success_message: successMsg,
-      redirect_url: redirectUrl || null,
-      to_emails: toEmails,
-      cc_emails: ccEmails,
-    };
+    try {
+      if (editingForm) {
+        // Validate form reference
+        if (!editingForm.id) {
+          toast.error("Invalid form reference");
+          return;
+        }
 
-    if (editingForm) {
-      // UPDATE existing form
-      const { error } = await supabase.from("seo_lead_forms")
-        .update(payload as any)
-        .eq("id", editingForm.id);
-      if (error) { toast.error("Failed to update form"); console.error(error); return; }
-      toast.success("Form updated");
-    } else {
-      // CREATE new form
-      const { error } = await supabase.from("seo_lead_forms").insert({
-        ...payload,
-        business_id: profile.business_id,
-        client_id: clientId,
-        seo_project_id: selectedProjectId,
-        is_active: true,
-        created_by: profile.user_id,
-      } as any);
-      if (error) { toast.error("Failed to create form"); console.error(error); return; }
-      toast.success("Contact form created");
+        console.log("[FORM UPDATE] Starting update for form:", editingForm.id, {
+          formName, fields, design, toEmails, ccEmails,
+        });
+
+        const { data, error } = await supabase
+          .from("seo_lead_forms")
+          .update({
+            form_name: formName,
+            fields_json: JSON.parse(JSON.stringify(fields)),
+            design_json: JSON.parse(JSON.stringify(design)),
+            success_message: successMsg,
+            redirect_url: redirectUrl || null,
+            to_emails: toEmails || [],
+            cc_emails: ccEmails || [],
+            updated_at: new Date().toISOString(),
+          } as any)
+          .eq("id", editingForm.id)
+          .eq("client_id", clientId)
+          .select()
+          .single();
+
+        if (error) {
+          console.error("[FORM UPDATE ERROR]", error);
+          toast.error(error.message || "Failed to update form");
+          return;
+        }
+
+        console.log("[FORM UPDATE SUCCESS]", data);
+        toast.success("Form updated successfully");
+      } else {
+        // CREATE new form
+        const { error } = await supabase.from("seo_lead_forms").insert({
+          form_name: formName,
+          fields_json: JSON.parse(JSON.stringify(fields)),
+          design_json: JSON.parse(JSON.stringify(design)),
+          success_message: successMsg,
+          redirect_url: redirectUrl || null,
+          to_emails: toEmails || [],
+          cc_emails: ccEmails || [],
+          business_id: profile.business_id,
+          client_id: clientId,
+          seo_project_id: selectedProjectId,
+          is_active: true,
+          created_by: profile.user_id,
+        } as any);
+
+        if (error) {
+          console.error("[FORM CREATE ERROR]", error);
+          toast.error(error.message || "Failed to create form");
+          return;
+        }
+        toast.success("Contact form created");
+      }
+
+      setDialogOpen(false);
+      fetchData();
+    } catch (err: any) {
+      console.error("[FORM SAVE EXCEPTION]", err);
+      toast.error(err.message || "An unexpected error occurred");
     }
-
-    setDialogOpen(false);
-    fetchData();
   };
 
   const toggleFormActive = async (formId: string, isActive: boolean) => {
