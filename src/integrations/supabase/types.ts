@@ -22558,6 +22558,7 @@ export type Database = {
       seo_lead_forms: {
         Row: {
           business_id: string
+          cc_emails: Json | null
           client_id: string | null
           created_at: string | null
           created_by: string | null
@@ -22569,10 +22570,12 @@ export type Database = {
           redirect_url: string | null
           seo_project_id: string
           success_message: string | null
+          to_emails: Json | null
           updated_at: string | null
         }
         Insert: {
           business_id: string
+          cc_emails?: Json | null
           client_id?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -22584,10 +22587,12 @@ export type Database = {
           redirect_url?: string | null
           seo_project_id: string
           success_message?: string | null
+          to_emails?: Json | null
           updated_at?: string | null
         }
         Update: {
           business_id?: string
+          cc_emails?: Json | null
           client_id?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -22599,6 +22604,7 @@ export type Database = {
           redirect_url?: string | null
           seo_project_id?: string
           success_message?: string | null
+          to_emails?: Json | null
           updated_at?: string | null
         }
         Relationships: [
