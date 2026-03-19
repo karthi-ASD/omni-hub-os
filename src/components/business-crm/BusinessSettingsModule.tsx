@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ArrowUp, ArrowDown, Pencil, Trash2, Plus, Save, GripVertical, Eye, EyeOff, Layers, GitBranch, Building2, Users, Palette, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { CRMCustomizationPanel } from "./CRMCustomizationPanel";
+import { FollowupSettingsPanel } from "./FollowupSettingsPanel";
 
 interface ConfigItem {
   id: string; config_type: string; module: string; key: string; label: string;
