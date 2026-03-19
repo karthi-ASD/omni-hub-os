@@ -82,9 +82,9 @@ export const ClientLeadsTab = ({ clientId }: Props) => {
       query = query.eq("status", statusFilter);
     }
     if (spamFilter === "genuine") {
-      query = query.eq("is_spam", false);
+      query = query.eq("is_spam", false) as any;
     } else if (spamFilter === "spam") {
-      query = query.eq("is_spam", true);
+      query = query.eq("is_spam", true) as any;
     }
     if (search) {
       query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
