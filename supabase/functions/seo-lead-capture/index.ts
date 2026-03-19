@@ -90,10 +90,8 @@ Deno.serve(async (req) => {
     if (contentLength > 50000) return json({ error: "Payload too large" }, 413);
 
     const body = await req.json();
-    const { name, email, phone, message, project_id, source, form_id, extra_data, api_key,
+    const { name, email, phone, message, domain, project_id, source, form_id, extra_data, api_key,
             utm_source, utm_medium, utm_campaign, page_url } = body;
-
-    if (!project_id) return json({ error: "project_id is required" }, 400);
 
     // Sanitize inputs
     const cleanName = (name || "").toString().trim().replace(/[\u200B\u200C\u200D\uFEFF]/g, "").slice(0, 200);
@@ -123,27 +121,57 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: project, error: projErr } = await supabase
-      .from("seo_projects")
-      .select("id, business_id, client_id, api_key, website_domain, default_country_code")
-      .eq("id", project_id)
-      .single();
+    // === AUTO PROJECT DETECTION ===
+    // Support both: new domain-based detection AND legacy project_id+api_key
+    let project: any = null;
 
-    if (projErr || !project) return json({ error: "Invalid project_id" }, 404);
+    if (domain && !project_id) {
+      // New: auto-detect project from domain
+      const cleanDomain = domain.toLowerCase().replace(/^www\./, "");
+      console.log("[Auto Project Detection] Looking up domain:", cleanDomain);
 
-    // API key validation
-    if (!api_key || api_key !== project.api_key) {
-      return json({ error: "Unauthorized: invalid or missing api_key" }, 401);
+      const { data: matchedProject, error: domainErr } = await supabase
+        .from("seo_projects")
+        .select("id, business_id, client_id, api_key, website_domain, default_country_code")
+        .or(`website_domain.ilike.%${cleanDomain}%,website_domain.ilike.%www.${cleanDomain}%`)
+        .limit(1)
+        .maybeSingle();
+
+      if (domainErr || !matchedProject) {
+        console.error("[Auto Project Detection] No project found for domain:", cleanDomain);
+        return json({ error: "No project found for this domain", debug: { domain: cleanDomain } }, 404);
+      }
+
+      project = matchedProject;
+      console.log("[Auto Project Detection] Matched project:", project.id);
+    } else if (project_id) {
+      // Legacy: use project_id + api_key
+      const { data: legacyProject, error: projErr } = await supabase
+        .from("seo_projects")
+        .select("id, business_id, client_id, api_key, website_domain, default_country_code")
+        .eq("id", project_id)
+        .single();
+
+      if (projErr || !legacyProject) return json({ error: "Invalid project_id" }, 404);
+
+      // Validate API key for legacy mode
+      if (!api_key || api_key !== legacyProject.api_key) {
+        return json({ error: "Unauthorized: invalid or missing api_key" }, 401);
+      }
+
+      project = legacyProject;
+    } else {
+      return json({ error: "Either domain or project_id is required" }, 400);
     }
 
-    // Auto-normalize domain from DB
+    // Origin validation using project's configured domain
     let allowedDomains: string[] | null = null;
     if (project.website_domain) {
-      const cleanDomain = project.website_domain
+      const projectDomain = project.website_domain
         .replace(/^https?:\/\//, "")
         .replace(/\/$/, "")
         .toLowerCase();
-      allowedDomains = [cleanDomain];
+      allowedDomains = [projectDomain];
     } else {
       console.warn("[seo-lead-capture] No domain configured for project — allowing request");
     }
@@ -164,7 +192,7 @@ Deno.serve(async (req) => {
     const { count } = await supabase
       .from("seo_captured_leads")
       .select("*", { count: "exact", head: true })
-      .eq("seo_project_id", project_id)
+      .eq("seo_project_id", project.id)
       .gte("created_at", oneMinAgo);
 
     if ((count || 0) > 20) return json({ error: "Rate limit exceeded. Try again later." }, 429);
@@ -173,7 +201,7 @@ Deno.serve(async (req) => {
     if (form_id) {
       const { data: form } = await supabase
         .from("seo_lead_forms").select("id")
-        .eq("id", form_id).eq("seo_project_id", project_id).single();
+        .eq("id", form_id).eq("seo_project_id", project.id).single();
       if (!form) return json({ error: "Invalid form_id for this project" }, 400);
     }
 
@@ -186,7 +214,7 @@ Deno.serve(async (req) => {
       const oneMinAgoDedup = new Date(Date.now() - 60 * 1000).toISOString();
       const { data: phoneDupes } = await supabase
         .from("seo_captured_leads").select("id")
-        .eq("seo_project_id", project_id).eq("phone", normalizedPhone)
+        .eq("seo_project_id", project.id).eq("phone", normalizedPhone)
         .gte("created_at", oneMinAgoDedup).limit(1);
       if (phoneDupes && phoneDupes.length > 0) return json({ error: "Duplicate lead detected" }, 409);
     }
@@ -196,7 +224,7 @@ Deno.serve(async (req) => {
       const twoMinAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
       const { data: dupes } = await supabase
         .from("seo_captured_leads").select("id")
-        .eq("seo_project_id", project_id).eq("email", cleanEmail)
+        .eq("seo_project_id", project.id).eq("email", cleanEmail)
         .gte("created_at", twoMinAgo).limit(1);
       if (dupes && dupes.length > 0) return json({ error: "Duplicate lead detected" }, 409);
     }
@@ -207,7 +235,7 @@ Deno.serve(async (req) => {
       .from("seo_captured_leads")
       .insert({
         business_id: project.business_id,
-        seo_project_id: project_id,
+        seo_project_id: project.id,
         client_id: project.client_id,
         name: cleanName || null,
         email: cleanEmail || null,
@@ -294,14 +322,14 @@ Deno.serve(async (req) => {
     // ── AUTOMATION SETTINGS ──
     const { data: autoSettings } = await supabase
       .from("seo_automation_settings").select("*")
-      .eq("seo_project_id", project_id).maybeSingle();
+      .eq("seo_project_id", project.id).maybeSingle();
 
     const automationResults: Array<{ type: string; status: string }> = [];
     const requestPayload = { name: cleanName, email: cleanEmail, phone: normalizedPhone, message: cleanMessage, source, form_id };
 
     const logAutomation = async (type: string, status: string, execMs: number, errMsg?: string, response?: any) => {
       await supabase.from("seo_automation_logs").insert({
-        lead_id: lead.id, seo_project_id: project_id, business_id: project.business_id,
+        lead_id: lead.id, seo_project_id: project.id, business_id: project.business_id,
         automation_type: type, status, execution_time_ms: execMs,
         error_message: errMsg || null, response_json: response || null,
         request_payload: requestPayload,
@@ -310,7 +338,7 @@ Deno.serve(async (req) => {
 
     const queueRetry = async (type: string, payload: any, error: string) => {
       await supabase.from("seo_automation_queue").insert({
-        lead_id: lead.id, seo_project_id: project_id, business_id: project.business_id,
+        lead_id: lead.id, seo_project_id: project.id, business_id: project.business_id,
         automation_type: type, payload,
         next_retry_at: new Date(Date.now() + 60 * 1000).toISOString(),
         last_error: error,
@@ -338,7 +366,7 @@ Deno.serve(async (req) => {
 
       if (autoSettings.enable_call && normalizedPhone) {
         const start = Date.now();
-        const callPayload = { phone: normalizedPhone, project_id, type: "lead_followup" };
+        const callPayload = { phone: normalizedPhone, project_id: project.id, type: "lead_followup" };
         try {
           await withTimeout(supabase.functions.invoke("trigger-call", { body: callPayload }));
           automationResults.push({ type: "call", status: "success" });

@@ -206,8 +206,6 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
 <script>
 (function() {
   var ENDPOINT = "${endpoint}";
-  var PROJECT_ID = "${project.id}";
-  var API_KEY = "${project.api_key}";
   var FORM_ID = "${form.id}";
   var SUCCESS_MSG = "${(form.success_message || "Thank you!").replace(/"/g, '\\"')}";
   var REDIRECT_URL = "${form.redirect_url || ""}";
@@ -269,7 +267,7 @@ export const ContactFormCreationTab = ({ clientId }: ContactFormCreationTabProps
     clearMsg(form);
 
     var payload = {
-      project_id: PROJECT_ID, api_key: API_KEY, form_id: FORM_ID,
+      domain: window.location.hostname, form_id: FORM_ID,
       name: name, phone: phone, email: email, message: message,
       source: 'form', page_url: window.location.href, extra_data: {}
     };
