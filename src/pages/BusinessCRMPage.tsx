@@ -66,7 +66,7 @@ export default function BusinessCRMPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">My Business CRM</h1>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">ACE1 Private Investment CRM</h1>
         <p className="text-sm text-muted-foreground mt-1">Your dedicated workspace for managing investors, properties, and deals</p>
       </div>
 
