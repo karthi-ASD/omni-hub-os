@@ -5038,6 +5038,62 @@ export type Database = {
           },
         ]
       }
+      business_crm_config: {
+        Row: {
+          business_id: string
+          config_type: string
+          created_at: string
+          field_type: string | null
+          id: string
+          is_required: boolean | null
+          is_visible: boolean
+          key: string
+          label: string
+          module: string
+          options_json: Json | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          config_type: string
+          created_at?: string
+          field_type?: string | null
+          id?: string
+          is_required?: boolean | null
+          is_visible?: boolean
+          key: string
+          label: string
+          module: string
+          options_json?: Json | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          config_type?: string
+          created_at?: string
+          field_type?: string | null
+          id?: string
+          is_required?: boolean | null
+          is_visible?: boolean
+          key?: string
+          label?: string
+          module?: string
+          options_json?: Json | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_crm_config_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_department_config: {
         Row: {
           business_id: string
@@ -5082,6 +5138,41 @@ export type Database = {
             columns: ["department_template_id"]
             isOneToOne: false
             referencedRelation: "department_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_theme_config: {
+        Row: {
+          business_id: string
+          created_at: string
+          custom_colors_json: Json | null
+          id: string
+          theme_preset: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          custom_colors_json?: Json | null
+          id?: string
+          theme_preset?: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          custom_colors_json?: Json | null
+          id?: string
+          theme_preset?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_theme_config_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
@@ -8908,6 +8999,388 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "cost_entries_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_activities: {
+        Row: {
+          activity_type: string
+          business_id: string
+          created_at: string
+          description: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          performed_by: string | null
+          title: string
+        }
+        Insert: {
+          activity_type: string
+          business_id: string
+          created_at?: string
+          description?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          performed_by?: string | null
+          title: string
+        }
+        Update: {
+          activity_type?: string
+          business_id?: string
+          created_at?: string
+          description?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          performed_by?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_activities_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_deals: {
+        Row: {
+          business_id: string
+          commission_amount: number | null
+          created_at: string
+          custom_fields_json: Json | null
+          deal_name: string
+          deal_stage: string
+          deal_value: number | null
+          finance_approved: boolean | null
+          id: string
+          investor_id: string | null
+          notes: string | null
+          partner_id: string | null
+          property_id: string | null
+          settlement_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          commission_amount?: number | null
+          created_at?: string
+          custom_fields_json?: Json | null
+          deal_name: string
+          deal_stage?: string
+          deal_value?: number | null
+          finance_approved?: boolean | null
+          id?: string
+          investor_id?: string | null
+          notes?: string | null
+          partner_id?: string | null
+          property_id?: string | null
+          settlement_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          commission_amount?: number | null
+          created_at?: string
+          custom_fields_json?: Json | null
+          deal_name?: string
+          deal_stage?: string
+          deal_value?: number | null
+          finance_approved?: boolean | null
+          id?: string
+          investor_id?: string | null
+          notes?: string | null
+          partner_id?: string | null
+          property_id?: string | null
+          settlement_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_deals_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_deals_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "crm_investors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_deals_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "crm_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_deals_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "crm_properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_investors: {
+        Row: {
+          assigned_to: string | null
+          budget_max: number | null
+          budget_min: number | null
+          business_id: string
+          created_at: string
+          custom_fields_json: Json | null
+          email: string | null
+          finance_status: string | null
+          full_name: string
+          id: string
+          investment_goals: string | null
+          investor_type: string | null
+          notes: string | null
+          phone: string | null
+          pipeline_stage: string
+          preferred_locations: string[] | null
+          preferred_property_types: string[] | null
+          risk_profile: string | null
+          source: string | null
+          stage_changed_at: string | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          budget_max?: number | null
+          budget_min?: number | null
+          business_id: string
+          created_at?: string
+          custom_fields_json?: Json | null
+          email?: string | null
+          finance_status?: string | null
+          full_name: string
+          id?: string
+          investment_goals?: string | null
+          investor_type?: string | null
+          notes?: string | null
+          phone?: string | null
+          pipeline_stage?: string
+          preferred_locations?: string[] | null
+          preferred_property_types?: string[] | null
+          risk_profile?: string | null
+          source?: string | null
+          stage_changed_at?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          budget_max?: number | null
+          budget_min?: number | null
+          business_id?: string
+          created_at?: string
+          custom_fields_json?: Json | null
+          email?: string | null
+          finance_status?: string | null
+          full_name?: string
+          id?: string
+          investment_goals?: string | null
+          investor_type?: string | null
+          notes?: string | null
+          phone?: string | null
+          pipeline_stage?: string
+          preferred_locations?: string[] | null
+          preferred_property_types?: string[] | null
+          risk_profile?: string | null
+          source?: string | null
+          stage_changed_at?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_investors_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_partners: {
+        Row: {
+          business_id: string
+          commission_structure: string | null
+          company_name: string | null
+          created_at: string
+          custom_fields_json: Json | null
+          email: string | null
+          id: string
+          notes: string | null
+          partner_name: string
+          partner_type: string
+          phone: string | null
+          referral_count: number | null
+          relationship_status: string | null
+          specialization: string | null
+          tags: string[] | null
+          total_deal_value: number | null
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          commission_structure?: string | null
+          company_name?: string | null
+          created_at?: string
+          custom_fields_json?: Json | null
+          email?: string | null
+          id?: string
+          notes?: string | null
+          partner_name: string
+          partner_type?: string
+          phone?: string | null
+          referral_count?: number | null
+          relationship_status?: string | null
+          specialization?: string | null
+          tags?: string[] | null
+          total_deal_value?: number | null
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          commission_structure?: string | null
+          company_name?: string | null
+          created_at?: string
+          custom_fields_json?: Json | null
+          email?: string | null
+          id?: string
+          notes?: string | null
+          partner_name?: string
+          partner_type?: string
+          phone?: string | null
+          referral_count?: number | null
+          relationship_status?: string | null
+          specialization?: string | null
+          tags?: string[] | null
+          total_deal_value?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_partners_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_properties: {
+        Row: {
+          address: string | null
+          availability: string | null
+          bathrooms: number | null
+          bedrooms: number | null
+          building_size_sqm: number | null
+          business_id: string
+          city: string | null
+          country: string | null
+          created_at: string
+          custom_fields_json: Json | null
+          description: string | null
+          developer_name: string | null
+          documents_json: Json | null
+          estimated_growth: number | null
+          estimated_yield: number | null
+          features: string[] | null
+          id: string
+          images_json: Json | null
+          is_off_market: boolean | null
+          land_size_sqm: number | null
+          listing_price: number | null
+          matched_investor_ids: string[] | null
+          parking: number | null
+          postcode: string | null
+          property_name: string
+          property_type: string
+          state: string | null
+          suburb: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          availability?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          building_size_sqm?: number | null
+          business_id: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          custom_fields_json?: Json | null
+          description?: string | null
+          developer_name?: string | null
+          documents_json?: Json | null
+          estimated_growth?: number | null
+          estimated_yield?: number | null
+          features?: string[] | null
+          id?: string
+          images_json?: Json | null
+          is_off_market?: boolean | null
+          land_size_sqm?: number | null
+          listing_price?: number | null
+          matched_investor_ids?: string[] | null
+          parking?: number | null
+          postcode?: string | null
+          property_name: string
+          property_type?: string
+          state?: string | null
+          suburb?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          availability?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          building_size_sqm?: number | null
+          business_id?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          custom_fields_json?: Json | null
+          description?: string | null
+          developer_name?: string | null
+          documents_json?: Json | null
+          estimated_growth?: number | null
+          estimated_yield?: number | null
+          features?: string[] | null
+          id?: string
+          images_json?: Json | null
+          is_off_market?: boolean | null
+          land_size_sqm?: number | null
+          listing_price?: number | null
+          matched_investor_ids?: string[] | null
+          parking?: number | null
+          postcode?: string | null
+          property_name?: string
+          property_type?: string
+          state?: string | null
+          suburb?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_properties_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
