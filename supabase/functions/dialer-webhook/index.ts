@@ -64,6 +64,14 @@ Deno.serve(async (req) => {
     const callUuid = body.CallUUID || body.call_uuid || body.RequestUUID || "";
     const rawStatus = body.CallStatus || body.Event || "unknown";
 
+    // Enhanced webhook logging
+    console.log("[dialer-webhook] Received", {
+      session_id: querySessionId,
+      call_uuid: callUuid,
+      raw_status: rawStatus,
+      content_type: contentType,
+    });
+
     // Resolve session — prefer query param, fallback to provider_call_id
     let session: any = null;
 
@@ -86,7 +94,15 @@ Deno.serve(async (req) => {
     }
 
     if (!session) {
-      console.warn("No dialer session found. query_session_id:", querySessionId, "callUuid:", callUuid);
+      console.warn("[dialer-webhook] No session found", { querySessionId, callUuid });
+      // Log orphan webhook to system_logs
+      try {
+        await supabase.from("system_logs").insert({
+          type: "DIALER_WEBHOOK_ORPHAN",
+          message: `Webhook received with no matching session`,
+          metadata: { session_id: querySessionId, call_uuid: callUuid, raw_status: rawStatus },
+        });
+      } catch (_) {}
       return new Response(JSON.stringify({ status: "no_session" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -97,7 +113,7 @@ Deno.serve(async (req) => {
     const mappedStatus = mapPlivoStatus(rawStatus);
 
     // Debug log
-    console.log("[dialer-webhook]", {
+    console.log("[dialer-webhook] Processing", {
       session_id: session.id,
       incoming_status: rawStatus,
       mapped_status: mappedStatus,
@@ -119,7 +135,7 @@ Deno.serve(async (req) => {
         { onConflict: "dedupe_key", ignoreDuplicates: true }
       );
     } catch (insertErr) {
-      console.log("Event insert skipped (likely duplicate):", rawStatus);
+      console.log("[dialer-webhook] Event insert skipped (likely duplicate):", rawStatus);
     }
 
     // Build updates
@@ -137,6 +153,7 @@ Deno.serve(async (req) => {
       if (Object.keys(updates).length > 0) {
         await supabase.from("dialer_sessions").update(updates).eq("id", session.id);
       }
+      console.log("[dialer-webhook] Skipped (terminal)", { session_id: session.id, current: session.call_status });
       return new Response(JSON.stringify({ status: "ok", session_id: session.id, skipped: "terminal" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -160,8 +177,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Trigger AI analysis for terminal states (fire-and-forget)
-    if (updates.call_status && TERMINAL_STATES.includes(updates.call_status) && updates.call_status === "ended") {
+    // Trigger AI analysis for ended calls (fire-and-forget)
+    if (updates.call_status && updates.call_status === "ended") {
       try {
         fetch(`${supabaseUrl}/functions/v1/dialer-ai-analyze`, {
           method: "POST",
@@ -170,12 +187,23 @@ Deno.serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ session_id: session.id }),
-        }).catch((e) => console.error("AI analyze trigger failed:", e));
+        }).catch((e) => console.error("[dialer-webhook] AI trigger failed:", e));
       } catch (_) {}
     }
 
     if (Object.keys(updates).length > 0) {
-      await supabase.from("dialer_sessions").update(updates).eq("id", session.id);
+      const { error: updateErr } = await supabase.from("dialer_sessions").update(updates).eq("id", session.id);
+      if (updateErr) {
+        console.error("[dialer-webhook] Session update failed:", updateErr);
+        try {
+          await supabase.from("system_logs").insert({
+            type: "DIALER_WEBHOOK_ERROR",
+            message: `Failed to update session ${session.id}`,
+            metadata: { error: updateErr.message, updates },
+            business_id: session.business_id,
+          });
+        } catch (_) {}
+      }
     }
 
     // System event for terminal states
@@ -192,12 +220,22 @@ Deno.serve(async (req) => {
       });
     }
 
+    console.log("[dialer-webhook] Done", { session_id: session.id, updates: Object.keys(updates) });
+
     return new Response(JSON.stringify({ status: "ok", session_id: session.id }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("Dialer webhook error:", err);
+    console.error("[dialer-webhook] Error:", err);
+    // Log to system_logs
+    try {
+      await supabase.from("system_logs").insert({
+        type: "DIALER_WEBHOOK_CRASH",
+        message: String(err),
+        metadata: { stack: err instanceof Error ? err.stack : null },
+      });
+    } catch (_) {}
     return new Response(JSON.stringify({ error: String(err) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
