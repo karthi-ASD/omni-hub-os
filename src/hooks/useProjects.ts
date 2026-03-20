@@ -89,8 +89,8 @@ export function useProjects() {
       const entityId = input.client_id || input.deal_id || projectId;
       const reminders = ONBOARDING_TASKS.map((title, i) => ({
         business_id: profile.business_id,
-        entity_type: "lead" as const, // reuse existing enum
-        entity_id: entityId,
+        entity_type: "project" as any,
+        entity_id: projectId,
         assigned_to_user_id: input.assigned_manager_user_id || profile.user_id,
         title: `[${input.project_name}] ${title}`,
         due_at: new Date(Date.now() + (i + 1) * 24 * 60 * 60 * 1000).toISOString(),
