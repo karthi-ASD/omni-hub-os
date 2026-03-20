@@ -6,7 +6,7 @@ import {
   DollarSign, Handshake, PieChart, PhoneCall, StickyNote,
   Headphones, Globe, Send, Sun, Wrench,
   LayoutDashboard, Filter, MapPinned, UserCheck, Banknote,
-  Shield, Inbox, HeadphonesIcon, Upload, Bell, Eye,
+  Shield, Inbox, HeadphonesIcon, Upload, Bell, Eye, Sparkles,
 } from "lucide-react";
 import type { NavSection } from "./nav-sections";
 import type { CRMType } from "@/hooks/useBusinessCRM";
