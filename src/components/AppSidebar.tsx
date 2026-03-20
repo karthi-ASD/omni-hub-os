@@ -73,23 +73,20 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { profile, isSuperAdmin, isBusinessAdmin, isClientUser, roles, signOut, selectedTenantId, allBusinesses } = useAuth();
+  const { profile, isSuperAdmin, isBusinessAdmin, isClientUser, roles, signOut, selectedTenantId, allBusinesses, userType } = useAuth();
   const { departmentName } = useEmployeeDepartment();
   const { hasCustomCRM, crmType } = useBusinessCRM();
 
   const isAdmin = isSuperAdmin || isBusinessAdmin;
-  const isEmployee = roles.includes("employee" as any);
-  const activeCRMSections = getCRMSections(crmType);
 
-  // STRICT: Only show client sidebar for genuine client portal users
-  // Employees and admins NEVER get the client sidebar, even if they have a CRM type
-  const isClientUserSafe = isClientUser && !isEmployee && !isAdmin;
+  // SINGLE SOURCE OF TRUTH: use userType from resolver
+  const isClientUserSafe = userType === "client";
 
   console.log("[SIDEBAR ROLE]", {
+    userType,
     isClientUser,
     isClientUserSafe,
     isAdmin,
-    isEmployee,
     roles,
     crmType,
   });

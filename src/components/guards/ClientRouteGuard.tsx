@@ -32,13 +32,11 @@ const CLIENT_ALLOWED_PREFIXES = [
 ];
 
 export function ClientRouteGuard({ children }: { children?: React.ReactNode }) {
-  const { isClientUser, roles } = useAuth();
+  const { userType } = useAuth();
 
-  // Double-check: employees/admins NEVER get client route restrictions
-  const isStaff = roles.includes("employee" as any) || roles.includes("business_admin" as any) || roles.includes("super_admin" as any);
-
-  if (!isClientUser || isStaff) {
-    // Not a client user — allow everything
+  // SINGLE SOURCE OF TRUTH: only restrict routes for resolved "client" type
+  // All staff types (super_admin, business_admin, employee) pass through
+  if (userType !== "client") {
     return children ? <>{children}</> : <Outlet />;
   }
 
