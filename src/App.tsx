@@ -347,6 +347,9 @@ const App = () => (
             <Route path="/company/:slug/signup" element={<CompanySignupPage />} />
             <Route path="/company/:slug/:department" element={<DepartmentSignupPage />} />
             <Route path="/client/login" element={<ClientLoginPage />} />
+            <Route path="/ace1" element={<ACE1LandingPage />} />
+            <Route path="/ace1/login" element={<ACE1EmployeeLoginPage />} />
+            <Route path="/ace1/portal" element={<ACE1ClientPortalLoginPage />} />
             <Route path="/client/register" element={<ClientRegisterPage />} />
             <Route path="/security-setup" element={<FirstLoginSecurityPage />} />
             <Route path="/login-v2" element={<LoginV2 />} />
