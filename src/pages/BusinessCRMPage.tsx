@@ -34,7 +34,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, UserPlus, Users, Building2, GitBranch, Landmark,
   Network, CheckSquare, MessageSquare, FileText, TrendingUp, BarChart3,
   Zap, Smartphone, Settings, Activity, Target, FolderKanban,
-  ClipboardList, DollarSign, PhoneCall, StickyNote, Briefcase,
+  ClipboardList, DollarSign, PhoneCall, StickyNote, Briefcase, Sun,
 };
 
 const REAL_ESTATE_MODULE_MAP: Record<string, React.FC> = {
