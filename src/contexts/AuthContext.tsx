@@ -454,7 +454,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     roles: roles as string[],
     clientUserId,
     businessId: activeTenantId,
-    hasCustomCRM,
   });
   const dashboardShell: DashboardShell = appMode;
   const isAuthResolved = !loading && !businessContextLoading && (!!session ? !!rawProfile : true);
