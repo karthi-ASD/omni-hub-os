@@ -90,7 +90,7 @@ export function useContracts() {
       payload_json: { entity_type: "contract", entity_id: contractId, actor_user_id: profile.user_id, deal_id: dealId, short_message: "Contract signed!" },
     });
     toast.success("Contract signed!");
-    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "complete", entityType: "contract", entityId: contractId, description: "Contract signed" });
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "sign", entityType: "contract", entityId: contractId, description: "Contract signed" });
     fetchContracts();
   };
 

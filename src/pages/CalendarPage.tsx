@@ -453,7 +453,10 @@ const CalendarPage = () => {
             <TabsContent value="events" className="flex-1 min-h-0 mt-3">
               <ScrollArea className="h-[460px] pr-2">
                 {eventsOnDay.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-12">No scheduled events</p>
+                  <div className="text-center py-12 space-y-2">
+                    <CalendarDays className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+                    <p className="text-sm text-muted-foreground">No scheduled events</p>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     {eventsOnDay.map((event) => (

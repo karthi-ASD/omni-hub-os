@@ -316,6 +316,7 @@ export function useClients(options?: UseClientsOptions) {
     } as any);
 
     toast.success(`Assigned ${clientIds.length} clients to ${userName}`);
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "assign", entityType: "client", description: `Bulk assigned ${clientIds.length} clients to ${userName}` });
     fetchClients(0, search);
     notifySalesDataChanged(["clients", "dashboard"], "client:bulk-assign");
   };
