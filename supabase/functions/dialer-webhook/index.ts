@@ -178,17 +178,32 @@ Deno.serve(async (req) => {
     }
 
     // Trigger AI analysis for ended calls (fire-and-forget)
+    // Skip AI for early disconnects (< 3 seconds)
     if (updates.call_status && updates.call_status === "ended") {
-      try {
-        fetch(`${supabaseUrl}/functions/v1/dialer-ai-analyze`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${serviceKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ session_id: session.id }),
-        }).catch((e) => console.error("[dialer-webhook] AI trigger failed:", e));
-      } catch (_) {}
+      const duration = updates.call_duration || 0;
+      const isEarlyDisconnect = duration > 0 && duration < 3;
+
+      if (isEarlyDisconnect) {
+        console.log("[dialer-webhook] Early disconnect detected", { session_id: session.id, duration });
+        try {
+          await supabase.from("dialer_call_events").insert({
+            session_id: session.id,
+            event_type: "early_disconnect",
+            metadata: { duration, reason: "call_ended_within_3s" },
+          });
+        } catch (_) {}
+      } else {
+        try {
+          fetch(`${supabaseUrl}/functions/v1/dialer-ai-analyze`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${serviceKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ session_id: session.id }),
+          }).catch((e) => console.error("[dialer-webhook] AI trigger failed:", e));
+        } catch (_) {}
+      }
     }
 
     if (Object.keys(updates).length > 0) {
