@@ -508,23 +508,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const activeCRMType = activeBusinessContext?.crm_type ?? null;
 
   // 🔒 DO NOT MODIFY — SECURITY CRITICAL
-  // SINGLE SOURCE OF TRUTH: resolve user type via strict priority resolver
-  // 🔴 CRITICAL: Pass isEmployeeByHR to ensure hr_employees check takes priority over clientUserId
-  const resolvedUserType = resolveUserType({ roles: roles as string[], clientUserId, isEmployeeByHR });
-
-  // 🔴 HARD OVERRIDE: Force staff users to employee, force-clear clientUserId
+  // 🔴 STEP 1: Detect staff signal FIRST — before ANY resolver runs
   const isStaffBySignal =
     isEmployeeByHR ||
     (roles as string[]).some((role) =>
       ["super_admin", "business_admin", "employee", "hr_manager", "manager"].includes(role)
     );
 
-  const userType: UserType = isStaffBySignal && resolvedUserType === "client"
-    ? (roles.includes("super_admin") ? "super_admin" : roles.includes("business_admin") ? "business_admin" : "employee")
+  // 🔴 STEP 2: Sanitize clientUserId BEFORE passing to resolvers
+  const safeClientUserId = isStaffBySignal ? null : clientUserId;
+
+  // 🔴 STEP 3: Resolve user type with SAFE values only
+  const resolvedUserType = resolveUserType({ roles: roles as string[], clientUserId: safeClientUserId, isEmployeeByHR });
+
+  // 🔴 STEP 4: STRICT user type — no dependency on resolvedUserType for staff
+  const userType: UserType = isStaffBySignal
+    ? (roles.includes("super_admin")
+        ? "super_admin"
+        : roles.includes("business_admin")
+        ? "business_admin"
+        : "employee")
     : resolvedUserType;
 
-  // 🔴 FORCE CLEAR: Staff must never hold clientUserId
-  const effectiveClientUserId = isStaffBySignal ? null : clientUserId;
+  // 🔴 STEP 5: Lock effective client ID from safe value
+  const effectiveClientUserId = safeClientUserId;
+
+  // 🔴 STEP 6: Extra hard lock — impossible state assertion
+  if (isStaffBySignal && effectiveClientUserId) {
+    throw new Error("CRITICAL: Staff has clientUserId after override");
+  }
 
   const appMode = resolveAppMode({
     roles: roles as string[],
@@ -541,17 +553,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clientId = isClientUser ? effectiveClientUserId : null;
 
   // Detect and log role conflicts (staff user with client_users record)
-  const conflict = detectRoleConflict({ roles: roles as string[], clientUserId, userId: user?.id, isEmployeeByHR });
+  const conflict = detectRoleConflict({ roles: roles as string[], clientUserId: effectiveClientUserId, userId: user?.id, isEmployeeByHR });
   if (conflict) {
     console.warn(conflict);
   }
 
-  // 🔴 REGRESSION GUARD + KILL SWITCH: Throw if employee is ever classified as client
+  // 🔴 REGRESSION GUARD + KILL SWITCH
   try {
     assertNoEmployeeClientCrossover({ isEmployeeByHR, roles: roles as string[], userType, userId: user?.id });
   } catch (e) {
     console.error(e);
-    // 🚨 Log security violation to system_logs
     if (user?.id) {
       supabase.from("system_events" as any).insert({
         business_id: rawProfile?.business_id ?? "00000000-0000-0000-0000-000000000000",
@@ -560,7 +571,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           userId: user.id,
           roles,
           userType,
-          clientUserId,
+          clientUserId: effectiveClientUserId,
           isEmployeeByHR,
         },
       }).then(() => {});
