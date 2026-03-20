@@ -117,6 +117,15 @@ export function ServiceLeadsModule() {
     if (!form.name.trim()) { toast.error("Name is required"); return; }
     if (!form.email.trim()) { toast.error("Email is required"); return; }
 
+    // Duplicate check: same email or phone
+    const emailMatch = leads.find(l => l.email?.toLowerCase() === form.email.trim().toLowerCase());
+    const phoneMatch = form.phone.trim() && leads.find(l => l.phone && l.phone.replace(/\D/g, "") === form.phone.trim().replace(/\D/g, ""));
+    if (emailMatch || phoneMatch) {
+      const dupName = (emailMatch || phoneMatch)?.name;
+      const proceed = window.confirm(`⚠️ A lead with similar details already exists: "${dupName}"\n\nDo you still want to create this lead?`);
+      if (!proceed) return;
+    }
+
     const customData: Record<string, any> = {};
     if (form.monthly_consumption) customData.monthly_consumption_kwh = form.monthly_consumption;
     if (form.roof_type) customData.roof_type = form.roof_type;
