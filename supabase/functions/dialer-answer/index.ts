@@ -95,13 +95,22 @@ Deno.serve(async (req) => {
     }
 
     // Return Plivo XML that joins both parties to the same conference bridge
-    const startConferenceOnEnter = leg === "agent" ? "true" : "false";
-    const endConferenceOnExit = leg === "agent" ? "true" : "false";
-    const tokenQS = token ? `&token=${token}` : "";
-    const conferenceActionUrl = `${supabaseUrl}/functions/v1/dialer-webhook?session_id=${sessionId}${tokenQS}&conference=${conferenceId}&leg=${leg}`;
-    return xmlResponse(
-      `<Conference startConferenceOnEnter="${startConferenceOnEnter}" endConferenceOnExit="${endConferenceOnExit}" action="${conferenceActionUrl}" method="POST">${conferenceId}</Conference>`
-    );
+    const startOnEnter = leg === "agent" ? "true" : "true";
+    const endOnExit = leg === "agent" ? "true" : "false";
+
+    console.log("[dialer-answer] Returning Conference XML", {
+      session_id: sessionId, leg, conference_id: conferenceId, startOnEnter, endOnExit,
+    });
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Conference startConferenceOnEnter="${startOnEnter}" endConferenceOnExit="${endOnExit}" record="true">${conferenceId}</Conference>
+</Response>`;
+
+    return new Response(xml, {
+      status: 200,
+      headers: { "Content-Type": "text/xml" },
+    });
   } catch (err) {
     console.error("[dialer-answer] Error:", err);
     return xmlResponse("<Hangup />");
