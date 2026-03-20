@@ -27,6 +27,7 @@ import {
 import { LeadDetailDrawer } from "./lead-engine/LeadDetailDrawer";
 import { LeadCSVImport } from "./lead-engine/LeadCSVImport";
 import { LeadAutomationPanel } from "./lead-engine/LeadAutomationPanel";
+import { MetaIntegrationPanel } from "./lead-engine/MetaIntegrationPanel";
 
 const TAB_ICONS: Record<string, React.ElementType> = {
   all: Target, new: Star, hot: Flame, warm: Thermometer, cold: Snowflake,
@@ -452,6 +453,12 @@ export function LeadsModule() {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Meta Integration Panel - shown on Meta tab */}
+      {activeTab === "meta" && bid && (
+        <div className="mt-4">
+          <MetaIntegrationPanel businessId={bid} />
+        </div>
+      )}
     </div>
   );
 }
