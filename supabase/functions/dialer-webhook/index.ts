@@ -31,19 +31,17 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // --- WEBHOOK SECURITY ---
-  const expectedToken = Deno.env.get("PLIVO_WEBHOOK_SECRET");
-  if (expectedToken) {
-    const incomingToken =
-      req.headers.get("x-plivo-signature") ||
-      req.headers.get("authorization");
-    if (incomingToken !== expectedToken) {
-      console.warn("[dialer-webhook] Unauthorized request rejected");
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+  // --- WEBHOOK SECURITY (token-based via query param) ---
+  const url = new URL(req.url);
+  const token = url.searchParams.get("token");
+  const expected = Deno.env.get("PLIVO_WEBHOOK_SECRET");
+
+  if (expected && token !== expected) {
+    console.warn("[dialer-webhook] Unauthorized request rejected");
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -51,7 +49,6 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, serviceKey);
 
   try {
-    const url = new URL(req.url);
     const querySessionId = url.searchParams.get("session_id");
 
     let body: Record<string, any>;
@@ -64,7 +61,7 @@ Deno.serve(async (req) => {
       body = Object.fromEntries(new URLSearchParams(text));
     }
 
-    const callUuid = body.CallUUID || body.call_uuid || body.RequestUUID;
+    const callUuid = body.CallUUID || body.call_uuid || body.RequestUUID || "";
     const rawStatus = body.CallStatus || body.Event || "unknown";
 
     // Resolve session — prefer query param, fallback to provider_call_id
@@ -99,7 +96,7 @@ Deno.serve(async (req) => {
     // Normalize status
     const mappedStatus = mapPlivoStatus(rawStatus);
 
-    // Debug log for production troubleshooting
+    // Debug log
     console.log("[dialer-webhook]", {
       session_id: session.id,
       incoming_status: rawStatus,
@@ -107,13 +104,20 @@ Deno.serve(async (req) => {
       current_status: session.call_status,
     });
 
-    // Store event (duplicate-safe via unique constraint)
+    // Build dedupe key for event insert
+    const dedupeKey = `${session.id}_${rawStatus}_${callUuid}_${body.Event || ""}_${body.CallStatus || ""}_${body.Duration || ""}`;
+
+    // Store event with dedupe
     try {
-      await supabase.from("dialer_call_events").insert({
-        session_id: session.id,
-        event_type: rawStatus,
-        metadata: body,
-      });
+      await supabase.from("dialer_call_events").upsert(
+        {
+          session_id: session.id,
+          event_type: rawStatus,
+          metadata: body,
+          dedupe_key: dedupeKey,
+        },
+        { onConflict: "dedupe_key", ignoreDuplicates: true }
+      );
     } catch (insertErr) {
       console.log("Event insert skipped (likely duplicate):", rawStatus);
     }

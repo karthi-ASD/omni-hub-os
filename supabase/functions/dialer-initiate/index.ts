@@ -5,17 +5,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// E.164 phone number formatter (AU default)
+// E.164 phone number formatter (AU only)
 function formatToE164(phone: string): string | null {
   let p = phone.replace(/\D/g, "");
-  // Leading 0 → Australian
+
   if (p.startsWith("0")) {
     p = "61" + p.slice(1);
   }
-  // Must start with 61 for AU or be a valid international number
-  if (p.length < 9 || p.length > 15) return null;
-  const full = "+" + p;
-  if (/^\+[1-9]\d{6,14}$/.test(full)) return full;
+
+  if (p.startsWith("61")) {
+    if (p.length < 9 || p.length > 11) return null;
+    return "+" + p;
+  }
+
   return null;
 }
 
@@ -75,7 +77,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // HANGUP action — ONLY sends hangup request to Plivo, webhook handles all status updates
+    // HANGUP action
     if (action === "hangup") {
       if (session.provider_call_id) {
         const PLIVO_AUTH_ID = Deno.env.get("PLIVO_AUTH_ID");
@@ -98,23 +100,32 @@ Deno.serve(async (req) => {
         }
       }
 
-      // NO fallback status write — webhook is the single source of truth
       return new Response(JSON.stringify({ status: "hangup_sent" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // --- RATE LIMITING (3 calls per user per 30s) ---
+    // --- RATE LIMITING (3 calls with provider_call_id per user per 30s) ---
     const userId = session.user_id;
     const thirtySecsAgo = new Date(Date.now() - 30_000).toISOString();
     const { count: recentCount } = await supabase
       .from("dialer_sessions")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
+      .not("provider_call_id", "is", null)
       .gt("created_at", thirtySecsAgo);
 
     if ((recentCount ?? 0) > 3) {
+      // Log rate limit event
+      try {
+        await supabase.from("dialer_call_events").insert({
+          session_id: session_id,
+          event_type: "rate_limit_blocked",
+          metadata: { user_id: userId, reason: "too_many_calls_30s" },
+        });
+      } catch (_) {}
+
       return new Response(
         JSON.stringify({ error: "Rate limit exceeded. Please wait before making another call." }),
         { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -125,6 +136,7 @@ Deno.serve(async (req) => {
     const PLIVO_AUTH_ID = Deno.env.get("PLIVO_AUTH_ID");
     const PLIVO_AUTH_TOKEN = Deno.env.get("PLIVO_AUTH_TOKEN");
     const PLIVO_CALLER_ID = Deno.env.get("PLIVO_CALLER_ID");
+    const PLIVO_WEBHOOK_SECRET = Deno.env.get("PLIVO_WEBHOOK_SECRET") || "";
 
     if (!PLIVO_AUTH_ID || !PLIVO_AUTH_TOKEN || !PLIVO_CALLER_ID) {
       await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", session_id);
@@ -134,18 +146,19 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Validate and format phone number to E.164
+    // Validate and format phone number to E.164 (AU only)
     const formattedPhone = formatToE164(session.phone_number);
     if (!formattedPhone) {
       await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", session_id);
       return new Response(
-        JSON.stringify({ error: "Invalid phone number format. Must be E.164 (e.g. +61412345678)." }),
+        JSON.stringify({ error: "Invalid phone number format. Must be Australian E.164 (e.g. +61412345678)." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // Build callback URL with session_id AND webhook secret token
     const callbackBase = `${supabaseUrl}/functions/v1/dialer-webhook`;
-    const callbackUrl = `${callbackBase}?session_id=${session_id}`;
+    const callbackUrl = `${callbackBase}?session_id=${session_id}&token=${PLIVO_WEBHOOK_SECRET}`;
 
     // Make Plivo outbound call
     const plivoResp = await fetch(
@@ -180,7 +193,6 @@ Deno.serve(async (req) => {
     if (!plivoResp.ok) {
       await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", session_id);
 
-      // Log provider error
       try {
         await supabase.from("dialer_call_events").insert({
           session_id: session_id,
@@ -197,7 +209,6 @@ Deno.serve(async (req) => {
 
     const providerCallId = plivoData.request_uuid || plivoData.RequestUUID || null;
 
-    // ONLY set provider_call_id and call_start_time — NO status write, webhook handles it
     await supabase
       .from("dialer_sessions")
       .update({
@@ -206,7 +217,6 @@ Deno.serve(async (req) => {
       })
       .eq("id", session_id);
 
-    // Log system event
     await supabase.from("system_events").insert({
       business_id: session.business_id,
       event_type: "DIALER_CALL_INITIATED",
