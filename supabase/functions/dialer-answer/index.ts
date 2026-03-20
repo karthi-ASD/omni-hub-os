@@ -116,18 +116,16 @@ Deno.serve(async (req) => {
     }
 
     // Return Conference XML — SAME for both legs
-    // Both join the same conference room → Plivo bridges audio automatically
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Conference
-    startConferenceOnEnter="true"
-    endConferenceOnExit="true"
-    record="record-from-start"
-    recordingCallbackUrl="${recordingCallbackUrl}"
-    recordingCallbackMethod="POST"
-    waitSound=""
-    maxMembers="2"
-  >${conferenceId}</Conference>
+  <Dial>
+    <Conference
+      startConferenceOnEnter="true"
+      endConferenceOnExit="true"
+      record="record-from-start"
+      maxMembers="2"
+    >${conferenceId}</Conference>
+  </Dial>
 </Response>`;
 
     console.log("[dialer-answer] Returning Conference XML", {
