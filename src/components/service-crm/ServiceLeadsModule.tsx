@@ -54,7 +54,7 @@ const PRIORITY_CONFIG: Record<string, string> = {
 
 export function ServiceLeadsModule() {
   const { leads, loading, createLead, updateStage } = useLeads();
-  const { followUps } = useFollowUps();
+  const { followUps, createFollowUp } = useFollowUps();
   const { profile, roles } = useAuth();
   const [subTab, setSubTab] = useState("new");
   const [search, setSearch] = useState("");
