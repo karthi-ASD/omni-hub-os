@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface SearchResult {
-  type: "user" | "business" | "event" | "inquiry" | "lead" | "deal" | "invoice";
+  type: "user" | "business" | "event" | "inquiry" | "lead" | "deal" | "invoice" | "request";
   id: string;
   title: string;
   subtitle: string;
