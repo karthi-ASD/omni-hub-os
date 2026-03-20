@@ -110,7 +110,7 @@ export function AppSidebar() {
   ) : null;
 
   // ── Client users get separated navigation ──
-  if (isClientUser) {
+  if (isClientUserSafe) {
     return (
       <Sidebar collapsible="icon" className="border-r-0">
         <SidebarHeader className="p-3">
