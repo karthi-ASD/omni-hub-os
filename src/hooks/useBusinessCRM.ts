@@ -25,12 +25,14 @@ export interface BusinessTheme {
 
 export type CRMType = "real_estate" | "service" | "finance" | "generic";
 
-// ACE1 business ID
+// Known business IDs
 const ACE1_BUSINESS_ID = "fcd55dac-804b-462f-8a95-1d49cdd0b03d";
+const GREEN_ULTIMATE_BUSINESS_ID = "6b2ce9b9-006d-463f-a194-154a4a429b08";
 
 // Map known business IDs to CRM types (future: fetch from DB)
 const BUSINESS_CRM_TYPE_MAP: Record<string, CRMType> = {
   [ACE1_BUSINESS_ID]: "real_estate",
+  [GREEN_ULTIMATE_BUSINESS_ID]: "service",
 };
 
 export function useBusinessCRM() {
