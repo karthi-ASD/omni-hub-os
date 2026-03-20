@@ -16623,6 +16623,7 @@ export type Database = {
       }
       leads: {
         Row: {
+          address: string | null
           ai_prediction: string | null
           ai_priority: string | null
           ai_recommended_action: string | null
@@ -16633,6 +16634,7 @@ export type Database = {
           business_id: string
           business_name: string | null
           created_at: string
+          custom_data_json: Json | null
           email: string
           engagement_score: number | null
           estimated_budget: number | null
@@ -16648,10 +16650,13 @@ export type Database = {
           lead_score: number | null
           lead_temperature: string | null
           locked_fields: Json | null
+          lost_reason: string | null
           name: string
           next_follow_up_at: string | null
           notes: string | null
           phone: string | null
+          priority: string | null
+          property_type: string | null
           proposal_sent: boolean | null
           referrer_url: string | null
           response_speed_hours: number | null
@@ -16674,6 +16679,7 @@ export type Database = {
           website_visits: number | null
         }
         Insert: {
+          address?: string | null
           ai_prediction?: string | null
           ai_priority?: string | null
           ai_recommended_action?: string | null
@@ -16684,6 +16690,7 @@ export type Database = {
           business_id: string
           business_name?: string | null
           created_at?: string
+          custom_data_json?: Json | null
           email: string
           engagement_score?: number | null
           estimated_budget?: number | null
@@ -16699,10 +16706,13 @@ export type Database = {
           lead_score?: number | null
           lead_temperature?: string | null
           locked_fields?: Json | null
+          lost_reason?: string | null
           name: string
           next_follow_up_at?: string | null
           notes?: string | null
           phone?: string | null
+          priority?: string | null
+          property_type?: string | null
           proposal_sent?: boolean | null
           referrer_url?: string | null
           response_speed_hours?: number | null
@@ -16725,6 +16735,7 @@ export type Database = {
           website_visits?: number | null
         }
         Update: {
+          address?: string | null
           ai_prediction?: string | null
           ai_priority?: string | null
           ai_recommended_action?: string | null
@@ -16735,6 +16746,7 @@ export type Database = {
           business_id?: string
           business_name?: string | null
           created_at?: string
+          custom_data_json?: Json | null
           email?: string
           engagement_score?: number | null
           estimated_budget?: number | null
@@ -16750,10 +16762,13 @@ export type Database = {
           lead_score?: number | null
           lead_temperature?: string | null
           locked_fields?: Json | null
+          lost_reason?: string | null
           name?: string
           next_follow_up_at?: string | null
           notes?: string | null
           phone?: string | null
+          priority?: string | null
+          property_type?: string | null
           proposal_sent?: boolean | null
           referrer_url?: string | null
           response_speed_hours?: number | null
@@ -19054,7 +19069,12 @@ export type Database = {
       }
       proposals: {
         Row: {
+          approved_at: string | null
+          approved_by_name: string | null
           business_id: string
+          client_email: string | null
+          client_name: string | null
+          client_phone: string | null
           created_at: string
           created_by_user_id: string
           currency: string
@@ -19062,12 +19082,19 @@ export type Database = {
           description: string | null
           discount_amount: number | null
           id: string
+          installation_timeline: string | null
+          lead_id: string | null
+          opened_at: string | null
           payment_required: boolean
           payment_status: Database["public"]["Enums"]["payment_status"]
           pricing_breakdown_json: Json | null
+          proposal_notes: string | null
           proposal_number: number
+          sent_at: string | null
+          sent_via: string | null
           services_json: Json | null
           status: Database["public"]["Enums"]["proposal_status"]
+          system_size: string | null
           tax_amount: number | null
           title: string
           total_amount: number | null
@@ -19075,7 +19102,12 @@ export type Database = {
           valid_until: string | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by_name?: string | null
           business_id: string
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
           created_at?: string
           created_by_user_id: string
           currency?: string
@@ -19083,12 +19115,19 @@ export type Database = {
           description?: string | null
           discount_amount?: number | null
           id?: string
+          installation_timeline?: string | null
+          lead_id?: string | null
+          opened_at?: string | null
           payment_required?: boolean
           payment_status?: Database["public"]["Enums"]["payment_status"]
           pricing_breakdown_json?: Json | null
+          proposal_notes?: string | null
           proposal_number?: number
+          sent_at?: string | null
+          sent_via?: string | null
           services_json?: Json | null
           status?: Database["public"]["Enums"]["proposal_status"]
+          system_size?: string | null
           tax_amount?: number | null
           title: string
           total_amount?: number | null
@@ -19096,7 +19135,12 @@ export type Database = {
           valid_until?: string | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by_name?: string | null
           business_id?: string
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
           created_at?: string
           created_by_user_id?: string
           currency?: string
@@ -19104,12 +19148,19 @@ export type Database = {
           description?: string | null
           discount_amount?: number | null
           id?: string
+          installation_timeline?: string | null
+          lead_id?: string | null
+          opened_at?: string | null
           payment_required?: boolean
           payment_status?: Database["public"]["Enums"]["payment_status"]
           pricing_breakdown_json?: Json | null
+          proposal_notes?: string | null
           proposal_number?: number
+          sent_at?: string | null
+          sent_via?: string | null
           services_json?: Json | null
           status?: Database["public"]["Enums"]["proposal_status"]
+          system_size?: string | null
           tax_amount?: number | null
           title?: string
           total_amount?: number | null
@@ -19129,6 +19180,13 @@ export type Database = {
             columns: ["deal_id"]
             isOneToOne: false
             referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
         ]
