@@ -121,7 +121,7 @@ export function AppSidebar() {
                   </p>
                 )}
               </div>
-              {BUSINESS_CRM_SECTIONS.map(section => (
+              {activeCRMSections.map(section => (
                 <SidebarNavSection key={section.title} section={section} collapsed={collapsed} pathname={location.pathname} />
               ))}
             </>
