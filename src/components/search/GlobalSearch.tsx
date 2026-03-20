@@ -50,6 +50,7 @@ export function GlobalSearch() {
       case "inquiry": navigate("/inquiries"); break;
       case "lead": navigate("/leads"); break;
       case "deal": navigate("/deals"); break;
+      case "request": navigate("/admin-service-requests"); break;
     }
   };
 
