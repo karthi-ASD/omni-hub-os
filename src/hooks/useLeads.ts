@@ -148,6 +148,7 @@ export function useLeads() {
     });
 
     toast.success("Lead assigned");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "leads", actionType: "assign", entityType: "lead", entityId: id, description: `Lead assigned` });
     await fetchLeads();
     notifySalesDataChanged(["leads", "follow-ups", "dashboard", "pipeline"], "lead:assign");
   };

@@ -198,6 +198,7 @@ export function useDeals() {
     ]);
 
     toast.success(`Deal moved to ${STAGE_LABELS[toStage]}`);
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "update", entityType: "deal", entityId: dealId, description: `Deal stage: ${fromStage} → ${toStage}` });
     await fetchDeals();
     notifySalesDataChanged(["deals", "dashboard", "pipeline", "proposals"], "deal:change-stage");
   };

@@ -116,6 +116,7 @@ export function useProjects() {
       payload_json: { entity_type: "project", entity_id: projectId, actor_user_id: profile.user_id, status, short_message: `Project status: ${status}` },
     });
     toast.success("Project status updated");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "update", entityType: "project", entityId: projectId, description: `Project status: ${status}` });
     fetchProjects();
   };
 

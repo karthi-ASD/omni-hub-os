@@ -248,6 +248,7 @@ export function useClients(options?: UseClientsOptions) {
     ]);
 
     toast.success("Client created");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "create", entityType: "client", entityId: clientId, description: `Created client: ${input.contact_name}` });
     fetchClients(0, search);
     notifySalesDataChanged(["clients", "dashboard"], "client:create");
     return data as any as Client;
