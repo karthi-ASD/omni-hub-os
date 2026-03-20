@@ -6,7 +6,7 @@ import {
   DollarSign, Handshake, PieChart, PhoneCall, StickyNote,
   Headphones, Globe, Send, Sun, Wrench,
   LayoutDashboard, Filter, MapPinned, UserCheck, Banknote,
-  Shield, Inbox, HeadphonesIcon,
+  Shield, Inbox, HeadphonesIcon, Upload, Bell, Eye,
 } from "lucide-react";
 import type { NavSection } from "./nav-sections";
 import type { CRMType } from "@/hooks/useBusinessCRM";
@@ -32,6 +32,48 @@ export const NEXTWEB_SERVICES_SECTIONS: NavSection[] = [
     ],
   },
 ];
+
+// ══════════════════════════════════════════════════════════════
+// SECTION A2: Investor Portal (Real Estate clients only)
+// ══════════════════════════════════════════════════════════════
+export const INVESTOR_PORTAL_SECTIONS: NavSection[] = [
+  {
+    title: "My Portal",
+    items: [
+      { label: "Dashboard", icon: LayoutDashboard, to: "/investor/dashboard" },
+      { label: "My Enquiries", icon: MessageSquare, to: "/investor/enquiries" },
+      { label: "My Properties", icon: Building2, to: "/investor/properties" },
+      { label: "Deal Progress", icon: Handshake, to: "/investor/deals" },
+    ],
+  },
+  {
+    title: "Deal Tracking",
+    items: [
+      { label: "Deposit Status", icon: DollarSign, to: "/investor/deposits" },
+      { label: "Finance Status", icon: Banknote, to: "/investor/finance" },
+      { label: "Contract Status", icon: FileText, to: "/investor/contracts" },
+      { label: "Settlement Status", icon: Star, to: "/investor/settlements" },
+    ],
+  },
+  {
+    title: "Communication",
+    items: [
+      { label: "Documents", icon: Upload, to: "/investor/documents" },
+      { label: "Messages", icon: Send, to: "/investor/messages" },
+      { label: "Notifications", icon: Bell, to: "/client-notifications" },
+      { label: "Support Tickets", icon: Ticket, to: "/unified-tickets" },
+    ],
+  },
+];
+
+/**
+ * Returns the client-facing sidebar sections based on CRM type.
+ * Real estate clients get the Investor Portal; others get NextWeb Services.
+ */
+export function getClientServiceSections(crmType: CRMType | null): NavSection[] {
+  if (crmType === "real_estate") return INVESTOR_PORTAL_SECTIONS;
+  return NEXTWEB_SERVICES_SECTIONS;
+}
 
 // ══════════════════════════════════════════════════════════════
 // SECTION B: Business CRM Sections (per CRM type)
