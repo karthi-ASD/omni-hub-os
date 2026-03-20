@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { logActivity as logAI } from "@/lib/activity-logger";
 import { format } from "date-fns";
 import { calculateLeadScore } from "./lead-engine/LeadEngineTypes";
 import {
