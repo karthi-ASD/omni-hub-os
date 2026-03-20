@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { resolveAppMode, resolveUserType, detectRoleConflict, type AppMode, type DashboardShell, type UserType } from "@/lib/role-resolver";
+import { resolveAppMode, resolveUserType, detectRoleConflict, assertNoEmployeeClientCrossover, type AppMode, type DashboardShell, type UserType } from "@/lib/role-resolver";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
