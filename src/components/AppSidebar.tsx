@@ -179,6 +179,7 @@ export function AppSidebar() {
 
   const filteredSections = isStaffShell ? NAV_SECTIONS.filter(section => {
     if (dashboardShell === "super_admin") return true;
+    if (section.title === "Sales" && canAccessDialer) return true;
     if (section.departments && !matchesDept(section.departments, departmentName)) return false;
     if (section.hiddenFromDepartments && matchesDept(section.hiddenFromDepartments, departmentName)) return false;
     return true;
