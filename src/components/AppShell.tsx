@@ -111,6 +111,7 @@ const AppShell = () => {
               </div>
             </main>
           </div>
+          <FloatingDialer />
           <BroadcastPopup />
           {businessId && (
             <ChatWidget
