@@ -45,6 +45,22 @@ const SalesDashboardPage = () => {
         icon={BarChart3}
       />
 
+      {/* Dialer Shortcut */}
+      <Card className="rounded-2xl border-0 shadow-elevated cursor-pointer hover:shadow-lg transition-shadow active:scale-[0.99]" onClick={() => navigate("/sales/dialer")}>
+        <CardContent className="flex items-center justify-between py-4 px-5">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+              <Phone className="h-5 w-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Sales Dialer</p>
+              <p className="text-xs text-muted-foreground">Call leads directly from CRM</p>
+            </div>
+          </div>
+          <Button size="sm" variant="outline" className="shrink-0">Open Dialer</Button>
+        </CardContent>
+      </Card>
+
       {/* Section 1: Daily Activity */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Calls Today" value={dailyActivity.calls} icon={Phone} gradient="from-primary to-accent" />
