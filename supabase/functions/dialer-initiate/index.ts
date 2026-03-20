@@ -37,6 +37,38 @@ function formatToE164(phone: string): string | null {
   return null;
 }
 
+async function createPlivoCall(params: {
+  authId: string;
+  authToken: string;
+  payload: Record<string, unknown>;
+}) {
+  const plivoResp = await fetch(
+    `https://api.plivo.com/v1/Account/${params.authId}/Call/`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: "Basic " + btoa(`${params.authId}:${params.authToken}`),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(params.payload),
+    }
+  );
+
+  const text = await plivoResp.text();
+  let data: any = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { raw: text };
+  }
+
+  return {
+    ok: plivoResp.ok,
+    status: plivoResp.status,
+    data,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -54,7 +86,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { session_id, action } = body;
+    const { session_id, action, agent_phone, agentPhone } = body;
 
     console.log("Dialer Initiate Start", { session_id, action });
 
@@ -136,100 +168,206 @@ Deno.serve(async (req) => {
       return jsonResponse({ status: "error", error: "Plivo credentials not configured. Please contact admin." });
     }
 
-    // Validate and format phone number
-    const formattedPhone = formatToE164(session.phone_number);
-    if (!formattedPhone) {
+    const { data: agentProfile } = await supabase
+      .from("hr_employees")
+      .select("mobile_number, full_name, email")
+      .eq("user_id", session.user_id)
+      .eq("business_id", session.business_id)
+      .maybeSingle();
+
+    const agentPhoneRaw = agent_phone || agentPhone || agentProfile?.mobile_number || "";
+    if (!agentPhoneRaw) {
+      await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", session_id);
+      return jsonResponse({ status: "error", error: "Agent phone number is missing. Please add a mobile number to the employee profile." });
+    }
+
+    const formattedCustomerPhone = formatToE164(session.phone_number);
+    const formattedAgentPhone = formatToE164(agentPhoneRaw);
+
+    if (!formattedCustomerPhone) {
       await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", session_id);
       return jsonResponse({ status: "error", error: "Invalid phone number format. Must include country code (e.g. +61412345678)." });
     }
 
-    console.log("Provider Request:", { from: PLIVO_CALLER_ID, to: formattedPhone });
+    if (!formattedAgentPhone) {
+      await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", session_id);
+      return jsonResponse({ status: "error", error: "Invalid agent phone number format. Must include country code (e.g. +61412345678)." });
+    }
 
-    // Build callback URLs — CRITICAL: answer_url must return XML, webhook returns JSON
-    const tokenQS = `token=${PLIVO_WEBHOOK_SECRET}`;
-    const answerUrl = `${supabaseUrl}/functions/v1/dialer-answer?session_id=${session_id}&${tokenQS}`;
-    const webhookUrl = `${supabaseUrl}/functions/v1/dialer-webhook?session_id=${session_id}&${tokenQS}`;
+    const conferenceId = `dialer-${session_id}`;
 
-    console.log("Callback URLs:", { answerUrl, webhookUrl });
+    console.log("CALL FLOW DEBUG", {
+      session_id,
+      conference_id: conferenceId,
+      agent_phone: formattedAgentPhone,
+      customer_phone: formattedCustomerPhone,
+      status: session.call_status,
+    });
 
-    // Make Plivo outbound call
-    let plivoData: any = {};
-    let plivoOk = false;
+    // Build callback URLs — answer_url must return XML, webhook returns JSON
+    const queryBase = new URLSearchParams({
+      session_id,
+      token: PLIVO_WEBHOOK_SECRET,
+      conference: conferenceId,
+    });
+
+    const agentAnswerUrl = `${supabaseUrl}/functions/v1/dialer-answer?${queryBase.toString()}&leg=agent`;
+    const customerAnswerUrl = `${supabaseUrl}/functions/v1/dialer-answer?${queryBase.toString()}&leg=customer`;
+    const agentWebhookUrl = `${supabaseUrl}/functions/v1/dialer-webhook?${queryBase.toString()}&leg=agent`;
+    const customerWebhookUrl = `${supabaseUrl}/functions/v1/dialer-webhook?${queryBase.toString()}&leg=customer`;
+
+    console.log("Callback URLs:", { agentAnswerUrl, customerAnswerUrl, agentWebhookUrl, customerWebhookUrl });
+
+    const agentPayload = {
+      from: PLIVO_CALLER_ID,
+      to: formattedAgentPhone,
+      answer_url: agentAnswerUrl,
+      answer_method: "POST",
+      hangup_url: agentWebhookUrl,
+      hangup_method: "POST",
+      fallback_url: agentAnswerUrl,
+      fallback_method: "POST",
+      ring_timeout: 45,
+      record: true,
+      recording_callback_url: agentWebhookUrl,
+      recording_callback_method: "POST",
+    };
+
+    console.log("Dial request payload", { leg: "agent", payload: agentPayload });
+
+    let agentResponse: { ok: boolean; status: number; data: any };
     try {
-      const plivoResp = await fetch(
-        `https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Call/`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: "Basic " + btoa(`${PLIVO_AUTH_ID}:${PLIVO_AUTH_TOKEN}`),
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            from: PLIVO_CALLER_ID,
-            to: formattedPhone,
-            answer_url: answerUrl,
-            answer_method: "POST",
-            hangup_url: webhookUrl,
-            hangup_method: "POST",
-            fallback_url: answerUrl,
-            fallback_method: "POST",
-            record: true,
-            recording_callback_url: webhookUrl,
-            recording_callback_method: "POST",
-            machine_detection: true,
-            machine_detection_url: webhookUrl,
-            machine_detection_method: "POST",
-          }),
-        }
-      );
-
-      plivoOk = plivoResp.ok;
-      const text = await plivoResp.text();
-      try { plivoData = JSON.parse(text); } catch { plivoData = { raw: text }; }
-
-      console.log("Plivo response:", { ok: plivoOk, status: plivoResp.status, data: plivoData });
+      agentResponse = await createPlivoCall({
+        authId: PLIVO_AUTH_ID,
+        authToken: PLIVO_AUTH_TOKEN,
+        payload: agentPayload,
+      });
+      console.log("Provider response", { leg: "agent", ...agentResponse });
     } catch (fetchErr) {
       console.error("Plivo fetch error:", fetchErr);
       await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", session_id);
       return jsonResponse({ status: "error", error: "Failed to reach call provider", session_id });
     }
 
-    if (!plivoOk) {
+    if (!agentResponse.ok) {
       await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", session_id);
 
       try {
         await supabase.from("dialer_call_events").insert({
           session_id,
           event_type: "provider_error",
-          metadata: { response: plivoData },
+          metadata: { leg: "agent", response: agentResponse.data },
         });
       } catch (_) {}
 
-      return jsonResponse({ status: "error", error: plivoData?.error || "Call provider rejected the request", details: plivoData, session_id });
+      return jsonResponse({ status: "error", error: agentResponse.data?.error || "Call provider rejected the agent leg", details: agentResponse.data, session_id });
     }
 
-    const providerCallId = plivoData.request_uuid || plivoData.RequestUUID || null;
+    const providerCallId = agentResponse.data.request_uuid || agentResponse.data.RequestUUID || null;
+
+    console.log("Agent leg created", { session_id, provider_call_id: providerCallId });
+
+    const customerPayload = {
+      from: PLIVO_CALLER_ID,
+      to: formattedCustomerPhone,
+      answer_url: customerAnswerUrl,
+      answer_method: "POST",
+      hangup_url: customerWebhookUrl,
+      hangup_method: "POST",
+      fallback_url: customerAnswerUrl,
+      fallback_method: "POST",
+      ring_timeout: 45,
+      machine_detection: true,
+      machine_detection_url: customerWebhookUrl,
+      machine_detection_method: "POST",
+    };
+
+    console.log("Dial request payload", { leg: "customer", payload: customerPayload });
+
+    let customerResponse: { ok: boolean; status: number; data: any };
+    try {
+      customerResponse = await createPlivoCall({
+        authId: PLIVO_AUTH_ID,
+        authToken: PLIVO_AUTH_TOKEN,
+        payload: customerPayload,
+      });
+      console.log("Provider response", { leg: "customer", ...customerResponse });
+    } catch (fetchErr) {
+      console.error("Plivo customer fetch error:", fetchErr);
+      if (providerCallId) {
+        try {
+          await fetch(`https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Call/${providerCallId}/`, {
+            method: "DELETE",
+            headers: { Authorization: "Basic " + btoa(`${PLIVO_AUTH_ID}:${PLIVO_AUTH_TOKEN}`) },
+          });
+        } catch (_) {}
+      }
+      await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", session_id);
+      return jsonResponse({ status: "error", error: "Failed to create customer leg", session_id });
+    }
+
+    if (!customerResponse.ok) {
+      if (providerCallId) {
+        try {
+          await fetch(`https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Call/${providerCallId}/`, {
+            method: "DELETE",
+            headers: { Authorization: "Basic " + btoa(`${PLIVO_AUTH_ID}:${PLIVO_AUTH_TOKEN}`) },
+          });
+        } catch (_) {}
+      }
+      await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", session_id);
+
+      try {
+        await supabase.from("dialer_call_events").insert({
+          session_id,
+          event_type: "provider_error",
+          metadata: { leg: "customer", response: customerResponse.data },
+        });
+      } catch (_) {}
+
+      return jsonResponse({ status: "error", error: customerResponse.data?.error || "Call provider rejected the customer leg", details: customerResponse.data, session_id });
+    }
+
+    const customerProviderCallId = customerResponse.data.request_uuid || customerResponse.data.RequestUUID || null;
+
+    console.log("Customer leg created", { session_id, provider_call_id: customerProviderCallId });
 
     await supabase
       .from("dialer_sessions")
       .update({
         provider_call_id: providerCallId,
-        call_start_time: new Date().toISOString(),
+        call_status: "ringing",
       })
       .eq("id", session_id);
+
+    try {
+      await supabase.from("dialer_call_events").insert({
+        session_id,
+        event_type: "conference_calls_created",
+        metadata: {
+          conference_id: conferenceId,
+          agent_provider_call_id: providerCallId,
+          customer_provider_call_id: customerProviderCallId,
+          agent_phone: formattedAgentPhone,
+          customer_phone: formattedCustomerPhone,
+        },
+      });
+    } catch (_) {}
 
     await supabase.from("system_events").insert({
       business_id: session.business_id,
       event_type: "DIALER_CALL_INITIATED",
       payload_json: {
         session_id,
-        phone_number: formattedPhone,
+        conference_id: conferenceId,
+        phone_number: formattedCustomerPhone,
         provider_call_id: providerCallId,
+        customer_provider_call_id: customerProviderCallId,
         user_id: session.user_id,
       },
     });
 
-    return jsonResponse({ status: "ok", provider_call_id: providerCallId, session_id });
+    return jsonResponse({ status: "ok", provider_call_id: providerCallId, customer_provider_call_id: customerProviderCallId, session_id, conference_id: conferenceId });
   } catch (err) {
     console.error("Dialer initiate error:", err);
     return jsonResponse({ status: "error", error: String(err) });
