@@ -4,6 +4,7 @@ import {
   Building2, GitBranch, TrendingUp, Zap, MapPin, Megaphone,
   FolderKanban, FileText, Star, ClipboardList, MessageSquare,
   DollarSign, Handshake, PieChart, PhoneCall, StickyNote,
+  Headphones, Globe, Send,
 } from "lucide-react";
 import type { NavSection } from "./nav-sections";
 import type { CRMType } from "@/hooks/useBusinessCRM";
@@ -25,6 +26,7 @@ export const NEXTWEB_SERVICES_SECTIONS: NavSection[] = [
       { label: "Website Intelligence", icon: GitBranch, to: "/client-website-structure" },
       { label: "Local Presence", icon: MapPin, to: "/client-local-presence" },
       { label: "Lead Dashboard", icon: Megaphone, to: "/client-leads-dashboard" },
+      { label: "NextWeb Services", icon: Headphones, to: "/nextweb-services" },
     ],
   },
 ];
