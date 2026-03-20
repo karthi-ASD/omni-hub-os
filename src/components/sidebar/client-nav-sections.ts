@@ -7,8 +7,8 @@ import {
 } from "lucide-react";
 import type { NavSection } from "./nav-sections";
 
-export const CLIENT_NAV_SECTIONS: NavSection[] = [
-  // ── SECTION A: NextWeb Services (Global – all clients) ──
+// ── SECTION A: NextWeb Services (Global – all clients) ──
+export const NEXTWEB_SERVICES_SECTIONS: NavSection[] = [
   {
     title: "NextWeb Services",
     items: [
@@ -24,9 +24,11 @@ export const CLIENT_NAV_SECTIONS: NavSection[] = [
       { label: "Lead Dashboard", icon: Megaphone, to: "/client-leads-dashboard" },
     ],
   },
+];
 
-  // ── SECTION B: My Business CRM (ACE1 Only) ──
-  // B-1: Sales CRM
+// ── SECTION B: My Business CRM (client-specific, shown only when hasCustomCRM) ──
+// Future: derive dynamically from crm_type ("real_estate" | "service" | "finance")
+export const BUSINESS_CRM_SECTIONS: NavSection[] = [
   {
     title: "Sales CRM",
     items: [
@@ -36,7 +38,6 @@ export const CLIENT_NAV_SECTIONS: NavSection[] = [
       { label: "Deal Pipeline", icon: TrendingUp, to: "/my-crm?tab=deal_pipeline" },
     ],
   },
-  // B-2: Sales Admin
   {
     title: "Sales Admin",
     items: [
@@ -45,21 +46,20 @@ export const CLIENT_NAV_SECTIONS: NavSection[] = [
       { label: "Tasks", icon: Briefcase, to: "/my-crm?tab=executive_dashboard" },
     ],
   },
-  // B-3: Accounts
   {
     title: "Accounts",
     items: [
-      { label: "Accounts Dashboard", icon: PieChart, to: "/my-crm?tab=reports" },
+      { label: "Dashboard", icon: PieChart, to: "/my-crm?tab=reports" },
       { label: "Client Approvals", icon: Handshake, to: "/my-crm?tab=partners" },
-      { label: "Payments / Commissions", icon: DollarSign, to: "/my-crm?tab=documents" },
+      { label: "Payments", icon: DollarSign, to: "/my-crm?tab=payments" },
+      { label: "Commissions", icon: DollarSign, to: "/my-crm?tab=commissions" },
     ],
   },
-  // B-4: Communication
   {
     title: "Communication",
     items: [
       { label: "Calls", icon: PhoneCall, to: "/my-crm?tab=communications" },
-      { label: "Notes", icon: StickyNote, to: "/my-crm?tab=mobile_app" },
+      { label: "Notes", icon: StickyNote, to: "/my-crm?tab=notes" },
       { label: "Settings", icon: Settings, to: "/my-crm?tab=business_settings" },
     ],
   },

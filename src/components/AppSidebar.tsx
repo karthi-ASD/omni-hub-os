@@ -81,11 +81,6 @@ export function AppSidebar() {
 
   // ── Client users get separated navigation ──
   if (isClientUser) {
-    // First section is always NextWeb Services
-    const serviceSection = CLIENT_NAV_SECTIONS[0];
-    // Remaining sections are Business CRM (ACE1) — only show if they have custom CRM
-    const crmSections = CLIENT_NAV_SECTIONS.slice(1);
-
     return (
       <Sidebar collapsible="icon" className="border-r-0">
         <SidebarHeader className="p-3">
@@ -104,11 +99,13 @@ export function AppSidebar() {
           </div>
         </SidebarHeader>
         <SidebarContent className="px-2">
-          {/* Section A: NextWeb Services */}
-          <SidebarNavSection section={serviceSection} collapsed={collapsed} pathname={location.pathname} />
+          {/* Section A: NextWeb Services (always shown) */}
+          {NEXTWEB_SERVICES_SECTIONS.map(section => (
+            <SidebarNavSection key={section.title} section={section} collapsed={collapsed} pathname={location.pathname} />
+          ))}
 
-          {/* Divider between service layer and business CRM */}
-          {hasCustomCRM && crmSections.length > 0 && (
+          {/* Section B: My Business CRM (only if hasCustomCRM) */}
+          {hasCustomCRM && (
             <>
               <div className="px-2 py-2">
                 <Separator className="bg-sidebar-foreground/10" />
@@ -118,8 +115,7 @@ export function AppSidebar() {
                   </p>
                 )}
               </div>
-              {/* Section B: ACE1 CRM sub-sections */}
-              {crmSections.map(section => (
+              {BUSINESS_CRM_SECTIONS.map(section => (
                 <SidebarNavSection key={section.title} section={section} collapsed={collapsed} pathname={location.pathname} />
               ))}
             </>
