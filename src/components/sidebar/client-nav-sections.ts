@@ -76,12 +76,12 @@ const REAL_ESTATE_CRM_SECTIONS: NavSection[] = [
 // Service business CRM (Green Ultimate and similar)
 const SERVICE_CRM_SECTIONS: NavSection[] = [
   {
-    title: "Sales CRM",
+    title: "Leads",
     items: [
-      { label: "Leads", icon: Target, to: "/my-crm?tab=leads" },
-      { label: "Clients", icon: Users, to: "/my-crm?tab=clients" },
-      { label: "Opportunities", icon: FolderKanban, to: "/my-crm?tab=opportunities" },
-      { label: "Deal Pipeline", icon: TrendingUp, to: "/my-crm?tab=deal_pipeline" },
+      { label: "All Leads", icon: Target, to: "/my-crm?tab=leads" },
+      { label: "Sales CRM", icon: FolderKanban, to: "/my-crm?tab=sales_crm" },
+      { label: "Opportunities", icon: TrendingUp, to: "/my-crm?tab=opportunities" },
+      { label: "Deal Pipeline", icon: GitBranch, to: "/my-crm?tab=deal_pipeline" },
     ],
   },
   {
