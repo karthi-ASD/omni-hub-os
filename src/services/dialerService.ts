@@ -2,7 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type DialerCallStatus = "idle" | "initiating" | "ringing" | "connected" | "ended" | "failed" | "busy" | "no-answer";
 export type AgentState = "available" | "on_call" | "offline";
-export type Disposition = "interested" | "not_interested" | "callback_later" | "no_answer";
+export type Disposition = "interested" | "not_interested" | "callback_later" | "no_answer" | "wrong_number" | "converted";
+export type CallTag = "hot_lead" | "warm_lead" | "cold_lead" | "spam";
 
 export interface DialerSession {
   id: string;
@@ -90,6 +91,53 @@ export async function saveDisposition(sessionId: string, disposition: string, no
     .eq("id", sessionId);
 }
 
+// Save detailed disposition to dialer_dispositions table
+export async function saveDetailedDisposition(params: {
+  sessionId: string;
+  leadId?: string | null;
+  agentId: string;
+  dispositionType: Disposition;
+  notes?: string;
+  followUpDate?: string;
+}) {
+  const { error } = await supabase
+    .from("dialer_dispositions")
+    .insert({
+      session_id: params.sessionId,
+      lead_id: params.leadId || null,
+      agent_id: params.agentId,
+      disposition_type: params.dispositionType,
+      notes: params.notes || null,
+      follow_up_date: params.followUpDate || null,
+    } as any);
+
+  if (error) console.error("Failed to save disposition:", error);
+  return !error;
+}
+
+// Add call tag
+export async function addCallTag(sessionId: string, tag: CallTag, userId: string) {
+  const { error } = await supabase
+    .from("dialer_call_tags")
+    .insert({
+      session_id: sessionId,
+      tag,
+      created_by: userId,
+    } as any);
+  if (error) console.error("Failed to add call tag:", error);
+  return !error;
+}
+
+// Fetch call tags for a session
+export async function fetchCallTags(sessionId: string): Promise<{ tag: string; created_at: string }[]> {
+  const { data } = await supabase
+    .from("dialer_call_tags")
+    .select("tag, created_at")
+    .eq("session_id", sessionId)
+    .order("created_at", { ascending: false });
+  return (data as any[]) || [];
+}
+
 // Insert call event (duplicate-safe via DB constraint)
 export async function insertCallEvent(sessionId: string, eventType: string, metadata?: any) {
   try {
@@ -124,6 +172,55 @@ export async function fetchLeadCallHistory(leadId: string): Promise<DialerSessio
     .order("created_at", { ascending: false })
     .limit(20);
   return (data as unknown as DialerSession[]) || [];
+}
+
+// Fetch dialer dashboard metrics for a business
+export async function fetchDialerDashboardMetrics(businessId: string) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayISO = today.toISOString();
+
+  // All sessions today
+  const { data: todaySessions } = await supabase
+    .from("dialer_sessions")
+    .select("id, call_status, call_duration, disposition, user_id")
+    .eq("business_id", businessId)
+    .gte("created_at", todayISO);
+
+  const sessions = (todaySessions as any[]) || [];
+  const totalCalls = sessions.length;
+  const connectedCalls = sessions.filter(s => ["connected", "ended"].includes(s.call_status) || s.call_duration > 0).length;
+  const failedCalls = sessions.filter(s => ["failed", "busy", "no-answer"].includes(s.call_status)).length;
+  const conversions = sessions.filter(s => s.disposition === "converted" || s.disposition === "interested").length;
+  const durations = sessions.filter(s => s.call_duration && s.call_duration > 0).map(s => s.call_duration);
+  const avgDuration = durations.length > 0 ? Math.round(durations.reduce((a: number, b: number) => a + b, 0) / durations.length) : 0;
+  const conversionRate = totalCalls > 0 ? Math.round((conversions / totalCalls) * 100) : 0;
+
+  // Agent performance
+  const agentMap = new Map<string, { calls: number; connected: number; conversions: number; followUps: number }>();
+  for (const s of sessions) {
+    if (!agentMap.has(s.user_id)) {
+      agentMap.set(s.user_id, { calls: 0, connected: 0, conversions: 0, followUps: 0 });
+    }
+    const a = agentMap.get(s.user_id)!;
+    a.calls++;
+    if (["connected", "ended"].includes(s.call_status) || s.call_duration > 0) a.connected++;
+    if (s.disposition === "converted" || s.disposition === "interested") a.conversions++;
+    if (s.disposition === "callback_later") a.followUps++;
+  }
+
+  return {
+    totalCalls,
+    connectedCalls,
+    failedCalls,
+    conversionRate,
+    avgDuration,
+    agentPerformance: Array.from(agentMap.entries()).map(([userId, stats]) => ({
+      userId,
+      ...stats,
+      connectRate: stats.calls > 0 ? Math.round((stats.connected / stats.calls) * 100) : 0,
+    })),
+  };
 }
 
 // Subscribe to session updates (realtime) — this is how frontend gets status changes

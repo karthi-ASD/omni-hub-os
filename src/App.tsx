@@ -147,6 +147,7 @@ import ITSolutionsPage from "./pages/ITSolutionsPage";
 import EMarketingPage from "./pages/EMarketingPage";
 import AutomationPage from "./pages/AutomationPage";
 import DialerPage from "./pages/DialerPage";
+import SalesDialerDashboardPage from "./pages/SalesDialerDashboardPage";
 import ConversationsPage from "./pages/ConversationsPage";
 import AgentFactoryPage from "./pages/AgentFactoryPage";
 import ProviderConnectionsPage from "./pages/ProviderConnectionsPage";
@@ -425,6 +426,7 @@ const App = () => (
               <Route path="/seo-client-reports" element={<SeoClientReportsPage />} />
               <Route path="/communications" element={<CommunicationsPage />} />
               <Route path="/dialer" element={<DialerPage />} />
+              <Route path="/sales/dialer-dashboard" element={<SalesDialerDashboardPage />} />
               <Route path="/analytics" element={<AnalyticsDashboardPage />} />
               <Route path="/ai-insights" element={<AIInsightsPage />} />
               <Route path="/ai-intelligence" element={<AIBusinessIntelligencePage />} />
