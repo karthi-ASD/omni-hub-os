@@ -100,6 +100,7 @@ export function usePackageSeoTasks(packageId?: string, clientId?: string) {
     } as any);
     if (error) { toast.error("Failed to create task"); return; }
     toast.success("Task created");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "tasks", actionType: "create", entityType: "seo_task", description: `Created SEO task: ${input.task_title}` });
     fetchTasks();
   };
 
