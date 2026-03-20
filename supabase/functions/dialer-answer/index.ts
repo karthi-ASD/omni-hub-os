@@ -107,6 +107,36 @@ async function parseTelephonyPayload(req: Request): Promise<Record<string, strin
   }
 }
 
+// Region-aware caller ID selection
+function getCallerIdForNumber(number: string): { callerId: string; region: string; fallback: boolean } {
+  if (number.startsWith("+91")) {
+    const id = Deno.env.get("PLIVO_CALLER_ID_IN") || "";
+    if (id) return { callerId: id, region: "IN", fallback: false };
+    const fb = Deno.env.get("PLIVO_CALLER_ID_DEFAULT") || Deno.env.get("PLIVO_CALLER_ID") || "";
+    return { callerId: fb, region: "IN", fallback: true };
+  }
+  if (number.startsWith("+61")) {
+    const id = Deno.env.get("PLIVO_CALLER_ID_AU") || Deno.env.get("PLIVO_CALLER_ID") || "";
+    return { callerId: id, region: "AU", fallback: false };
+  }
+  if (number.startsWith("+1")) {
+    const id = Deno.env.get("PLIVO_CALLER_ID_US") || "";
+    if (id) return { callerId: id, region: "US", fallback: false };
+    const fb = Deno.env.get("PLIVO_CALLER_ID_DEFAULT") || Deno.env.get("PLIVO_CALLER_ID") || "";
+    return { callerId: fb, region: "US", fallback: true };
+  }
+  if (number.startsWith("+44")) {
+    const id = Deno.env.get("PLIVO_CALLER_ID_UK") || "";
+    if (id) return { callerId: id, region: "UK", fallback: false };
+  }
+  if (number.startsWith("+64")) {
+    const id = Deno.env.get("PLIVO_CALLER_ID_NZ") || "";
+    if (id) return { callerId: id, region: "NZ", fallback: false };
+  }
+  const fb = Deno.env.get("PLIVO_CALLER_ID_DEFAULT") || Deno.env.get("PLIVO_CALLER_ID") || "";
+  return { callerId: fb, region: "OTHER", fallback: true };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -120,7 +150,6 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceKey);
-  const PLIVO_CALLER_ID = Deno.env.get("PLIVO_CALLER_ID") || "";
   const PLIVO_WEBHOOK_SECRET = Deno.env.get("PLIVO_WEBHOOK_SECRET") || "";
 
   try {
@@ -138,25 +167,8 @@ Deno.serve(async (req) => {
     const body = await parseTelephonyPayload(req);
     const callUuid = body.CallUUID || body.RequestUUID || "";
 
-    console.log("[dialer-answer] Agent answered call", {
-      session_id: sessionId,
-      call_uuid: callUuid,
-      caller_id: PLIVO_CALLER_ID,
-    });
-
     if (!sessionId) {
       console.error("[dialer-answer] No session_id — returning hangup");
-      return xmlResponse("<Hangup />");
-    }
-
-    if (!PLIVO_CALLER_ID) {
-      console.error("[dialer-answer] PLIVO_CALLER_ID is blank — cannot bridge");
-      await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", sessionId);
-      await supabase.from("dialer_call_events").insert({
-        session_id: sessionId,
-        event_type: "failed",
-        metadata: { reason: "blank_caller_id" },
-      }).catch(() => {});
       return xmlResponse("<Hangup />");
     }
 
