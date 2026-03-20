@@ -125,6 +125,11 @@ export default function NextWebServices() {
                   {REQUEST_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                 </SelectContent>
               </Select>
+              <Select value={newRequest.service_category} onValueChange={v => setNewRequest(p => ({ ...p, service_category: v }))}>
+                <SelectTrigger><SelectValue placeholder="Service Category" /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORY_OPTIONS.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                </SelectContent>
               <Input
                 placeholder="Request title"
                 value={newRequest.title}
