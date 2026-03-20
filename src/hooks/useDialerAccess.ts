@@ -65,12 +65,12 @@ export function useDialerAccess(clientId?: string | null) {
     || roleNames.includes("admin");
 
   const hasRoleAccess = hasExplicitDialerRole || !!isSalesDept || isStaffFallback;
-  const isClientUser = roles.includes("client");
+  const isClientUser = roleNames.includes("client");
   const hasClientPermission = clientId ? (clientDialerEnabled ?? false) : true;
   const canAccessDialer = hasRoleAccess && !isClientUser && hasClientPermission;
 
   console.log("Dialer Access Check:", {
-    roles,
+    roles: roleNames,
     canAccessDialer,
   });
 

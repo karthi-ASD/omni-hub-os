@@ -186,6 +186,7 @@ export function AppSidebar() {
 
   const filterItems = (items: NavItem[]) =>
     items.filter(item => {
+      if (item.label === "Dialer") return canAccessDialer;
       if (item.roles && !item.roles.some(r => roles.includes(r as any))) return false;
       if (dashboardShell === "super_admin") return true;
       if (item.hiddenFromDepartments && matchesDept(item.hiddenFromDepartments, departmentName)) return false;
