@@ -6,8 +6,11 @@ import {
   DollarSign, Handshake, PieChart, PhoneCall, StickyNote,
 } from "lucide-react";
 import type { NavSection } from "./nav-sections";
+import type { CRMType } from "@/hooks/useBusinessCRM";
 
-// ── SECTION A: NextWeb Services (Global – all clients) ──
+// ══════════════════════════════════════════════════════════════
+// SECTION A: NextWeb Services (Global – identical for ALL clients)
+// ══════════════════════════════════════════════════════════════
 export const NEXTWEB_SERVICES_SECTIONS: NavSection[] = [
   {
     title: "NextWeb Services",
@@ -26,9 +29,12 @@ export const NEXTWEB_SERVICES_SECTIONS: NavSection[] = [
   },
 ];
 
-// ── SECTION B: My Business CRM (client-specific, shown only when hasCustomCRM) ──
-// Future: derive dynamically from crm_type ("real_estate" | "service" | "finance")
-export const BUSINESS_CRM_SECTIONS: NavSection[] = [
+// ══════════════════════════════════════════════════════════════
+// SECTION B: Business CRM Sections (per CRM type)
+// ══════════════════════════════════════════════════════════════
+
+// Real Estate / Investment CRM (ACE1)
+const REAL_ESTATE_CRM_SECTIONS: NavSection[] = [
   {
     title: "Sales CRM",
     items: [
@@ -64,3 +70,34 @@ export const BUSINESS_CRM_SECTIONS: NavSection[] = [
     ],
   },
 ];
+
+// Service business CRM (future)
+const SERVICE_CRM_SECTIONS: NavSection[] = [];
+
+// Finance CRM (future)
+const FINANCE_CRM_SECTIONS: NavSection[] = [];
+
+// Generic fallback
+const GENERIC_CRM_SECTIONS: NavSection[] = [];
+
+// ══════════════════════════════════════════════════════════════
+// CRM Type → Sections Map
+// ══════════════════════════════════════════════════════════════
+const CRM_SECTIONS_MAP: Record<CRMType, NavSection[]> = {
+  real_estate: REAL_ESTATE_CRM_SECTIONS,
+  service: SERVICE_CRM_SECTIONS,
+  finance: FINANCE_CRM_SECTIONS,
+  generic: GENERIC_CRM_SECTIONS,
+};
+
+/**
+ * Get CRM sidebar sections for a given CRM type.
+ * Returns empty array if type is unknown.
+ */
+export function getCRMSections(crmType: CRMType | null): NavSection[] {
+  if (!crmType) return [];
+  return CRM_SECTIONS_MAP[crmType] || [];
+}
+
+// Legacy export for backward compat (defaults to real_estate)
+export const BUSINESS_CRM_SECTIONS = REAL_ESTATE_CRM_SECTIONS;

@@ -23,8 +23,15 @@ export interface BusinessTheme {
   custom_colors_json: Record<string, string> | null;
 }
 
+export type CRMType = "real_estate" | "service" | "finance" | "generic";
+
 // ACE1 business ID
 const ACE1_BUSINESS_ID = "fcd55dac-804b-462f-8a95-1d49cdd0b03d";
+
+// Map known business IDs to CRM types (future: fetch from DB)
+const BUSINESS_CRM_TYPE_MAP: Record<string, CRMType> = {
+  [ACE1_BUSINESS_ID]: "real_estate",
+};
 
 export function useBusinessCRM() {
   const { profile } = useAuth();
@@ -33,7 +40,15 @@ export function useBusinessCRM() {
   // Check if current user is ACE1
   const isACE1 = businessId === ACE1_BUSINESS_ID;
 
-  // Fetch CRM tabs
+  // Determine CRM type for this business
+  const crmType: CRMType | null = businessId
+    ? BUSINESS_CRM_TYPE_MAP[businessId] || null
+    : null;
+
+  // hasCustomCRM is true if business has a known CRM type (not dependent on DB rows)
+  const hasCustomCRM = !!crmType;
+
+  // Fetch CRM tabs (for the CRM page, not sidebar)
   const { data: tabs = [], refetch: refetchTabs } = useQuery({
     queryKey: ["crm-tabs", businessId],
     queryFn: async () => {
@@ -99,9 +114,13 @@ export function useBusinessCRM() {
     enabled: !!businessId,
   });
 
+  // Debug logging
+  console.log("[useBusinessCRM] businessId:", businessId, "isACE1:", isACE1, "crmType:", crmType, "hasCustomCRM:", hasCustomCRM, "tabs:", tabs.length);
+
   return {
     isACE1,
-    hasCustomCRM: isACE1 && tabs.length > 0,
+    hasCustomCRM,
+    crmType,
     tabs: tabs.filter(t => t.is_visible),
     theme,
     usePipelineStages,

@@ -14,7 +14,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { LogOut } from "lucide-react";
 import { NAV_SECTIONS, type NavItem, type NavSection } from "@/components/sidebar/nav-sections";
-import { NEXTWEB_SERVICES_SECTIONS, BUSINESS_CRM_SECTIONS } from "@/components/sidebar/client-nav-sections";
+import { NEXTWEB_SERVICES_SECTIONS, getCRMSections } from "@/components/sidebar/client-nav-sections";
 
 function matchesDept(list: string[] | undefined, deptName: string | null): boolean {
   if (!list || list.length === 0 || !deptName) return false;
@@ -75,9 +75,15 @@ export function AppSidebar() {
   const location = useLocation();
   const { profile, isSuperAdmin, isBusinessAdmin, isClientUser, roles, signOut } = useAuth();
   const { departmentName } = useEmployeeDepartment();
-  const { hasCustomCRM } = useBusinessCRM();
+  const { hasCustomCRM, crmType } = useBusinessCRM();
 
   const isAdmin = isSuperAdmin || isBusinessAdmin;
+  const activeCRMSections = getCRMSections(crmType);
+
+  // Debug logging for client nav
+  if (isClientUser) {
+    console.log("[AppSidebar] isClientUser:", isClientUser, "hasCustomCRM:", hasCustomCRM, "crmType:", crmType, "crmSections:", activeCRMSections.length);
+  }
 
   // ── Client users get separated navigation ──
   if (isClientUser) {
@@ -115,7 +121,7 @@ export function AppSidebar() {
                   </p>
                 )}
               </div>
-              {BUSINESS_CRM_SECTIONS.map(section => (
+              {activeCRMSections.map(section => (
                 <SidebarNavSection key={section.title} section={section} collapsed={collapsed} pathname={location.pathname} />
               ))}
             </>
