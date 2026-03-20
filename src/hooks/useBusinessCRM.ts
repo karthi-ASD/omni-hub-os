@@ -117,9 +117,12 @@ export function useBusinessCRM() {
   });
 
   return {
-    isACE1,
+    isRealEstate,
+    /** @deprecated Use isRealEstate instead */
+    isACE1: isRealEstate,
     hasCustomCRM,
     crmType,
+    businessName,
     tabs: tabs.filter(t => t.is_visible),
     theme,
     usePipelineStages,
