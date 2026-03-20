@@ -30,6 +30,15 @@ const SALES_DEPTS = ["sales", "sales department", "business development"];
 const FINANCE_DEPTS = ["finance", "accounts", "accounting"];
 
 export const NAV_SECTIONS: NavSection[] = [
+  // ── NextWeb Master (Super Admin Only) ──
+  {
+    title: "NextWeb Master",
+    items: [
+      { label: "Master Dashboard", icon: Gauge, to: "/nextweb-master", roles: ["super_admin"] },
+      { label: "All Clients", icon: Building2, to: "/nextweb-clients", roles: ["super_admin"] },
+      { label: "Service Requests", icon: Inbox, to: "/admin-service-requests", roles: ["super_admin"] },
+    ],
+  },
   {
     title: "Core",
     items: [
