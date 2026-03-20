@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
+import { useBusinessCRM } from "@/hooks/useBusinessCRM";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
 import { NWLogo } from "@/components/NWLogo";
@@ -10,6 +11,7 @@ import {
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
   SidebarFooter, SidebarHeader, useSidebar,
 } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
 import { LogOut } from "lucide-react";
 import { NAV_SECTIONS, type NavItem, type NavSection } from "@/components/sidebar/nav-sections";
 import { CLIENT_NAV_SECTIONS } from "@/components/sidebar/client-nav-sections";
@@ -20,17 +22,70 @@ function matchesDept(list: string[] | undefined, deptName: string | null): boole
   return list.some(d => lower.includes(d));
 }
 
+function SidebarNavSection({
+  section,
+  collapsed,
+  pathname,
+}: {
+  section: NavSection;
+  collapsed: boolean;
+  pathname: string;
+}) {
+  return (
+    <SidebarGroup key={section.title}>
+      {!collapsed && (
+        <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-sidebar-foreground/50 font-semibold px-2">
+          {section.title}
+        </SidebarGroupLabel>
+      )}
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {section.items.map(item => {
+            const active = pathname === item.to || pathname.startsWith(item.to + "/")
+              || (item.to.includes("?") && pathname === item.to.split("?")[0] && typeof window !== "undefined" && window.location.search === "?" + item.to.split("?")[1]);
+            return (
+              <SidebarMenuItem key={item.to + item.label}>
+                <SidebarMenuButton asChild isActive={active}>
+                  <NavLink
+                    to={item.to}
+                    end={item.to === "/dashboard"}
+                    className={cn(
+                      "flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-all",
+                      active
+                        ? "bg-sidebar-accent text-sidebar-primary font-medium"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    <item.icon className={cn("h-4 w-4 shrink-0", active && "text-sidebar-primary")} />
+                    {!collapsed && <span className="truncate">{item.label}</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
+}
+
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { profile, isSuperAdmin, isBusinessAdmin, isClientUser, roles, signOut } = useAuth();
   const { departmentName } = useEmployeeDepartment();
+  const { hasCustomCRM } = useBusinessCRM();
 
   const isAdmin = isSuperAdmin || isBusinessAdmin;
 
-  // Client users get a completely different navigation
+  // ── Client users get separated navigation ──
   if (isClientUser) {
+    // First section is always NextWeb Services
+    const serviceSection = CLIENT_NAV_SECTIONS[0];
+    // Remaining sections are Business CRM (ACE1) — only show if they have custom CRM
+    const crmSections = CLIENT_NAV_SECTIONS.slice(1);
+
     return (
       <Sidebar collapsible="icon" className="border-r-0">
         <SidebarHeader className="p-3">
@@ -49,41 +104,26 @@ export function AppSidebar() {
           </div>
         </SidebarHeader>
         <SidebarContent className="px-2">
-          {CLIENT_NAV_SECTIONS.map(section => (
-            <SidebarGroup key={section.title}>
-              {!collapsed && (
-                <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-sidebar-foreground/50 font-semibold px-2">
-                  {section.title}
-                </SidebarGroupLabel>
-              )}
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {section.items.map(item => {
-                    const active = location.pathname === item.to || location.pathname.startsWith(item.to + "/");
-                    return (
-                      <SidebarMenuItem key={item.to + item.label}>
-                        <SidebarMenuButton asChild isActive={active}>
-                          <NavLink
-                            to={item.to}
-                            end={item.to === "/dashboard"}
-                            className={cn(
-                              "flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-all",
-                              active
-                                ? "bg-sidebar-accent text-sidebar-primary font-medium"
-                                : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                            )}
-                          >
-                            <item.icon className={cn("h-4 w-4 shrink-0", active && "text-sidebar-primary")} />
-                            {!collapsed && <span className="truncate">{item.label}</span>}
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))}
+          {/* Section A: NextWeb Services */}
+          <SidebarNavSection section={serviceSection} collapsed={collapsed} pathname={location.pathname} />
+
+          {/* Divider between service layer and business CRM */}
+          {hasCustomCRM && crmSections.length > 0 && (
+            <>
+              <div className="px-2 py-2">
+                <Separator className="bg-sidebar-foreground/10" />
+                {!collapsed && (
+                  <p className="text-[9px] uppercase tracking-widest text-sidebar-foreground/40 font-bold mt-2 px-2">
+                    My Business CRM
+                  </p>
+                )}
+              </div>
+              {/* Section B: ACE1 CRM sub-sections */}
+              {crmSections.map(section => (
+                <SidebarNavSection key={section.title} section={section} collapsed={collapsed} pathname={location.pathname} />
+              ))}
+            </>
+          )}
         </SidebarContent>
         <SidebarFooter className="p-3">
           <button
@@ -101,14 +141,11 @@ export function AppSidebar() {
     );
   }
 
-  // Staff / admin navigation
+  // ── Staff / admin navigation ──
 
   const filteredSections = NAV_SECTIONS.filter(section => {
-    // Admins see everything
     if (isAdmin) return true;
-    // Dept-specific sections: only show if user is in that dept
     if (section.departments && !matchesDept(section.departments, departmentName)) return false;
-    // Hidden from dept sections
     if (section.hiddenFromDepartments && matchesDept(section.hiddenFromDepartments, departmentName)) return false;
     return true;
   });
@@ -150,39 +187,12 @@ export function AppSidebar() {
           const visibleItems = filterItems(section.items);
           if (visibleItems.length === 0) return null;
           return (
-            <SidebarGroup key={section.title}>
-              {!collapsed && (
-                <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-sidebar-foreground/50 font-semibold px-2">
-                  {section.title}
-                </SidebarGroupLabel>
-              )}
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {visibleItems.map(item => {
-                    const active = location.pathname === item.to || location.pathname.startsWith(item.to + "/");
-                    return (
-                      <SidebarMenuItem key={item.to + item.label}>
-                        <SidebarMenuButton asChild isActive={active}>
-                          <NavLink
-                            to={item.to}
-                            end={item.to === "/dashboard"}
-                            className={cn(
-                              "flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-all",
-                              active
-                                ? "bg-sidebar-accent text-sidebar-primary font-medium"
-                                : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                            )}
-                          >
-                            <item.icon className={cn("h-4 w-4 shrink-0", active && "text-sidebar-primary")} />
-                            {!collapsed && <span className="truncate">{item.label}</span>}
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+            <SidebarNavSection
+              key={section.title}
+              section={{ ...section, items: visibleItems }}
+              collapsed={collapsed}
+              pathname={location.pathname}
+            />
           );
         })}
       </SidebarContent>
