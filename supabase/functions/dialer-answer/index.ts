@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
 <Response>
   <Dial>
     <Conference
-      startConferenceOnEnter="true"
+      startConferenceOnEnter="${leg === 'agent' ? 'true' : 'false'}"
       endConferenceOnExit="true"
       waitSound=""
       enterSound=""
