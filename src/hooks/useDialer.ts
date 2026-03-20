@@ -105,11 +105,9 @@ export function useDialer() {
       initTimeoutRef.current = setTimeout(() => {
         setCallStatus((prev) => {
           if (prev === "initiating") {
-            toast.error("Call initiation timed out");
-            insertCallEvent(sess.id, "init_timeout");
-            if (profile?.business_id) updateAgentState(profile.business_id, profile.user_id, "available");
-            setAgentState("available");
-            return "failed";
+            // Don't mark failed — assume ringing, let webhook decide final status
+            insertCallEvent(sess.id, "init_timeout_fallback_ringing");
+            return "ringing";
           }
           return prev;
         });

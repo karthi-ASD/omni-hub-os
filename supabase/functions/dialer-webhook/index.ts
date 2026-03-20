@@ -31,6 +31,21 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // --- WEBHOOK SECURITY ---
+  const expectedToken = Deno.env.get("PLIVO_WEBHOOK_SECRET");
+  if (expectedToken) {
+    const incomingToken =
+      req.headers.get("x-plivo-signature") ||
+      req.headers.get("authorization");
+    if (incomingToken !== expectedToken) {
+      console.warn("[dialer-webhook] Unauthorized request rejected");
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceKey);
@@ -107,9 +122,9 @@ Deno.serve(async (req) => {
     const updates: Record<string, any> = {};
     const currentIsTerminal = TERMINAL_STATES.includes(session.call_status);
 
-    // Recording URL — always accept regardless of state
+    // Recording URL — validate and always accept regardless of state
     const recordingUrl = body.RecordUrl || body.RecordingUrl || body.recording_url;
-    if (recordingUrl) {
+    if (recordingUrl && typeof recordingUrl === "string" && recordingUrl.startsWith("http")) {
       updates.recording_url = recordingUrl;
     }
 
