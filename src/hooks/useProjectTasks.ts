@@ -29,6 +29,7 @@ export function useProjectTasks(projectId?: string) {
       ...values,
       business_id: profile.business_id,
     }]);
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "tasks", actionType: "create", entityType: "project_task", description: `Created task: ${values.title || values.task_title || ""}` });
     fetch();
   };
 
