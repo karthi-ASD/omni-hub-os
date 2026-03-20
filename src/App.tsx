@@ -702,6 +702,12 @@ const App = () => (
                <Route path="/admin-service-requests" element={
                  <ProtectedRoute requiredRoles={["super_admin"]}><AdminServiceRequestsPage /></ProtectedRoute>
                } />
+               <Route path="/nextweb-master" element={
+                 <ProtectedRoute requiredRoles={["super_admin"]}><NextWebMasterDashboardPage /></ProtectedRoute>
+               } />
+               <Route path="/nextweb-clients" element={
+                 <ProtectedRoute requiredRoles={["super_admin"]}><NextWebClientsPage /></ProtectedRoute>
+               } />
               <Route path="/client-package/:clientId" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager", "employee"]}><ClientPackagePage /></ProtectedRoute>
               } />
