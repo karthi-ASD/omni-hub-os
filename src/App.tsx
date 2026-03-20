@@ -114,6 +114,8 @@ import ClientPackagePage from "./pages/ClientPackagePage";
 import FinancePackagesPage from "./pages/FinancePackagesPage";
 import NextWebServicesPage from "./pages/NextWebServices";
 import AdminServiceRequestsPage from "./pages/AdminServiceRequests";
+import NextWebMasterDashboardPage from "./pages/NextWebMasterDashboard";
+import NextWebClientsPage from "./pages/NextWebClientsPage";
 import ContentManagementPage from "./pages/ContentManagementPage";
 import WebsiteDevStagesPage from "./pages/WebsiteDevStagesPage";
 import ActivityTimelinePage from "./pages/ActivityTimelinePage";
@@ -699,6 +701,12 @@ const App = () => (
                <Route path="/nextweb-services" element={<NextWebServicesPage />} />
                <Route path="/admin-service-requests" element={
                  <ProtectedRoute requiredRoles={["super_admin"]}><AdminServiceRequestsPage /></ProtectedRoute>
+               } />
+               <Route path="/nextweb-master" element={
+                 <ProtectedRoute requiredRoles={["super_admin"]}><NextWebMasterDashboardPage /></ProtectedRoute>
+               } />
+               <Route path="/nextweb-clients" element={
+                 <ProtectedRoute requiredRoles={["super_admin"]}><NextWebClientsPage /></ProtectedRoute>
                } />
               <Route path="/client-package/:clientId" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager", "employee"]}><ClientPackagePage /></ProtectedRoute>

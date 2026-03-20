@@ -30,6 +30,15 @@ const SALES_DEPTS = ["sales", "sales department", "business development"];
 const FINANCE_DEPTS = ["finance", "accounts", "accounting"];
 
 export const NAV_SECTIONS: NavSection[] = [
+  // ── NextWeb Master (Super Admin Only) ──
+  {
+    title: "NextWeb Master",
+    items: [
+      { label: "Master Dashboard", icon: Gauge, to: "/nextweb-master", roles: ["super_admin"] },
+      { label: "All Clients", icon: Building2, to: "/nextweb-clients", roles: ["super_admin"] },
+      { label: "Service Requests", icon: Inbox, to: "/admin-service-requests", roles: ["super_admin"] },
+    ],
+  },
   {
     title: "Core",
     items: [
@@ -213,7 +222,6 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "SA Tools", icon: Wrench, to: "/super-admin-tools", roles: ["super_admin"] },
       { label: "SA Clients", icon: Users, to: "/super-admin-clients", roles: ["super_admin"] },
       { label: "Business Mgmt", icon: Building2, to: "/business-admin-management", roles: ["super_admin"] },
-      { label: "Service Requests", icon: Inbox, to: "/admin-service-requests", roles: ["super_admin"] },
       { label: "System Health", icon: Activity, to: "/system-health", roles: ["super_admin"] },
       { label: "Integrations", icon: Plug, to: "/integrations-overview", roles: ["super_admin"] },
       { label: "Feature Registry", icon: ClipboardCheck, to: "/feature-registry", roles: ["super_admin"] },

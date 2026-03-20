@@ -17033,10 +17033,13 @@ export type Database = {
           created_by: string
           description: string | null
           id: string
+          notes: string | null
           priority: string
           request_type: string
           resolution_notes: string | null
           resolved_at: string | null
+          service_category: string | null
+          sla_status: string | null
           status: string
           title: string
           updated_at: string
@@ -17049,10 +17052,13 @@ export type Database = {
           created_by: string
           description?: string | null
           id?: string
+          notes?: string | null
           priority?: string
           request_type?: string
           resolution_notes?: string | null
           resolved_at?: string | null
+          service_category?: string | null
+          sla_status?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -17065,10 +17071,13 @@ export type Database = {
           created_by?: string
           description?: string | null
           id?: string
+          notes?: string | null
           priority?: string
           request_type?: string
           resolution_notes?: string | null
           resolved_at?: string | null
+          service_category?: string | null
+          sla_status?: string | null
           status?: string
           title?: string
           updated_at?: string

@@ -30,6 +30,15 @@ const REQUEST_TYPES = [
   { value: "integration_request", label: "Integration Request" },
 ];
 
+const CATEGORY_OPTIONS = [
+  { value: "general", label: "General" },
+  { value: "seo", label: "SEO" },
+  { value: "website", label: "Website" },
+  { value: "ads", label: "Ads" },
+  { value: "crm", label: "CRM" },
+  { value: "automation", label: "Automation" },
+];
+
 const PRIORITY_OPTIONS = [
   { value: "low", label: "Low" },
   { value: "medium", label: "Medium" },
@@ -53,6 +62,7 @@ export default function NextWebServices() {
     title: "",
     description: "",
     request_type: "support_issue",
+    service_category: "general",
     priority: "medium",
   });
 
@@ -84,7 +94,7 @@ export default function NextWebServices() {
     onSuccess: () => {
       toast.success("Request submitted to NextWeb");
       setShowNewRequest(false);
-      setNewRequest({ title: "", description: "", request_type: "support_issue", priority: "medium" });
+      setNewRequest({ title: "", description: "", request_type: "support_issue", service_category: "general", priority: "medium" });
       queryClient.invalidateQueries({ queryKey: ["nextweb-requests"] });
     },
     onError: (e: any) => toast.error(e.message),
@@ -113,6 +123,12 @@ export default function NextWebServices() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {REQUEST_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={newRequest.service_category} onValueChange={v => setNewRequest(p => ({ ...p, service_category: v }))}>
+                <SelectTrigger><SelectValue placeholder="Service Category" /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORY_OPTIONS.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Input

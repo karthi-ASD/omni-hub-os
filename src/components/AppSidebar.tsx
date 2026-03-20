@@ -73,7 +73,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { profile, isSuperAdmin, isBusinessAdmin, isClientUser, roles, signOut } = useAuth();
+  const { profile, isSuperAdmin, isBusinessAdmin, isClientUser, roles, signOut, selectedTenantId, allBusinesses } = useAuth();
   const { departmentName } = useEmployeeDepartment();
   const { hasCustomCRM, crmType } = useBusinessCRM();
 
@@ -84,25 +84,30 @@ export function AppSidebar() {
   // even if client_users record is missing
   const isClientUserSafe = isClientUser || (!!crmType && !isSuperAdmin && !isBusinessAdmin);
 
-  console.log("SIDEBAR:", { isClientUser, isClientUserSafe, crmType, hasCustomCRM });
-
   // ── Client users get separated navigation ──
   if (isClientUserSafe) {
+    // Resolve a friendly business name from profile or fallback
+    const businessName = profile?.full_name || "My Business";
+
     return (
       <Sidebar collapsible="icon" className="border-r-0">
         <SidebarHeader className="p-3">
-          <div className={cn("flex items-center gap-2.5 transition-all", collapsed && "justify-center")}>
-            <NWLogo size="sm" />
+          <div className={cn("flex flex-col gap-1 transition-all", collapsed && "items-center")}>
             {!collapsed && (
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-bold text-sidebar-accent-foreground leading-tight truncate">
-                  Client Portal
-                </span>
-                <span className="text-[10px] text-sidebar-foreground leading-tight truncate">
-                  {profile?.full_name?.split(" ")[0] || "User"}
-                </span>
-              </div>
+              <span className="text-xs font-bold text-sidebar-accent-foreground leading-tight truncate">
+                {businessName}
+              </span>
             )}
+            <div className={cn("flex items-center gap-2", collapsed && "justify-center")}>
+              <NWLogo size="sm" />
+              {!collapsed && (
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[9px] text-sidebar-foreground/50 uppercase tracking-wider font-medium">
+                    Powered by NextWeb
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </SidebarHeader>
         <SidebarContent className="px-2">
@@ -180,8 +185,13 @@ export function AppSidebar() {
           )}
         </div>
         {!collapsed && isSuperAdmin && (
-          <div className="mt-2">
+          <div className="mt-2 space-y-1.5">
             <TenantSelector />
+            {selectedTenantId && (
+              <div className="px-2 py-1 rounded bg-primary/10 text-[10px] text-primary font-medium truncate">
+                Viewing: {allBusinesses.find(b => b.id === selectedTenantId)?.name || "Tenant"}
+              </div>
+            )}
           </div>
         )}
       </SidebarHeader>
