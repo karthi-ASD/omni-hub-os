@@ -49,10 +49,10 @@ export default function InvestorPortalDashboard() {
   const { data: deals = [], isLoading } = useQuery({
     queryKey: ["investor-deals", bid, clientId],
     queryFn: async () => {
-      const { data } = await supabase.from("crm_deals").select("*")
+      const { data } = await (supabase.from("crm_deals").select("*") as any)
         .eq("business_id", bid!).eq("client_id", clientId!)
         .order("created_at", { ascending: false });
-      return data || [];
+      return (data || []) as any[];
     },
     enabled: !!bid && !!clientId,
   });

@@ -33,9 +33,9 @@ export default function InvestorPropertiesPage() {
   const { data: deals = [] } = useQuery({
     queryKey: ["investor-deal-properties", bid, clientId],
     queryFn: async () => {
-      const { data } = await supabase.from("crm_deals").select("id, deal_name, deal_stage, property_id, deal_value")
+      const { data } = await (supabase.from("crm_deals").select("id, deal_name, deal_stage, property_id, deal_value") as any)
         .eq("business_id", bid!).eq("client_id", clientId!);
-      return data || [];
+      return (data || []) as any[];
     },
     enabled: !!bid && !!clientId,
   });
