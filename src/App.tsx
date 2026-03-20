@@ -220,6 +220,9 @@ import CompanySignupPage from "./pages/CompanySignupPage";
 import DepartmentSignupPage from "./pages/DepartmentSignupPage";
 import ClientLoginPage from "./pages/ClientLoginPage";
 import ClientRegisterPage from "./pages/ClientRegisterPage";
+import ACE1LandingPage from "./pages/ace1/ACE1LandingPage";
+import ACE1EmployeeLoginPage from "./pages/ace1/ACE1EmployeeLoginPage";
+import ACE1ClientPortalLoginPage from "./pages/ace1/ACE1ClientPortalLoginPage";
 import FirstLoginSecurityPage from "./pages/FirstLoginSecurityPage";
 import SuperAdminToolsPage from "./pages/SuperAdminToolsPage";
 import UserProfilePage from "./pages/UserProfilePage";
@@ -344,6 +347,9 @@ const App = () => (
             <Route path="/company/:slug/signup" element={<CompanySignupPage />} />
             <Route path="/company/:slug/:department" element={<DepartmentSignupPage />} />
             <Route path="/client/login" element={<ClientLoginPage />} />
+            <Route path="/ace1" element={<ACE1LandingPage />} />
+            <Route path="/ace1/login" element={<ACE1EmployeeLoginPage />} />
+            <Route path="/ace1/portal" element={<ACE1ClientPortalLoginPage />} />
             <Route path="/client/register" element={<ClientRegisterPage />} />
             <Route path="/security-setup" element={<FirstLoginSecurityPage />} />
             <Route path="/login-v2" element={<LoginV2 />} />
