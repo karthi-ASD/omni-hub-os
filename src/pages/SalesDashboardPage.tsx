@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useSalesPerformanceDashboard } from "@/hooks/useSalesPerformanceDashboard";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PageHeader } from "@/components/ui/page-header";
