@@ -121,9 +121,6 @@ function xmlResponse(inner: string): Response {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n  ${inner}\n</Response>`;
   return new Response(xml, {
     status: 200,
-    headers: {
-      "Content-Type": "application/xml",
-      "Access-Control-Allow-Origin": "*",
-    },
+    headers: { "Content-Type": "text/xml" },
   });
 }
