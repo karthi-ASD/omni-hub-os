@@ -69,10 +69,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [rawProfile, setRawProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [businessContextLoading, setBusinessContextLoading] = useState(false);
   const [tenantValidationError, setTenantValidationError] = useState<string | null>(null);
   const [allBusinesses, setAllBusinesses] = useState<TenantBusiness[]>([]);
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
   const [clientUserId, setClientUserId] = useState<string | null>(null);
+  const [activeBusinessContext, setActiveBusinessContext] = useState<ActiveBusinessContext | null>(null);
 
   const isHydratingRef = React.useRef(false);
   const hasHydratedRef = React.useRef(false);
