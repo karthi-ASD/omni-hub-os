@@ -16,6 +16,8 @@ import {
   type AgentState,
 } from "@/services/dialerService";
 
+const CALL_INIT_TIMEOUT_MS = 30_000; // 30s timeout for call initiation
+
 export function useDialer() {
   const { profile } = useAuth();
   const [session, setSession] = useState<DialerSession | null>(null);
@@ -27,6 +29,7 @@ export function useDialer() {
   const [loading, setLoading] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const unsubRef = useRef<(() => void) | null>(null);
+  const initTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Timer logic — starts ONLY when webhook sets status to "connected"
   useEffect(() => {
@@ -37,6 +40,14 @@ export function useDialer() {
       if (callStatus === "idle") setCallTimer(0);
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [callStatus]);
+
+  // Clear init timeout when status progresses past initiating
+  useEffect(() => {
+    if (callStatus !== "initiating" && initTimeoutRef.current) {
+      clearTimeout(initTimeoutRef.current);
+      initTimeoutRef.current = null;
+    }
   }, [callStatus]);
 
   // Realtime subscription — ALL status changes come from webhook via DB updates
@@ -65,8 +76,11 @@ export function useDialer() {
     setPreviousCalls(calls);
   }, []);
 
+  // Prevent duplicate calls — check if already active
+  const isCallActive = callStatus !== "idle" && callStatus !== "ended" && callStatus !== "failed" && callStatus !== "busy" && callStatus !== "no-answer";
+
   const startCall = useCallback(async (phoneNumber: string, leadId?: string, clientId?: string) => {
-    if (!profile?.business_id) return;
+    if (!profile?.business_id || loading || isCallActive) return;
     setLoading(true);
     try {
       const sess = await createDialerSession({
@@ -79,7 +93,7 @@ export function useDialer() {
       if (!sess) { toast.error("Failed to create call session"); return; }
 
       setSession(sess);
-      setCallStatus("initiating"); // Local UI-only state before webhook takes over
+      setCallStatus("initiating");
       setIsMuted(false);
       setCallTimer(0);
 
@@ -87,23 +101,37 @@ export function useDialer() {
       await updateAgentState(profile.business_id, profile.user_id, "on_call");
       setAgentState("on_call");
 
+      // Start init timeout failsafe
+      initTimeoutRef.current = setTimeout(() => {
+        setCallStatus((prev) => {
+          if (prev === "initiating") {
+            toast.error("Call initiation timed out");
+            insertCallEvent(sess.id, "init_timeout");
+            if (profile?.business_id) updateAgentState(profile.business_id, profile.user_id, "available");
+            setAgentState("available");
+            return "failed";
+          }
+          return prev;
+        });
+      }, CALL_INIT_TIMEOUT_MS);
+
       const result = await initiateCall(sess.id);
       if (!result.success) {
-        // Call failed at initiation — backend already set status to "failed"
-        // Realtime will update UI, but set local state immediately for responsiveness
+        if (initTimeoutRef.current) clearTimeout(initTimeoutRef.current);
         setCallStatus("failed");
         toast.error(result.error || "Call failed");
         await updateAgentState(profile.business_id, profile.user_id, "available");
         setAgentState("available");
       } else {
-        // Backend set status to "ringing" — realtime will confirm
+        // Backend wrote provider_call_id only — status will come from webhook
+        // Set local UI to ringing optimistically for responsiveness
         setCallStatus("ringing");
         await insertCallEvent(sess.id, "call_initiated", { provider_call_id: result.providerCallId });
       }
     } finally {
       setLoading(false);
     }
-  }, [profile]);
+  }, [profile, loading, isCallActive]);
 
   // Hangup — tells backend to send hangup to Plivo; webhook handles status transition
   const endCall = useCallback(async () => {
@@ -112,7 +140,6 @@ export function useDialer() {
     if (!success) {
       toast.error("Failed to end call");
     }
-    // Do NOT update call_status here — webhook will do it via realtime
   }, [session]);
 
   const toggleMute = useCallback(() => {
@@ -143,6 +170,7 @@ export function useDialer() {
   }, [session, profile]);
 
   const resetDialer = useCallback(() => {
+    if (initTimeoutRef.current) clearTimeout(initTimeoutRef.current);
     setSession(null);
     setCallStatus("idle");
     setCallTimer(0);
@@ -165,6 +193,7 @@ export function useDialer() {
     isMuted,
     previousCalls,
     loading,
+    isCallActive,
     startCall,
     endCall,
     toggleMute,

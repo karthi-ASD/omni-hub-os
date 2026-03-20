@@ -5,6 +5,20 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// E.164 phone number formatter (AU default)
+function formatToE164(phone: string): string | null {
+  const digits = phone.replace(/[^0-9+]/g, "");
+  // Already E.164
+  if (/^\+[1-9]\d{6,14}$/.test(digits)) return digits;
+  // Australian local (0X XXXX XXXX)
+  if (/^0[2-9]\d{8}$/.test(digits)) return "+61" + digits.slice(1);
+  // Raw digits that look like AU without leading 0
+  if (/^[2-9]\d{8}$/.test(digits)) return "+61" + digits;
+  // 10+ digits starting with country code without +
+  if (/^[1-9]\d{9,14}$/.test(digits)) return "+" + digits;
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -61,7 +75,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // HANGUP action — only sends hangup request to Plivo, webhook handles status update
+    // HANGUP action — ONLY sends hangup request to Plivo, webhook handles all status updates
     if (action === "hangup") {
       if (session.provider_call_id) {
         const PLIVO_AUTH_ID = Deno.env.get("PLIVO_AUTH_ID");
@@ -84,19 +98,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Fallback: if Plivo doesn't send a webhook for hangup (e.g. call never connected),
-      // mark ended only if still in a non-terminal state
-      const terminalStates = ["ended", "failed", "busy", "no-answer"];
-      if (!terminalStates.includes(session.call_status)) {
-        await supabase
-          .from("dialer_sessions")
-          .update({
-            call_status: "ended",
-            call_end_time: new Date().toISOString(),
-          })
-          .eq("id", session_id);
-      }
-
+      // NO fallback status write — webhook is the single source of truth
       return new Response(JSON.stringify({ status: "hangup_sent" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -116,7 +118,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    // CRITICAL FIX: Pass session_id in all callback URLs to avoid race condition
+    // Validate and format phone number to E.164
+    const formattedPhone = formatToE164(session.phone_number);
+    if (!formattedPhone) {
+      await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", session_id);
+      return new Response(
+        JSON.stringify({ error: "Invalid phone number format. Must be E.164 (e.g. +61412345678)." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const callbackBase = `${supabaseUrl}/functions/v1/dialer-webhook`;
     const callbackUrl = `${callbackBase}?session_id=${session_id}`;
 
@@ -131,7 +142,7 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({
           from: PLIVO_CALLER_ID,
-          to: session.phone_number,
+          to: formattedPhone,
           answer_url: callbackUrl,
           answer_method: "POST",
           hangup_url: callbackUrl,
@@ -160,11 +171,10 @@ Deno.serve(async (req) => {
 
     const providerCallId = plivoData.request_uuid || plivoData.RequestUUID || null;
 
-    // Only set provider_call_id and call_start_time — status updates come from webhook
+    // ONLY set provider_call_id and call_start_time — NO status write, webhook handles it
     await supabase
       .from("dialer_sessions")
       .update({
-        call_status: "ringing",
         provider_call_id: providerCallId,
         call_start_time: new Date().toISOString(),
       })
@@ -176,7 +186,7 @@ Deno.serve(async (req) => {
       event_type: "DIALER_CALL_INITIATED",
       payload_json: {
         session_id,
-        phone_number: session.phone_number,
+        phone_number: formattedPhone,
         provider_call_id: providerCallId,
         user_id: session.user_id,
       },
