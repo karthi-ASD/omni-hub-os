@@ -11916,6 +11916,7 @@ export type Database = {
       dialer_call_events: {
         Row: {
           created_at: string
+          dedupe_key: string | null
           event_type: string
           id: string
           metadata: Json | null
@@ -11923,6 +11924,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          dedupe_key?: string | null
           event_type: string
           id?: string
           metadata?: Json | null
@@ -11930,6 +11932,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          dedupe_key?: string | null
           event_type?: string
           id?: string
           metadata?: Json | null

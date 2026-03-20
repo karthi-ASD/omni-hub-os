@@ -1,0 +1,1 @@
+ALTER TABLE public.dialer_call_events ADD COLUMN IF NOT EXISTS dedupe_key TEXT UNIQUE;
