@@ -285,7 +285,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           fetchRoles(nextSession.user.id),
         ]);
 
-        await validateClientTenantMapping(nextSession.user.id, profileData);
+        const validatedProfile = await validateClientTenantMapping(nextSession.user.id, profileData, userRoles);
+        const effectiveBusinessId = validatedProfile?.business_id ?? profileData?.business_id ?? null;
 
         if (userRoles.includes("super_admin")) {
           const biz = await fetchBusinesses();
@@ -297,6 +298,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
           }
         }
+
+        await fetchActiveBusinessContext(effectiveBusinessId);
 
         hydratedSessionKeyRef.current = hydrationKey;
         hasHydratedRef.current = true;
