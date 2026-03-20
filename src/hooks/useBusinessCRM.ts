@@ -70,7 +70,7 @@ export function useBusinessCRM() {
         icon: d.options_json?.icon,
       })) as CRMTab[];
     },
-    enabled: !!businessId && isACE1,
+    enabled: !!businessId && isRealEstate,
   });
 
   // Fetch pipeline stages for a module
