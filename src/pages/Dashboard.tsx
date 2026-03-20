@@ -66,8 +66,11 @@ const Dashboard = () => {
   const { departmentName } = useEmployeeDepartment();
   const navigate = useNavigate();
 
-  // Tenant-side users get the tenant/client dashboard shell
-  if (dashboardShell === "client_business" || dashboardShell === "client_portal") return <ClientDashboardPage />;
+  // 🔒 SECURITY: Only actual client users see client dashboard
+  // Employees with client_business shell must see CRM dashboard, NOT client UI
+  if (isClientUser && (dashboardShell === "client_business" || dashboardShell === "client_portal")) {
+    return <ClientDashboardPage />;
+  }
   const isManager = hasRole("manager");
   const deptLower = departmentName?.toLowerCase() ?? "";
   const isFinanceDept = deptLower.includes("finance") || deptLower.includes("accounts");
