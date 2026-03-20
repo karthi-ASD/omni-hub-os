@@ -257,6 +257,9 @@ import SalesToolsPage from "./pages/SalesToolsPage";
 import SeoLeadCapturePage from "./pages/SeoLeadCapturePage";
 import WhatsAppSupportPage from "./pages/WhatsAppSupportPage";
 import BusinessCRMPage from "./pages/BusinessCRMPage";
+import SolarProjectsPage from "./pages/SolarProjectsPage";
+import SolarProjectDashboard from "./pages/SolarProjectDashboard";
+import SolarInstallationsPage from "./pages/SolarInstallationsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -386,6 +389,9 @@ const App = () => (
               <Route path="/clients/:id" element={<ClientProfilePage />} />
               <Route path="/clients/:id/access" element={<ClientAccessHubPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
+              <Route path="/solar-projects" element={<SolarProjectsPage />} />
+              <Route path="/solar-dashboard" element={<SolarProjectDashboard />} />
+              <Route path="/solar-installations" element={<SolarInstallationsPage />} />
               <Route path="/invoices" element={<InvoicesPage />} />
               <Route path="/payments" element={<PaymentsPage />} />
               <Route path="/billing" element={<BillingDashboard />} />
