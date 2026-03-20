@@ -11881,6 +11881,162 @@ export type Database = {
         }
         Relationships: []
       }
+      dialer_agent_states: {
+        Row: {
+          business_id: string
+          id: string
+          state: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          id?: string
+          state?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          id?: string
+          state?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dialer_agent_states_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dialer_call_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dialer_call_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "dialer_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dialer_sessions: {
+        Row: {
+          ai_score: number | null
+          ai_summary: string | null
+          business_id: string
+          call_duration: number | null
+          call_end_time: string | null
+          call_start_time: string | null
+          call_status: string
+          client_id: string | null
+          created_at: string
+          disposition: string | null
+          id: string
+          lead_id: string | null
+          notes: string | null
+          phone_number: string
+          provider: string
+          provider_call_id: string | null
+          recording_url: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_score?: number | null
+          ai_summary?: string | null
+          business_id: string
+          call_duration?: number | null
+          call_end_time?: string | null
+          call_start_time?: string | null
+          call_status?: string
+          client_id?: string | null
+          created_at?: string
+          disposition?: string | null
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          phone_number: string
+          provider?: string
+          provider_call_id?: string | null
+          recording_url?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_score?: number | null
+          ai_summary?: string | null
+          business_id?: string
+          call_duration?: number | null
+          call_end_time?: string | null
+          call_start_time?: string | null
+          call_status?: string
+          client_id?: string | null
+          created_at?: string
+          disposition?: string | null
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          phone_number?: string
+          provider?: string
+          provider_call_id?: string | null
+          recording_url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dialer_sessions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dialer_sessions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_integrity_report"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dialer_sessions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dialer_sessions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dunning_rules: {
         Row: {
           action: Database["public"]["Enums"]["dunning_action"]
