@@ -66,9 +66,10 @@ const Dashboard = () => {
   const { departmentName } = useEmployeeDepartment();
   const navigate = useNavigate();
 
-  // 🔒 SECURITY: Only actual client users see client dashboard
-  // Employees with client_business shell must see CRM dashboard, NOT client UI
-  if (isClientUser && (dashboardShell === "client_business" || dashboardShell === "client_portal")) {
+  // 🔒 DO NOT MODIFY — SECURITY CRITICAL
+  // Never use dashboardShell/appMode/client_business as proof of client identity.
+  // Only userType === "client" may render client dashboard.
+  if (isClientUser) {
     return <ClientDashboardPage />;
   }
   const isManager = hasRole("manager");

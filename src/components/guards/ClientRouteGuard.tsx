@@ -36,14 +36,30 @@ export function ClientRouteGuard({ children }: { children?: React.ReactNode }) {
 
   const path = window.location.pathname;
 
-  // ── HARD BLOCK: Employees must NEVER reach client-only routes ──
+  // ── HARD BLOCK: Non-clients must NEVER reach client-only routes ──
+  // Covers explicit list AND prefix-based fallback for future routes
   if (userType !== "client") {
     const isClientOnlyRoute = CLIENT_ONLY_ROUTES.some(
       (prefix) => path === prefix || path.startsWith(prefix + "/")
     );
-    if (isClientOnlyRoute) {
-      console.warn(`[RouteGuard] Employee blocked from client route: ${path}`);
-      return <Navigate to="/dashboard" replace />;
+    const isClientPrefixRoute = path.startsWith("/client-") || path.startsWith("/client/");
+
+    if (isClientOnlyRoute || isClientPrefixRoute) {
+      // Allow staff-managed client pages (e.g. /client-360, /client-package) 
+      // that are protected by requiredRoles in App.tsx
+      const STAFF_CLIENT_ROUTES = [
+        "/client-360",
+        "/client-package",
+        "/client-projects",
+        "/client-data-integrity",
+      ];
+      const isStaffClientRoute = STAFF_CLIENT_ROUTES.some(
+        (prefix) => path === prefix || path.startsWith(prefix + "/")
+      );
+      if (!isStaffClientRoute) {
+        console.error("[SECURITY] Non-client blocked from client route", { path, userType });
+        return <Navigate to="/dashboard" replace />;
+      }
     }
   }
 
