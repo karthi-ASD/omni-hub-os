@@ -37,7 +37,7 @@ export function useDialer() {
 
   // Timer logic
   useEffect(() => {
-    if (callStatus === "connected") {
+    if (callStatus === "connected" || callStatus === "bridging") {
       timerRef.current = setInterval(() => setCallTimer((t) => t + 1), 1000);
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
