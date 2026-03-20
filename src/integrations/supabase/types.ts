@@ -19008,6 +19008,7 @@ export type Database = {
           priority: string | null
           project_name: string
           project_type: string | null
+          proposal_id: string | null
           roof_type: string | null
           start_date: string | null
           status: Database["public"]["Enums"]["project_status"]
@@ -19035,6 +19036,7 @@ export type Database = {
           priority?: string | null
           project_name: string
           project_type?: string | null
+          proposal_id?: string | null
           roof_type?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"]
@@ -19062,6 +19064,7 @@ export type Database = {
           priority?: string | null
           project_name?: string
           project_type?: string | null
+          proposal_id?: string | null
           roof_type?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"]
@@ -19103,6 +19106,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
             referencedColumns: ["id"]
           },
         ]
