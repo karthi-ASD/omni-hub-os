@@ -74,6 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [allBusinesses, setAllBusinesses] = useState<TenantBusiness[]>([]);
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
   const [clientUserId, setClientUserId] = useState<string | null>(null);
+  const [isEmployeeByHR, setIsEmployeeByHR] = useState(false);
   const [activeBusinessContext, setActiveBusinessContext] = useState<ActiveBusinessContext | null>(null);
 
   const isHydratingRef = React.useRef(false);
@@ -120,6 +121,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       setRoles([]);
       return [] as AppRole[];
+    }
+  };
+
+  /** Check if user has an hr_employees record — CRITICAL for employee detection */
+  const checkEmployeeByHR = async (userId: string, businessId: string | null): Promise<boolean> => {
+    if (!businessId) {
+      // Also check without business_id filter (some employees may not have it set)
+      try {
+        const { data } = await supabase
+          .from("hr_employees")
+          .select("id")
+          .eq("user_id", userId)
+          .limit(1)
+          .maybeSingle();
+        const result = !!data;
+        setIsEmployeeByHR(result);
+        return result;
+      } catch {
+        setIsEmployeeByHR(false);
+        return false;
+      }
+    }
+
+    try {
+      const { data } = await supabase
+        .from("hr_employees")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("business_id", businessId)
+        .limit(1)
+        .maybeSingle();
+      const result = !!data;
+      setIsEmployeeByHR(result);
+      return result;
+    } catch {
+      setIsEmployeeByHR(false);
+      return false;
     }
   };
 
@@ -239,6 +277,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAllBusinesses([]);
     setSelectedTenantId(null);
     setClientUserId(null);
+    setIsEmployeeByHR(false);
     setActiveBusinessContext(null);
     setBusinessContextLoading(false);
     setTenantValidationError(null);
@@ -285,8 +324,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           fetchRoles(nextSession.user.id),
         ]);
 
+        // 🔴 CRITICAL: Check hr_employees BEFORE client tenant mapping
+        const effectiveBusinessId = profileData?.business_id ?? null;
+        const employeeByHR = await checkEmployeeByHR(nextSession.user.id, effectiveBusinessId);
+
+        // Log debug info for role resolution
+        console.log("[User Debug]", {
+          userId: nextSession.user.id,
+          roles: userRoles,
+          businessId: effectiveBusinessId,
+          isEmployeeByHR: employeeByHR,
+        });
+
         const validatedProfile = await validateClientTenantMapping(nextSession.user.id, profileData, userRoles);
-        const effectiveBusinessId = validatedProfile?.business_id ?? profileData?.business_id ?? null;
+        const finalBusinessId = validatedProfile?.business_id ?? profileData?.business_id ?? null;
 
         if (userRoles.includes("super_admin")) {
           const biz = await fetchBusinesses();
@@ -299,11 +350,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-        await fetchActiveBusinessContext(effectiveBusinessId);
+        await fetchActiveBusinessContext(finalBusinessId);
 
         hydratedSessionKeyRef.current = hydrationKey;
         hasHydratedRef.current = true;
-        console.log("[Hydration] complete", { source, hydrationKey });
+        console.log("[Hydration] complete", { source, hydrationKey, userRoles, employeeByHR });
       } finally {
         isHydratingRef.current = false;
         finalizeLoading();
@@ -446,14 +497,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     : (profile?.business_id ?? rawProfile?.business_id ?? null);
 
   const activeCRMType = activeBusinessContext?.crm_type ?? null;
-  const hasCustomCRM = !!activeCRMType && activeCRMType !== "generic";
 
   // SINGLE SOURCE OF TRUTH: resolve user type via strict priority resolver
-  const userType = resolveUserType({ roles: roles as string[], clientUserId });
+  // 🔴 CRITICAL: Pass isEmployeeByHR to ensure hr_employees check takes priority over clientUserId
+  const userType = resolveUserType({ roles: roles as string[], clientUserId, isEmployeeByHR });
   const appMode = resolveAppMode({
     roles: roles as string[],
     clientUserId,
     businessId: activeTenantId,
+    isEmployeeByHR,
   });
   const dashboardShell: DashboardShell = appMode;
   const isAuthResolved = !loading && !businessContextLoading && (!!session ? !!rawProfile : true);
@@ -463,10 +515,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clientId = isClientUser ? clientUserId : null;
 
   // Detect and log role conflicts (staff user with client_users record)
-  const conflict = detectRoleConflict({ roles: roles as string[], clientUserId, userId: user?.id });
+  const conflict = detectRoleConflict({ roles: roles as string[], clientUserId, userId: user?.id, isEmployeeByHR });
   if (conflict) {
     console.warn(conflict);
   }
+
+  // Debug logging for role resolution
+  useEffect(() => {
+    if (rawProfile && isAuthResolved) {
+      console.log("[Role Resolution]", {
+        userId: user?.id,
+        roles,
+        clientUserId,
+        isEmployeeByHR,
+        userType,
+        appMode,
+        dashboardShell,
+        businessId: activeTenantId,
+      });
+    }
+  }, [isAuthResolved, userType, appMode]);
 
   useEffect(() => {
     if (!session?.user) {
