@@ -359,6 +359,7 @@ export function useUnifiedTickets(_departmentFilter?: string) {
       action_type: isInternal ? "internal_note" : "reply_sent", details: content.slice(0, 200),
     } as any);
     toast.success(isInternal ? "Internal note added" : "Reply sent");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: bid, module: "communication", actionType: "submit", entityType: "ticket_message", entityId: ticketId, description: isInternal ? "Internal note added" : "Reply sent on ticket" });
   }, [bid, profile, tickets]);
 
   const fetchAuditLog = useCallback(async (ticketId: string): Promise<TicketAuditEntry[]> => {

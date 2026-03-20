@@ -115,6 +115,7 @@ export function usePackageSeoTasks(packageId?: string, clientId?: string) {
   const deleteTask = async (id: string) => {
     await supabase.from("seo_tasks").delete().eq("id", id);
     toast.success("Task deleted");
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "tasks", actionType: "delete", entityType: "seo_task", entityId: id, description: "SEO task deleted" });
     fetchTasks();
   };
 

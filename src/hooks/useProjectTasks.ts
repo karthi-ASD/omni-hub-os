@@ -41,6 +41,7 @@ export function useProjectTasks(projectId?: string) {
 
   const remove = async (id: string) => {
     await (supabase.from("project_tasks" as any) as any).delete().eq("id", id);
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "tasks", actionType: "delete", entityType: "project_task", entityId: id, description: "Task deleted" });
     fetch();
   };
 
