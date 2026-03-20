@@ -7,15 +7,15 @@ const corsHeaders = {
 
 // E.164 phone number formatter (AU default)
 function formatToE164(phone: string): string | null {
-  const digits = phone.replace(/[^0-9+]/g, "");
-  // Already E.164
-  if (/^\+[1-9]\d{6,14}$/.test(digits)) return digits;
-  // Australian local (0X XXXX XXXX)
-  if (/^0[2-9]\d{8}$/.test(digits)) return "+61" + digits.slice(1);
-  // Raw digits that look like AU without leading 0
-  if (/^[2-9]\d{8}$/.test(digits)) return "+61" + digits;
-  // 10+ digits starting with country code without +
-  if (/^[1-9]\d{9,14}$/.test(digits)) return "+" + digits;
+  let p = phone.replace(/\D/g, "");
+  // Leading 0 → Australian
+  if (p.startsWith("0")) {
+    p = "61" + p.slice(1);
+  }
+  // Must start with 61 for AU or be a valid international number
+  if (p.length < 9 || p.length > 15) return null;
+  const full = "+" + p;
+  if (/^\+[1-9]\d{6,14}$/.test(full)) return full;
   return null;
 }
 
@@ -105,6 +105,22 @@ Deno.serve(async (req) => {
       });
     }
 
+    // --- RATE LIMITING (3 calls per user per 30s) ---
+    const userId = session.user_id;
+    const thirtySecsAgo = new Date(Date.now() - 30_000).toISOString();
+    const { count: recentCount } = await supabase
+      .from("dialer_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .gt("created_at", thirtySecsAgo);
+
+    if ((recentCount ?? 0) > 3) {
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded. Please wait before making another call." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // INITIATE CALL
     const PLIVO_AUTH_ID = Deno.env.get("PLIVO_AUTH_ID");
     const PLIVO_AUTH_TOKEN = Deno.env.get("PLIVO_AUTH_TOKEN");
@@ -163,6 +179,16 @@ Deno.serve(async (req) => {
 
     if (!plivoResp.ok) {
       await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", session_id);
+
+      // Log provider error
+      try {
+        await supabase.from("dialer_call_events").insert({
+          session_id: session_id,
+          event_type: "provider_error",
+          metadata: { status_code: plivoResp.status, response: plivoData },
+        });
+      } catch (_) {}
+
       return new Response(
         JSON.stringify({ error: "Plivo call failed", details: plivoData }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
