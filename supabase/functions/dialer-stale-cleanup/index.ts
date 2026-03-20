@@ -5,8 +5,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Failsafe: mark sessions stuck in non-terminal states as "failed"
-// Only cleans up "idle", "initiating", "ringing" — NOT "connected"
+// Failsafe: mark sessions stuck in "initiating" or "ringing" as "failed"
+// Does NOT touch "idle" or "connected" sessions
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -19,11 +19,10 @@ Deno.serve(async (req) => {
   try {
     const cutoff = new Date(Date.now() - 3 * 60 * 1000).toISOString();
 
-    // Find stuck sessions — exclude "connected" (active calls should not be auto-failed)
     const { data: stale, error } = await supabase
       .from("dialer_sessions")
       .select("id, call_status, business_id, phone_number")
-      .in("call_status", ["idle", "initiating", "ringing"])
+      .in("call_status", ["initiating", "ringing"])
       .lt("created_at", cutoff);
 
     if (error) {
