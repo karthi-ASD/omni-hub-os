@@ -77,6 +77,7 @@ export function useContracts() {
       payload_json: { entity_type: "contract", entity_id: contractId, actor_user_id: profile.user_id, short_message: "Contract sent for signing" },
     });
     toast.success("Contract sent");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "submit", entityType: "contract", entityId: contractId, description: "Contract sent for signing" });
     fetchContracts();
   };
 
