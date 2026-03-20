@@ -63,6 +63,7 @@ export function useContracts() {
     ]);
 
     toast.success("Contract created");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "create", entityType: "contract", entityId: (data as any).id, description: "Contract created from proposal" });
     fetchContracts();
     return data as any as Contract;
   };
