@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import type { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { notifySalesDataChanged, useSalesDataAutoRefresh } from "@/lib/salesDataSync";
+import { logActivity as logAI } from "@/lib/activity-logger";
 
 type Lead = Database["public"]["Tables"]["leads"]["Row"];
 type LeadInsert = Database["public"]["Tables"]["leads"]["Insert"];
