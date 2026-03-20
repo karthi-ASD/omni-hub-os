@@ -7640,6 +7640,7 @@ export type Database = {
           payment_method: string | null
           payment_status: string | null
           phone: string | null
+          phone_normalized: string | null
           renewal_date: string | null
           renewal_probability: string | null
           sales_owner_id: string | null
@@ -7694,6 +7695,7 @@ export type Database = {
           payment_method?: string | null
           payment_status?: string | null
           phone?: string | null
+          phone_normalized?: string | null
           renewal_date?: string | null
           renewal_probability?: string | null
           sales_owner_id?: string | null
@@ -7748,6 +7750,7 @@ export type Database = {
           payment_method?: string | null
           payment_status?: string | null
           phone?: string | null
+          phone_normalized?: string | null
           renewal_date?: string | null
           renewal_probability?: string | null
           sales_owner_id?: string | null
