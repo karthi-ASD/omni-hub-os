@@ -113,3 +113,6 @@ verify_jwt = false
 
 [functions.dialer-webhook]
 verify_jwt = false
+
+[functions.dialer-answer]
+verify_jwt = false

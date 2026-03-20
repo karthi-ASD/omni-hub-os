@@ -145,9 +145,12 @@ Deno.serve(async (req) => {
 
     console.log("Provider Request:", { from: PLIVO_CALLER_ID, to: formattedPhone });
 
-    // Build callback URL
-    const callbackBase = `${supabaseUrl}/functions/v1/dialer-webhook`;
-    const callbackUrl = `${callbackBase}?session_id=${session_id}&token=${PLIVO_WEBHOOK_SECRET}`;
+    // Build callback URLs — CRITICAL: answer_url must return XML, webhook returns JSON
+    const tokenQS = `token=${PLIVO_WEBHOOK_SECRET}`;
+    const answerUrl = `${supabaseUrl}/functions/v1/dialer-answer?session_id=${session_id}&${tokenQS}`;
+    const webhookUrl = `${supabaseUrl}/functions/v1/dialer-webhook?session_id=${session_id}&${tokenQS}`;
+
+    console.log("Callback URLs:", { answerUrl, webhookUrl });
 
     // Make Plivo outbound call
     let plivoData: any = {};
@@ -164,17 +167,17 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             from: PLIVO_CALLER_ID,
             to: formattedPhone,
-            answer_url: callbackUrl,
+            answer_url: answerUrl,
             answer_method: "POST",
-            hangup_url: callbackUrl,
+            hangup_url: webhookUrl,
             hangup_method: "POST",
-            fallback_url: callbackUrl,
+            fallback_url: answerUrl,
             fallback_method: "POST",
             record: true,
-            recording_callback_url: callbackUrl,
+            recording_callback_url: webhookUrl,
             recording_callback_method: "POST",
             machine_detection: true,
-            machine_detection_url: callbackUrl,
+            machine_detection_url: webhookUrl,
             machine_detection_method: "POST",
           }),
         }
