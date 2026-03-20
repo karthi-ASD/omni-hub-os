@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { notifySalesDataChanged, useSalesDataAutoRefresh } from "@/lib/salesDataSync";
+import { logActivity as logAI } from "@/lib/activity-logger";
 
 export type OnboardingStatus = "pending" | "in_progress" | "completed";
 export type ClientStatus = "active" | "cancelled" | "pending" | "prospect" | "suspended";
