@@ -572,18 +572,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.warn("[AUTH WARNING] roles.includes('client') detected — this is an INVALID design pattern. Use clientUserId instead.");
   }
 
-  // Debug logging for role resolution
+  // 🔒 ONE-TIME final auth state log per session
   useEffect(() => {
-    if (rawProfile && isAuthResolved) {
-      console.log("[Role Resolution]", {
+    if (rawProfile && isAuthResolved && !(window as any).__AUTH_LOGGED__) {
+      (window as any).__AUTH_LOGGED__ = true;
+      console.log("[AUTH FINAL STATE]", {
         userId: user?.id,
         roles,
-        clientUserId,
+        clientUserId: effectiveClientUserId,
         isEmployeeByHR,
         userType,
         appMode,
         dashboardShell,
         businessId: activeTenantId,
+        isStaffBySignal,
       });
     }
   }, [isAuthResolved, userType, appMode]);
