@@ -28,7 +28,7 @@ export default function InvestorEnquiriesPage() {
   const { data: leads = [] } = useQuery({
     queryKey: ["investor-enquiries", bid, clientId],
     queryFn: async () => {
-      const { data } = await supabase.from("crm_leads").select("*")
+      const { data } = await (supabase.from("crm_leads") as any).select("*")
         .eq("business_id", bid!).eq("client_id", clientId!)
         .order("created_at", { ascending: false });
       return data || [];

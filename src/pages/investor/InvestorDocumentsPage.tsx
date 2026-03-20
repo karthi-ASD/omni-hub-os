@@ -29,7 +29,7 @@ export default function InvestorDocumentsPage() {
   const { data: deals = [] } = useQuery({
     queryKey: ["investor-docs-deals", bid, clientId],
     queryFn: async () => {
-      const { data } = await supabase.from("crm_deals").select("id, deal_name, deal_stage, documents_json, property_id")
+      const { data } = await (supabase.from("crm_deals") as any).select("id, deal_name, deal_stage, property_id")
         .eq("business_id", bid!).eq("client_id", clientId!)
         .order("created_at", { ascending: false });
       return data || [];
@@ -38,7 +38,7 @@ export default function InvestorDocumentsPage() {
   });
 
   // Get properties with documents
-  const propIds = deals.filter(d => d.property_id).map(d => d.property_id);
+  const propIds = deals.filter((d: any) => d.property_id).map((d: any) => d.property_id);
   const { data: properties = [] } = useQuery({
     queryKey: ["investor-docs-props", propIds],
     queryFn: async () => {

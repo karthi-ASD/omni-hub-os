@@ -85,7 +85,7 @@ export default function InvestorStatusPage({ statusType }: Props) {
   const { data: deals = [] } = useQuery({
     queryKey: ["investor-status-deals", bid, clientLink?.client_id, statusType],
     queryFn: async () => {
-      const { data } = await supabase.from("crm_deals").select("*")
+      const { data } = await (supabase.from("crm_deals") as any).select("*")
         .eq("business_id", bid!).eq("client_id", clientLink!.client_id)
         .order("created_at", { ascending: false });
       return data || [];
