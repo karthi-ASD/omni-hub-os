@@ -12148,7 +12148,9 @@ export type Database = {
           call_start_time: string | null
           call_status: string
           client_id: string | null
+          conference_id: string | null
           created_at: string
+          customer_call_id: string | null
           customer_connected: boolean | null
           disposition: string | null
           id: string
@@ -12172,7 +12174,9 @@ export type Database = {
           call_start_time?: string | null
           call_status?: string
           client_id?: string | null
+          conference_id?: string | null
           created_at?: string
+          customer_call_id?: string | null
           customer_connected?: boolean | null
           disposition?: string | null
           id?: string
@@ -12196,7 +12200,9 @@ export type Database = {
           call_start_time?: string | null
           call_status?: string
           client_id?: string | null
+          conference_id?: string | null
           created_at?: string
+          customer_call_id?: string | null
           customer_connected?: boolean | null
           disposition?: string | null
           id?: string
