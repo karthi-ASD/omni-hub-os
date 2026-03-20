@@ -84,30 +84,7 @@ export function AppSidebar() {
   // even if client_users record is missing
   const isClientUserSafe = isClientUser || (!!crmType && !isSuperAdmin && !isBusinessAdmin);
 
-  console.log("=== SIDEBAR DEBUG ===");
-  console.log("isClientUser:", isClientUser);
-  console.log("isClientUserSafe:", isClientUserSafe);
-  console.log("isSuperAdmin:", isSuperAdmin);
-  console.log("isBusinessAdmin:", isBusinessAdmin);
-  console.log("profile.business_id:", profile?.business_id);
-  console.log("expected ACE1 ID:", "fcd55dac-804b-462f-8a95-1d49cdd0b03d");
-  console.log("hasCustomCRM:", hasCustomCRM);
-  console.log("crmType:", crmType);
-  console.log("CRM Sections:", activeCRMSections);
-
-  const debugPanel = !collapsed ? (
-    <div className="px-2 pb-2">
-      <div className="rounded-md border border-dashed border-destructive/40 bg-destructive/5 px-2 py-2 text-[10px] text-destructive break-words">
-        {JSON.stringify({
-          isClientUser,
-          isClientUserSafe,
-          businessId: profile?.business_id,
-          crmType,
-          hasCustomCRM,
-        })}
-      </div>
-    </div>
-  ) : null;
+  console.log("SIDEBAR:", { isClientUser, isClientUserSafe, crmType, hasCustomCRM });
 
   // ── Client users get separated navigation ──
   if (isClientUserSafe) {
@@ -129,7 +106,6 @@ export function AppSidebar() {
           </div>
         </SidebarHeader>
         <SidebarContent className="px-2">
-          {debugPanel}
 
           {/* Section A: NextWeb Services (always shown) */}
           {NEXTWEB_SERVICES_SECTIONS.map(section => (
@@ -211,7 +187,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2">
-        {debugPanel}
+        
         {filteredSections.map(section => {
           const visibleItems = filterItems(section.items);
           if (visibleItems.length === 0) return null;
