@@ -5,7 +5,7 @@ import {
   LayoutDashboard, UserPlus, Users, Building2, GitBranch, Landmark,
   Network, CheckSquare, MessageSquare, FileText, TrendingUp, BarChart3,
   Zap, Smartphone, Settings, Activity, Target, FolderKanban,
-  ClipboardList, DollarSign, PhoneCall, StickyNote, Briefcase,
+  ClipboardList, DollarSign, PhoneCall, StickyNote, Briefcase, Sun,
 } from "lucide-react";
 
 // Real Estate CRM modules
