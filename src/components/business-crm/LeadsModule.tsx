@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusinessCRM } from "@/hooks/useBusinessCRM";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity as logAI } from "@/lib/activity-logger";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
