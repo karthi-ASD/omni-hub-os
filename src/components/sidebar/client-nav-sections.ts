@@ -88,6 +88,9 @@ const SERVICE_CRM_SECTIONS: NavSection[] = [
     title: "Operations",
     items: [
       { label: "Projects", icon: Briefcase, to: "/my-crm?tab=projects" },
+      { label: "Solar Projects", icon: Sun, to: "/solar-projects" },
+      { label: "Solar Dashboard", icon: BarChart3, to: "/solar-dashboard" },
+      { label: "Installations", icon: Wrench, to: "/solar-installations" },
       { label: "Tasks", icon: ClipboardList, to: "/my-crm?tab=tasks_followups" },
       { label: "Calendar", icon: Calendar, to: "/my-crm?tab=calendar" },
     ],
