@@ -25,23 +25,29 @@ export function useProjectTasks(projectId?: string) {
 
   const create = async (values: Record<string, any>) => {
     if (!profile?.business_id) return;
-    await (supabase.from("project_tasks" as any) as any).insert([{
+    const { error } = await (supabase.from("project_tasks" as any) as any).insert([{
       ...values,
       business_id: profile.business_id,
     }]);
-    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "tasks", actionType: "create", entityType: "project_task", description: `Created task: ${values.title || values.task_title || ""}` });
+    if (!error) {
+      logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "tasks", actionType: "create", entityType: "project_task", description: `Created task: ${values.title || values.task_title || ""}` });
+    }
     fetch();
   };
 
   const update = async (id: string, values: Record<string, any>) => {
-    await (supabase.from("project_tasks" as any) as any).update(values).eq("id", id);
-    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "tasks", actionType: values.status === "completed" ? "complete" : "update", entityType: "project_task", entityId: id, description: values.status === "completed" ? "Task completed" : "Task updated" });
+    const { error } = await (supabase.from("project_tasks" as any) as any).update(values).eq("id", id);
+    if (!error) {
+      logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "tasks", actionType: values.status === "completed" ? "complete" : "update", entityType: "project_task", entityId: id, description: values.status === "completed" ? "Task completed" : "Task updated" });
+    }
     fetch();
   };
 
   const remove = async (id: string) => {
-    await (supabase.from("project_tasks" as any) as any).delete().eq("id", id);
-    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "tasks", actionType: "delete", entityType: "project_task", entityId: id, description: "Task deleted" });
+    const { error } = await (supabase.from("project_tasks" as any) as any).delete().eq("id", id);
+    if (!error) {
+      logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "tasks", actionType: "delete", entityType: "project_task", entityId: id, description: "Task deleted" });
+    }
     fetch();
   };
 

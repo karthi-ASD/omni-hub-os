@@ -272,6 +272,7 @@ export function useClients(options?: UseClientsOptions) {
       payload_json: { entity_type: "client", entity_id: clientId, actor_user_id: profile.user_id, short_message: `Onboarding: ${status}` },
     });
     toast.success("Onboarding status updated");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "update", entityType: "client", entityId: clientId, description: `Onboarding status → ${status}` });
     fetchClients(page, search);
     notifySalesDataChanged(["clients", "dashboard"], "client:update-onboarding");
   };
@@ -292,6 +293,7 @@ export function useClients(options?: UseClientsOptions) {
       entity_id: clientId,
     });
     toast.success("Client status updated");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "update", entityType: "client", entityId: clientId, description: `Client status → ${status}` });
     fetchClients(page, search);
     notifySalesDataChanged(["clients", "dashboard"], "client:update-status");
   };
@@ -314,6 +316,7 @@ export function useClients(options?: UseClientsOptions) {
     } as any);
 
     toast.success(`Assigned ${clientIds.length} clients to ${userName}`);
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "assign", entityType: "client", description: `Bulk assigned ${clientIds.length} clients to ${userName}` });
     fetchClients(0, search);
     notifySalesDataChanged(["clients", "dashboard"], "client:bulk-assign");
   };

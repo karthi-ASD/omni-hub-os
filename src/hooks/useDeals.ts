@@ -214,6 +214,7 @@ export function useDeals() {
     } as any);
 
     toast.success("Note added");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "create", entityType: "deal_note", entityId: dealId, description: "Added note to deal" });
     notifySalesDataChanged(["deals", "dashboard", "pipeline"], "deal:add-note");
   };
 

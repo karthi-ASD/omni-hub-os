@@ -59,22 +59,27 @@ function DaySummaryDots({ summary }: { summary: DaySummary | undefined }) {
 }
 
 /* ────── Activity Timeline Item ────── */
+function capitalizeAction(str: string) {
+  return str.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function ActivityTimelineItem({ record }: { record: ActivityRecord }) {
   const Icon = MODULE_ICON[record.module] || Activity;
+  const isImportant = ["create", "delete", "assign", "sign", "complete"].some(k => record.action_type?.includes(k));
   return (
-    <div className="flex gap-3 py-2.5 border-b border-border/50 last:border-0">
+    <div className={cn("flex gap-3 py-2.5 border-b border-border/50 last:border-0", isImportant && "bg-primary/[0.02]")}>
       <div className={cn("mt-0.5 p-1.5 rounded-lg shrink-0", getActionColor(record.action_type))}>
         <Icon className="h-3.5 w-3.5" />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium">{record.action_type.replace(/_/g, " ")}</span>
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0">{record.module}</Badge>
+          <span className={cn("text-sm", isImportant ? "font-semibold" : "font-medium")}>{capitalizeAction(record.action_type)}</span>
+          <Badge variant="outline" className="text-[10px] px-1.5 py-0 capitalize">{record.module}</Badge>
         </div>
         {record.description && <p className="text-xs text-muted-foreground mt-0.5">{record.description}</p>}
         {record.entity_type && (
-          <p className="text-[10px] text-muted-foreground mt-0.5">
-            {record.entity_type} {record.entity_id ? `· ${record.entity_id.slice(0, 8)}…` : ""}
+          <p className="text-[10px] text-muted-foreground mt-0.5 capitalize">
+            {record.entity_type.replace(/_/g, " ")} {record.entity_id ? `· ${record.entity_id.slice(0, 8)}…` : ""}
           </p>
         )}
       </div>
@@ -414,7 +419,11 @@ const CalendarPage = () => {
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                   </div>
                 ) : filteredActivities.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-12">No activities for this day</p>
+                  <div className="text-center py-12 space-y-2">
+                    <Activity className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+                    <p className="text-sm text-muted-foreground">No activities recorded for this day</p>
+                    <p className="text-xs text-muted-foreground/60">Actions like lead creation, ticket updates, and task changes will appear here</p>
+                  </div>
                 ) : (
                   filteredActivities.map((a) => <ActivityTimelineItem key={a.id} record={a} />)
                 )}
@@ -429,7 +438,11 @@ const CalendarPage = () => {
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                   </div>
                 ) : dayBehaviours.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-12">No behaviour data for this day</p>
+                  <div className="text-center py-12 space-y-2">
+                    <Globe className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+                    <p className="text-sm text-muted-foreground">No page visits recorded</p>
+                    <p className="text-xs text-muted-foreground/60">User navigation and time-on-page data will appear here</p>
+                  </div>
                 ) : (
                   dayBehaviours.map((b) => <BehaviourTimelineItem key={b.id} record={b} />)
                 )}
@@ -440,7 +453,10 @@ const CalendarPage = () => {
             <TabsContent value="events" className="flex-1 min-h-0 mt-3">
               <ScrollArea className="h-[460px] pr-2">
                 {eventsOnDay.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-12">No scheduled events</p>
+                  <div className="text-center py-12 space-y-2">
+                    <CalendarDays className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+                    <p className="text-sm text-muted-foreground">No scheduled events</p>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     {eventsOnDay.map((event) => (
