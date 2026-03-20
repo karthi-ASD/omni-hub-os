@@ -115,7 +115,11 @@ export function useBusinessCRM() {
   });
 
   // Debug logging
-  console.log("[useBusinessCRM] businessId:", businessId, "isACE1:", isACE1, "crmType:", crmType, "hasCustomCRM:", hasCustomCRM, "tabs:", tabs.length);
+  console.log("=== CRM DEBUG ===");
+  console.log("businessId:", businessId);
+  console.log("crmType:", crmType);
+  console.log("hasCustomCRM:", hasCustomCRM);
+  console.log("tabs length:", tabs.length);
 
   return {
     isACE1,
