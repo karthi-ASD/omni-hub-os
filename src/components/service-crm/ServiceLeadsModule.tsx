@@ -122,7 +122,7 @@ export function ServiceLeadsModule() {
     if (form.roof_type) customData.roof_type = form.roof_type;
     if (form.installation_notes) customData.installation_notes = form.installation_notes;
 
-    await createLead({
+    const result = await createLead({
       name: form.name.trim(),
       email: form.email.trim(),
       phone: form.phone.trim() || null,
@@ -135,6 +135,25 @@ export function ServiceLeadsModule() {
       property_type: form.property_type || null,
       priority: "medium",
     } as any);
+
+    // Auto-create follow-ups: Day 1 and Day 3
+    if (result?.id) {
+      const today = new Date();
+      await createFollowUp({
+        lead_id: result.id,
+        subject: `Day 1 follow-up: ${form.name.trim()}`,
+        followup_date: fmtDate(addDays(today, 1), "yyyy-MM-dd"),
+        followup_type: "call",
+        priority: "high",
+      });
+      await createFollowUp({
+        lead_id: result.id,
+        subject: `Day 3 follow-up: ${form.name.trim()}`,
+        followup_date: fmtDate(addDays(today, 3), "yyyy-MM-dd"),
+        followup_type: "call",
+        priority: "medium",
+      });
+    }
 
     setForm({ name: "", email: "", phone: "", address: "", source: "manual" as any, property_type: "", notes: "", monthly_consumption: "", roof_type: "", installation_notes: "" });
     setAddOpen(false);
