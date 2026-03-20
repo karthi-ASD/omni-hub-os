@@ -96,9 +96,11 @@ Deno.serve(async (req) => {
 
     // Return Plivo XML that joins both parties to the same conference bridge
     const startConferenceOnEnter = leg === "agent" ? "true" : "false";
-    const endConferenceOnExit = leg === "agent" ? "true" : "true";
+    const endConferenceOnExit = leg === "agent" ? "true" : "false";
+    const tokenQS = token ? `&token=${token}` : "";
+    const conferenceActionUrl = `${supabaseUrl}/functions/v1/dialer-webhook?session_id=${sessionId}${tokenQS}&conference=${conferenceId}&leg=${leg}`;
     return xmlResponse(
-      `<Conference startConferenceOnEnter="${startConferenceOnEnter}" endConferenceOnExit="${endConferenceOnExit}" callerId="${PLIVO_CALLER_ID}" callbackMethod="POST">${conferenceId}</Conference>`
+      `<Conference startConferenceOnEnter="${startConferenceOnEnter}" endConferenceOnExit="${endConferenceOnExit}" action="${conferenceActionUrl}" method="POST">${conferenceId}</Conference>`
     );
   } catch (err) {
     console.error("[dialer-answer] Error:", err);
