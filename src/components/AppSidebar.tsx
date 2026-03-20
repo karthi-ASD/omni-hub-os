@@ -185,8 +185,13 @@ export function AppSidebar() {
           )}
         </div>
         {!collapsed && isSuperAdmin && (
-          <div className="mt-2">
+          <div className="mt-2 space-y-1.5">
             <TenantSelector />
+            {selectedTenantId && (
+              <div className="px-2 py-1 rounded bg-primary/10 text-[10px] text-primary font-medium truncate">
+                Viewing: {allBusinesses.find(b => b.id === selectedTenantId)?.name || "Tenant"}
+              </div>
+            )}
           </div>
         )}
       </SidebarHeader>
