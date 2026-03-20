@@ -9769,24 +9769,123 @@ export type Database = {
           },
         ]
       }
+      crm_lead_activities: {
+        Row: {
+          activity_type: string
+          business_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          lead_id: string
+          performed_by: string | null
+        }
+        Insert: {
+          activity_type: string
+          business_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          lead_id: string
+          performed_by?: string | null
+        }
+        Update: {
+          activity_type?: string
+          business_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          lead_id?: string
+          performed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_lead_activities_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_lead_activities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "crm_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_lead_automation_rules: {
+        Row: {
+          action_config_json: Json | null
+          action_type: string
+          business_id: string
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          rule_name: string
+          trigger_event: string
+          updated_at: string | null
+        }
+        Insert: {
+          action_config_json?: Json | null
+          action_type: string
+          business_id: string
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          rule_name: string
+          trigger_event?: string
+          updated_at?: string | null
+        }
+        Update: {
+          action_config_json?: Json | null
+          action_type?: string
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          rule_name?: string
+          trigger_event?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_lead_automation_rules_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_leads: {
         Row: {
           assigned_advisor: string | null
+          assigned_at: string | null
+          assigned_employee_id: string | null
+          auto_scored: boolean | null
           budget_range: string | null
           business_id: string
           campaign_source: string | null
           city: string | null
+          contact_attempts: number | null
           created_at: string
           custom_fields_json: Json | null
           email: string | null
+          email_sent: boolean | null
           email_verified: boolean | null
           enquiry_at: string | null
           finance_readiness: string | null
+          first_contact_at: string | null
           full_name: string
           id: string
           invalid_reason: string | null
+          investment_timeline: string | null
           last_contact_attempt: string | null
           lead_score: number | null
+          lead_temperature: string | null
+          location_preference: string | null
+          meta_lead_id: string | null
           mobile: string | null
           next_followup: string | null
           notes: string | null
@@ -9795,31 +9894,45 @@ export type Database = {
           phone_verified: boolean | null
           preferred_callback_time: string | null
           property_interest_type: string | null
+          qualification_status: string | null
+          referral_source_name: string | null
           seriousness_score: number | null
+          sla_breached: boolean | null
           smsf_interest: boolean | null
           source: string | null
           stage: string | null
           state: string | null
           tags: string[] | null
           updated_at: string
+          whatsapp_sent: boolean | null
         }
         Insert: {
           assigned_advisor?: string | null
+          assigned_at?: string | null
+          assigned_employee_id?: string | null
+          auto_scored?: boolean | null
           budget_range?: string | null
           business_id: string
           campaign_source?: string | null
           city?: string | null
+          contact_attempts?: number | null
           created_at?: string
           custom_fields_json?: Json | null
           email?: string | null
+          email_sent?: boolean | null
           email_verified?: boolean | null
           enquiry_at?: string | null
           finance_readiness?: string | null
+          first_contact_at?: string | null
           full_name: string
           id?: string
           invalid_reason?: string | null
+          investment_timeline?: string | null
           last_contact_attempt?: string | null
           lead_score?: number | null
+          lead_temperature?: string | null
+          location_preference?: string | null
+          meta_lead_id?: string | null
           mobile?: string | null
           next_followup?: string | null
           notes?: string | null
@@ -9828,31 +9941,45 @@ export type Database = {
           phone_verified?: boolean | null
           preferred_callback_time?: string | null
           property_interest_type?: string | null
+          qualification_status?: string | null
+          referral_source_name?: string | null
           seriousness_score?: number | null
+          sla_breached?: boolean | null
           smsf_interest?: boolean | null
           source?: string | null
           stage?: string | null
           state?: string | null
           tags?: string[] | null
           updated_at?: string
+          whatsapp_sent?: boolean | null
         }
         Update: {
           assigned_advisor?: string | null
+          assigned_at?: string | null
+          assigned_employee_id?: string | null
+          auto_scored?: boolean | null
           budget_range?: string | null
           business_id?: string
           campaign_source?: string | null
           city?: string | null
+          contact_attempts?: number | null
           created_at?: string
           custom_fields_json?: Json | null
           email?: string | null
+          email_sent?: boolean | null
           email_verified?: boolean | null
           enquiry_at?: string | null
           finance_readiness?: string | null
+          first_contact_at?: string | null
           full_name?: string
           id?: string
           invalid_reason?: string | null
+          investment_timeline?: string | null
           last_contact_attempt?: string | null
           lead_score?: number | null
+          lead_temperature?: string | null
+          location_preference?: string | null
+          meta_lead_id?: string | null
           mobile?: string | null
           next_followup?: string | null
           notes?: string | null
@@ -9861,13 +9988,17 @@ export type Database = {
           phone_verified?: boolean | null
           preferred_callback_time?: string | null
           property_interest_type?: string | null
+          qualification_status?: string | null
+          referral_source_name?: string | null
           seriousness_score?: number | null
+          sla_breached?: boolean | null
           smsf_interest?: boolean | null
           source?: string | null
           stage?: string | null
           state?: string | null
           tags?: string[] | null
           updated_at?: string
+          whatsapp_sent?: boolean | null
         }
         Relationships: [
           {
