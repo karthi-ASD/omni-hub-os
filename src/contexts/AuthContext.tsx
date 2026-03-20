@@ -429,19 +429,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isBusinessAdmin = hasRole("business_admin");
   const isHRManager = hasRole("hr_manager");
 
-  // SINGLE SOURCE OF TRUTH: resolve user type via strict priority resolver
-  const userType = resolveUserType({ roles: roles as string[], clientUserId });
-
-  // Derived booleans from userType — NEVER infer independently
-  const isClientUser = userType === "client";
-  const clientId = isClientUser ? clientUserId : null;
-
-  // Detect and log role conflicts (staff user with client_users record)
-  const conflict = detectRoleConflict({ roles: roles as string[], clientUserId, userId: user?.id });
-  if (conflict) {
-    console.warn(conflict);
-  }
-
   const selectTenant = useCallback((id: string | null) => setSelectedTenantId(id), []);
 
   // KEY FIX: For super_admin, override profile.business_id with selected tenant
@@ -454,12 +441,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     : null;
 
+  const activeTenantId = isSuperAdmin
+    ? (selectedTenantId ?? rawProfile?.business_id ?? null)
+    : (profile?.business_id ?? rawProfile?.business_id ?? null);
+
+  const activeCRMType = activeBusinessContext?.crm_type ?? null;
+  const hasCustomCRM = !!activeCRMType && activeCRMType !== "generic";
+
+  // SINGLE SOURCE OF TRUTH: resolve user type via strict priority resolver
+  const userType = resolveUserType({ roles: roles as string[], clientUserId });
+  const appMode = resolveAppMode({
+    roles: roles as string[],
+    clientUserId,
+    businessId: activeTenantId,
+    hasCustomCRM,
+  });
+  const dashboardShell: DashboardShell = appMode;
+  const isAuthResolved = !loading && !businessContextLoading && (!!session ? !!rawProfile : true);
+
+  // Derived booleans from userType — NEVER infer independently
+  const isClientUser = userType === "client";
+  const clientId = isClientUser ? clientUserId : null;
+
+  // Detect and log role conflicts (staff user with client_users record)
+  const conflict = detectRoleConflict({ roles: roles as string[], clientUserId, userId: user?.id });
+  if (conflict) {
+    console.warn(conflict);
+  }
+
+  useEffect(() => {
+    if (!session?.user) {
+      setActiveBusinessContext(null);
+      setBusinessContextLoading(false);
+      return;
+    }
+
+    void fetchActiveBusinessContext(activeTenantId);
+  }, [session?.user?.id, activeTenantId, fetchActiveBusinessContext]);
+
   const contextValue = useMemo(() => ({
     session,
     user,
     profile,
     roles,
     loading,
+    isAuthResolved,
     tenantValidationError,
     signOut,
     hasRole,
@@ -469,10 +495,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isClientUser,
     clientId,
     userType,
+    appMode,
+    dashboardShell,
+    activeTenantId,
+    activeBusinessName: activeBusinessContext?.name ?? null,
+    activeCRMType,
     allBusinesses,
     selectedTenantId,
     selectTenant,
-  }), [session, user, profile, roles, loading, tenantValidationError, signOut, hasRole, isSuperAdmin, isBusinessAdmin, isHRManager, isClientUser, clientId, userType, allBusinesses, selectedTenantId, selectTenant]);
+  }), [session, user, profile, roles, loading, isAuthResolved, tenantValidationError, signOut, hasRole, isSuperAdmin, isBusinessAdmin, isHRManager, isClientUser, clientId, userType, appMode, dashboardShell, activeTenantId, activeBusinessContext?.name, activeCRMType, allBusinesses, selectedTenantId, selectTenant]);
 
   return (
     <AuthContext.Provider value={contextValue}>
