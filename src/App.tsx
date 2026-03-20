@@ -146,6 +146,7 @@ import MobileTechnologyPage from "./pages/MobileTechnologyPage";
 import ITSolutionsPage from "./pages/ITSolutionsPage";
 import EMarketingPage from "./pages/EMarketingPage";
 import AutomationPage from "./pages/AutomationPage";
+import DialerPage from "./pages/DialerPage";
 import ConversationsPage from "./pages/ConversationsPage";
 import AgentFactoryPage from "./pages/AgentFactoryPage";
 import ProviderConnectionsPage from "./pages/ProviderConnectionsPage";
