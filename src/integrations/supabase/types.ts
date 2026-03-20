@@ -7685,6 +7685,7 @@ export type Database = {
           deal_id: string | null
           deleted_at: string | null
           deleted_by: string | null
+          dialer_enabled: boolean | null
           email: string
           google_map_link: string | null
           health_score: string | null
@@ -7740,6 +7741,7 @@ export type Database = {
           deal_id?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          dialer_enabled?: boolean | null
           email: string
           google_map_link?: string | null
           health_score?: string | null
@@ -7795,6 +7797,7 @@ export type Database = {
           deal_id?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          dialer_enabled?: boolean | null
           email?: string
           google_map_link?: string | null
           health_score?: string | null
@@ -11941,6 +11944,86 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "dialer_call_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "dialer_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dialer_call_tags: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          session_id: string
+          tag: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          session_id: string
+          tag: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          session_id?: string
+          tag?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dialer_call_tags_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "dialer_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dialer_dispositions: {
+        Row: {
+          agent_id: string
+          created_at: string
+          disposition_type: string
+          follow_up_date: string | null
+          id: string
+          lead_id: string | null
+          notes: string | null
+          session_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          disposition_type: string
+          follow_up_date?: string | null
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          session_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          disposition_type?: string
+          follow_up_date?: string | null
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dialer_dispositions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dialer_dispositions_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "dialer_sessions"
