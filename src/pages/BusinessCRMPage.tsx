@@ -6,23 +6,25 @@ import {
   Network, CheckSquare, MessageSquare, FileText, TrendingUp, BarChart3,
   Zap, Smartphone, Settings, Activity, Target, FolderKanban,
   ClipboardList, DollarSign, PhoneCall, StickyNote, Briefcase, Sun,
+  Filter, MapPinned, Handshake, Banknote, UserCheck, Shield, Inbox, PieChart,
 } from "lucide-react";
 
-// Real Estate CRM modules
-import { ExecutiveDashboardModule } from "@/components/business-crm/ExecutiveDashboardModule";
+// Real Estate / ACE1 Command Centre modules
+import { ACE1ExecutiveDashboard } from "@/components/business-crm/ACE1ExecutiveDashboard";
 import { LeadsModule } from "@/components/business-crm/LeadsModule";
+import { QualificationDeskModule } from "@/components/business-crm/QualificationDeskModule";
+import { PropertyMatchingModule } from "@/components/business-crm/PropertyMatchingModule";
 import { InvestorsModule } from "@/components/business-crm/InvestorsModule";
 import { OpportunitiesModule } from "@/components/business-crm/OpportunitiesModule";
 import { DealPipelineModule } from "@/components/business-crm/DealPipelineModule";
 import { ProjectsDevelopersModule } from "@/components/business-crm/ProjectsDevelopersModule";
-import { PartnersModule } from "@/components/business-crm/PartnersModule";
+import { AccountsCommissionsModule } from "@/components/business-crm/AccountsCommissionsModule";
+import { HRTeamModule } from "@/components/business-crm/HRTeamModule";
 import { TasksFollowupsModule } from "@/components/business-crm/TasksFollowupsModule";
 import { CommunicationsModule } from "@/components/business-crm/CommunicationsModule";
-import { DocumentsModule } from "@/components/business-crm/DocumentsModule";
-import { PortfolioGrowthModule } from "@/components/business-crm/PortfolioGrowthModule";
+import { ClientPortalMgmtModule } from "@/components/business-crm/ClientPortalMgmtModule";
+import { TicketingSupportModule } from "@/components/business-crm/TicketingSupportModule";
 import { ReportsModule } from "@/components/business-crm/ReportsModule";
-import { AutomationsModule } from "@/components/business-crm/AutomationsModule";
-import { MobileAppModule } from "@/components/business-crm/MobileAppModule";
 import { BusinessSettingsModule } from "@/components/business-crm/BusinessSettingsModule";
 
 // Service CRM modules
@@ -35,23 +37,26 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Network, CheckSquare, MessageSquare, FileText, TrendingUp, BarChart3,
   Zap, Smartphone, Settings, Activity, Target, FolderKanban,
   ClipboardList, DollarSign, PhoneCall, StickyNote, Briefcase, Sun,
+  Filter, MapPinned, Handshake, Banknote, UserCheck, Shield, Inbox, PieChart,
 };
 
+// ACE1 Command Centre module map (16 modules)
 const REAL_ESTATE_MODULE_MAP: Record<string, React.FC> = {
-  executive_dashboard: ExecutiveDashboardModule,
+  executive_dashboard: ACE1ExecutiveDashboard,
   leads: LeadsModule,
+  qualification_desk: QualificationDeskModule,
+  property_matching: PropertyMatchingModule,
   investors: InvestorsModule,
   opportunities: OpportunitiesModule,
   deal_pipeline: DealPipelineModule,
   projects_developers: ProjectsDevelopersModule,
-  partners: PartnersModule,
+  accounts_commissions: AccountsCommissionsModule,
+  hr_team: HRTeamModule,
   tasks_followups: TasksFollowupsModule,
   communications: CommunicationsModule,
-  documents: DocumentsModule,
-  portfolio_growth: PortfolioGrowthModule,
+  client_portal_mgmt: ClientPortalMgmtModule,
+  ticketing_support: TicketingSupportModule,
   reports: ReportsModule,
-  automations: AutomationsModule,
-  mobile_app: MobileAppModule,
   business_settings: BusinessSettingsModule,
 };
 
@@ -72,9 +77,8 @@ const SERVICE_MODULE_MAP: Record<string, React.FC> = {
   business_settings: BusinessSettingsModule,
 };
 
-// Dynamic CRM type subtitles
 const CRM_SUBTITLES: Record<string, string> = {
-  real_estate: "Your dedicated workspace for managing investors, properties, and deals",
+  real_estate: "Property Investment Command System",
   service: "Manage leads, proposals, and service operations",
   finance: "Financial services workspace",
   generic: "Your business workspace",
@@ -97,49 +101,24 @@ export default function BusinessCRMPage() {
     );
   }
 
-  const title = `${businessName} CRM`;
+  const title = isRealEstate ? `${businessName} Command Centre` : `${businessName} CRM`;
   const subtitle = CRM_SUBTITLES[crmType || "generic"] || CRM_SUBTITLES.generic;
 
-  // Real estate CRM: tab-based rendering from DB config
+  // Real estate: direct module rendering via sidebar (no tab bar)
   if (isRealEstate) {
+    const ModuleComponent = REAL_ESTATE_MODULE_MAP[activeTab] || ACE1ExecutiveDashboard;
     return (
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">{title}</h1>
           <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
         </div>
-        <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v })} className="w-full">
-          <TabsList className="bg-card border border-border h-auto flex-wrap gap-1 p-1">
-            {tabs.map((tab) => {
-              const Icon = ICON_MAP[tab.icon || ""] || Activity;
-              return (
-                <TabsTrigger
-                  key={tab.key}
-                  value={tab.key}
-                  className="gap-1.5 text-[11px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                >
-                  <Icon className="h-3 w-3" />
-                  {tab.label}
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
-          {tabs.map((tab) => {
-            const ModuleComponent = REAL_ESTATE_MODULE_MAP[tab.key];
-            return (
-              <TabsContent key={tab.key} value={tab.key} className="mt-4">
-                {ModuleComponent ? <ModuleComponent /> : (
-                  <div className="text-center py-12 text-muted-foreground">Module "{tab.label}" coming soon</div>
-                )}
-              </TabsContent>
-            );
-          })}
-        </Tabs>
+        <ModuleComponent />
       </div>
     );
   }
 
-  // Service CRM: render module directly
+  // Service CRM
   const ModuleComponent = SERVICE_MODULE_MAP[activeTab] || SERVICE_MODULE_MAP.leads;
 
   return (

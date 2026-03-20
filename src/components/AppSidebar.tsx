@@ -143,11 +143,11 @@ export function AppSidebar() {
             <>
               <div className="px-2 py-2">
                 <Separator className="bg-sidebar-foreground/10" />
-                {!collapsed && (
-                  <p className="text-[9px] uppercase tracking-widest text-sidebar-foreground/40 font-bold mt-2 px-2">
-                    My Business CRM
-                  </p>
-                )}
+                 {!collapsed && (
+                   <p className="text-[9px] uppercase tracking-widest text-sidebar-foreground/40 font-bold mt-2 px-2">
+                     {getCRMHeading(activeCRMType, activeBusinessName)}
+                   </p>
+                 )}
               </div>
               {activeCRMSections.map(section => (
                 <SidebarNavSection key={section.title} section={section} collapsed={collapsed} pathname={location.pathname} />
