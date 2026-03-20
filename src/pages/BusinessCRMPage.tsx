@@ -20,7 +20,7 @@ import { DealPipelineModule } from "@/components/business-crm/DealPipelineModule
 import { PropertyInventoryModule } from "@/components/business-crm/PropertyInventoryModule";
 import { ProjectsDevelopersModule } from "@/components/business-crm/ProjectsDevelopersModule";
 import { AccountsCommissionsModule } from "@/components/business-crm/AccountsCommissionsModule";
-import { HRTeamModule } from "@/components/business-crm/HRTeamModule";
+import { HRTeamModuleFull } from "@/components/business-crm/hr/HRTeamModuleFull";
 import { TasksFollowupsModule } from "@/components/business-crm/TasksFollowupsModule";
 import { CommunicationsModule } from "@/components/business-crm/CommunicationsModule";
 import { ClientPortalMgmtModule } from "@/components/business-crm/ClientPortalMgmtModule";
@@ -53,7 +53,7 @@ const REAL_ESTATE_MODULE_MAP: Record<string, React.FC> = {
   property_inventory: PropertyInventoryModule,
   projects_developers: ProjectsDevelopersModule,
   accounts_commissions: AccountsCommissionsModule,
-  hr_team: HRTeamModule,
+  hr_team: HRTeamModuleFull,
   tasks_followups: TasksFollowupsModule,
   communications: CommunicationsModule,
   client_portal_mgmt: ClientPortalMgmtModule,
