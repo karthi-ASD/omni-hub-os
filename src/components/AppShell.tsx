@@ -12,6 +12,7 @@ import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { BroadcastPopup } from "@/components/notifications/BroadcastPopup";
+import { useActivityTracking } from "@/hooks/useActivityTracking";
 import { useEffect } from "react";
 
 const shellMeta = {
