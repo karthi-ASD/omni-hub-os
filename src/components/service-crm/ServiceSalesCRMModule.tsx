@@ -106,9 +106,29 @@ export function ServiceSalesCRMModule() {
     if (error) { toast.error("Failed to update"); return; }
     toast.success("Proposal approved! Conversion flow triggered.");
 
-    // Auto-convert linked lead to "won"
+    // Auto-convert linked lead to "won" and create client record
     if (proposal && (proposal as any).lead_id) {
-      await supabase.from("leads").update({ stage: "won" }).eq("id", (proposal as any).lead_id);
+      const leadId = (proposal as any).lead_id;
+      await supabase.from("leads").update({ stage: "won" }).eq("id", leadId);
+
+      // Get lead data to create client
+      const { data: leadData } = await supabase.from("leads").select("*").eq("id", leadId).maybeSingle();
+      if (leadData && businessId) {
+        const { error: clientErr } = await supabase.from("clients").insert({
+          business_id: businessId,
+          contact_name: leadData.name,
+          email: leadData.email,
+          phone: leadData.phone,
+          mobile: leadData.phone,
+          company_name: leadData.business_name || leadData.name,
+          city: leadData.suburb || null,
+          lead_source: leadData.source || "crm",
+          onboarding_status: "pending",
+        });
+        if (!clientErr) {
+          toast.success("Client profile created from lead");
+        }
+      }
     }
 
     qc.invalidateQueries({ queryKey: ["service-proposals"] });

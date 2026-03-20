@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface SearchResult {
-  type: "user" | "business" | "event" | "inquiry" | "lead" | "deal" | "invoice";
+  type: "user" | "business" | "event" | "inquiry" | "lead" | "deal" | "invoice" | "request";
   id: string;
   title: string;
   subtitle: string;
@@ -55,6 +55,22 @@ export function useGlobalSearch() {
           id: b.id,
           title: b.name,
           subtitle: b.status,
+        })
+      );
+
+      // Search service requests (super admin)
+      const { data: requests } = await supabase
+        .from("nextweb_service_requests" as any)
+        .select("id, title, status, business_id")
+        .ilike("title", `%${query}%`)
+        .limit(5);
+
+      requests?.forEach((r: any) =>
+        allResults.push({
+          type: "request",
+          id: r.id,
+          title: r.title,
+          subtitle: `Request · ${r.status}`,
         })
       );
     }

@@ -167,7 +167,7 @@ export function MobileAppModule() {
           <div className="mx-auto max-w-sm border-2 border-border rounded-2xl overflow-hidden bg-card shadow-lg">
             <div className="bg-primary/10 px-4 py-3 border-b border-border">
               <p className="text-sm font-semibold text-foreground">📅 Upcoming Follow-ups</p>
-              <p className="text-[10px] text-muted-foreground">Your scheduled consultations with ACE1</p>
+              <p className="text-[10px] text-muted-foreground">Your scheduled consultations</p>
             </div>
             <div className="p-3 space-y-2 max-h-[400px] overflow-y-auto">
               {followupTasks.length === 0 && (
@@ -211,7 +211,7 @@ export function MobileAppModule() {
       <Card className="bg-card border-primary/20">
         <CardContent className="p-4">
           <p className="text-xs text-muted-foreground">
-            💡 <strong>Note:</strong> Changes to mobile app content are managed through your ACE1 CRM workspace. 
+            💡 <strong>Note:</strong> Changes to mobile app content are managed through your CRM workspace. 
             Content updates will sync automatically to connected investor mobile apps.
           </p>
         </CardContent>

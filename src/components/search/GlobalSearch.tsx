@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useGlobalSearch } from "@/hooks/useGlobalSearch";
 import { Input } from "@/components/ui/input";
-import { Search, Users, Building2, Calendar, X, MessageSquare, Target, FolderKanban } from "lucide-react";
+import { Search, Users, Building2, Calendar, X, MessageSquare, Target, FolderKanban, Ticket } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export function GlobalSearch() {
@@ -34,6 +34,7 @@ export function GlobalSearch() {
       case "inquiry": return MessageSquare;
       case "lead": return Target;
       case "deal": return FolderKanban;
+      case "request": return Ticket;
       default: return Search;
     }
   };
@@ -49,6 +50,7 @@ export function GlobalSearch() {
       case "inquiry": navigate("/inquiries"); break;
       case "lead": navigate("/leads"); break;
       case "deal": navigate("/deals"); break;
+      case "request": navigate("/admin-service-requests"); break;
     }
   };
 
