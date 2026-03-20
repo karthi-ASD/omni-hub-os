@@ -11916,6 +11916,53 @@ export type Database = {
           },
         ]
       }
+      dialer_ai_logs: {
+        Row: {
+          created_at: string
+          id: string
+          key_points: string[] | null
+          next_action: string | null
+          priority: string | null
+          score: number | null
+          sentiment: string | null
+          session_id: string
+          summary: string | null
+          transcript: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key_points?: string[] | null
+          next_action?: string | null
+          priority?: string | null
+          score?: number | null
+          sentiment?: string | null
+          session_id: string
+          summary?: string | null
+          transcript?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key_points?: string[] | null
+          next_action?: string | null
+          priority?: string | null
+          score?: number | null
+          sentiment?: string | null
+          session_id?: string
+          summary?: string | null
+          transcript?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dialer_ai_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "dialer_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dialer_call_events: {
         Row: {
           created_at: string
@@ -12035,7 +12082,9 @@ export type Database = {
         Row: {
           ai_score: number | null
           ai_summary: string | null
+          bill_duration: number | null
           business_id: string
+          call_cost: number | null
           call_duration: number | null
           call_end_time: string | null
           call_start_time: string | null
@@ -12055,7 +12104,9 @@ export type Database = {
         Insert: {
           ai_score?: number | null
           ai_summary?: string | null
+          bill_duration?: number | null
           business_id: string
+          call_cost?: number | null
           call_duration?: number | null
           call_end_time?: string | null
           call_start_time?: string | null
@@ -12075,7 +12126,9 @@ export type Database = {
         Update: {
           ai_score?: number | null
           ai_summary?: string | null
+          bill_duration?: number | null
           business_id?: string
+          call_cost?: number | null
           call_duration?: number | null
           call_end_time?: string | null
           call_start_time?: string | null
@@ -17145,6 +17198,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           priority: string | null
+          priority_score: number | null
           property_type: string | null
           proposal_sent: boolean | null
           referrer_url: string | null
@@ -17201,6 +17255,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           priority?: string | null
+          priority_score?: number | null
           property_type?: string | null
           proposal_sent?: boolean | null
           referrer_url?: string | null
@@ -17257,6 +17312,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           priority?: string | null
+          priority_score?: number | null
           property_type?: string | null
           proposal_sent?: boolean | null
           referrer_url?: string | null
@@ -28690,6 +28746,7 @@ export type Database = {
         Returns: string
       }
       get_client_id_for_user: { Args: { _user_id: string }; Returns: string }
+      get_dialer_metrics: { Args: { _business_id: string }; Returns: Json }
       get_provider_business_id_for_client_user: {
         Args: { _user_id: string }
         Returns: string

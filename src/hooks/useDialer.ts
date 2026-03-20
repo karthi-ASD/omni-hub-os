@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   createDialerSession,
   initiateCall,
@@ -34,7 +35,7 @@ export function useDialer() {
   const unsubRef = useRef<(() => void) | null>(null);
   const initTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Timer logic — starts ONLY when webhook sets status to "connected"
+  // Timer logic
   useEffect(() => {
     if (callStatus === "connected") {
       timerRef.current = setInterval(() => setCallTimer((t) => t + 1), 1000);
@@ -45,7 +46,6 @@ export function useDialer() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [callStatus]);
 
-  // Clear init timeout when status progresses past initiating
   useEffect(() => {
     if (callStatus !== "initiating" && initTimeoutRef.current) {
       clearTimeout(initTimeoutRef.current);
@@ -53,7 +53,7 @@ export function useDialer() {
     }
   }, [callStatus]);
 
-  // Realtime subscription — ALL status changes come from webhook via DB updates
+  // Realtime subscription
   useEffect(() => {
     if (!session?.id) return;
     unsubRef.current = subscribeToSession(session.id, (updated) => {
@@ -82,12 +82,24 @@ export function useDialer() {
 
   const startCall = useCallback(async (phoneNumber: string, leadId?: string, clientId?: string) => {
     if (!profile?.business_id || loading || isCallActive) return;
+
+    // Lead context validation: fetch latest phone from DB
+    let resolvedPhone = phoneNumber;
+    if (leadId) {
+      const { data: lead } = await supabase
+        .from("leads")
+        .select("phone")
+        .eq("id", leadId)
+        .maybeSingle();
+      if (lead?.phone) resolvedPhone = lead.phone;
+    }
+
     setLoading(true);
     try {
       const sess = await createDialerSession({
         businessId: profile.business_id,
         userId: profile.user_id,
-        phoneNumber,
+        phoneNumber: resolvedPhone,
         leadId,
         clientId,
       });
@@ -101,7 +113,6 @@ export function useDialer() {
       await updateAgentState(profile.business_id, profile.user_id, "on_call");
       setAgentState("on_call");
 
-      // Start init timeout failsafe — keep status as initiating, just notify user
       initTimeoutRef.current = setTimeout(() => {
         setCallStatus((prev) => {
           if (prev === "initiating") {
@@ -131,9 +142,7 @@ export function useDialer() {
   const endCall = useCallback(async () => {
     if (!session?.id) return;
     const success = await hangupCall(session.id);
-    if (!success) {
-      toast.error("Failed to end call");
-    }
+    if (!success) toast.error("Failed to end call");
   }, [session]);
 
   const toggleMute = useCallback(() => {
@@ -143,11 +152,11 @@ export function useDialer() {
 
   const submitDisposition = useCallback(async (disposition: Disposition, notes?: string, followUpDate?: string) => {
     if (!session?.id || !profile) return;
-    
-    // Save to dialer_sessions (legacy)
+
+    // Save to dialer_sessions (latest state)
     await saveDisposition(session.id, disposition, notes);
-    
-    // Save detailed disposition
+
+    // Save detailed disposition (audit log)
     await saveDetailedDisposition({
       sessionId: session.id,
       leadId: session.lead_id,
@@ -159,18 +168,32 @@ export function useDialer() {
 
     await insertCallEvent(session.id, "disposition_set", { disposition, notes });
 
+    // Follow-up with duplicate check
     if (followUpDate && profile.business_id) {
-      const { supabase } = await import("@/integrations/supabase/client");
-      await supabase.from("reminders").insert({
-        business_id: profile.business_id,
-        entity_type: "lead" as any,
-        entity_id: session.lead_id || session.id,
-        assigned_to_user_id: profile.user_id,
-        created_by_user_id: profile.user_id,
-        title: `Follow-up call: ${session.phone_number}`,
-        due_at: followUpDate,
-        priority: "high" as any,
-      });
+      const entityId = session.lead_id || session.id;
+      const dateOnly = followUpDate.split("T")[0];
+
+      // Check for existing reminder on same date for same entity
+      const { count } = await supabase
+        .from("reminders")
+        .select("id", { count: "exact", head: true })
+        .eq("entity_id", entityId)
+        .eq("assigned_to_user_id", profile.user_id)
+        .gte("due_at", dateOnly)
+        .lt("due_at", new Date(new Date(dateOnly).getTime() + 86400000).toISOString().split("T")[0]);
+
+      if ((count || 0) === 0) {
+        await supabase.from("reminders").insert({
+          business_id: profile.business_id,
+          entity_type: "lead" as any,
+          entity_id: entityId,
+          assigned_to_user_id: profile.user_id,
+          created_by_user_id: profile.user_id,
+          title: `Follow-up call: ${session.phone_number}`,
+          due_at: followUpDate,
+          priority: "high" as any,
+        });
+      }
     }
 
     toast.success("Disposition saved");
