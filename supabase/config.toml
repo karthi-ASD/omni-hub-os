@@ -104,3 +104,6 @@ verify_jwt = false
 
 [functions.approve-proposal]
 verify_jwt = false
+
+[functions.meta-lead-webhook]
+verify_jwt = false
