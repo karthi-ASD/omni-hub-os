@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { resolveUserType, detectRoleConflict, type UserType } from "@/lib/role-resolver";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -36,6 +37,8 @@ interface AuthContextType {
   isClientUser: boolean;
   /** The client_id this user is linked to (from client_users) */
   clientId: string | null;
+  /** Resolved user type — SINGLE SOURCE OF TRUTH */
+  userType: UserType;
   /** All businesses — only populated for super_admin */
   allBusinesses: TenantBusiness[];
   /** Selected tenant for super_admin context switching */
@@ -368,24 +371,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isSuperAdmin = hasRole("super_admin");
   const isBusinessAdmin = hasRole("business_admin");
   const isHRManager = hasRole("hr_manager");
-  const isEmployee = hasRole("employee");
 
-  // STRICT: client user ONLY if they have a client_users link AND no staff/admin role
-  const isClientUser = !!clientUserId && !isSuperAdmin && !isBusinessAdmin && !isEmployee;
+  // SINGLE SOURCE OF TRUTH: resolve user type via strict priority resolver
+  const userType = resolveUserType({ roles: roles as string[], clientUserId });
+
+  // Derived booleans from userType — NEVER infer independently
+  const isClientUser = userType === "client";
   const clientId = isClientUser ? clientUserId : null;
 
-  // Security guard: log if employee incorrectly has a client_users record
-  if ((isEmployee || isBusinessAdmin) && !!clientUserId) {
-    console.warn("[ROLE CONFLICT] Staff user has client_users record — ignoring client context", {
-      userId: user?.id,
-      roles,
-      clientUserId,
-    });
+  // Detect and log role conflicts (staff user with client_users record)
+  const conflict = detectRoleConflict({ roles: roles as string[], clientUserId, userId: user?.id });
+  if (conflict) {
+    console.warn(conflict);
   }
+
   const selectTenant = useCallback((id: string | null) => setSelectedTenantId(id), []);
 
   // KEY FIX: For super_admin, override profile.business_id with selected tenant
-  // This makes ALL hooks that use profile.business_id work automatically
   const profile: Profile | null = rawProfile
     ? {
         ...rawProfile,
@@ -409,10 +411,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isHRManager,
     isClientUser,
     clientId,
+    userType,
     allBusinesses,
     selectedTenantId,
     selectTenant,
-  }), [session, user, profile, roles, loading, tenantValidationError, signOut, hasRole, isSuperAdmin, isBusinessAdmin, isHRManager, isClientUser, clientId, allBusinesses, selectedTenantId, selectTenant]);
+  }), [session, user, profile, roles, loading, tenantValidationError, signOut, hasRole, isSuperAdmin, isBusinessAdmin, isHRManager, isClientUser, clientId, userType, allBusinesses, selectedTenantId, selectTenant]);
 
   return (
     <AuthContext.Provider value={contextValue}>
