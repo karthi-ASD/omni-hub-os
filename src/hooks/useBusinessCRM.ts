@@ -29,25 +29,26 @@ export function useBusinessCRM() {
   const { profile } = useAuth();
   const businessId = profile?.business_id;
 
-  // Fetch CRM type dynamically from businesses table
+  // Fetch CRM type and business name dynamically from businesses table
   const { data: businessData } = useQuery({
     queryKey: ["business-crm-type", businessId],
     queryFn: async () => {
       if (!businessId) return null;
       const { data } = await supabase
         .from("businesses")
-        .select("id, crm_type")
+        .select("id, name, crm_type")
         .eq("id", businessId)
         .maybeSingle();
       return data;
     },
     enabled: !!businessId,
-    staleTime: 5 * 60 * 1000, // cache for 5 min
+    staleTime: 5 * 60 * 1000,
   });
 
   const crmType: CRMType | null = (businessData?.crm_type as CRMType) || null;
+  const businessName: string = (businessData as any)?.name || "Business";
   const hasCustomCRM = !!crmType && crmType !== "generic";
-  const isACE1 = crmType === "real_estate";
+  const isRealEstate = crmType === "real_estate";
 
   // Fetch CRM tabs (for the CRM page, not sidebar)
   const { data: tabs = [], refetch: refetchTabs } = useQuery({
