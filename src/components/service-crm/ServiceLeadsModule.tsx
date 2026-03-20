@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useLeads } from "@/hooks/useLeads";
 import { useFollowUps } from "@/hooks/useFollowUps";
 import { useAuth } from "@/contexts/AuthContext";
+import { addDays, format as fmtDate } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
