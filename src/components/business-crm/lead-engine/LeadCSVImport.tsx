@@ -71,7 +71,7 @@ export function LeadCSVImport({ open, onClose, businessId }: Props) {
             errs.push(`Row ${i + 2}: Missing name`);
             return;
           }
-          leads.push(mapped as ParsedLead);
+          leads.push(mapped as unknown as ParsedLead);
         });
 
         setParsed(leads);
