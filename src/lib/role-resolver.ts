@@ -102,26 +102,29 @@ export function isClientPortalUser(userType: UserType): boolean {
 }
 
 /**
- * REGRESSION GUARD — fires if an employee is ever classified as client.
- * This should NEVER happen if resolveUserType priority is correct.
+ * 🔒 DO NOT MODIFY — SECURITY CRITICAL
+ * REGRESSION GUARD — fires if a staff user is either:
+ *   - classified as "client", OR
+ *   - still holds a non-null clientUserId
  */
 export function assertNoEmployeeClientCrossover({
   isEmployeeByHR,
   roles,
   userType,
+  clientUserId,
   userId,
 }: {
-  isEmployeeByHR: boolean;
+  isEmployeeByHR?: boolean;
   roles: string[];
   userType: UserType;
+  clientUserId?: string | null;
   userId?: string;
 }): void {
-  const hasStaffSignal = isEmployeeByHR || hasAnyRole(roles, [...PRIVILEGED_ROLES]);
-  if (hasStaffSignal && userType === "client") {
-    const msg = `[CRITICAL ROLE BUG] User ${userId} has staff signal but resolved as "client". Roles: ${roles.join(",")}, isEmployeeByHR: ${isEmployeeByHR}`;
+  const hasStaffSignal = !!isEmployeeByHR || hasAnyRole(roles, [...PRIVILEGED_ROLES]);
+  if (hasStaffSignal && (userType === "client" || !!clientUserId)) {
+    const msg = `[CRITICAL SECURITY] Employee detected as client. User ${userId}, Roles: ${roles.join(",")}, userType: ${userType}, clientUserId: ${clientUserId}, isEmployeeByHR: ${isEmployeeByHR}`;
     console.error(msg);
-    // In production this should alert — for now hard-log so it's unmissable
-    throw new Error(msg);
+    throw new Error("SECURITY_VIOLATION: Employee cannot be classified as client");
   }
 }
 

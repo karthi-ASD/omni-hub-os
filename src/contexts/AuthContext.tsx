@@ -560,7 +560,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // 🔴 REGRESSION GUARD + KILL SWITCH
   try {
-    assertNoEmployeeClientCrossover({ isEmployeeByHR, roles: roles as string[], userType, userId: user?.id });
+    assertNoEmployeeClientCrossover({ isEmployeeByHR, roles: roles as string[], userType, clientUserId: effectiveClientUserId, userId: user?.id });
   } catch (e) {
     console.error(e);
     if (user?.id) {
