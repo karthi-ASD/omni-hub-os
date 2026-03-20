@@ -101,13 +101,12 @@ export function useDialer() {
       await updateAgentState(profile.business_id, profile.user_id, "on_call");
       setAgentState("on_call");
 
-      // Start init timeout failsafe
+      // Start init timeout failsafe — keep status as initiating, just notify user
       initTimeoutRef.current = setTimeout(() => {
         setCallStatus((prev) => {
           if (prev === "initiating") {
-            // Don't mark failed — assume ringing, let webhook decide final status
-            insertCallEvent(sess.id, "init_timeout_fallback_ringing");
-            return "ringing";
+            toast.info("Connection taking longer than expected");
+            insertCallEvent(sess.id, "init_timeout_waiting");
           }
           return prev;
         });
