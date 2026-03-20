@@ -147,6 +147,7 @@ export function useDeals() {
     ]);
 
     toast.success("Deal created");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "create", entityType: "deal", entityId: (data as any).id, description: `Created deal: ${deal.deal_name}` });
     await fetchDeals();
     notifySalesDataChanged(["deals", "dashboard", "pipeline", "proposals"], "deal:create");
     return data as Deal;
