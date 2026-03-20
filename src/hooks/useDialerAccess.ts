@@ -51,16 +51,18 @@ export function useDialerAccess(clientId?: string | null) {
     staleTime: 60 * 1000,
   });
 
-  const hasExplicitDialerRole = roles.includes("admin")
-    || roles.includes("business_admin")
-    || roles.includes("sales_agent")
-    || roles.includes("sales_manager")
+  const roleNames = roles as string[];
+
+  const hasExplicitDialerRole = roleNames.includes("admin")
+    || roleNames.includes("business_admin")
+    || roleNames.includes("sales_agent")
+    || roleNames.includes("sales_manager")
     || isSuperAdmin
     || isBusinessAdmin;
 
-  const isStaffFallback = roles.includes("employee")
-    || roles.includes("manager")
-    || roles.includes("admin");
+  const isStaffFallback = roleNames.includes("employee")
+    || roleNames.includes("manager")
+    || roleNames.includes("admin");
 
   const hasRoleAccess = hasExplicitDialerRole || !!isSalesDept || isStaffFallback;
   const isClientUser = roles.includes("client");
