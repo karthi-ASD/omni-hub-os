@@ -4,7 +4,7 @@ import {
   Building2, GitBranch, TrendingUp, Zap, MapPin, Megaphone,
   FolderKanban, FileText, Star, ClipboardList, MessageSquare,
   DollarSign, Handshake, PieChart, PhoneCall, StickyNote,
-  Headphones, Globe, Send,
+  Headphones, Globe, Send, Sun, Wrench,
 } from "lucide-react";
 import type { NavSection } from "./nav-sections";
 import type { CRMType } from "@/hooks/useBusinessCRM";
