@@ -28,6 +28,7 @@ import { BusinessSettingsModule } from "@/components/business-crm/BusinessSettin
 // Service CRM modules
 import { ServiceLeadsModule } from "@/components/service-crm/ServiceLeadsModule";
 import { ServiceSalesCRMModule } from "@/components/service-crm/ServiceSalesCRMModule";
+import { SolarProjectsCRMModule } from "@/components/service-crm/SolarProjectsCRMModule";
 
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, UserPlus, Users, Building2, GitBranch, Landmark,
