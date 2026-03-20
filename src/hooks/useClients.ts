@@ -293,6 +293,7 @@ export function useClients(options?: UseClientsOptions) {
       entity_id: clientId,
     });
     toast.success("Client status updated");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "update", entityType: "client", entityId: clientId, description: `Client status → ${status}` });
     fetchClients(page, search);
     notifySalesDataChanged(["clients", "dashboard"], "client:update-status");
   };
