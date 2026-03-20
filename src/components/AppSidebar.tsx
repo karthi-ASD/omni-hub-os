@@ -85,7 +85,7 @@ export function AppSidebar() {
   } = useAuth();
   const { departmentName } = useEmployeeDepartment();
 
-  const isTenantShell = dashboardShell === "client" || dashboardShell === "business_admin";
+  const isTenantShell = dashboardShell === "client_business" || dashboardShell === "client_portal";
   const isStaffShell = dashboardShell === "internal_staff" || dashboardShell === "super_admin";
   const activeCRMSections = getCRMSections(activeCRMType);
   const hasCustomCRM = !!activeCRMType && activeCRMType !== "generic";
