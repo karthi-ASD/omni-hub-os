@@ -237,6 +237,7 @@ export function useUnifiedTickets(_departmentFilter?: string) {
     } catch { /* non-critical */ }
 
     toast.success("Ticket created");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: bid, module: "tickets", actionType: "create", entityType: "ticket", entityId: ticket.id, description: `Created ticket: ${ticket.ticket_number} - ${data.subject}` });
     fetchTickets();
     return inserted;
   }, [bid, profile, fetchTickets]);
