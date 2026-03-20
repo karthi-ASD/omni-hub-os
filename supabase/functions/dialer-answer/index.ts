@@ -24,6 +24,8 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const sessionId = url.searchParams.get("session_id");
     const token = url.searchParams.get("token");
+    const leg = url.searchParams.get("leg") || "agent";
+    const conferenceId = url.searchParams.get("conference") || `dialer-${sessionId}`;
     const expected = Deno.env.get("PLIVO_WEBHOOK_SECRET");
 
     // Token validation
@@ -64,34 +66,41 @@ Deno.serve(async (req) => {
     }
 
     const customerNumber = session.phone_number;
-    console.log("[dialer-answer] Bridging to customer", { session_id: sessionId, customer_number: customerNumber });
+    console.log("[dialer-answer] Answer XML triggered", {
+      session_id: sessionId,
+      leg,
+      customer_number: customerNumber,
+      conference_id: conferenceId,
+    });
 
-    // Update session status to connected
-    const updates: Record<string, any> = { call_status: "connected" };
-    if (!session.call_start_time) {
+    // Update session only when the customer leg joins, so talk time starts at actual bridge time
+    const updates: Record<string, any> = {};
+    if (leg === "customer") {
+      updates.call_status = "connected";
+    }
+    if (leg === "customer" && !session.call_start_time) {
       updates.call_start_time = new Date().toISOString();
     }
-    await supabase.from("dialer_sessions").update(updates).eq("id", sessionId);
+    if (Object.keys(updates).length > 0) {
+      await supabase.from("dialer_sessions").update(updates).eq("id", sessionId);
+    }
 
     // Log event
     if (session.business_id) {
       await supabase.from("dialer_call_events").insert({
         session_id: sessionId,
         event_type: "call_answered",
-        metadata: { call_uuid: callUuid, bridging_to: customerNumber },
+        metadata: { call_uuid: callUuid, leg, conference_id: conferenceId, customer_number: customerNumber },
       }).then(() => {}, () => {});
     }
 
-    // Build webhook URL for dial status callbacks
+    // Return Plivo XML that joins both parties to the same conference bridge
+    const startConferenceOnEnter = leg === "agent" ? "true" : "false";
+    const endConferenceOnExit = leg === "agent" ? "true" : "false";
     const tokenQS = token ? `&token=${token}` : "";
-    const dialActionUrl = `${supabaseUrl}/functions/v1/dialer-webhook?session_id=${sessionId}${tokenQS}`;
-
-    // Return Plivo XML that bridges agent → customer
-    const callerIdAttr = PLIVO_CALLER_ID ? ` callerId="${PLIVO_CALLER_ID}"` : "";
+    const conferenceActionUrl = `${supabaseUrl}/functions/v1/dialer-webhook?session_id=${sessionId}${tokenQS}&conference=${conferenceId}&leg=${leg}`;
     return xmlResponse(
-      `<Dial${callerIdAttr} timeout="30" action="${dialActionUrl}" method="POST">` +
-      `<Number>${customerNumber}</Number>` +
-      `</Dial>`
+      `<Conference startConferenceOnEnter="${startConferenceOnEnter}" endConferenceOnExit="${endConferenceOnExit}" action="${conferenceActionUrl}" method="POST">${conferenceId}</Conference>`
     );
   } catch (err) {
     console.error("[dialer-answer] Error:", err);

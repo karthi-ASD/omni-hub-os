@@ -26,6 +26,21 @@ function mapPlivoStatus(raw: string): string | null {
 
 const TERMINAL_STATES = ["ended", "failed", "busy", "no-answer"];
 
+function getStatusRank(status: string | null | undefined): number {
+  const ranks: Record<string, number> = {
+    idle: 0,
+    initiating: 1,
+    ringing: 2,
+    connected: 3,
+    ended: 4,
+    busy: 4,
+    "no-answer": 4,
+    failed: 4,
+  };
+
+  return ranks[status || ""] ?? -1;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -50,6 +65,8 @@ Deno.serve(async (req) => {
 
   try {
     const querySessionId = url.searchParams.get("session_id");
+    const leg = url.searchParams.get("leg") || "unknown";
+    const conferenceId = url.searchParams.get("conference") || null;
 
     let body: Record<string, any>;
     const contentType = req.headers.get("content-type") || "";
@@ -68,6 +85,8 @@ Deno.serve(async (req) => {
     console.log("[dialer-webhook] Received", {
       session_id: querySessionId,
       call_uuid: callUuid,
+      leg,
+      conference_id: conferenceId,
       raw_status: rawStatus,
       content_type: contentType,
     });
@@ -115,6 +134,8 @@ Deno.serve(async (req) => {
     // Debug log
     console.log("[dialer-webhook] Processing", {
       session_id: session.id,
+      leg,
+      conference_id: conferenceId,
       incoming_status: rawStatus,
       mapped_status: mappedStatus,
       current_status: session.call_status,
@@ -129,7 +150,7 @@ Deno.serve(async (req) => {
         {
           session_id: session.id,
           event_type: rawStatus,
-          metadata: body,
+          metadata: { ...body, leg, conference_id: conferenceId },
           dedupe_key: dedupeKey,
         },
         { onConflict: "dedupe_key", ignoreDuplicates: true }
@@ -162,6 +183,18 @@ Deno.serve(async (req) => {
 
     // Apply mapped status if valid and different from current (idempotency)
     if (mappedStatus && mappedStatus !== session.call_status) {
+      const currentRank = getStatusRank(session.call_status);
+      const nextRank = getStatusRank(mappedStatus);
+      const isProgression = nextRank >= currentRank;
+
+      if (!isProgression && !TERMINAL_STATES.includes(mappedStatus)) {
+        console.log("[dialer-webhook] Ignored status regression", {
+          session_id: session.id,
+          leg,
+          current_status: session.call_status,
+          next_status: mappedStatus,
+        });
+      } else {
       updates.call_status = mappedStatus;
 
       if (TERMINAL_STATES.includes(mappedStatus)) {
@@ -174,6 +207,7 @@ Deno.serve(async (req) => {
         if (billDuration) updates.bill_duration = billDuration;
         const cost = parseFloat(body.TotalCost || body.Cost || "0");
         if (cost > 0) updates.call_cost = cost;
+      }
       }
     }
 
@@ -234,6 +268,14 @@ Deno.serve(async (req) => {
         },
       });
     }
+
+    console.log("CALL FLOW DEBUG", {
+      session_id: session.id,
+      provider_call_id: callUuid,
+      leg,
+      conference_id: conferenceId,
+      status: updates.call_status || session.call_status,
+    });
 
     console.log("[dialer-webhook] Done", { session_id: session.id, updates: Object.keys(updates) });
 
