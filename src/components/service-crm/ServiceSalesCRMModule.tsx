@@ -247,7 +247,17 @@ export function ServiceSalesCRMModule() {
                               </>
                             )}
                             {p.status === "sent" && (
-                              <Button size="sm" variant="ghost" onClick={() => markApproved(p.id)} className="h-7 text-[10px] gap-1 text-green-600"><CheckCircle className="h-3 w-3" />Approve</Button>
+                              <Button size="sm" variant="ghost" onClick={() => markApproved(p.id)} disabled={approvingId === p.id}
+                                className="h-7 text-[10px] gap-1 text-success">
+                                {approvingId === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3 w-3" />}
+                                {approvingId === p.id ? "Approving…" : "Approve"}
+                              </Button>
+                            )}
+                            {p.status === "accepted" && (
+                              <Button size="sm" variant="ghost" onClick={() => setSearchParams({ tab: "projects" })}
+                                className="h-7 text-[10px] gap-1 text-primary">
+                                <ExternalLink className="h-3 w-3" />View Project
+                              </Button>
                             )}
                           </div>
                         </TableCell>
