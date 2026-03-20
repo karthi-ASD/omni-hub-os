@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
       hangup_method: "POST",
       fallback_url: agentAnswerUrl,
       fallback_method: "POST",
-      ring_timeout: 45,
+      ring_timeout: 25,
       record: true,
       recording_callback_url: agentWebhookUrl,
       recording_callback_method: "POST",
