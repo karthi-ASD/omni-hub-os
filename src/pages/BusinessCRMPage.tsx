@@ -61,7 +61,7 @@ const SERVICE_MODULE_MAP: Record<string, React.FC> = {
   opportunities: OpportunitiesModule,
   deal_pipeline: DealPipelineModule,
   sales_crm: ServiceSalesCRMModule,
-  projects: () => <div className="text-center py-12 text-muted-foreground">Projects module coming soon</div>,
+  projects: SolarProjectsCRMModule,
   tasks_followups: TasksFollowupsModule,
   calendar: () => <div className="text-center py-12 text-muted-foreground">Calendar coming soon</div>,
   reports: ReportsModule,
