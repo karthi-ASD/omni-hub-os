@@ -99,6 +99,48 @@ export function isClientPortalUser(userType: UserType): boolean {
   return userType === "client";
 }
 
+/**
+ * REGRESSION GUARD — fires if an employee is ever classified as client.
+ * This should NEVER happen if resolveUserType priority is correct.
+ */
+export function assertNoEmployeeClientCrossover({
+  isEmployeeByHR,
+  roles,
+  userType,
+  userId,
+}: {
+  isEmployeeByHR: boolean;
+  roles: string[];
+  userType: UserType;
+  userId?: string;
+}): void {
+  const hasStaffSignal = isEmployeeByHR || hasAnyRole(roles, [...PRIVILEGED_ROLES]);
+  if (hasStaffSignal && userType === "client") {
+    const msg = `[CRITICAL ROLE BUG] User ${userId} has staff signal but resolved as "client". Roles: ${roles.join(",")}, isEmployeeByHR: ${isEmployeeByHR}`;
+    console.error(msg);
+    // In production this should alert — for now hard-log so it's unmissable
+    throw new Error(msg);
+  }
+}
+
+/** Routes that ONLY client users may access */
+export const CLIENT_ONLY_ROUTES = ["/client-dashboard", "/client-portal"] as const;
+
+/** Routes that clients must NEVER access */
+export const STAFF_ONLY_ROUTES = [
+  "/crm",
+  "/command-centre",
+  "/sales",
+  "/dialer",
+  "/hr",
+  "/finance",
+  "/platform-billing",
+  "/investor-dashboard",
+  "/corporate-structure",
+  "/infrastructure",
+  "/observability",
+] as const;
+
 export function detectRoleConflict({
   roles,
   clientUserId,

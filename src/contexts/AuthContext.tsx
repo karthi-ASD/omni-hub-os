@@ -529,6 +529,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.warn(conflict);
   }
 
+  // 🔴 REGRESSION GUARD: Throw if employee is ever classified as client
+  try {
+    assertNoEmployeeClientCrossover({ isEmployeeByHR, roles: roles as string[], userType, userId: user?.id });
+  } catch (e) {
+    console.error(e);
+  }
+
   // Debug logging for role resolution
   useEffect(() => {
     if (rawProfile && isAuthResolved) {
