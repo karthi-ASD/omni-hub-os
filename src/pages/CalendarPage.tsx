@@ -59,22 +59,27 @@ function DaySummaryDots({ summary }: { summary: DaySummary | undefined }) {
 }
 
 /* ────── Activity Timeline Item ────── */
+function capitalizeAction(str: string) {
+  return str.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function ActivityTimelineItem({ record }: { record: ActivityRecord }) {
   const Icon = MODULE_ICON[record.module] || Activity;
+  const isImportant = ["create", "delete", "assign", "sign", "complete"].some(k => record.action_type?.includes(k));
   return (
-    <div className="flex gap-3 py-2.5 border-b border-border/50 last:border-0">
+    <div className={cn("flex gap-3 py-2.5 border-b border-border/50 last:border-0", isImportant && "bg-primary/[0.02]")}>
       <div className={cn("mt-0.5 p-1.5 rounded-lg shrink-0", getActionColor(record.action_type))}>
         <Icon className="h-3.5 w-3.5" />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium">{record.action_type.replace(/_/g, " ")}</span>
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0">{record.module}</Badge>
+          <span className={cn("text-sm", isImportant ? "font-semibold" : "font-medium")}>{capitalizeAction(record.action_type)}</span>
+          <Badge variant="outline" className="text-[10px] px-1.5 py-0 capitalize">{record.module}</Badge>
         </div>
         {record.description && <p className="text-xs text-muted-foreground mt-0.5">{record.description}</p>}
         {record.entity_type && (
-          <p className="text-[10px] text-muted-foreground mt-0.5">
-            {record.entity_type} {record.entity_id ? `· ${record.entity_id.slice(0, 8)}…` : ""}
+          <p className="text-[10px] text-muted-foreground mt-0.5 capitalize">
+            {record.entity_type.replace(/_/g, " ")} {record.entity_id ? `· ${record.entity_id.slice(0, 8)}…` : ""}
           </p>
         )}
       </div>
