@@ -507,12 +507,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const activeCRMType = activeBusinessContext?.crm_type ?? null;
 
+  // 🔒 DO NOT MODIFY — SECURITY CRITICAL
   // SINGLE SOURCE OF TRUTH: resolve user type via strict priority resolver
   // 🔴 CRITICAL: Pass isEmployeeByHR to ensure hr_employees check takes priority over clientUserId
-  const userType = resolveUserType({ roles: roles as string[], clientUserId, isEmployeeByHR });
+  const resolvedUserType = resolveUserType({ roles: roles as string[], clientUserId, isEmployeeByHR });
+
+  // 🔴 HARD OVERRIDE: Force staff users to employee, force-clear clientUserId
+  const isStaffBySignal =
+    isEmployeeByHR ||
+    (roles as string[]).some((role) =>
+      ["super_admin", "business_admin", "employee", "hr_manager", "manager"].includes(role)
+    );
+
+  const userType: UserType = isStaffBySignal && resolvedUserType === "client"
+    ? (roles.includes("super_admin") ? "super_admin" : roles.includes("business_admin") ? "business_admin" : "employee")
+    : resolvedUserType;
+
+  // 🔴 FORCE CLEAR: Staff must never hold clientUserId
+  const effectiveClientUserId = isStaffBySignal ? null : clientUserId;
+
   const appMode = resolveAppMode({
     roles: roles as string[],
-    clientUserId,
+    clientUserId: effectiveClientUserId,
     businessId: activeTenantId,
     isEmployeeByHR,
   });
@@ -520,8 +536,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isAuthResolved = !loading && !businessContextLoading && (!!session ? !!rawProfile : true);
 
   // Derived booleans from userType — NEVER infer independently
+  // 🚫 NEVER use roles.includes("client") — INVALID DESIGN
   const isClientUser = userType === "client";
-  const clientId = isClientUser ? clientUserId : null;
+  const clientId = isClientUser ? effectiveClientUserId : null;
 
   // Detect and log role conflicts (staff user with client_users record)
   const conflict = detectRoleConflict({ roles: roles as string[], clientUserId, userId: user?.id, isEmployeeByHR });
@@ -529,11 +546,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.warn(conflict);
   }
 
-  // 🔴 REGRESSION GUARD: Throw if employee is ever classified as client
+  // 🔴 REGRESSION GUARD + KILL SWITCH: Throw if employee is ever classified as client
   try {
     assertNoEmployeeClientCrossover({ isEmployeeByHR, roles: roles as string[], userType, userId: user?.id });
   } catch (e) {
     console.error(e);
+    // 🚨 Log security violation to system_logs
+    if (user?.id) {
+      supabase.from("system_events" as any).insert({
+        business_id: rawProfile?.business_id ?? "00000000-0000-0000-0000-000000000000",
+        event_type: "SECURITY_ROLE_BUG",
+        payload_json: {
+          userId: user.id,
+          roles,
+          userType,
+          clientUserId,
+          isEmployeeByHR,
+        },
+      }).then(() => {});
+    }
+  }
+
+  // 🔴 DEV SAFETY: Warn if roles contain "client" (invalid pattern)
+  if ((roles as string[]).includes("client")) {
+    console.warn("[AUTH WARNING] roles.includes('client') detected — this is an INVALID design pattern. Use clientUserId instead.");
   }
 
   // Debug logging for role resolution
