@@ -64,17 +64,43 @@ describe("assertNoEmployeeClientCrossover", () => {
         isEmployeeByHR: true,
         roles: [],
         userType: "client",
+        clientUserId: null,
         userId: "test-user",
       })
-    ).toThrow("[CRITICAL ROLE BUG]");
+    ).toThrow("SECURITY_VIOLATION");
   });
 
-  it("does not throw for correct resolution", () => {
+  it("throws if staff still has clientUserId", () => {
     expect(() =>
       assertNoEmployeeClientCrossover({
         isEmployeeByHR: true,
         roles: [],
         userType: "employee",
+        clientUserId: "cu-leaked",
+        userId: "test-user",
+      })
+    ).toThrow("SECURITY_VIOLATION");
+  });
+
+  it("throws if role-based staff has clientUserId", () => {
+    expect(() =>
+      assertNoEmployeeClientCrossover({
+        isEmployeeByHR: false,
+        roles: ["employee"],
+        userType: "employee",
+        clientUserId: "cu-leaked",
+        userId: "test-user",
+      })
+    ).toThrow("SECURITY_VIOLATION");
+  });
+
+  it("does not throw for correct employee resolution", () => {
+    expect(() =>
+      assertNoEmployeeClientCrossover({
+        isEmployeeByHR: true,
+        roles: [],
+        userType: "employee",
+        clientUserId: null,
         userId: "test-user",
       })
     ).not.toThrow();
@@ -86,6 +112,7 @@ describe("assertNoEmployeeClientCrossover", () => {
         isEmployeeByHR: false,
         roles: [],
         userType: "client",
+        clientUserId: "cu-1",
         userId: "test-user",
       })
     ).not.toThrow();
