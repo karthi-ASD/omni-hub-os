@@ -44,6 +44,7 @@ const AppShell = () => {
   const { profile, isAuthResolved, dashboardShell, activeBusinessName } = useAuth();
   const businessId = profile?.business_id;
   const isMobile = useIsMobile();
+  useActivityTracking(); // Global activity + behaviour tracking
   const shellInfo = shellMeta[dashboardShell];
   const shellTitle = dashboardShell === "client_business" || dashboardShell === "client_portal"
     ? activeBusinessName || shellInfo.title
