@@ -94,7 +94,7 @@ export default function NextWebServices() {
     onSuccess: () => {
       toast.success("Request submitted to NextWeb");
       setShowNewRequest(false);
-      setNewRequest({ title: "", description: "", request_type: "support_issue", priority: "medium" });
+      setNewRequest({ title: "", description: "", request_type: "support_issue", service_category: "general", priority: "medium" });
       queryClient.invalidateQueries({ queryKey: ["nextweb-requests"] });
     },
     onError: (e: any) => toast.error(e.message),
