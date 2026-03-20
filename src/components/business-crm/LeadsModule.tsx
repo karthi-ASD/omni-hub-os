@@ -158,6 +158,7 @@ export function LeadsModule() {
 
   const moveStage = async (id: string, stage: string) => {
     await supabase.from("crm_leads").update({ stage, updated_at: new Date().toISOString() } as any).eq("id", id);
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: bid, module: "leads", actionType: "update", entityType: "crm_lead", entityId: id, description: `Lead stage → ${stage}` });
     qc.invalidateQueries({ queryKey: ["crm-leads"] });
   };
 

@@ -190,6 +190,7 @@ const TicketDetailPage = () => {
       ...(status === "resolved" ? { resolved_at: new Date().toISOString() } : {}),
     }).eq("id", id);
     setTicket((t: any) => ({ ...t, status }));
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "tickets", actionType: "update", entityType: "ticket", entityId: id, description: `Ticket status → ${status}` });
     toast.success(`Status updated to ${status}`);
   };
 

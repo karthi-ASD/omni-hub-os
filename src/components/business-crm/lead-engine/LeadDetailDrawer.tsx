@@ -75,6 +75,7 @@ export function LeadDetailDrawer({ lead, open, onClose, employees, businessId }:
     } as any);
 
     toast.success("Lead assigned");
+    logAI({ userId: "", userRole: "staff", businessId, module: "leads", actionType: "assign", entityType: "crm_lead", entityId: lead.id, description: `Lead assigned to team member` });
     qc.invalidateQueries({ queryKey: ["crm-leads"] });
     setAssigning(false);
   };

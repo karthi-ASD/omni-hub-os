@@ -130,6 +130,7 @@ export function LeadCSVImport({ open, onClose, businessId }: Props) {
       toast.error("Import failed: " + error.message);
     } else {
       toast.success(`${rows.length} leads imported`);
+      logAI({ userId: "", userRole: "staff", businessId: businessId, module: "leads", actionType: "create", entityType: "crm_lead", description: `Imported ${rows.length} leads via CSV` });
       setImportedCount(rows.length);
       setStep("done");
       qc.invalidateQueries({ queryKey: ["crm-leads"] });

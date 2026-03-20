@@ -102,6 +102,7 @@ const TicketsPage = () => {
   const updateStatus = async (id: string, status: string) => {
     await supabase.from("support_tickets").update({ status }).eq("id", id);
     fetchTickets();
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "tickets", actionType: "update", entityType: "ticket", entityId: id, description: `Ticket status → ${status}` });
     toast.success(`Ticket marked as ${status.replace(/_/g, " ")}`);
   };
 

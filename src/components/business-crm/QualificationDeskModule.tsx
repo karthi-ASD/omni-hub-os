@@ -69,6 +69,7 @@ export function QualificationDeskModule() {
       updated_at: new Date().toISOString(),
     } as any).eq("id", id);
     toast.success("Lead disqualified");
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "leads", actionType: "update", entityType: "crm_lead", entityId: id, description: "Lead disqualified" });
     qc.invalidateQueries({ queryKey: ["qual-desk-leads"] });
     qc.invalidateQueries({ queryKey: ["crm-leads"] });
   };

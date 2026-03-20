@@ -120,8 +120,10 @@ export function CommunicationsModule() {
         toast.success("Communication logged & follow-up task created", {
           description: `Due: ${format(new Date(form.followup_date + "T00:00:00"), "dd MMM yyyy")}${form.followup_time ? ` at ${form.followup_time}` : ""}`,
         });
+        logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "communication", actionType: "create", entityType: "communication", description: `Communication logged via ${form.channel} + follow-up task` });
       } else {
         toast.success("Communication logged");
+        logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "communication", actionType: "create", entityType: "communication", description: `Communication logged via ${form.channel}` });
       }
 
       setOpen(false);
