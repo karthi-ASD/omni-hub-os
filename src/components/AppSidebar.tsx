@@ -78,11 +78,21 @@ export function AppSidebar() {
   const { hasCustomCRM, crmType } = useBusinessCRM();
 
   const isAdmin = isSuperAdmin || isBusinessAdmin;
+  const isEmployee = roles.includes("employee" as any);
   const activeCRMSections = getCRMSections(crmType);
 
-  // Safety fallback: show client sidebar if user has a CRM type mapped,
-  // even if client_users record is missing
-  const isClientUserSafe = isClientUser || (!!crmType && !isSuperAdmin && !isBusinessAdmin);
+  // STRICT: Only show client sidebar for genuine client portal users
+  // Employees and admins NEVER get the client sidebar, even if they have a CRM type
+  const isClientUserSafe = isClientUser && !isEmployee && !isAdmin;
+
+  console.log("[SIDEBAR ROLE]", {
+    isClientUser,
+    isClientUserSafe,
+    isAdmin,
+    isEmployee,
+    roles,
+    crmType,
+  });
 
   // ── Client users get separated navigation ──
   if (isClientUserSafe) {
