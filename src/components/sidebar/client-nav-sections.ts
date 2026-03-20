@@ -59,7 +59,7 @@ const REAL_ESTATE_CRM_SECTIONS: NavSection[] = [
       { label: "Investors & Clients", icon: Users, to: "/my-crm?tab=investors" },
       { label: "Opportunities & Pipeline", icon: FolderKanban, to: "/my-crm?tab=opportunities" },
       { label: "Deal Management", icon: Handshake, to: "/my-crm?tab=deal_pipeline" },
-      { label: "Property Inventory", icon: Building2, to: "/my-crm?tab=projects_developers" },
+      { label: "Property Inventory", icon: Building2, to: "/my-crm?tab=property_inventory" },
     ],
   },
   {
