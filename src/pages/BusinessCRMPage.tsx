@@ -27,6 +27,7 @@ import { ClientPortalMgmtModule } from "@/components/business-crm/ClientPortalMg
 import { TicketingSupportModule } from "@/components/business-crm/TicketingSupportModule";
 import { ReportsModule } from "@/components/business-crm/ReportsModule";
 import { BusinessSettingsModule } from "@/components/business-crm/BusinessSettingsModule";
+import { ACE1AssistantModule } from "@/components/business-crm/ACE1AssistantModule";
 
 // Service CRM modules
 import { ServiceLeadsModule } from "@/components/service-crm/ServiceLeadsModule";
