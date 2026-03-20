@@ -38,16 +38,16 @@ export function ServiceSalesCRMModule() {
   const [createOpen, setCreateOpen] = useState(false);
 
   const { data: proposals = [], isLoading } = useQuery({
-    queryKey: ["service-proposals", profile?.business_id],
+    queryKey: ["service-proposals", businessId],
     queryFn: async () => {
       const { data } = await supabase
         .from("proposals")
         .select("*")
-        .eq("business_id", profile!.business_id!)
+        .eq("business_id", businessId!)
         .order("created_at", { ascending: false });
       return data || [];
     },
-    enabled: !!profile?.business_id,
+    enabled: !!businessId,
   });
 
   const activeLeads = leads.filter(l => !["won", "lost"].includes(l.stage));
