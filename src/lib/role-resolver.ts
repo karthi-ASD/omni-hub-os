@@ -1,15 +1,21 @@
 /**
- * SINGLE SOURCE OF TRUTH for user type resolution.
+ * Central role + shell resolution utilities.
  *
- * Priority order:
- *   1. super_admin  (highest privilege)
- *   2. business_admin
- *   3. employee
- *   4. client       (ONLY if explicit link exists AND no staff role)
- *   5. employee     (SAFE DEFAULT — never "client")
+ * Security identity (`UserType`) stays strict and mutually exclusive.
+ * UI shell resolution (`AppMode`) is separate so tenant users never fall back
+ * into internal NextWeb shells during delayed client-link hydration.
  */
 
 export type UserType = "super_admin" | "business_admin" | "employee" | "client";
+export type AppMode = "super_admin" | "internal_staff" | "business_admin" | "client";
+export type DashboardShell = AppMode;
+
+const INTERNAL_STAFF_ROLES = ["employee", "hr_manager", "manager"] as const;
+const PRIVILEGED_ROLES = ["super_admin", "business_admin", ...INTERNAL_STAFF_ROLES] as const;
+
+function hasAnyRole(roles: string[], allowedRoles: readonly string[]) {
+  return allowedRoles.some((role) => roles.includes(role));
+}
 
 export function resolveUserType({
   roles,
@@ -20,29 +26,46 @@ export function resolveUserType({
 }): UserType {
   if (roles.includes("super_admin")) return "super_admin";
   if (roles.includes("business_admin")) return "business_admin";
-  if (roles.includes("employee")) return "employee";
+  if (hasAnyRole(roles, INTERNAL_STAFF_ROLES)) return "employee";
 
-  // ONLY classify as client when explicitly linked AND no staff role
   if (clientUserId) return "client";
 
-  // SAFE DEFAULT — never fall back to "client"
   return "employee";
 }
 
-/** Returns true if the resolved type is any staff role */
+export function resolveAppMode({
+  roles,
+  clientUserId,
+  businessId,
+  hasCustomCRM,
+}: {
+  roles: string[];
+  clientUserId: string | null;
+  businessId: string | null;
+  hasCustomCRM: boolean;
+}): AppMode {
+  if (roles.includes("super_admin")) return "super_admin";
+  if (hasAnyRole(roles, INTERNAL_STAFF_ROLES)) return "internal_staff";
+  if (roles.includes("business_admin")) return "business_admin";
+
+  const hasTenantContext = !!businessId;
+
+  if (hasTenantContext && hasCustomCRM) return "business_admin";
+  if (clientUserId) return "client";
+  if (hasTenantContext) return "client";
+
+  // Never fall back to an internal shell for unresolved tenant-side users.
+  return "client";
+}
+
 export function isStaffUser(userType: UserType): boolean {
   return userType === "super_admin" || userType === "business_admin" || userType === "employee";
 }
 
-/** Returns true if the resolved type is a client portal user */
 export function isClientPortalUser(userType: UserType): boolean {
   return userType === "client";
 }
 
-/**
- * Detects role conflicts — e.g. a staff user who also has a client_users record.
- * Returns a warning string or null.
- */
 export function detectRoleConflict({
   roles,
   clientUserId,
@@ -52,12 +75,9 @@ export function detectRoleConflict({
   clientUserId: string | null;
   userId: string | undefined;
 }): string | null {
-  const hasStaffRole =
-    roles.includes("super_admin") ||
-    roles.includes("business_admin") ||
-    roles.includes("employee");
+  const hasPrivilegedRole = hasAnyRole(roles, PRIVILEGED_ROLES);
 
-  if (hasStaffRole && !!clientUserId) {
+  if (hasPrivilegedRole && !!clientUserId) {
     return `[ROLE CONFLICT] Staff user ${userId} has client_users record — client context IGNORED. Roles: ${roles.join(",")}`;
   }
 

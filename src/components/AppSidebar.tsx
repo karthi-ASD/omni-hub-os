@@ -1,7 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
-import { useBusinessCRM } from "@/hooks/useBusinessCRM";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
 import { NWLogo } from "@/components/NWLogo";
@@ -73,29 +72,46 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { profile, isSuperAdmin, isBusinessAdmin, isClientUser, roles, signOut, selectedTenantId, allBusinesses, userType } = useAuth();
-  const { departmentName } = useEmployeeDepartment();
-  const { hasCustomCRM, crmType } = useBusinessCRM();
-
-  const isAdmin = isSuperAdmin || isBusinessAdmin;
-  const activeCRMSections = getCRMSections(crmType);
-
-  // SINGLE SOURCE OF TRUTH: use userType from resolver
-  const isClientUserSafe = userType === "client";
-
-  console.log("[SIDEBAR ROLE]", {
-    userType,
-    isClientUser,
-    isClientUserSafe,
-    isAdmin,
+  const {
+    profile,
+    isSuperAdmin,
     roles,
-    crmType,
+    signOut,
+    selectedTenantId,
+    allBusinesses,
+    dashboardShell,
+    activeBusinessName,
+    activeCRMType,
+  } = useAuth();
+  const { departmentName } = useEmployeeDepartment();
+
+  const isTenantShell = dashboardShell === "client" || dashboardShell === "business_admin";
+  const isStaffShell = dashboardShell === "internal_staff" || dashboardShell === "super_admin";
+  const activeCRMSections = getCRMSections(activeCRMType);
+  const hasCustomCRM = !!activeCRMType && activeCRMType !== "generic";
+
+  console.log("[NAV DEBUG]", {
+    userId: profile?.user_id,
+    roles,
+    dashboardShell,
+    clientUserId: null,
+    visibleSections: isTenantShell
+      ? [...NEXTWEB_SERVICES_SECTIONS.map(section => section.title), ...(hasCustomCRM ? activeCRMSections.map(section => section.title) : [])]
+      : NAV_SECTIONS.map(section => section.title),
+    hiddenSections: [],
   });
 
-  // ── Client users get separated navigation ──
-  if (isClientUserSafe) {
-    // Resolve a friendly business name from profile or fallback
-    const businessName = profile?.full_name || "My Business";
+  if (isTenantShell) {
+    const businessName = activeBusinessName || profile?.full_name || "My Business";
+    const renderedSections = [
+      ...NEXTWEB_SERVICES_SECTIONS.map(section => section.title),
+      ...(hasCustomCRM ? activeCRMSections.map(section => section.title) : []),
+    ];
+
+    console.log("[SIDEBAR SOURCE]", {
+      dashboardShell,
+      sectionsRendered: renderedSections,
+    });
 
     return (
       <Sidebar collapsible="icon" className="border-r-0">
@@ -119,13 +135,10 @@ export function AppSidebar() {
           </div>
         </SidebarHeader>
         <SidebarContent className="px-2">
-
-          {/* Section A: NextWeb Services (always shown) */}
           {NEXTWEB_SERVICES_SECTIONS.map(section => (
             <SidebarNavSection key={section.title} section={section} collapsed={collapsed} pathname={location.pathname} />
           ))}
 
-          {/* Section B: My Business CRM (only if hasCustomCRM) */}
           {hasCustomCRM && (
             <>
               <div className="px-2 py-2">
@@ -158,23 +171,31 @@ export function AppSidebar() {
     );
   }
 
-  // ── Staff / admin navigation ──
-
-  const filteredSections = NAV_SECTIONS.filter(section => {
-    if (isAdmin) return true;
+  const filteredSections = isStaffShell ? NAV_SECTIONS.filter(section => {
+    if (dashboardShell === "super_admin") return true;
     if (section.departments && !matchesDept(section.departments, departmentName)) return false;
     if (section.hiddenFromDepartments && matchesDept(section.hiddenFromDepartments, departmentName)) return false;
     return true;
-  });
+  }) : [];
 
   const filterItems = (items: NavItem[]) =>
     items.filter(item => {
       if (item.roles && !item.roles.some(r => roles.includes(r as any))) return false;
-      if (isAdmin) return true;
+      if (dashboardShell === "super_admin") return true;
       if (item.hiddenFromDepartments && matchesDept(item.hiddenFromDepartments, departmentName)) return false;
       if (item.departments && !matchesDept(item.departments, departmentName)) return false;
       return true;
     });
+
+  const renderedSections = filteredSections
+    .map(section => ({ ...section, items: filterItems(section.items) }))
+    .filter(section => section.items.length > 0)
+    .map(section => section.title);
+
+  console.log("[SIDEBAR SOURCE]", {
+    dashboardShell,
+    sectionsRendered: renderedSections,
+  });
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
@@ -184,7 +205,7 @@ export function AppSidebar() {
           {!collapsed && (
             <div className="flex flex-col min-w-0">
               <span className="text-xs font-bold text-sidebar-accent-foreground leading-tight truncate">
-                NextWeb OS
+                {dashboardShell === "super_admin" ? "NextWeb OS" : "NextWeb Staff"}
               </span>
               <span className="text-[10px] text-sidebar-foreground leading-tight truncate">
                 {profile?.full_name?.split(" ")[0] || "User"}
@@ -192,7 +213,7 @@ export function AppSidebar() {
             </div>
           )}
         </div>
-        {!collapsed && isSuperAdmin && (
+        {!collapsed && isSuperAdmin && dashboardShell === "super_admin" && (
           <div className="mt-2 space-y-1.5">
             <TenantSelector />
             {selectedTenantId && (
@@ -205,10 +226,17 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2">
-        
         {filteredSections.map(section => {
           const visibleItems = filterItems(section.items);
           if (visibleItems.length === 0) return null;
+
+          console.log("[SECTION CHECK]", {
+            title: section.title,
+            userType: dashboardShell,
+            visible: true,
+            childCount: visibleItems.length,
+          });
+
           return (
             <SidebarNavSection
               key={section.title}

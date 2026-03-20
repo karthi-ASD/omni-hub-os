@@ -2,9 +2,11 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { resolveUserType, detectRoleConflict, type UserType } from "@/lib/role-resolver";
+import { resolveAppMode, resolveUserType, detectRoleConflict, type AppMode, type DashboardShell, type UserType } from "@/lib/role-resolver";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
+
+type CRMType = "real_estate" | "service" | "finance" | "generic";
 
 interface Profile {
   id: string;
@@ -21,12 +23,19 @@ interface TenantBusiness {
   status: string;
 }
 
+interface ActiveBusinessContext {
+  id: string;
+  name: string;
+  crm_type: CRMType | null;
+}
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   profile: Profile | null;
   roles: AppRole[];
   loading: boolean;
+  isAuthResolved: boolean;
   tenantValidationError: string | null;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
@@ -39,6 +48,12 @@ interface AuthContextType {
   clientId: string | null;
   /** Resolved user type — SINGLE SOURCE OF TRUTH */
   userType: UserType;
+  /** Resolved shell/app mode for layout and navigation */
+  appMode: AppMode;
+  dashboardShell: DashboardShell;
+  activeTenantId: string | null;
+  activeBusinessName: string | null;
+  activeCRMType: CRMType | null;
   /** All businesses — only populated for super_admin */
   allBusinesses: TenantBusiness[];
   /** Selected tenant for super_admin context switching */
@@ -54,10 +69,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [rawProfile, setRawProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [businessContextLoading, setBusinessContextLoading] = useState(false);
   const [tenantValidationError, setTenantValidationError] = useState<string | null>(null);
   const [allBusinesses, setAllBusinesses] = useState<TenantBusiness[]>([]);
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
   const [clientUserId, setClientUserId] = useState<string | null>(null);
+  const [activeBusinessContext, setActiveBusinessContext] = useState<ActiveBusinessContext | null>(null);
 
   const isHydratingRef = React.useRef(false);
   const hasHydratedRef = React.useRef(false);
@@ -121,7 +138,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const validateClientTenantMapping = async (userId: string, profileData: Profile | null) => {
+  const fetchActiveBusinessContext = useCallback(async (businessId: string | null) => {
+    if (!businessId) {
+      setActiveBusinessContext(null);
+      setBusinessContextLoading(false);
+      return null;
+    }
+
+    setBusinessContextLoading(true);
+
+    try {
+      const { data } = await supabase
+        .from("businesses")
+        .select("id, name, crm_type")
+        .eq("id", businessId)
+        .maybeSingle();
+
+      const context = (data as ActiveBusinessContext | null) ?? null;
+      setActiveBusinessContext(context);
+      return context;
+    } catch {
+      setActiveBusinessContext(null);
+      return null;
+    } finally {
+      setBusinessContextLoading(false);
+    }
+  }, []);
+
+  const validateClientTenantMapping = async (
+    userId: string,
+    profileData: Profile | null,
+    userRoles: AppRole[]
+  ) => {
     try {
       const { data: clientLink } = await supabase
         .from("client_users")
@@ -133,7 +181,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const linkedClientId = clientLink?.client_id || null;
       setClientUserId(linkedClientId);
 
-      if (!linkedClientId) {
+      const hasPrivilegedNonClientRole = userRoles.some((role) =>
+        ["super_admin", "business_admin", "employee", "hr_manager", "manager"].includes(role)
+      );
+
+      if (!linkedClientId || hasPrivilegedNonClientRole) {
         setTenantValidationError(null);
         return profileData;
       }
@@ -187,6 +239,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAllBusinesses([]);
     setSelectedTenantId(null);
     setClientUserId(null);
+    setActiveBusinessContext(null);
+    setBusinessContextLoading(false);
     setTenantValidationError(null);
     hasHydratedRef.current = false;
     isHydratingRef.current = false;
@@ -231,7 +285,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           fetchRoles(nextSession.user.id),
         ]);
 
-        await validateClientTenantMapping(nextSession.user.id, profileData);
+        const validatedProfile = await validateClientTenantMapping(nextSession.user.id, profileData, userRoles);
+        const effectiveBusinessId = validatedProfile?.business_id ?? profileData?.business_id ?? null;
 
         if (userRoles.includes("super_admin")) {
           const biz = await fetchBusinesses();
@@ -243,6 +298,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
           }
         }
+
+        await fetchActiveBusinessContext(effectiveBusinessId);
 
         hydratedSessionKeyRef.current = hydrationKey;
         hasHydratedRef.current = true;
@@ -372,19 +429,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isBusinessAdmin = hasRole("business_admin");
   const isHRManager = hasRole("hr_manager");
 
-  // SINGLE SOURCE OF TRUTH: resolve user type via strict priority resolver
-  const userType = resolveUserType({ roles: roles as string[], clientUserId });
-
-  // Derived booleans from userType — NEVER infer independently
-  const isClientUser = userType === "client";
-  const clientId = isClientUser ? clientUserId : null;
-
-  // Detect and log role conflicts (staff user with client_users record)
-  const conflict = detectRoleConflict({ roles: roles as string[], clientUserId, userId: user?.id });
-  if (conflict) {
-    console.warn(conflict);
-  }
-
   const selectTenant = useCallback((id: string | null) => setSelectedTenantId(id), []);
 
   // KEY FIX: For super_admin, override profile.business_id with selected tenant
@@ -397,12 +441,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     : null;
 
+  const activeTenantId = isSuperAdmin
+    ? (selectedTenantId ?? rawProfile?.business_id ?? null)
+    : (profile?.business_id ?? rawProfile?.business_id ?? null);
+
+  const activeCRMType = activeBusinessContext?.crm_type ?? null;
+  const hasCustomCRM = !!activeCRMType && activeCRMType !== "generic";
+
+  // SINGLE SOURCE OF TRUTH: resolve user type via strict priority resolver
+  const userType = resolveUserType({ roles: roles as string[], clientUserId });
+  const appMode = resolveAppMode({
+    roles: roles as string[],
+    clientUserId,
+    businessId: activeTenantId,
+    hasCustomCRM,
+  });
+  const dashboardShell: DashboardShell = appMode;
+  const isAuthResolved = !loading && !businessContextLoading && (!!session ? !!rawProfile : true);
+
+  // Derived booleans from userType — NEVER infer independently
+  const isClientUser = userType === "client";
+  const clientId = isClientUser ? clientUserId : null;
+
+  // Detect and log role conflicts (staff user with client_users record)
+  const conflict = detectRoleConflict({ roles: roles as string[], clientUserId, userId: user?.id });
+  if (conflict) {
+    console.warn(conflict);
+  }
+
+  useEffect(() => {
+    if (!session?.user) {
+      setActiveBusinessContext(null);
+      setBusinessContextLoading(false);
+      return;
+    }
+
+    void fetchActiveBusinessContext(activeTenantId);
+  }, [session?.user?.id, activeTenantId, fetchActiveBusinessContext]);
+
   const contextValue = useMemo(() => ({
     session,
     user,
     profile,
     roles,
     loading,
+    isAuthResolved,
     tenantValidationError,
     signOut,
     hasRole,
@@ -412,10 +495,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isClientUser,
     clientId,
     userType,
+    appMode,
+    dashboardShell,
+    activeTenantId,
+    activeBusinessName: activeBusinessContext?.name ?? null,
+    activeCRMType,
     allBusinesses,
     selectedTenantId,
     selectTenant,
-  }), [session, user, profile, roles, loading, tenantValidationError, signOut, hasRole, isSuperAdmin, isBusinessAdmin, isHRManager, isClientUser, clientId, userType, allBusinesses, selectedTenantId, selectTenant]);
+  }), [session, user, profile, roles, loading, isAuthResolved, tenantValidationError, signOut, hasRole, isSuperAdmin, isBusinessAdmin, isHRManager, isClientUser, clientId, userType, appMode, dashboardShell, activeTenantId, activeBusinessContext?.name, activeCRMType, allBusinesses, selectedTenantId, selectTenant]);
 
   return (
     <AuthContext.Provider value={contextValue}>

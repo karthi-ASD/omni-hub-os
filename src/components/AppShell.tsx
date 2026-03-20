@@ -12,12 +12,54 @@ import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { BroadcastPopup } from "@/components/notifications/BroadcastPopup";
+import { useEffect } from "react";
+
+const shellMeta = {
+  super_admin: {
+    title: "NextWeb Super Admin",
+    subtitle: "Global tenant oversight and platform controls.",
+  },
+  internal_staff: {
+    title: "NextWeb Staff Workspace",
+    subtitle: "Internal operations, delivery, and service management.",
+  },
+  business_admin: {
+    title: "Business Workspace",
+    subtitle: "Tenant-scoped CRM and business operations.",
+  },
+  client: {
+    title: "Client Portal",
+    subtitle: "Your services, reporting, and business growth workspace.",
+  },
+} as const;
+
+const ShellLoading = () => (
+  <div className="flex min-h-screen items-center justify-center bg-background">
+    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+  </div>
+);
 
 const AppShell = () => {
-
-  const { profile } = useAuth();
+  const { profile, isAuthResolved, dashboardShell, activeBusinessName } = useAuth();
   const businessId = profile?.business_id;
   const isMobile = useIsMobile();
+  const shellInfo = shellMeta[dashboardShell];
+  const shellTitle = dashboardShell === "business_admin" || dashboardShell === "client"
+    ? activeBusinessName || shellInfo.title
+    : shellInfo.title;
+
+  useEffect(() => {
+    console.log("[SHELL RENDER]", {
+      dashboardShell,
+      pathname: window.location.pathname,
+      businessId,
+      activeBusinessName,
+    });
+  }, [dashboardShell, businessId, activeBusinessName]);
+
+  if (!isAuthResolved) {
+    return <ShellLoading />;
+  }
 
   if (isMobile) {
     return (
@@ -47,8 +89,12 @@ const AppShell = () => {
           <AppSidebar />
           <div className="flex-1 flex flex-col min-w-0">
             <header className="sticky top-0 z-40 h-14 flex items-center justify-between px-4 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3 min-w-0">
                 <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+                <div className="min-w-0 hidden md:block">
+                  <p className="text-sm font-semibold text-foreground truncate">{shellTitle}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">{shellInfo.subtitle}</p>
+                </div>
               </div>
               <div className="flex items-center gap-1">
                 <GlobalSearch />
