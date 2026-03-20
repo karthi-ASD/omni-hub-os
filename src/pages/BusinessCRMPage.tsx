@@ -53,7 +53,7 @@ const REAL_ESTATE_MODULE_MAP: Record<string, React.FC> = {
   property_inventory: PropertyInventoryModule,
   projects_developers: ProjectsDevelopersModule,
   accounts_commissions: AccountsCommissionsModule,
-  hr_team: HRTeamModule,
+  hr_team: HRTeamModuleFull,
   tasks_followups: TasksFollowupsModule,
   communications: CommunicationsModule,
   client_portal_mgmt: ClientPortalMgmtModule,
