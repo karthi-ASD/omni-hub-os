@@ -17192,6 +17192,41 @@ export type Database = {
           },
         ]
       }
+      meta_page_mappings: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          page_id: string
+          page_name: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          page_id: string
+          page_name?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          page_id?: string
+          page_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_page_mappings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       migration_runs: {
         Row: {
           error_message: string | null

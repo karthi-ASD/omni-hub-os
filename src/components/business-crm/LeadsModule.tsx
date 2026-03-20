@@ -453,6 +453,12 @@ export function LeadsModule() {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Meta Integration Panel - shown on Meta tab */}
+      {activeTab === "meta" && bid && (
+        <div className="mt-4">
+          <MetaIntegrationPanel businessId={bid} />
+        </div>
+      )}
     </div>
   );
 }
