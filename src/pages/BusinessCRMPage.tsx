@@ -8,7 +8,7 @@ import {
   ClipboardList, DollarSign, PhoneCall, StickyNote, Briefcase,
 } from "lucide-react";
 
-// ACE1 (Real Estate) modules
+// Real Estate CRM modules
 import { ExecutiveDashboardModule } from "@/components/business-crm/ExecutiveDashboardModule";
 import { LeadsModule } from "@/components/business-crm/LeadsModule";
 import { InvestorsModule } from "@/components/business-crm/InvestorsModule";
@@ -25,7 +25,7 @@ import { AutomationsModule } from "@/components/business-crm/AutomationsModule";
 import { MobileAppModule } from "@/components/business-crm/MobileAppModule";
 import { BusinessSettingsModule } from "@/components/business-crm/BusinessSettingsModule";
 
-// Service CRM modules (Green Ultimate)
+// Service CRM modules
 import { ServiceLeadsModule } from "@/components/service-crm/ServiceLeadsModule";
 import { ServiceSalesCRMModule } from "@/components/service-crm/ServiceSalesCRMModule";
 
@@ -36,7 +36,6 @@ const ICON_MAP: Record<string, React.ElementType> = {
   ClipboardList, DollarSign, PhoneCall, StickyNote, Briefcase,
 };
 
-// ACE1 modules (Real Estate CRM)
 const REAL_ESTATE_MODULE_MAP: Record<string, React.FC> = {
   executive_dashboard: ExecutiveDashboardModule,
   leads: LeadsModule,
@@ -55,7 +54,6 @@ const REAL_ESTATE_MODULE_MAP: Record<string, React.FC> = {
   business_settings: BusinessSettingsModule,
 };
 
-// Service CRM modules (Green Ultimate)
 const SERVICE_MODULE_MAP: Record<string, React.FC> = {
   leads: ServiceLeadsModule,
   clients: () => <div className="text-center py-12 text-muted-foreground">Clients module coming soon</div>,
@@ -73,22 +71,16 @@ const SERVICE_MODULE_MAP: Record<string, React.FC> = {
   business_settings: BusinessSettingsModule,
 };
 
-// CRM type labels
-const CRM_HEADERS: Record<string, { title: string; subtitle: string }> = {
-  real_estate: {
-    title: "ACE1 Private Investment CRM",
-    subtitle: "Your dedicated workspace for managing investors, properties, and deals",
-  },
-  service: {
-    title: "Green Ultimate CRM",
-    subtitle: "Manage leads, proposals, and solar installations",
-  },
-  finance: { title: "Finance CRM", subtitle: "Financial services workspace" },
-  generic: { title: "Business CRM", subtitle: "Your business workspace" },
+// Dynamic CRM type subtitles
+const CRM_SUBTITLES: Record<string, string> = {
+  real_estate: "Your dedicated workspace for managing investors, properties, and deals",
+  service: "Manage leads, proposals, and service operations",
+  finance: "Financial services workspace",
+  generic: "Your business workspace",
 };
 
 export default function BusinessCRMPage() {
-  const { tabs, hasCustomCRM, crmType, isACE1 } = useBusinessCRM();
+  const { tabs, hasCustomCRM, crmType, isRealEstate, businessName } = useBusinessCRM();
   const [searchParams, setSearchParams] = useSearchParams();
   const defaultTab = crmType === "service" ? "leads" : (tabs[0]?.key || "executive_dashboard");
   const activeTab = searchParams.get("tab") || defaultTab;
@@ -104,15 +96,16 @@ export default function BusinessCRMPage() {
     );
   }
 
-  const header = CRM_HEADERS[crmType || "generic"] || CRM_HEADERS.generic;
+  const title = `${businessName} CRM`;
+  const subtitle = CRM_SUBTITLES[crmType || "generic"] || CRM_SUBTITLES.generic;
 
-  // For ACE1, use tab-based rendering from DB config
-  if (isACE1) {
+  // Real estate CRM: tab-based rendering from DB config
+  if (isRealEstate) {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">{header.title}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{header.subtitle}</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">{title}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
         </div>
         <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v })} className="w-full">
           <TabsList className="bg-card border border-border h-auto flex-wrap gap-1 p-1">
@@ -145,14 +138,14 @@ export default function BusinessCRMPage() {
     );
   }
 
-  // For service CRM (Green Ultimate), render module directly based on tab param
+  // Service CRM: render module directly
   const ModuleComponent = SERVICE_MODULE_MAP[activeTab] || SERVICE_MODULE_MAP.leads;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">{header.title}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{header.subtitle}</p>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">{title}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
       </div>
       <ModuleComponent />
     </div>

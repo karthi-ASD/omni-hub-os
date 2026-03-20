@@ -88,7 +88,8 @@ export function ServiceLeadDetail({ lead, onBack, onStageChange }: Props) {
   const handleWhatsApp = () => {
     if (!lead.phone) { toast.error("No phone number"); return; }
     const phone = lead.phone.replace(/[^0-9+]/g, "");
-    window.open(`https://wa.me/${phone}`, "_blank");
+    const message = encodeURIComponent(`Hi ${lead.name}, regarding your enquiry with us — we'd love to help you with the next steps. Let us know a good time to chat!`);
+    window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
   };
 
   const handleCall = () => {
