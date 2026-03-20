@@ -239,6 +239,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAllBusinesses([]);
     setSelectedTenantId(null);
     setClientUserId(null);
+    setActiveBusinessContext(null);
+    setBusinessContextLoading(false);
     setTenantValidationError(null);
     hasHydratedRef.current = false;
     isHydratingRef.current = false;
