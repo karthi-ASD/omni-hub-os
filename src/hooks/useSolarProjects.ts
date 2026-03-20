@@ -107,7 +107,7 @@ export function useSolarProjects() {
 
     const reminders = defaultTasks.map((t, i) => ({
       business_id: businessId,
-      entity_type: "lead" as const,
+      entity_type: "project" as any,
       entity_id: project.id,
       assigned_to_user_id: input.assigned_manager_user_id || profile.user_id,
       title: `[${input.project_name}] ${t.title}`,
