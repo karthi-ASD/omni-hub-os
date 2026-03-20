@@ -227,7 +227,7 @@ export function LeadCSVImport({ open, onClose, businessId }: Props) {
                         <SelectItem value="_skip" className="text-muted-foreground">Skip</SelectItem>
                         {TARGET_FIELDS.map(f => (
                           <SelectItem key={f.key} value={f.key}>
-                            {f.label}{f.required ? " *" : ""}
+                            {f.label}{"required" in f && f.required ? " *" : ""}
                           </SelectItem>
                         ))}
                       </SelectContent>
