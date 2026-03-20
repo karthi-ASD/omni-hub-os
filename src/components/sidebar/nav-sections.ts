@@ -6,7 +6,7 @@ import {
   Palette, Activity, Layers, UserCog, LogOut, Search, Bell,
   BookOpen, Lock, Cpu, Workflow, Store, Gauge, Brain,
   TrendingUp, Code, FileEdit, PhoneCall, CalendarCheck, Handshake,
-  MapPin, RefreshCw, Star, ListChecks, Inbox, Sparkles, Plug,
+  MapPin, RefreshCw, Star, ListChecks, Inbox, Sparkles, Plug, Sun,
 } from "lucide-react";
 
 export interface NavItem {
