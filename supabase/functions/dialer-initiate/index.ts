@@ -27,9 +27,8 @@ Deno.serve(async (req) => {
   const authClient = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authHeader } },
   });
-  const { data: claimsData, error: claimsErr } = await authClient.auth.getClaims(
-    authHeader.replace("Bearer ", "")
-  );
+  const token = authHeader.replace("Bearer ", "");
+  const { data: claimsData, error: claimsErr } = await authClient.auth.getClaims(token);
   if (claimsErr || !claimsData?.claims) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
@@ -62,7 +61,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // HANGUP action
+    // HANGUP action — only sends hangup request to Plivo, webhook handles status update
     if (action === "hangup") {
       if (session.provider_call_id) {
         const PLIVO_AUTH_ID = Deno.env.get("PLIVO_AUTH_ID");
@@ -85,13 +84,18 @@ Deno.serve(async (req) => {
         }
       }
 
-      await supabase
-        .from("dialer_sessions")
-        .update({
-          call_status: "ended",
-          call_end_time: new Date().toISOString(),
-        })
-        .eq("id", session_id);
+      // Fallback: if Plivo doesn't send a webhook for hangup (e.g. call never connected),
+      // mark ended only if still in a non-terminal state
+      const terminalStates = ["ended", "failed", "busy", "no-answer"];
+      if (!terminalStates.includes(session.call_status)) {
+        await supabase
+          .from("dialer_sessions")
+          .update({
+            call_status: "ended",
+            call_end_time: new Date().toISOString(),
+          })
+          .eq("id", session_id);
+      }
 
       return new Response(JSON.stringify({ status: "hangup_sent" }), {
         status: 200,
@@ -105,7 +109,6 @@ Deno.serve(async (req) => {
     const PLIVO_CALLER_ID = Deno.env.get("PLIVO_CALLER_ID");
 
     if (!PLIVO_AUTH_ID || !PLIVO_AUTH_TOKEN || !PLIVO_CALLER_ID) {
-      // Mark session as failed and return descriptive error
       await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", session_id);
       return new Response(
         JSON.stringify({ error: "Plivo credentials not configured. Please contact admin." }),
@@ -113,7 +116,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    const callbackUrl = `${supabaseUrl}/functions/v1/dialer-webhook`;
+    // CRITICAL FIX: Pass session_id in all callback URLs to avoid race condition
+    const callbackBase = `${supabaseUrl}/functions/v1/dialer-webhook`;
+    const callbackUrl = `${callbackBase}?session_id=${session_id}`;
 
     // Make Plivo outbound call
     const plivoResp = await fetch(
@@ -155,6 +160,7 @@ Deno.serve(async (req) => {
 
     const providerCallId = plivoData.request_uuid || plivoData.RequestUUID || null;
 
+    // Only set provider_call_id and call_start_time — status updates come from webhook
     await supabase
       .from("dialer_sessions")
       .update({

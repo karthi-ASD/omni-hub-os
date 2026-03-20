@@ -15,13 +15,16 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, serviceKey);
 
   try {
+    // Extract session_id from query params (primary method — avoids race condition)
+    const url = new URL(req.url);
+    const querySessionId = url.searchParams.get("session_id");
+
     let body: Record<string, any>;
     const contentType = req.headers.get("content-type") || "";
 
     if (contentType.includes("application/json")) {
       body = await req.json();
     } else {
-      // Plivo may send form-urlencoded
       const text = await req.text();
       body = Object.fromEntries(new URLSearchParams(text));
     }
@@ -29,60 +32,80 @@ Deno.serve(async (req) => {
     const callUuid = body.CallUUID || body.call_uuid || body.RequestUUID;
     const callStatus = body.CallStatus || body.Event || "unknown";
 
-    if (!callUuid) {
-      return new Response(JSON.stringify({ error: "Missing CallUUID" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // CRITICAL: Resolve session — prefer query param session_id, fallback to provider_call_id
+    let session: any = null;
+
+    if (querySessionId) {
+      const { data } = await supabase
+        .from("dialer_sessions")
+        .select("*")
+        .eq("id", querySessionId)
+        .maybeSingle();
+      session = data;
     }
 
-    // Find session by provider_call_id
-    const { data: session } = await supabase
-      .from("dialer_sessions")
-      .select("*")
-      .eq("provider_call_id", callUuid)
-      .maybeSingle();
+    // Fallback: find by provider_call_id if session_id wasn't in query or didn't match
+    if (!session && callUuid) {
+      const { data } = await supabase
+        .from("dialer_sessions")
+        .select("*")
+        .eq("provider_call_id", callUuid)
+        .maybeSingle();
+      session = data;
+    }
 
     if (!session) {
-      console.warn("No dialer session found for call UUID:", callUuid);
+      console.warn("No dialer session found. query_session_id:", querySessionId, "callUuid:", callUuid);
       return new Response(JSON.stringify({ status: "no_session" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Store event
-    await supabase.from("dialer_call_events").insert({
-      session_id: session.id,
-      event_type: callStatus,
-      metadata: body,
-    });
+    // Store event (duplicate-safe via unique constraint on session_id + event_type + created_at)
+    try {
+      await supabase.from("dialer_call_events").insert({
+        session_id: session.id,
+        event_type: callStatus,
+        metadata: body,
+      });
+    } catch (insertErr) {
+      // Duplicate event — safe to ignore
+      console.log("Event insert skipped (likely duplicate):", callStatus);
+    }
 
-    // Map status
+    // Map status — SINGLE SOURCE OF TRUTH for call lifecycle
     const updates: Record<string, any> = {};
     const statusLower = String(callStatus).toLowerCase();
 
-    if (["ringing"].includes(statusLower)) {
-      updates.call_status = "ringing";
-    } else if (["answered", "in-progress"].includes(statusLower)) {
-      updates.call_status = "connected";
-    } else if (["completed", "hangup"].includes(statusLower)) {
-      updates.call_status = "ended";
-      updates.call_end_time = new Date().toISOString();
-      const duration = parseInt(body.Duration || body.BillDuration || "0");
-      if (duration) updates.call_duration = duration;
-    } else if (["busy"].includes(statusLower)) {
-      updates.call_status = "busy";
-      updates.call_end_time = new Date().toISOString();
-    } else if (["no-answer", "cancel"].includes(statusLower)) {
-      updates.call_status = "no-answer";
-      updates.call_end_time = new Date().toISOString();
-    } else if (["failed"].includes(statusLower)) {
-      updates.call_status = "failed";
-      updates.call_end_time = new Date().toISOString();
+    // Define terminal states to prevent backward transitions
+    const terminalStates = ["ended", "failed", "busy", "no-answer"];
+    const currentIsTerminal = terminalStates.includes(session.call_status);
+
+    // Skip status updates if session already in terminal state
+    if (!currentIsTerminal) {
+      if (["ringing"].includes(statusLower)) {
+        updates.call_status = "ringing";
+      } else if (["answered", "in-progress"].includes(statusLower)) {
+        updates.call_status = "connected";
+      } else if (["completed", "hangup"].includes(statusLower)) {
+        updates.call_status = "ended";
+        updates.call_end_time = new Date().toISOString();
+        const duration = parseInt(body.Duration || body.BillDuration || "0");
+        if (duration) updates.call_duration = duration;
+      } else if (["busy"].includes(statusLower)) {
+        updates.call_status = "busy";
+        updates.call_end_time = new Date().toISOString();
+      } else if (["no-answer", "cancel"].includes(statusLower)) {
+        updates.call_status = "no-answer";
+        updates.call_end_time = new Date().toISOString();
+      } else if (["failed"].includes(statusLower)) {
+        updates.call_status = "failed";
+        updates.call_end_time = new Date().toISOString();
+      }
     }
 
-    // Recording URL
+    // Recording URL — always update regardless of state
     const recordingUrl = body.RecordUrl || body.RecordingUrl || body.recording_url;
     if (recordingUrl) {
       updates.recording_url = recordingUrl;
@@ -93,7 +116,7 @@ Deno.serve(async (req) => {
     }
 
     // System event for terminal states
-    if (["ended", "failed", "busy", "no-answer"].includes(updates.call_status)) {
+    if (updates.call_status && terminalStates.includes(updates.call_status)) {
       await supabase.from("system_events").insert({
         business_id: session.business_id,
         event_type: `DIALER_CALL_${updates.call_status.toUpperCase().replace("-", "_")}`,

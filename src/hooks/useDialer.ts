@@ -5,7 +5,6 @@ import {
   createDialerSession,
   initiateCall,
   hangupCall,
-  updateSessionStatus,
   saveDisposition,
   insertCallEvent,
   updateAgentState,
@@ -29,18 +28,18 @@ export function useDialer() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const unsubRef = useRef<(() => void) | null>(null);
 
-  // Timer logic
+  // Timer logic — starts ONLY when webhook sets status to "connected"
   useEffect(() => {
     if (callStatus === "connected") {
       timerRef.current = setInterval(() => setCallTimer((t) => t + 1), 1000);
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
-      if (callStatus === "idle" || callStatus === "ended") setCallTimer(0);
+      if (callStatus === "idle") setCallTimer(0);
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [callStatus]);
 
-  // Realtime subscription
+  // Realtime subscription — ALL status changes come from webhook via DB updates
   useEffect(() => {
     if (!session?.id) return;
     unsubRef.current = subscribeToSession(session.id, (updated) => {
@@ -48,11 +47,12 @@ export function useDialer() {
       const status = updated.call_status as DialerCallStatus;
       setCallStatus(status);
 
+      // Sync agent state based on webhook-driven status
       if (status === "connected" && agentState !== "on_call") {
         setAgentState("on_call");
         if (profile?.business_id) updateAgentState(profile.business_id, profile.user_id, "on_call");
       }
-      if (status === "ended" || status === "failed") {
+      if (["ended", "failed", "busy", "no-answer"].includes(status)) {
         setAgentState("available");
         if (profile?.business_id) updateAgentState(profile.business_id, profile.user_id, "available");
       }
@@ -79,22 +79,24 @@ export function useDialer() {
       if (!sess) { toast.error("Failed to create call session"); return; }
 
       setSession(sess);
-      setCallStatus("initiating");
+      setCallStatus("initiating"); // Local UI-only state before webhook takes over
       setIsMuted(false);
       setCallTimer(0);
 
+      // Optimistic agent state
       await updateAgentState(profile.business_id, profile.user_id, "on_call");
       setAgentState("on_call");
 
       const result = await initiateCall(sess.id);
       if (!result.success) {
+        // Call failed at initiation — backend already set status to "failed"
+        // Realtime will update UI, but set local state immediately for responsiveness
         setCallStatus("failed");
-        await updateSessionStatus(sess.id, "failed");
-        await insertCallEvent(sess.id, "call_failed", { error: result.error });
         toast.error(result.error || "Call failed");
         await updateAgentState(profile.business_id, profile.user_id, "available");
         setAgentState("available");
       } else {
+        // Backend set status to "ringing" — realtime will confirm
         setCallStatus("ringing");
         await insertCallEvent(sess.id, "call_initiated", { provider_call_id: result.providerCallId });
       }
@@ -103,21 +105,15 @@ export function useDialer() {
     }
   }, [profile]);
 
+  // Hangup — tells backend to send hangup to Plivo; webhook handles status transition
   const endCall = useCallback(async () => {
     if (!session?.id) return;
     const success = await hangupCall(session.id);
-    if (success) {
-      setCallStatus("ended");
-      await updateSessionStatus(session.id, "ended", { call_end_time: new Date().toISOString(), call_duration: callTimer });
-      await insertCallEvent(session.id, "call_ended", { duration: callTimer });
-      if (profile?.business_id) {
-        await updateAgentState(profile.business_id, profile.user_id, "available");
-        setAgentState("available");
-      }
-    } else {
+    if (!success) {
       toast.error("Failed to end call");
     }
-  }, [session, callTimer, profile]);
+    // Do NOT update call_status here — webhook will do it via realtime
+  }, [session]);
 
   const toggleMute = useCallback(() => {
     setIsMuted((m) => !m);

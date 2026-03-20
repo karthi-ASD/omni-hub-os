@@ -66,7 +66,7 @@ export async function initiateCall(sessionId: string): Promise<{ success: boolea
   }
 }
 
-// Hangup call
+// Hangup call — tells backend to send hangup to Plivo; webhook handles status
 export async function hangupCall(sessionId: string): Promise<boolean> {
   try {
     const { error } = await supabase.functions.invoke("dialer-initiate", {
@@ -82,13 +82,7 @@ export async function hangupCall(sessionId: string): Promise<boolean> {
   }
 }
 
-// Update session status locally (optimistic)
-export async function updateSessionStatus(sessionId: string, status: string, extras?: Record<string, any>) {
-  const updates: any = { call_status: status, ...extras };
-  await supabase.from("dialer_sessions").update(updates).eq("id", sessionId);
-}
-
-// Save disposition and notes
+// Save disposition and notes — ALLOWED frontend DB write (non-status field)
 export async function saveDisposition(sessionId: string, disposition: string, notes?: string) {
   await supabase
     .from("dialer_sessions")
@@ -96,13 +90,17 @@ export async function saveDisposition(sessionId: string, disposition: string, no
     .eq("id", sessionId);
 }
 
-// Insert call event
+// Insert call event (duplicate-safe via DB constraint)
 export async function insertCallEvent(sessionId: string, eventType: string, metadata?: any) {
-  await supabase.from("dialer_call_events").insert({
-    session_id: sessionId,
-    event_type: eventType,
-    metadata: metadata || null,
-  } as any);
+  try {
+    await supabase.from("dialer_call_events").insert({
+      session_id: sessionId,
+      event_type: eventType,
+      metadata: metadata || null,
+    } as any);
+  } catch {
+    // Duplicate or failure — non-blocking
+  }
 }
 
 // Update agent state
@@ -128,7 +126,7 @@ export async function fetchLeadCallHistory(leadId: string): Promise<DialerSessio
   return (data as unknown as DialerSession[]) || [];
 }
 
-// Subscribe to session updates (realtime)
+// Subscribe to session updates (realtime) — this is how frontend gets status changes
 export function subscribeToSession(sessionId: string, callback: (session: DialerSession) => void) {
   const channel = supabase
     .channel(`dialer-session-${sessionId}`)
