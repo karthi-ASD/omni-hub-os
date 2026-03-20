@@ -167,7 +167,7 @@ export function MobileAppModule() {
           <div className="mx-auto max-w-sm border-2 border-border rounded-2xl overflow-hidden bg-card shadow-lg">
             <div className="bg-primary/10 px-4 py-3 border-b border-border">
               <p className="text-sm font-semibold text-foreground">📅 Upcoming Follow-ups</p>
-              <p className="text-[10px] text-muted-foreground">Your scheduled consultations with ACE1</p>
+              <p className="text-[10px] text-muted-foreground">Your scheduled consultations</p>
             </div>
             <div className="p-3 space-y-2 max-h-[400px] overflow-y-auto">
               {followupTasks.length === 0 && (
