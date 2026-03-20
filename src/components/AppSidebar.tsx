@@ -86,6 +86,7 @@ export function AppSidebar() {
     isClientUser,
   } = useAuth();
   const { departmentName } = useEmployeeDepartment();
+  const { canAccessDialer } = useDialerAccess();
 
   // 🔒 DO NOT MODIFY — SECURITY CRITICAL
   // client_business is a shell mode, not a client identity.
