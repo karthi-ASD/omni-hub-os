@@ -142,7 +142,7 @@ export function ServiceLeadsModule() {
       await createFollowUp({
         lead_id: result.id,
         subject: `Day 1 follow-up: ${form.name.trim()}`,
-        followup_date: fmtDate(addDays(today, 1), "yyyy-MM-dd"),
+        followup_date: format(addDays(today, 1), "yyyy-MM-dd"),
         followup_type: "call",
         priority: "high",
       });
