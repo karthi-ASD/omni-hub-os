@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useGlobalSearch } from "@/hooks/useGlobalSearch";
 import { Input } from "@/components/ui/input";
-import { Search, Users, Building2, Calendar, X, MessageSquare, Target, FolderKanban } from "lucide-react";
+import { Search, Users, Building2, Calendar, X, MessageSquare, Target, FolderKanban, Ticket } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export function GlobalSearch() {
