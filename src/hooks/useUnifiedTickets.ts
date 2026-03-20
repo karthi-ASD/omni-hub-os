@@ -270,6 +270,7 @@ export function useUnifiedTickets(_departmentFilter?: string) {
       action_type: "assigned", new_value: userName || userId,
     } as any);
     toast.success("Ticket assigned");
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: bid, module: "tickets", actionType: "assign", entityType: "ticket", entityId: id, description: `Ticket assigned to ${userName || userId}` });
     fetchTickets();
   }, [bid, profile, fetchTickets]);
 
