@@ -257,6 +257,9 @@ import SalesToolsPage from "./pages/SalesToolsPage";
 import SeoLeadCapturePage from "./pages/SeoLeadCapturePage";
 import WhatsAppSupportPage from "./pages/WhatsAppSupportPage";
 import BusinessCRMPage from "./pages/BusinessCRMPage";
+import SolarProjectsPage from "./pages/SolarProjectsPage";
+import SolarProjectDashboard from "./pages/SolarProjectDashboard";
+import SolarInstallationsPage from "./pages/SolarInstallationsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
