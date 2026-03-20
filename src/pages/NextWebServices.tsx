@@ -30,6 +30,15 @@ const REQUEST_TYPES = [
   { value: "integration_request", label: "Integration Request" },
 ];
 
+const CATEGORY_OPTIONS = [
+  { value: "general", label: "General" },
+  { value: "seo", label: "SEO" },
+  { value: "website", label: "Website" },
+  { value: "ads", label: "Ads" },
+  { value: "crm", label: "CRM" },
+  { value: "automation", label: "Automation" },
+];
+
 const PRIORITY_OPTIONS = [
   { value: "low", label: "Low" },
   { value: "medium", label: "Medium" },
