@@ -23,6 +23,7 @@ const tempColor = (t: string) => t === "hot" ? "destructive" : t === "warm" ? "s
 
 const SalesDashboardPage = () => {
   usePageTitle("Sales Dashboard");
+  const navigate = useNavigate();
   const {
     loading, isAdmin, clientMetrics, leadMetrics, pipelineStages,
     followUpMetrics, proposalMetrics, revenueMetrics, conversionRate,
