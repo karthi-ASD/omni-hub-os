@@ -6,7 +6,7 @@ import {
   Palette, Activity, Layers, UserCog, LogOut, Search, Bell,
   BookOpen, Lock, Cpu, Workflow, Store, Gauge, Brain,
   TrendingUp, Code, FileEdit, PhoneCall, CalendarCheck, Handshake,
-  MapPin, RefreshCw, Star, ListChecks, Inbox, Sparkles, Plug, Sun,
+  MapPin, RefreshCw, Star, ListChecks, Inbox, Sparkles, Plug, Sun, Mic,
 } from "lucide-react";
 
 export interface NavItem {
@@ -78,6 +78,10 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Pipeline", icon: FolderKanban, to: "/sales/pipeline" },
       { label: "Clients", icon: Users, to: "/sales/clients" },
       { label: "Dialer", icon: Phone, to: "/sales/dialer" },
+      { label: "My Calls", icon: Headphones, to: "/sales/dialer/my-dashboard" },
+      { label: "Team Calls", icon: Users, to: "/sales/dialer/team-dashboard", roles: ["super_admin", "business_admin", "admin", "sales_manager"] },
+      { label: "Recordings", icon: Mic, to: "/sales/dialer/recordings" },
+      { label: "Call Analytics", icon: BarChart3, to: "/sales/dialer/analytics", roles: ["super_admin", "business_admin", "admin", "sales_manager"] },
       { label: "Proposals", icon: FileText, to: "/sales/proposals" },
       { label: "Activities", icon: PhoneCall, to: "/sales/activities" },
       { label: "Tools", icon: Wrench, to: "/sales/tools" },
