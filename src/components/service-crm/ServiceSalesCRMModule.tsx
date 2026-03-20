@@ -118,7 +118,7 @@ export function ServiceSalesCRMModule() {
           toast.success(`Linked to project: ${data.project.project_name}`, {
             action: {
               label: "View Project",
-              onClick: () => setSearchParams({ tab: "projects" }),
+              onClick: () => setSearchParams({ tab: "projects", projectId: data.project?.id || "" }),
             },
           });
         }
@@ -129,7 +129,7 @@ export function ServiceSalesCRMModule() {
         toast.success("Proposal approved! " + msg, {
           action: {
             label: "View Project",
-            onClick: () => setSearchParams({ tab: "projects" }),
+            onClick: () => setSearchParams({ tab: "projects", projectId: data.project_id || "" }),
           },
         });
       }

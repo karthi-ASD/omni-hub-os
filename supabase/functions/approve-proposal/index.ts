@@ -7,17 +7,45 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-/** Safely extract numeric kW from strings like "6.6kW", "10 kW", "13.2kW Solar System" */
+/** Safely extract numeric kW from strings like "6.6kW", "10 kW", "13,2kW Solar System" */
 function parseSystemSizeKw(raw: string | null | undefined): number | null {
   if (!raw) return null;
-  const match = raw.replace(/,/g, "").match(/([\d.]+)\s*k?w?/i);
-  return match ? parseFloat(match[1]) || null : null;
+  // Replace comma decimal separators with dots, strip everything but digits/dots
+  const cleaned = raw.replace(/,/g, ".").replace(/[^0-9.]/g, " ");
+  const match = cleaned.match(/([\d]+\.?[\d]*)/);
+  if (!match) return null;
+  const num = parseFloat(match[1]);
+  return isNaN(num) || num <= 0 ? null : num;
+}
+
+/** Normalize email for exact matching */
+function normalizeEmail(email: string | null | undefined): string | null {
+  if (!email) return null;
+  const trimmed = email.trim().toLowerCase();
+  return trimmed || null;
+}
+
+/** Normalize phone to digits only */
+function normalizePhone(phone: string | null | undefined): string | null {
+  if (!phone) return null;
+  const digits = phone.replace(/[^0-9]/g, "");
+  return digits.length >= 8 ? digits : null;
 }
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  // Get caller from JWT
+  const authHeader = req.headers.get("authorization") || "";
+  const token = authHeader.replace("Bearer ", "");
+  let userId: string;
 
   try {
     const { proposal_id } = await req.json();
@@ -28,15 +56,6 @@ serve(async (req) => {
       });
     }
 
-    // Use service role for atomic server-side operation
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
-    // Get caller from JWT
-    const authHeader = req.headers.get("authorization") || "";
-    const token = authHeader.replace("Bearer ", "");
     const {
       data: { user },
     } = await supabase.auth.getUser(token);
@@ -46,6 +65,7 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    userId = user.id;
 
     // 1. Fetch proposal
     const { data: proposal, error: pErr } = await supabase
@@ -63,11 +83,11 @@ serve(async (req) => {
 
     const businessId = proposal.business_id;
 
-    // Get user profile for business_id verification
+    // Verify tenant access
     const { data: profile } = await supabase
       .from("profiles")
       .select("business_id")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .maybeSingle();
 
     if (!profile || profile.business_id !== businessId) {
@@ -79,7 +99,6 @@ serve(async (req) => {
 
     // 2. IDEMPOTENCY: If already accepted, return existing linked records
     if (proposal.status === "accepted") {
-      // Find existing project
       const { data: existingProject } = await supabase
         .from("projects")
         .select("id, project_name")
@@ -97,34 +116,11 @@ serve(async (req) => {
       );
     }
 
-    // 3. Mark proposal as accepted
-    const { error: updateErr } = await supabase
-      .from("proposals")
-      .update({ status: "accepted", approved_at: new Date().toISOString() })
-      .eq("id", proposal_id);
-
-    if (updateErr) {
-      return new Response(
-        JSON.stringify({ error: "Failed to update proposal" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const auditLogs: any[] = [];
-    auditLogs.push({
-      business_id: businessId,
-      actor_user_id: user.id,
-      action_type: "PROPOSAL_ACCEPTED",
-      entity_type: "proposal",
-      entity_id: proposal_id,
-      new_value_json: { proposal_title: proposal.title },
-    });
 
+    // 3. Fetch lead data if linked
     let leadData: any = null;
     if (proposal.lead_id) {
-      // Update lead stage to "won"
-      await supabase.from("leads").update({ stage: "won" }).eq("id", proposal.lead_id);
-
       const { data } = await supabase
         .from("leads")
         .select("*")
@@ -133,49 +129,48 @@ serve(async (req) => {
       leadData = data;
     }
 
-    // 4. FIND OR CREATE CLIENT (dedup by email/phone)
+    // 4. RESOLVE CLIENT (dedup by exact email, then phone_normalized)
     let clientId: string | null = null;
     let clientCreated = false;
 
-    const clientEmail = proposal.client_email || leadData?.email || null;
+    const clientEmail = normalizeEmail(proposal.client_email || leadData?.email);
     const clientPhone = proposal.client_phone || leadData?.phone || null;
+    const clientPhoneNorm = normalizePhone(clientPhone);
     const clientName = proposal.client_name || leadData?.name || null;
 
-    // Search for existing client
+    // Search by exact email (trimmed, lowered)
     if (clientEmail) {
       const { data: byEmail } = await supabase
         .from("clients")
         .select("id")
         .eq("business_id", businessId)
-        .ilike("email", clientEmail.trim())
+        .eq("email", clientEmail)
         .is("deleted_at", null)
         .limit(1)
         .maybeSingle();
       if (byEmail) clientId = byEmail.id;
     }
 
-    if (!clientId && clientPhone) {
-      const normPhone = clientPhone.replace(/[^0-9]/g, "");
-      if (normPhone.length >= 8) {
-        const { data: byPhone } = await supabase
-          .from("clients")
-          .select("id, phone, mobile")
-          .eq("business_id", businessId)
-          .is("deleted_at", null);
-        if (byPhone) {
-          const match = byPhone.find((c: any) => {
-            const cp = (c.phone || "").replace(/[^0-9]/g, "");
-            const cm = (c.mobile || "").replace(/[^0-9]/g, "");
-            const suffix = normPhone.slice(-9);
-            return cp.endsWith(suffix) || cm.endsWith(suffix);
-          });
-          if (match) clientId = match.id;
-        }
+    // Search by phone_normalized (suffix match for country code variations)
+    if (!clientId && clientPhoneNorm) {
+      const suffix = clientPhoneNorm.slice(-9);
+      const { data: byPhone } = await supabase
+        .from("clients")
+        .select("id, phone_normalized")
+        .eq("business_id", businessId)
+        .is("deleted_at", null)
+        .not("phone_normalized", "is", null);
+
+      if (byPhone) {
+        const match = byPhone.find((c: any) =>
+          c.phone_normalized && c.phone_normalized.endsWith(suffix)
+        );
+        if (match) clientId = match.id;
       }
     }
 
+    // Create new client if no match
     if (!clientId && clientName) {
-      // Create new client
       const insertPayload: any = {
         business_id: businessId,
         contact_name: clientName,
@@ -187,7 +182,6 @@ serve(async (req) => {
         onboarding_status: "pending",
       };
 
-      // Only set company_name if lead has a business name; otherwise leave null
       if (leadData?.business_name) {
         insertPayload.company_name = leadData.business_name;
       }
@@ -203,7 +197,7 @@ serve(async (req) => {
         clientCreated = true;
         auditLogs.push({
           business_id: businessId,
-          actor_user_id: user.id,
+          actor_user_id: userId,
           action_type: "CLIENT_CREATED",
           entity_type: "client",
           entity_id: clientId,
@@ -215,7 +209,7 @@ serve(async (req) => {
     if (clientId && !clientCreated) {
       auditLogs.push({
         business_id: businessId,
-        actor_user_id: user.id,
+        actor_user_id: userId,
         action_type: "CLIENT_LINKED",
         entity_type: "client",
         entity_id: clientId,
@@ -223,7 +217,7 @@ serve(async (req) => {
       });
     }
 
-    // 5. FIND OR CREATE PROJECT (dedup by proposal_id or lead_id)
+    // 5. RESOLVE PROJECT (dedup by proposal_id, then lead_id)
     let projectId: string | null = null;
     let projectName: string | null = null;
     let projectCreated = false;
@@ -262,7 +256,6 @@ serve(async (req) => {
     }
 
     if (!projectId) {
-      // Create new project
       const systemKw = parseSystemSizeKw(proposal.system_size);
       projectName = `${clientName || "Solar"} - ${proposal.system_size || "System"}`;
 
@@ -287,30 +280,42 @@ serve(async (req) => {
           address: leadData?.suburb || leadData?.address || null,
           notes: proposal.proposal_notes || null,
           description: proposal.title || null,
-          assigned_manager_user_id: user.id,
+          assigned_manager_user_id: userId,
           start_date: new Date().toISOString().split("T")[0],
         })
         .select("id, project_name")
         .maybeSingle();
 
-      if (!prjErr && newProject) {
+      if (prjErr) {
+        // Handle race condition: unique constraint violation means another request created it
+        if (prjErr.code === "23505") {
+          const { data: reFetch } = await supabase
+            .from("projects")
+            .select("id, project_name")
+            .eq("business_id", businessId)
+            .eq("proposal_id", proposal_id)
+            .maybeSingle();
+          if (reFetch) {
+            projectId = reFetch.id;
+            projectName = reFetch.project_name;
+          }
+        }
+        // If still no project and not a duplicate error, we'll continue without project
+      } else if (newProject) {
         projectId = newProject.id;
         projectName = newProject.project_name;
         projectCreated = true;
 
         auditLogs.push({
           business_id: businessId,
-          actor_user_id: user.id,
+          actor_user_id: userId,
           action_type: "PROJECT_CREATED",
           entity_type: "project",
           entity_id: projectId,
-          new_value_json: {
-            from_proposal: proposal_id,
-            project_name: projectName,
-          },
+          new_value_json: { from_proposal: proposal_id, project_name: projectName },
         });
 
-        // 6. Create onboarding reminders with entity_type = "project"
+        // Create onboarding reminders
         const tasks = [
           { title: "Call client to confirm details", due_offset: 1 },
           { title: "Schedule site inspection", due_offset: 2 },
@@ -323,12 +328,10 @@ serve(async (req) => {
           business_id: businessId,
           entity_type: "project",
           entity_id: projectId,
-          assigned_to_user_id: user.id,
+          assigned_to_user_id: userId,
           title: `[${projectName}] ${t.title}`,
-          due_at: new Date(
-            Date.now() + t.due_offset * 86400000
-          ).toISOString(),
-          created_by_user_id: user.id,
+          due_at: new Date(Date.now() + t.due_offset * 86400000).toISOString(),
+          created_by_user_id: userId,
           priority: "medium",
         }));
 
@@ -336,7 +339,7 @@ serve(async (req) => {
 
         auditLogs.push({
           business_id: businessId,
-          actor_user_id: user.id,
+          actor_user_id: userId,
           action_type: "TASKS_CREATED",
           entity_type: "project",
           entity_id: projectId,
@@ -346,7 +349,7 @@ serve(async (req) => {
     } else {
       auditLogs.push({
         business_id: businessId,
-        actor_user_id: user.id,
+        actor_user_id: userId,
         action_type: "PROJECT_LINKED",
         entity_type: "project",
         entity_id: projectId,
@@ -354,7 +357,33 @@ serve(async (req) => {
       });
     }
 
-    // 7. System event
+    // 6. Mark proposal as accepted ONLY AFTER client + project resolved
+    const { error: updateErr } = await supabase
+      .from("proposals")
+      .update({ status: "accepted", approved_at: new Date().toISOString() })
+      .eq("id", proposal_id)
+      .neq("status", "accepted"); // prevent double-update race
+
+    if (updateErr) {
+      // Log failure but don't fail — entities are already created
+      console.error("Failed to update proposal status:", updateErr);
+    }
+
+    // Update lead stage to "won" if linked
+    if (proposal.lead_id) {
+      await supabase.from("leads").update({ stage: "won" }).eq("id", proposal.lead_id);
+    }
+
+    // 7. Audit logs + system event
+    auditLogs.push({
+      business_id: businessId,
+      actor_user_id: userId,
+      action_type: "PROPOSAL_ACCEPTED",
+      entity_type: "proposal",
+      entity_id: proposal_id,
+      new_value_json: { proposal_title: proposal.title },
+    });
+
     await supabase.from("system_events").insert({
       business_id: businessId,
       event_type: "PROPOSAL_APPROVED_FLOW",
@@ -364,11 +393,10 @@ serve(async (req) => {
         client_created: clientCreated,
         project_id: projectId,
         project_created: projectCreated,
-        actor_user_id: user.id,
+        actor_user_id: userId,
       },
     });
 
-    // 8. Write all audit logs
     if (auditLogs.length > 0) {
       await supabase.from("audit_logs").insert(auditLogs);
     }
@@ -386,6 +414,19 @@ serve(async (req) => {
     );
   } catch (err) {
     console.error("approve-proposal error:", err);
+
+    // Log failure event
+    try {
+      await supabase.from("system_events").insert({
+        business_id: null,
+        event_type: "PROPOSAL_APPROVAL_FAILED",
+        payload_json: {
+          error: err instanceof Error ? err.message : "Unknown error",
+          actor_user_id: userId! || null,
+        },
+      });
+    } catch (_) { /* swallow logging errors */ }
+
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
