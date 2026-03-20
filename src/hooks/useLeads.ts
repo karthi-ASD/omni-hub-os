@@ -121,6 +121,7 @@ export function useLeads() {
     });
 
     toast.success("Stage updated");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "leads", actionType: "update", entityType: "lead", entityId: id, description: `Lead stage changed to ${stage}` });
     await fetchLeads();
     notifySalesDataChanged(["leads", "follow-ups", "dashboard", "pipeline"], "lead:update-stage");
   };
