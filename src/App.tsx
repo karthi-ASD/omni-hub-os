@@ -433,6 +433,10 @@ const App = () => (
               <Route path="/dialer" element={<DialerPage />} />
               <Route path="/sales/dialer-dashboard" element={<SalesDialerDashboardPage />} />
               <Route path="/sales/dialer" element={<SalesDialerPage />} />
+              <Route path="/sales/dialer/recordings" element={<DialerRecordingsPage />} />
+              <Route path="/sales/dialer/my-dashboard" element={<DialerMyDashboardPage />} />
+              <Route path="/sales/dialer/team-dashboard" element={<DialerTeamDashboardPage />} />
+              <Route path="/sales/dialer/analytics" element={<DialerAnalyticsPage />} />
               <Route path="/analytics" element={<AnalyticsDashboardPage />} />
               <Route path="/ai-insights" element={<AIInsightsPage />} />
               <Route path="/ai-intelligence" element={<AIBusinessIntelligencePage />} />
