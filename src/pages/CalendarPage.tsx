@@ -419,7 +419,11 @@ const CalendarPage = () => {
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                   </div>
                 ) : filteredActivities.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-12">No activities for this day</p>
+                  <div className="text-center py-12 space-y-2">
+                    <Activity className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+                    <p className="text-sm text-muted-foreground">No activities recorded for this day</p>
+                    <p className="text-xs text-muted-foreground/60">Actions like lead creation, ticket updates, and task changes will appear here</p>
+                  </div>
                 ) : (
                   filteredActivities.map((a) => <ActivityTimelineItem key={a.id} record={a} />)
                 )}
