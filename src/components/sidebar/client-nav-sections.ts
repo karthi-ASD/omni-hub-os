@@ -4,6 +4,7 @@ import {
   Building2, GitBranch, TrendingUp, Zap, MapPin, Megaphone,
   FolderKanban, FileText, Star, ClipboardList, MessageSquare,
   DollarSign, Handshake, PieChart, PhoneCall, StickyNote,
+  Headphones, Globe, Send,
 } from "lucide-react";
 import type { NavSection } from "./nav-sections";
 import type { CRMType } from "@/hooks/useBusinessCRM";
@@ -25,6 +26,7 @@ export const NEXTWEB_SERVICES_SECTIONS: NavSection[] = [
       { label: "Website Intelligence", icon: GitBranch, to: "/client-website-structure" },
       { label: "Local Presence", icon: MapPin, to: "/client-local-presence" },
       { label: "Lead Dashboard", icon: Megaphone, to: "/client-leads-dashboard" },
+      { label: "NextWeb Services", icon: Headphones, to: "/nextweb-services" },
     ],
   },
 ];
@@ -71,8 +73,42 @@ const REAL_ESTATE_CRM_SECTIONS: NavSection[] = [
   },
 ];
 
-// Service business CRM (future)
-const SERVICE_CRM_SECTIONS: NavSection[] = [];
+// Service business CRM (Green Ultimate and similar)
+const SERVICE_CRM_SECTIONS: NavSection[] = [
+  {
+    title: "Sales CRM",
+    items: [
+      { label: "Leads", icon: Target, to: "/my-crm?tab=leads" },
+      { label: "Clients", icon: Users, to: "/my-crm?tab=clients" },
+      { label: "Opportunities", icon: FolderKanban, to: "/my-crm?tab=opportunities" },
+      { label: "Deal Pipeline", icon: TrendingUp, to: "/my-crm?tab=deal_pipeline" },
+    ],
+  },
+  {
+    title: "Operations",
+    items: [
+      { label: "Projects", icon: Briefcase, to: "/my-crm?tab=projects" },
+      { label: "Tasks", icon: ClipboardList, to: "/my-crm?tab=tasks_followups" },
+      { label: "Calendar", icon: Calendar, to: "/my-crm?tab=calendar" },
+    ],
+  },
+  {
+    title: "Accounts",
+    items: [
+      { label: "Dashboard", icon: PieChart, to: "/my-crm?tab=reports" },
+      { label: "Invoices", icon: Receipt, to: "/my-crm?tab=invoices" },
+      { label: "Payments", icon: DollarSign, to: "/my-crm?tab=payments" },
+    ],
+  },
+  {
+    title: "Communication",
+    items: [
+      { label: "Calls", icon: PhoneCall, to: "/my-crm?tab=communications" },
+      { label: "Notes", icon: StickyNote, to: "/my-crm?tab=notes" },
+      { label: "Settings", icon: Settings, to: "/my-crm?tab=business_settings" },
+    ],
+  },
+];
 
 // Finance CRM (future)
 const FINANCE_CRM_SECTIONS: NavSection[] = [];

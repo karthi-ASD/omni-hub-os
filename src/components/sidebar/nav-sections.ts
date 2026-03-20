@@ -213,6 +213,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "SA Tools", icon: Wrench, to: "/super-admin-tools", roles: ["super_admin"] },
       { label: "SA Clients", icon: Users, to: "/super-admin-clients", roles: ["super_admin"] },
       { label: "Business Mgmt", icon: Building2, to: "/business-admin-management", roles: ["super_admin"] },
+      { label: "Service Requests", icon: Inbox, to: "/admin-service-requests", roles: ["super_admin"] },
       { label: "System Health", icon: Activity, to: "/system-health", roles: ["super_admin"] },
       { label: "Integrations", icon: Plug, to: "/integrations-overview", roles: ["super_admin"] },
       { label: "Feature Registry", icon: ClipboardCheck, to: "/feature-registry", roles: ["super_admin"] },

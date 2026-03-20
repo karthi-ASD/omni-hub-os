@@ -112,6 +112,8 @@ import XeroTestPage from "./pages/XeroTestPage";
 import ClientBillingPortalPage from "./pages/ClientBillingPortalPage";
 import ClientPackagePage from "./pages/ClientPackagePage";
 import FinancePackagesPage from "./pages/FinancePackagesPage";
+import NextWebServicesPage from "./pages/NextWebServices";
+import AdminServiceRequestsPage from "./pages/AdminServiceRequests";
 import ContentManagementPage from "./pages/ContentManagementPage";
 import WebsiteDevStagesPage from "./pages/WebsiteDevStagesPage";
 import ActivityTimelinePage from "./pages/ActivityTimelinePage";
@@ -692,8 +694,12 @@ const App = () => (
               <Route path="/xero-test" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><XeroTestPage /></ProtectedRoute>
               } />
-              <Route path="/my-billing" element={<ClientBillingPortalPage />} />
-              <Route path="/my-package" element={<ClientPackagePage />} />
+               <Route path="/my-billing" element={<ClientBillingPortalPage />} />
+               <Route path="/my-package" element={<ClientPackagePage />} />
+               <Route path="/nextweb-services" element={<NextWebServicesPage />} />
+               <Route path="/admin-service-requests" element={
+                 <ProtectedRoute requiredRoles={["super_admin"]}><AdminServiceRequestsPage /></ProtectedRoute>
+               } />
               <Route path="/client-package/:clientId" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager", "employee"]}><ClientPackagePage /></ProtectedRoute>
               } />

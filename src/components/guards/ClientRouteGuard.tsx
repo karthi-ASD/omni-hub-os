@@ -22,6 +22,13 @@ const CLIENT_ALLOWED_PREFIXES = [
   "/reports",
   "/settings",
   "/profile",
+  "/nextweb-services",
+  "/my-crm",
+  "/client-performance-intelligence",
+  "/client-seo-projects",
+  "/client-website-structure",
+  "/client-local-presence",
+  "/client-leads-dashboard",
 ];
 
 export function ClientRouteGuard({ children }: { children?: React.ReactNode }) {
