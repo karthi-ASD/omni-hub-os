@@ -167,9 +167,16 @@ Deno.serve(async (req) => {
     const recordingUrl = body.RecordUrl || body.RecordingUrl || body.recording_url;
     if (recordingUrl && typeof recordingUrl === "string" && recordingUrl.startsWith("http")) {
       updates.recording_url = recordingUrl;
+      console.log("[dialer-webhook] Recording URL captured", { session_id: session.id, recording_url: recordingUrl });
     }
 
-    // If already terminal, ONLY allow recording_url — skip everything else
+    // Track leg-specific connection
+    if (leg === "customer" && mappedStatus === "connected") {
+      updates.customer_connected = true;
+      console.log("[dialer-webhook] Customer connected", { session_id: session.id });
+    }
+
+    // If already terminal, ONLY allow recording_url + customer_connected — skip everything else
     if (currentIsTerminal) {
       if (Object.keys(updates).length > 0) {
         await supabase.from("dialer_sessions").update(updates).eq("id", session.id);
@@ -195,19 +202,19 @@ Deno.serve(async (req) => {
           next_status: mappedStatus,
         });
       } else {
-      updates.call_status = mappedStatus;
+        updates.call_status = mappedStatus;
 
-      if (TERMINAL_STATES.includes(mappedStatus)) {
-        updates.call_end_time = new Date().toISOString();
-        const duration = parseInt(body.Duration || body.BillDuration || "0");
-        if (duration) updates.call_duration = duration;
+        if (TERMINAL_STATES.includes(mappedStatus)) {
+          updates.call_end_time = new Date().toISOString();
+          const duration = parseInt(body.Duration || body.BillDuration || "0");
+          if (duration) updates.call_duration = duration;
 
-        // Extract cost tracking fields
-        const billDuration = parseInt(body.BillDuration || "0");
-        if (billDuration) updates.bill_duration = billDuration;
-        const cost = parseFloat(body.TotalCost || body.Cost || "0");
-        if (cost > 0) updates.call_cost = cost;
-      }
+          // Extract cost tracking fields
+          const billDuration = parseInt(body.BillDuration || "0");
+          if (billDuration) updates.bill_duration = billDuration;
+          const cost = parseFloat(body.TotalCost || body.Cost || "0");
+          if (cost > 0) updates.call_cost = cost;
+        }
       }
     }
 
