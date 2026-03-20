@@ -359,6 +359,65 @@ export type Database = {
         }
         Relationships: []
       }
+      activity_logs: {
+        Row: {
+          action_type: string
+          business_id: string | null
+          client_id: string | null
+          created_at: string
+          description: string | null
+          device_info: string | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          module: string
+          user_id: string | null
+          user_role: string | null
+        }
+        Insert: {
+          action_type: string
+          business_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          device_info?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          module?: string
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          action_type?: string
+          business_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          device_info?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          module?: string
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ads_campaigns: {
         Row: {
           business_id: string
@@ -26635,6 +26694,62 @@ export type Database = {
           },
         ]
       }
+      user_behaviour_logs: {
+        Row: {
+          action: string | null
+          business_id: string | null
+          client_id: string | null
+          created_at: string
+          element: string | null
+          id: string
+          metadata: Json | null
+          page_name: string | null
+          page_url: string | null
+          session_id: string | null
+          time_spent: number | null
+          user_id: string | null
+          user_role: string | null
+        }
+        Insert: {
+          action?: string | null
+          business_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          element?: string | null
+          id?: string
+          metadata?: Json | null
+          page_name?: string | null
+          page_url?: string | null
+          session_id?: string | null
+          time_spent?: number | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          action?: string | null
+          business_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          element?: string | null
+          id?: string
+          metadata?: Json | null
+          page_name?: string | null
+          page_url?: string | null
+          session_id?: string | null
+          time_spent?: number | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_behaviour_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           business_id: string | null
@@ -26666,6 +26781,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          login_time: string
+          logout_time: string | null
+          session_id: string
+          total_duration: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          login_time?: string
+          logout_time?: string | null
+          session_id: string
+          total_duration?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          login_time?: string
+          logout_time?: string | null
+          session_id?: string
+          total_duration?: number | null
+          user_id?: string
+        }
+        Relationships: []
       }
       valuation_models: {
         Row: {
