@@ -2,9 +2,110 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 /**
  * dialer-answer: Plivo answer_url for the human sales dialer.
- * Returns Plivo XML that BRIDGES the agent to the customer via <Dial>.
- * Uses record-from-answer to capture full conversation.
+ * Called when AGENT answers the outbound call.
+ * Returns Plivo XML with <Dial> to bridge agent → customer.
+ * Uses record-from-answer for full conversation recording.
+ *
+ * CRITICAL: Does NOT set call_status=connected here.
+ * Only sets agent_connected=true and call_status=bridging.
+ * Connected state is set by dialer-webhook when customer answers.
  */
+
+// Reusable safe XML response helper
+function xmlResponse(innerXml: string): Response {
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n  ${innerXml}\n</Response>`;
+  return new Response(xml, {
+    status: 200,
+    headers: { "Content-Type": "text/xml" },
+  });
+}
+
+// E.164 normalizer focused on validating outbound dial targets
+function normalizeToE164(phone: string): { valid: boolean; normalized: string; reason?: string } {
+  if (!phone || typeof phone !== "string") {
+    return { valid: false, normalized: "", reason: "empty_input" };
+  }
+
+  // Strip all non-digit characters except leading +
+  const trimmed = phone.trim();
+  const hasPlus = trimmed.startsWith("+");
+  const digits = trimmed.replace(/\D/g, "");
+
+  if (digits.length < 8) {
+    return { valid: false, normalized: "", reason: "too_short" };
+  }
+
+  // Already E.164 with +
+  if (hasPlus && digits.length >= 10 && digits.length <= 15) {
+    return { valid: true, normalized: "+" + digits };
+  }
+
+  // India: 10 digits starting with 6-9 → +91
+  if (digits.length === 10 && /^[6-9]/.test(digits)) {
+    return { valid: true, normalized: "+91" + digits };
+  }
+
+  // India: already has 91 prefix
+  if (digits.startsWith("91") && digits.length >= 12 && digits.length <= 13) {
+    return { valid: true, normalized: "+" + digits };
+  }
+
+  // AU: 0X → +61X
+  if (digits.startsWith("0") && digits.length === 10) {
+    return { valid: true, normalized: "+61" + digits.slice(1) };
+  }
+
+  // AU: already 61
+  if (digits.startsWith("61") && digits.length >= 9 && digits.length <= 11) {
+    return { valid: true, normalized: "+" + digits };
+  }
+
+  // US/CA: 1 + 10 digits
+  if (digits.startsWith("1") && digits.length === 11) {
+    return { valid: true, normalized: "+" + digits };
+  }
+
+  // UK
+  if (digits.startsWith("44") && digits.length >= 10 && digits.length <= 12) {
+    return { valid: true, normalized: "+" + digits };
+  }
+
+  // NZ
+  if (digits.startsWith("64") && digits.length >= 9 && digits.length <= 11) {
+    return { valid: true, normalized: "+" + digits };
+  }
+
+  // Fallback: if enough digits, trust it
+  if (digits.length >= 10 && digits.length <= 15) {
+    return { valid: true, normalized: "+" + digits };
+  }
+
+  return { valid: false, normalized: "", reason: "unrecognized_format" };
+}
+
+// Parse Plivo request body (supports JSON and form-urlencoded)
+async function parseTelephonyPayload(req: Request): Promise<Record<string, string>> {
+  const contentType = req.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    try {
+      const json = await req.json();
+      const result: Record<string, string> = {};
+      for (const [k, v] of Object.entries(json)) {
+        result[k] = String(v ?? "");
+      }
+      return result;
+    } catch {
+      return {};
+    }
+  }
+  // Default: form-urlencoded
+  try {
+    const text = await req.text();
+    return Object.fromEntries(new URLSearchParams(text));
+  } catch {
+    return {};
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -26,37 +127,43 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const sessionId = url.searchParams.get("session_id");
     const token = url.searchParams.get("token");
-    const expected = Deno.env.get("PLIVO_WEBHOOK_SECRET");
 
     // Token validation
-    if (expected && token !== expected) {
+    if (PLIVO_WEBHOOK_SECRET && token !== PLIVO_WEBHOOK_SECRET) {
       console.warn("[dialer-answer] Unauthorized request rejected");
       return xmlResponse("<Hangup />");
     }
 
-    // Parse body (Plivo sends form-urlencoded)
-    let callUuid = "";
-    const contentType = req.headers.get("content-type") || "";
-    if (contentType.includes("application/json")) {
-      const body = await req.json();
-      callUuid = body.CallUUID || body.RequestUUID || "";
-    } else {
-      const text = await req.text();
-      const params = new URLSearchParams(text);
-      callUuid = params.get("CallUUID") || params.get("RequestUUID") || "";
-    }
+    // Parse Plivo body
+    const body = await parseTelephonyPayload(req);
+    const callUuid = body.CallUUID || body.RequestUUID || "";
 
-    console.log("[dialer-answer] Call answered", { session_id: sessionId, call_uuid: callUuid });
+    console.log("[dialer-answer] Agent answered call", {
+      session_id: sessionId,
+      call_uuid: callUuid,
+      caller_id: PLIVO_CALLER_ID,
+    });
 
     if (!sessionId) {
-      console.error("[dialer-answer] No session_id — cannot bridge");
+      console.error("[dialer-answer] No session_id — returning hangup");
       return xmlResponse("<Hangup />");
     }
 
-    // Fetch customer number from session
+    if (!PLIVO_CALLER_ID) {
+      console.error("[dialer-answer] PLIVO_CALLER_ID is blank — cannot bridge");
+      await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", sessionId);
+      await supabase.from("dialer_call_events").insert({
+        session_id: sessionId,
+        event_type: "failed",
+        metadata: { reason: "blank_caller_id" },
+      }).catch(() => {});
+      return xmlResponse("<Hangup />");
+    }
+
+    // Fetch session for customer number
     const { data: session, error: sessErr } = await supabase
       .from("dialer_sessions")
-      .select("phone_number, call_start_time, business_id")
+      .select("phone_number, business_id")
       .eq("id", sessionId)
       .maybeSingle();
 
@@ -65,66 +172,83 @@ Deno.serve(async (req) => {
       return xmlResponse("<Hangup />");
     }
 
-    const customerNumber = session.phone_number;
-    console.log("[dialer-answer] Answer XML triggered", {
-      session_id: sessionId,
-      customer_number: customerNumber,
-      caller_id: PLIVO_CALLER_ID,
+    // Normalize and validate customer number
+    const phoneResult = normalizeToE164(session.phone_number);
+
+    console.log("[dialer-answer] Phone normalization", {
+      original: session.phone_number,
+      normalized: phoneResult.normalized,
+      valid: phoneResult.valid,
+      reason: phoneResult.reason,
     });
 
-    // Update session: agent connected, call starting
-    const updates: Record<string, any> = {
-      call_status: "connected",
-      agent_connected: true,
-    };
-    if (!session.call_start_time) {
-      updates.call_start_time = new Date().toISOString();
-    }
-    await supabase.from("dialer_sessions").update(updates).eq("id", sessionId);
-
-    // Log event
-    if (session.business_id) {
+    if (!phoneResult.valid) {
+      console.error("[dialer-answer] Invalid customer number — aborting dial", {
+        session_id: sessionId,
+        original: session.phone_number,
+        reason: phoneResult.reason,
+      });
+      // Mark session failed and log event
+      await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", sessionId);
       await supabase.from("dialer_call_events").insert({
         session_id: sessionId,
-        event_type: "call_answered",
-        metadata: { call_uuid: callUuid, customer_number: customerNumber },
-      }).then(() => {}, () => {});
+        event_type: "invalid_number",
+        metadata: { original: session.phone_number, reason: phoneResult.reason },
+      }).catch(() => {});
+      // Return empty valid XML (no dial attempt)
+      return xmlResponse("");
     }
 
-    // Build recording callback URL
-    const webhookQuery = new URLSearchParams({
+    const customerNumber = phoneResult.normalized;
+
+    // Update session: agent connected, status = bridging (NOT connected)
+    await supabase.from("dialer_sessions").update({
+      agent_connected: true,
+      call_status: "bridging",
+    }).eq("id", sessionId);
+
+    // Log agent_answered event (fire-and-forget)
+    supabase.from("dialer_call_events").insert({
+      session_id: sessionId,
+      event_type: "agent_answered",
+      metadata: { call_uuid: callUuid, customer_number: customerNumber },
+    }).then(() => {}, () => {});
+
+    // Build callback URLs
+    const recordingParams = new URLSearchParams({
       session_id: sessionId,
       token: PLIVO_WEBHOOK_SECRET,
       leg: "recording",
     });
-    const recordingCallbackUrl = `${supabaseUrl}/functions/v1/dialer-webhook?${webhookQuery.toString()}`;
+    const recordingCallbackUrl = `${supabaseUrl}/functions/v1/dialer-webhook?${recordingParams.toString()}`;
 
-    // Build action URL (called when Dial completes — customer hangs up or timeout)
-    const actionQuery = new URLSearchParams({
+    const actionParams = new URLSearchParams({
       session_id: sessionId,
       token: PLIVO_WEBHOOK_SECRET,
       leg: "customer",
     });
-    const actionUrl = `${supabaseUrl}/functions/v1/dialer-webhook?${actionQuery.toString()}`;
+    const actionUrl = `${supabaseUrl}/functions/v1/dialer-webhook?${actionParams.toString()}`;
 
     console.log("[dialer-answer] Returning Dial XML", {
       session_id: sessionId,
       customer_number: customerNumber,
-      recording_callback: recordingCallbackUrl,
+      caller_id: PLIVO_CALLER_ID,
+      action_url: actionUrl,
+      recording_callback_url: recordingCallbackUrl,
     });
 
-    // Full Dial XML with recording and callbacks
+    // Return strict valid Plivo XML
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Dial
     callerId="${PLIVO_CALLER_ID}"
-    timeout="30"
-    record="true"
-    recordingCallbackUrl="${recordingCallbackUrl}"
-    recordingCallbackMethod="POST"
+    timeout="20"
     action="${actionUrl}"
     method="POST"
-    hangupOnStar="false"
+    redirect="false"
+    record="record-from-answer"
+    recordingCallbackUrl="${recordingCallbackUrl}"
+    recordingCallbackMethod="POST"
   >
     <Number>${customerNumber}</Number>
   </Dial>
@@ -139,11 +263,3 @@ Deno.serve(async (req) => {
     return xmlResponse("<Hangup />");
   }
 });
-
-function xmlResponse(inner: string): Response {
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n  ${inner}\n</Response>`;
-  return new Response(xml, {
-    status: 200,
-    headers: { "Content-Type": "text/xml" },
-  });
-}

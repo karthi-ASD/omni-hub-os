@@ -37,7 +37,7 @@ export function useDialer() {
 
   // Timer logic
   useEffect(() => {
-    if (callStatus === "connected") {
+    if (callStatus === "connected" || callStatus === "bridging") {
       timerRef.current = setInterval(() => setCallTimer((t) => t + 1), 1000);
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -61,7 +61,7 @@ export function useDialer() {
       const status = updated.call_status as DialerCallStatus;
       setCallStatus(status);
 
-      if (status === "connected" && agentState !== "on_call") {
+      if ((status === "connected" || status === "bridging") && agentState !== "on_call") {
         setAgentState("on_call");
         if (profile?.business_id) updateAgentState(profile.business_id, profile.user_id, "on_call");
       }
