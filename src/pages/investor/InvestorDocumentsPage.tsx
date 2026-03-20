@@ -49,13 +49,12 @@ export default function InvestorDocumentsPage() {
     enabled: propIds.length > 0,
   });
 
-  // Flatten all documents
   const allDocs: { name: string; url?: string; source: string; dealName?: string }[] = [];
 
-  deals.forEach((d: any) => {
-    if (d.documents_json && Array.isArray(d.documents_json)) {
-      (d.documents_json as any[]).forEach(doc => {
-        allDocs.push({ name: doc.name || "Document", url: doc.url, source: "Deal", dealName: d.deal_name });
+  properties.forEach((p: any) => {
+    if (p.documents_json && Array.isArray(p.documents_json)) {
+      (p.documents_json as any[]).forEach(doc => {
+        allDocs.push({ name: doc.name || "Document", url: doc.url, source: "Property", dealName: p.property_name });
       });
     }
   });
