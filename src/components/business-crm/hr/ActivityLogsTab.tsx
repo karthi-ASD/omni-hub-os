@@ -13,7 +13,7 @@ export function ActivityLogsTab() {
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ["hr-activity-logs", bid],
     queryFn: async () => {
-      const { data } = await supabase.from("system_activity_logs")
+      const { data } = await (supabase.from("system_activity_logs" as any) as any)
         .select("*")
         .eq("business_id", bid!)
         .order("created_at", { ascending: false })

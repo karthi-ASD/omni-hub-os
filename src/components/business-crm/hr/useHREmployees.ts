@@ -29,7 +29,7 @@ export function useHREmployees() {
       employee_code: code,
       business_id: profile.business_id,
       employment_status: "active",
-    }]);
+    } as any]);
     if (error) throw error;
     await fetch();
   };
