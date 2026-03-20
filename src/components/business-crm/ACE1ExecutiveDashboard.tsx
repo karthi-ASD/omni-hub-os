@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Users, UserPlus, Building2, Handshake, DollarSign, TrendingUp,
-  Clock, AlertTriangle, CheckCircle, Target, FileText, Calendar,
+  Clock, AlertTriangle, CheckCircle, Target, FileText, Calendar, ClipboardList,
   ShieldAlert, Repeat, BarChart3,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
