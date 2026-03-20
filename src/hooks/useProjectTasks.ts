@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { logActivity as logAI } from "@/lib/activity-logger";
 
 export function useProjectTasks(projectId?: string) {
   const { profile } = useAuth();
