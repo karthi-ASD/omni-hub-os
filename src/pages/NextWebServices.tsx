@@ -220,7 +220,12 @@ export default function NextWebServices() {
                     View Details
                   </Button>
                   <Button size="sm" className="text-xs" onClick={() => {
-                    setNewRequest(p => ({ ...p, service_category: svc.category }));
+                    setNewRequest(p => ({
+                      ...p,
+                      service_category: svc.category,
+                      title: `${svc.title} Request`,
+                      request_type: "support_issue",
+                    }));
                     setShowNewRequest(true);
                   }}>
                     Request Service
