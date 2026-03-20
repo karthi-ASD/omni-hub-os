@@ -99,6 +99,11 @@ export default function SalesDialerPage() {
     staleTime: 15_000,
   });
 
+  // 🔒 SECURITY: Only sales/admin roles can access this page
+  if (!canAccessDialer) {
+    return <Navigate to="/sales-dashboard" replace />;
+  }
+
   const handleQuickDial = (lead: any) => {
     if (isCallActive || loading) return;
     setPhoneInput(lead.phone);
