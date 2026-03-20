@@ -102,6 +102,7 @@ export function useProjects() {
     }
 
     toast.success("Project created with onboarding tasks");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "create", entityType: "project", entityId: projectId, description: `Project created: ${input.project_name}` });
     fetchProjects();
     return data as any as Project;
   };
