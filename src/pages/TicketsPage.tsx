@@ -93,6 +93,7 @@ const TicketsPage = () => {
       return;
     }
     toast.success("Ticket created");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "tickets", actionType: "create", entityType: "ticket", description: `Created ticket: ${form.subject}` });
     setForm({ subject: "", description: "", category: "bug", priority: "medium" });
     setOpen(false);
     fetchTickets();
