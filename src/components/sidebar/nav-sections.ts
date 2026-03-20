@@ -130,6 +130,9 @@ export const NAV_SECTIONS: NavSection[] = [
     hiddenFromDepartments: [...SEO_DEPTS, ...SALES_DEPTS, ...FINANCE_DEPTS],
     items: [
       { label: "Projects", icon: Briefcase, to: "/projects" },
+      { label: "Solar Projects", icon: Sun, to: "/solar-projects" },
+      { label: "Solar Dashboard", icon: BarChart3, to: "/solar-dashboard" },
+      { label: "Installations", icon: Wrench, to: "/solar-installations" },
       { label: "Tasks", icon: ClipboardList, to: "/tasks" },
       { label: "Website Dev", icon: Globe, to: "/website-dev-stages" },
       { label: "Content Mgmt", icon: FileText, to: "/content-management" },

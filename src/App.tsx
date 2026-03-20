@@ -389,6 +389,9 @@ const App = () => (
               <Route path="/clients/:id" element={<ClientProfilePage />} />
               <Route path="/clients/:id/access" element={<ClientAccessHubPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
+              <Route path="/solar-projects" element={<SolarProjectsPage />} />
+              <Route path="/solar-dashboard" element={<SolarProjectDashboard />} />
+              <Route path="/solar-installations" element={<SolarInstallationsPage />} />
               <Route path="/invoices" element={<InvoicesPage />} />
               <Route path="/payments" element={<PaymentsPage />} />
               <Route path="/billing" element={<BillingDashboard />} />
