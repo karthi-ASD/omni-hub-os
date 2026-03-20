@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
+import { useDialerAccess } from "@/hooks/useDialerAccess";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
 import { NWLogo } from "@/components/NWLogo";
@@ -85,6 +86,7 @@ export function AppSidebar() {
     isClientUser,
   } = useAuth();
   const { departmentName } = useEmployeeDepartment();
+  const { canAccessDialer } = useDialerAccess();
 
   // 🔒 DO NOT MODIFY — SECURITY CRITICAL
   // client_business is a shell mode, not a client identity.
@@ -177,6 +179,7 @@ export function AppSidebar() {
 
   const filteredSections = isStaffShell ? NAV_SECTIONS.filter(section => {
     if (dashboardShell === "super_admin") return true;
+    if (section.title === "Sales" && canAccessDialer) return true;
     if (section.departments && !matchesDept(section.departments, departmentName)) return false;
     if (section.hiddenFromDepartments && matchesDept(section.hiddenFromDepartments, departmentName)) return false;
     return true;
@@ -184,6 +187,7 @@ export function AppSidebar() {
 
   const filterItems = (items: NavItem[]) =>
     items.filter(item => {
+      if (item.label === "Dialer") return canAccessDialer;
       if (item.roles && !item.roles.some(r => roles.includes(r as any))) return false;
       if (dashboardShell === "super_admin") return true;
       if (item.hiddenFromDepartments && matchesDept(item.hiddenFromDepartments, departmentName)) return false;

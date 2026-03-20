@@ -26,7 +26,7 @@ export function useDialerAccess(clientId?: string | null) {
         .eq("user_id", profile.user_id)
         .eq("business_id", profile.business_id)
         .maybeSingle();
-      
+
       if (!data) return false;
       const deptName = ((data as any)?.departments?.name || "").toLowerCase();
       return deptName.includes("sales");
@@ -51,12 +51,31 @@ export function useDialerAccess(clientId?: string | null) {
     staleTime: 60 * 1000,
   });
 
-  const hasRoleAccess = isSuperAdmin || isBusinessAdmin || !!isSalesDept;
-  const isClientUser = roles.includes("client");
+  const roleNames = roles as string[];
+
+  const hasExplicitDialerRole = roleNames.includes("admin")
+    || roleNames.includes("business_admin")
+    || roleNames.includes("sales_agent")
+    || roleNames.includes("sales_manager")
+    || isSuperAdmin
+    || isBusinessAdmin;
+
+  const isStaffFallback = roleNames.includes("employee")
+    || roleNames.includes("manager")
+    || roleNames.includes("admin");
+
+  const hasRoleAccess = hasExplicitDialerRole || !!isSalesDept || isStaffFallback;
+  const isClientUser = roleNames.includes("client");
   const hasClientPermission = clientId ? (clientDialerEnabled ?? false) : true;
+  const canAccessDialer = hasRoleAccess && !isClientUser && hasClientPermission;
+
+  console.log("Dialer Access Check:", {
+    roles: roleNames,
+    canAccessDialer,
+  });
 
   return {
-    canAccessDialer: hasRoleAccess && !isClientUser && hasClientPermission,
+    canAccessDialer,
     hasRoleAccess,
     isClientUser,
     clientDialerEnabled: hasClientPermission,
