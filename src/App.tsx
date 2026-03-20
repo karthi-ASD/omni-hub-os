@@ -692,8 +692,12 @@ const App = () => (
               <Route path="/xero-test" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><XeroTestPage /></ProtectedRoute>
               } />
-              <Route path="/my-billing" element={<ClientBillingPortalPage />} />
-              <Route path="/my-package" element={<ClientPackagePage />} />
+               <Route path="/my-billing" element={<ClientBillingPortalPage />} />
+               <Route path="/my-package" element={<ClientPackagePage />} />
+               <Route path="/nextweb-services" element={<NextWebServicesPage />} />
+               <Route path="/admin-service-requests" element={
+                 <ProtectedRoute requiredRoles={["super_admin"]}><AdminServiceRequestsPage /></ProtectedRoute>
+               } />
               <Route path="/client-package/:clientId" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager", "employee"]}><ClientPackagePage /></ProtectedRoute>
               } />
