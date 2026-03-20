@@ -43,6 +43,18 @@ describe("resolveUserType", () => {
       resolveUserType({ roles: ["hr_manager"], clientUserId: "cu-1" })
     ).toBe("employee");
   });
+
+  it("manager role wins over clientUserId", () => {
+    expect(
+      resolveUserType({ roles: ["manager"], clientUserId: "cu-1" })
+    ).toBe("employee");
+  });
+
+  it("isEmployeeByHR alone (no roles, with clientUserId) → employee", () => {
+    expect(
+      resolveUserType({ roles: [], clientUserId: "cu-1", isEmployeeByHR: true })
+    ).toBe("employee");
+  });
 });
 
 describe("assertNoEmployeeClientCrossover", () => {
