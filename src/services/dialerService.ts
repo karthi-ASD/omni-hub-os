@@ -18,11 +18,24 @@ export interface DialerSession {
   call_start_time: string | null;
   call_end_time: string | null;
   call_duration: number | null;
+  call_cost: number | null;
+  bill_duration: number | null;
   recording_url: string | null;
   notes: string | null;
   disposition: string | null;
   ai_summary: string | null;
   ai_score: number | null;
+  created_at: string;
+}
+
+export interface DialerAILog {
+  id: string;
+  session_id: string;
+  summary: string | null;
+  sentiment: string | null;
+  score: number | null;
+  next_action: string | null;
+  priority: string | null;
   created_at: string;
 }
 
@@ -67,7 +80,7 @@ export async function initiateCall(sessionId: string): Promise<{ success: boolea
   }
 }
 
-// Hangup call — tells backend to send hangup to Plivo; webhook handles status
+// Hangup call
 export async function hangupCall(sessionId: string): Promise<boolean> {
   try {
     const { error } = await supabase.functions.invoke("dialer-initiate", {
@@ -83,7 +96,7 @@ export async function hangupCall(sessionId: string): Promise<boolean> {
   }
 }
 
-// Save disposition and notes — ALLOWED frontend DB write (non-status field)
+// Save disposition and notes
 export async function saveDisposition(sessionId: string, disposition: string, notes?: string) {
   await supabase
     .from("dialer_sessions")
@@ -91,7 +104,7 @@ export async function saveDisposition(sessionId: string, disposition: string, no
     .eq("id", sessionId);
 }
 
-// Save detailed disposition to dialer_dispositions table
+// Save detailed disposition
 export async function saveDetailedDisposition(params: {
   sessionId: string;
   leadId?: string | null;
@@ -115,15 +128,14 @@ export async function saveDetailedDisposition(params: {
   return !error;
 }
 
-// Add call tag
+// Add call tag (with upsert for duplicate safety)
 export async function addCallTag(sessionId: string, tag: CallTag, userId: string) {
   const { error } = await supabase
     .from("dialer_call_tags")
-    .insert({
-      session_id: sessionId,
-      tag,
-      created_by: userId,
-    } as any);
+    .upsert(
+      { session_id: sessionId, tag, created_by: userId } as any,
+      { onConflict: "session_id,tag", ignoreDuplicates: true }
+    );
   if (error) console.error("Failed to add call tag:", error);
   return !error;
 }
@@ -174,56 +186,59 @@ export async function fetchLeadCallHistory(leadId: string): Promise<DialerSessio
   return (data as unknown as DialerSession[]) || [];
 }
 
-// Fetch dialer dashboard metrics for a business
+// Fetch dialer dashboard metrics via SQL function (optimized)
 export async function fetchDialerDashboardMetrics(businessId: string) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayISO = today.toISOString();
+  const { data, error } = await supabase.rpc("get_dialer_metrics", {
+    _business_id: businessId,
+  });
 
-  // All sessions today
-  const { data: todaySessions } = await supabase
-    .from("dialer_sessions")
-    .select("id, call_status, call_duration, disposition, user_id")
-    .eq("business_id", businessId)
-    .gte("created_at", todayISO);
-
-  const sessions = (todaySessions as any[]) || [];
-  const totalCalls = sessions.length;
-  const connectedCalls = sessions.filter(s => ["connected", "ended"].includes(s.call_status) || s.call_duration > 0).length;
-  const failedCalls = sessions.filter(s => ["failed", "busy", "no-answer"].includes(s.call_status)).length;
-  const conversions = sessions.filter(s => s.disposition === "converted" || s.disposition === "interested").length;
-  const durations = sessions.filter(s => s.call_duration && s.call_duration > 0).map(s => s.call_duration);
-  const avgDuration = durations.length > 0 ? Math.round(durations.reduce((a: number, b: number) => a + b, 0) / durations.length) : 0;
-  const conversionRate = totalCalls > 0 ? Math.round((conversions / totalCalls) * 100) : 0;
-
-  // Agent performance
-  const agentMap = new Map<string, { calls: number; connected: number; conversions: number; followUps: number }>();
-  for (const s of sessions) {
-    if (!agentMap.has(s.user_id)) {
-      agentMap.set(s.user_id, { calls: 0, connected: 0, conversions: 0, followUps: 0 });
-    }
-    const a = agentMap.get(s.user_id)!;
-    a.calls++;
-    if (["connected", "ended"].includes(s.call_status) || s.call_duration > 0) a.connected++;
-    if (s.disposition === "converted" || s.disposition === "interested") a.conversions++;
-    if (s.disposition === "callback_later") a.followUps++;
+  if (error) {
+    console.error("Failed to fetch dialer metrics:", error);
+    return {
+      totalCalls: 0,
+      connectedCalls: 0,
+      failedCalls: 0,
+      conversionRate: 0,
+      avgDuration: 0,
+      agentPerformance: [],
+    };
   }
+
+  const metrics = data as any;
+  const totalCalls = metrics.total_calls || 0;
+  const conversionCount = metrics.conversion_count || 0;
 
   return {
     totalCalls,
-    connectedCalls,
-    failedCalls,
-    conversionRate,
-    avgDuration,
-    agentPerformance: Array.from(agentMap.entries()).map(([userId, stats]) => ({
-      userId,
-      ...stats,
-      connectRate: stats.calls > 0 ? Math.round((stats.connected / stats.calls) * 100) : 0,
+    connectedCalls: metrics.connected_calls || 0,
+    failedCalls: metrics.failed_calls || 0,
+    conversionRate: totalCalls > 0 ? Math.round((conversionCount / totalCalls) * 100) : 0,
+    avgDuration: metrics.avg_duration || 0,
+    agentPerformance: (metrics.agent_performance || []).map((a: any) => ({
+      userId: a.userId,
+      agentName: a.agentName,
+      calls: a.calls,
+      connected: a.connected,
+      connectRate: a.connectRate,
+      conversions: a.conversions,
+      followUps: a.followUps,
     })),
   };
 }
 
-// Subscribe to session updates (realtime) — this is how frontend gets status changes
+// Fetch AI analysis for a session
+export async function fetchSessionAILog(sessionId: string): Promise<DialerAILog | null> {
+  const { data } = await supabase
+    .from("dialer_ai_logs")
+    .select("*")
+    .eq("session_id", sessionId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data as unknown as DialerAILog;
+}
+
+// Subscribe to session updates (realtime)
 export function subscribeToSession(sessionId: string, callback: (session: DialerSession) => void) {
   const channel = supabase
     .channel(`dialer-session-${sessionId}`)

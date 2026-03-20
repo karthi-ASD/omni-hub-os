@@ -151,7 +151,27 @@ Deno.serve(async (req) => {
         updates.call_end_time = new Date().toISOString();
         const duration = parseInt(body.Duration || body.BillDuration || "0");
         if (duration) updates.call_duration = duration;
+
+        // Extract cost tracking fields
+        const billDuration = parseInt(body.BillDuration || "0");
+        if (billDuration) updates.bill_duration = billDuration;
+        const cost = parseFloat(body.TotalCost || body.Cost || "0");
+        if (cost > 0) updates.call_cost = cost;
       }
+    }
+
+    // Trigger AI analysis for terminal states (fire-and-forget)
+    if (updates.call_status && TERMINAL_STATES.includes(updates.call_status) && updates.call_status === "ended") {
+      try {
+        fetch(`${supabaseUrl}/functions/v1/dialer-ai-analyze`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${serviceKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ session_id: session.id }),
+        }).catch((e) => console.error("AI analyze trigger failed:", e));
+      } catch (_) {}
     }
 
     if (Object.keys(updates).length > 0) {
