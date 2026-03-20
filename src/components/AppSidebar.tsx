@@ -80,8 +80,13 @@ export function AppSidebar() {
   const isAdmin = isSuperAdmin || isBusinessAdmin;
   const activeCRMSections = getCRMSections(crmType);
 
+  // Safety fallback: show client sidebar if user has a CRM type mapped,
+  // even if client_users record is missing
+  const isClientUserSafe = isClientUser || (!!crmType && !isSuperAdmin && !isBusinessAdmin);
+
   console.log("=== SIDEBAR DEBUG ===");
   console.log("isClientUser:", isClientUser);
+  console.log("isClientUserSafe:", isClientUserSafe);
   console.log("isSuperAdmin:", isSuperAdmin);
   console.log("isBusinessAdmin:", isBusinessAdmin);
   console.log("profile.business_id:", profile?.business_id);
@@ -95,6 +100,7 @@ export function AppSidebar() {
       <div className="rounded-md border border-dashed border-destructive/40 bg-destructive/5 px-2 py-2 text-[10px] text-destructive break-words">
         {JSON.stringify({
           isClientUser,
+          isClientUserSafe,
           businessId: profile?.business_id,
           crmType,
           hasCustomCRM,
@@ -104,7 +110,7 @@ export function AppSidebar() {
   ) : null;
 
   // ── Client users get separated navigation ──
-  if (isClientUser) {
+  if (isClientUserSafe) {
     return (
       <Sidebar collapsible="icon" className="border-r-0">
         <SidebarHeader className="p-3">
