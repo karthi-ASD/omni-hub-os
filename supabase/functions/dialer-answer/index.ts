@@ -213,6 +213,39 @@ Deno.serve(async (req) => {
 
     const customerNumber = phoneResult.normalized;
 
+    // Region-aware caller ID
+    const callerIdResult = getCallerIdForNumber(customerNumber);
+
+    console.log("[dialer-answer] Region routing", {
+      session_id: sessionId,
+      customer_number: customerNumber,
+      detected_region: callerIdResult.region,
+      caller_id_used: callerIdResult.callerId,
+      is_fallback: callerIdResult.fallback,
+    });
+
+    if (callerIdResult.fallback) {
+      console.warn("[dialer-answer] Using fallback caller ID — may cause slow connection for region", callerIdResult.region);
+      supabase.from("dialer_call_events").insert({
+        session_id: sessionId,
+        event_type: "region_fallback_used",
+        metadata: { region: callerIdResult.region, fallback_caller_id: callerIdResult.callerId },
+      }).catch(() => {});
+    }
+
+    if (!callerIdResult.callerId) {
+      console.error("[dialer-answer] No caller ID available for region", callerIdResult.region);
+      await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", sessionId);
+      await supabase.from("dialer_call_events").insert({
+        session_id: sessionId,
+        event_type: "missing_region_caller_id",
+        metadata: { region: callerIdResult.region, customer_number: customerNumber },
+      }).catch(() => {});
+      return xmlResponse("<Hangup />");
+    }
+
+    const callerId = callerIdResult.callerId;
+
     // Update session: agent connected, status = bridging (NOT connected)
     await supabase.from("dialer_sessions").update({
       agent_connected: true,
@@ -223,7 +256,7 @@ Deno.serve(async (req) => {
     supabase.from("dialer_call_events").insert({
       session_id: sessionId,
       event_type: "agent_answered",
-      metadata: { call_uuid: callUuid, customer_number: customerNumber },
+      metadata: { call_uuid: callUuid, customer_number: customerNumber, caller_id: callerId, region: callerIdResult.region },
     }).then(() => {}, () => {});
 
     // Build callback URLs
@@ -244,16 +277,18 @@ Deno.serve(async (req) => {
     console.log("[dialer-answer] Returning Dial XML", {
       session_id: sessionId,
       customer_number: customerNumber,
-      caller_id: PLIVO_CALLER_ID,
+      caller_id: callerId,
+      region: callerIdResult.region,
       action_url: actionUrl,
       recording_callback_url: recordingCallbackUrl,
+      timestamp: new Date().toISOString(),
     });
 
     // Return strict valid Plivo XML
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Dial
-    callerId="${PLIVO_CALLER_ID}"
+    callerId="${callerId}"
     timeout="20"
     action="${actionUrl}"
     method="POST"
