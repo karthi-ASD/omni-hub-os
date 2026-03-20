@@ -110,7 +110,7 @@ export default function NextWebClientsPage() {
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
                       <Badge variant="outline" className="text-[10px] capitalize">
-                        {CRM_TYPE_MAP[b.id] || "—"}
+                        {b.crm_type || "generic"}
                       </Badge>
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell">
