@@ -32,6 +32,7 @@ const PROPOSAL_STATUS_CONFIG: Record<string, { label: string; color: string }> =
 export function ServiceSalesCRMModule() {
   const { profile, selectedTenantId } = useAuth();
   const businessId = profile?.business_id;
+  const { leads } = useLeads();
   const qc = useQueryClient();
   const [subTab, setSubTab] = useState("proposals");
   const [createOpen, setCreateOpen] = useState(false);
