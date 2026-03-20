@@ -356,6 +356,7 @@ const SuperAdminClientManagementPage = () => {
                       <TableHead>Email</TableHead>
                       <TableHead>Phone</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Dialer</TableHead>
                       <TableHead>Created</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
