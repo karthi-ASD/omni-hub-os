@@ -138,7 +138,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const validateClientTenantMapping = async (userId: string, profileData: Profile | null) => {
+  const fetchActiveBusinessContext = useCallback(async (businessId: string | null) => {
+    if (!businessId) {
+      setActiveBusinessContext(null);
+      setBusinessContextLoading(false);
+      return null;
+    }
+
+    setBusinessContextLoading(true);
+
+    try {
+      const { data } = await supabase
+        .from("businesses")
+        .select("id, name, crm_type")
+        .eq("id", businessId)
+        .maybeSingle();
+
+      const context = (data as ActiveBusinessContext | null) ?? null;
+      setActiveBusinessContext(context);
+      return context;
+    } catch {
+      setActiveBusinessContext(null);
+      return null;
+    } finally {
+      setBusinessContextLoading(false);
+    }
+  }, []);
+
+  const validateClientTenantMapping = async (
+    userId: string,
+    profileData: Profile | null,
+    userRoles: AppRole[]
+  ) => {
     try {
       const { data: clientLink } = await supabase
         .from("client_users")
@@ -150,7 +181,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const linkedClientId = clientLink?.client_id || null;
       setClientUserId(linkedClientId);
 
-      if (!linkedClientId) {
+      const hasPrivilegedNonClientRole = userRoles.some((role) =>
+        ["super_admin", "business_admin", "employee", "hr_manager", "manager"].includes(role)
+      );
+
+      if (!linkedClientId || hasPrivilegedNonClientRole) {
         setTenantValidationError(null);
         return profileData;
       }
