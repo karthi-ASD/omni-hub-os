@@ -211,7 +211,7 @@ export function MobileAppModule() {
       <Card className="bg-card border-primary/20">
         <CardContent className="p-4">
           <p className="text-xs text-muted-foreground">
-            💡 <strong>Note:</strong> Changes to mobile app content are managed through your ACE1 CRM workspace. 
+            💡 <strong>Note:</strong> Changes to mobile app content are managed through your CRM workspace. 
             Content updates will sync automatically to connected investor mobile apps.
           </p>
         </CardContent>

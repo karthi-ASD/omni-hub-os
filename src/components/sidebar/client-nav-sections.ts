@@ -35,7 +35,7 @@ export const NEXTWEB_SERVICES_SECTIONS: NavSection[] = [
 // SECTION B: Business CRM Sections (per CRM type)
 // ══════════════════════════════════════════════════════════════
 
-// Real Estate / Investment CRM (ACE1)
+// Real Estate / Investment CRM
 const REAL_ESTATE_CRM_SECTIONS: NavSection[] = [
   {
     title: "Sales CRM",
