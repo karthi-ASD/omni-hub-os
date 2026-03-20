@@ -240,13 +240,23 @@ Deno.serve(async (req) => {
       ring_timeout: 25,
     };
 
+    // Region caller ID warnings
+    if (formattedCustomerPhone.startsWith("+91") && !Deno.env.get("PLIVO_CALLER_ID_IN")) {
+      console.warn("[dialer-initiate] WARNING: Calling India (+91) but no PLIVO_CALLER_ID_IN configured. Using fallback — may cause slow connection or failure.");
+      await supabase.from("dialer_call_events").insert({
+        session_id,
+        event_type: "region_caller_id_warning",
+        metadata: { customer_number: formattedCustomerPhone, fallback_caller_id: customerCallerId },
+      }).catch(() => {});
+    }
+
     console.log("[dialer-initiate] Creating agent leg", agentPayload);
 
     // Create agent call first
     let agentResponse: { ok: boolean; status: number; data: any };
     try {
       agentResponse = await createPlivoCall({ authId: PLIVO_AUTH_ID, authToken: PLIVO_AUTH_TOKEN, payload: agentPayload });
-      console.log("[dialer-initiate] Agent leg response", agentResponse);
+      console.log("[PLIVO RESPONSE] Agent leg:", JSON.stringify(agentResponse.data));
     } catch (fetchErr) {
       console.error("[dialer-initiate] Agent call fetch error:", fetchErr);
       await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", session_id);
@@ -254,52 +264,93 @@ Deno.serve(async (req) => {
     }
 
     if (!agentResponse.ok) {
+      console.error("[PLIVO RESPONSE] Agent leg REJECTED:", JSON.stringify(agentResponse.data));
       await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", session_id);
       await supabase.from("dialer_call_events").insert({
         session_id,
         event_type: "provider_error",
-        metadata: { leg: "agent", response: agentResponse.data },
+        metadata: { leg: "agent", http_status: agentResponse.status, response: agentResponse.data },
       }).catch(() => {});
       return jsonResponse({ status: "error", error: agentResponse.data?.error || "Call provider rejected the agent leg", session_id });
     }
 
     const agentCallId = agentResponse.data.request_uuid || agentResponse.data.RequestUUID || null;
+    if (!agentCallId) {
+      console.error("[PLIVO RESPONSE] Agent leg missing request_uuid:", JSON.stringify(agentResponse.data));
+      await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", session_id);
+      await supabase.from("dialer_call_events").insert({
+        session_id,
+        event_type: "provider_error",
+        metadata: { leg: "agent", reason: "missing_request_uuid", response: agentResponse.data },
+      }).catch(() => {});
+      return jsonResponse({ status: "error", error: "Call provider did not return a valid call ID for agent leg", session_id });
+    }
 
-    // 1-second delay before customer leg to let agent leg establish
+    // 1-second delay before customer leg
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     console.log("[dialer-initiate] Creating customer leg", customerPayload);
     let customerResponse: { ok: boolean; status: number; data: any };
     try {
       customerResponse = await createPlivoCall({ authId: PLIVO_AUTH_ID, authToken: PLIVO_AUTH_TOKEN, payload: customerPayload });
-      console.log("[dialer-initiate] Customer leg response", customerResponse);
+      console.log("[PLIVO RESPONSE] Customer leg:", JSON.stringify(customerResponse.data));
     } catch (fetchErr) {
       console.error("[dialer-initiate] Customer call fetch error:", fetchErr);
-      // Agent call already created — update session but don't fully fail
+      // Hangup the agent leg since customer failed
+      try {
+        await fetch(`https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Call/${agentCallId}/`, {
+          method: "DELETE",
+          headers: { Authorization: "Basic " + btoa(`${PLIVO_AUTH_ID}:${PLIVO_AUTH_TOKEN}`) },
+        });
+      } catch (_) {}
       await supabase.from("dialer_sessions").update({ call_status: "failed", provider_call_id: agentCallId }).eq("id", session_id);
       return jsonResponse({ status: "error", error: "Failed to reach call provider for customer leg", session_id });
     }
 
     if (!customerResponse.ok) {
+      console.error("[PLIVO RESPONSE] Customer leg REJECTED:", JSON.stringify(customerResponse.data));
+      // Hangup agent leg
+      try {
+        await fetch(`https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Call/${agentCallId}/`, {
+          method: "DELETE",
+          headers: { Authorization: "Basic " + btoa(`${PLIVO_AUTH_ID}:${PLIVO_AUTH_TOKEN}`) },
+        });
+      } catch (_) {}
       await supabase.from("dialer_sessions").update({ call_status: "failed", provider_call_id: agentCallId }).eq("id", session_id);
       await supabase.from("dialer_call_events").insert({
         session_id,
         event_type: "provider_error",
-        metadata: { leg: "customer", response: customerResponse.data },
+        metadata: { leg: "customer", http_status: customerResponse.status, response: customerResponse.data },
       }).catch(() => {});
       return jsonResponse({ status: "error", error: customerResponse.data?.error || "Call provider rejected the customer leg", session_id });
     }
 
     const customerCallId = customerResponse.data.request_uuid || customerResponse.data.RequestUUID || null;
+    if (!customerCallId) {
+      console.error("[PLIVO RESPONSE] Customer leg missing request_uuid:", JSON.stringify(customerResponse.data));
+      try {
+        await fetch(`https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Call/${agentCallId}/`, {
+          method: "DELETE",
+          headers: { Authorization: "Basic " + btoa(`${PLIVO_AUTH_ID}:${PLIVO_AUTH_TOKEN}`) },
+        });
+      } catch (_) {}
+      await supabase.from("dialer_sessions").update({ call_status: "failed", provider_call_id: agentCallId }).eq("id", session_id);
+      await supabase.from("dialer_call_events").insert({
+        session_id,
+        event_type: "provider_error",
+        metadata: { leg: "customer", reason: "missing_request_uuid", response: customerResponse.data },
+      }).catch(() => {});
+      return jsonResponse({ status: "error", error: "Call provider did not return a valid call ID for customer leg", session_id });
+    }
 
-    console.log("[dialer-initiate] Both legs created", {
+    console.log("[dialer-initiate] Both legs confirmed by Plivo", {
       session_id,
       conference_id: conferenceId,
       agent_call_id: agentCallId,
       customer_call_id: customerCallId,
     });
 
-    // Update session with both call IDs
+    // Only NOW mark as ringing — both legs confirmed by Plivo
     await supabase.from("dialer_sessions").update({
       provider_call_id: agentCallId,
       customer_call_id: customerCallId,
@@ -316,6 +367,8 @@ Deno.serve(async (req) => {
         customer_call_id: customerCallId,
         agent_phone: formattedAgentPhone,
         customer_phone: formattedCustomerPhone,
+        agent_caller_id: agentCallerId,
+        customer_caller_id: customerCallerId,
       },
     }).catch(() => {});
 
