@@ -424,6 +424,7 @@ const App = () => (
               <Route path="/sales-seo-intel" element={<SalesSeoPitchPage />} />
               <Route path="/seo-client-reports" element={<SeoClientReportsPage />} />
               <Route path="/communications" element={<CommunicationsPage />} />
+              <Route path="/dialer" element={<DialerPage />} />
               <Route path="/analytics" element={<AnalyticsDashboardPage />} />
               <Route path="/ai-insights" element={<AIInsightsPage />} />
               <Route path="/ai-intelligence" element={<AIBusinessIntelligencePage />} />

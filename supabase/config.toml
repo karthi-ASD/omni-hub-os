@@ -107,3 +107,9 @@ verify_jwt = false
 
 [functions.meta-lead-webhook]
 verify_jwt = false
+
+[functions.dialer-initiate]
+verify_jwt = false
+
+[functions.dialer-webhook]
+verify_jwt = false
