@@ -73,9 +73,31 @@ export async function initiateCall(sessionId: string): Promise<{ success: boolea
     const { data, error } = await supabase.functions.invoke("dialer-initiate", {
       body: { session_id: sessionId },
     });
-    if (error) return { success: false, error: error.message };
-    return { success: true, providerCallId: data?.provider_call_id };
+
+    console.log("Dialer API Response:", { data, error });
+
+    // Supabase client wraps non-2xx as error, but check data first
+    if (data?.status === "ok" || data?.success === true || data?.session_id || data?.provider_call_id) {
+      return { success: true, providerCallId: data?.provider_call_id };
+    }
+
+    if (error) {
+      // FunctionsHttpError includes a response — check if it actually succeeded
+      const errData = typeof error === "object" && "context" in error ? (error as any).context : null;
+      if (errData?.provider_call_id || errData?.session_id || errData?.status === "ok") {
+        return { success: true, providerCallId: errData?.provider_call_id };
+      }
+      return { success: false, error: error.message || "Dialer request failed" };
+    }
+
+    // No explicit error and no recognized success — treat as success if data exists
+    if (data && typeof data === "object") {
+      return { success: true, providerCallId: data?.provider_call_id };
+    }
+
+    return { success: true };
   } catch (err: any) {
+    console.error("Dialer initiate exception:", err);
     return { success: false, error: err.message || "Call initiation failed" };
   }
 }
