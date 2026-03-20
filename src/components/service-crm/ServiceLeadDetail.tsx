@@ -367,6 +367,29 @@ export function ServiceLeadDetail({ lead, onBack, onStageChange }: Props) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Lost Reason Dialog */}
+      <Dialog open={lostReasonOpen} onOpenChange={setLostReasonOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Reason for Losing Lead</DialogTitle></DialogHeader>
+          <div className="space-y-3 mt-2">
+            <p className="text-sm text-muted-foreground">Please provide a reason for marking this lead as lost. This is required.</p>
+            <div><Label className="text-xs">Reason *</Label>
+              <Textarea value={lostReason} onChange={e => setLostReason(e.target.value)} rows={3} placeholder="e.g. Went with competitor, Budget too high, No response..." />
+            </div>
+            <Button onClick={async () => {
+              if (!lostReason.trim()) { toast.error("Reason is required"); return; }
+              if (pendingStage) {
+                await updateLead(lead.id, { lost_reason: lostReason.trim() } as any);
+                onStageChange(pendingStage);
+              }
+              setLostReason("");
+              setPendingStage(null);
+              setLostReasonOpen(false);
+            }} className="w-full">Confirm &amp; Mark as Lost</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
