@@ -100,6 +100,7 @@ export function AppSidebar() {
       <div className="rounded-md border border-dashed border-destructive/40 bg-destructive/5 px-2 py-2 text-[10px] text-destructive break-words">
         {JSON.stringify({
           isClientUser,
+          isClientUserSafe,
           businessId: profile?.business_id,
           crmType,
           hasCustomCRM,
