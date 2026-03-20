@@ -12137,6 +12137,7 @@ export type Database = {
       }
       dialer_sessions: {
         Row: {
+          agent_connected: boolean | null
           ai_score: number | null
           ai_summary: string | null
           bill_duration: number | null
@@ -12148,6 +12149,7 @@ export type Database = {
           call_status: string
           client_id: string | null
           created_at: string
+          customer_connected: boolean | null
           disposition: string | null
           id: string
           lead_id: string | null
@@ -12159,6 +12161,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          agent_connected?: boolean | null
           ai_score?: number | null
           ai_summary?: string | null
           bill_duration?: number | null
@@ -12170,6 +12173,7 @@ export type Database = {
           call_status?: string
           client_id?: string | null
           created_at?: string
+          customer_connected?: boolean | null
           disposition?: string | null
           id?: string
           lead_id?: string | null
@@ -12181,6 +12185,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          agent_connected?: boolean | null
           ai_score?: number | null
           ai_summary?: string | null
           bill_duration?: number | null
@@ -12192,6 +12197,7 @@ export type Database = {
           call_status?: string
           client_id?: string | null
           created_at?: string
+          customer_connected?: boolean | null
           disposition?: string | null
           id?: string
           lead_id?: string | null

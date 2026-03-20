@@ -25,6 +25,8 @@ export interface DialerSession {
   disposition: string | null;
   ai_summary: string | null;
   ai_score: number | null;
+  agent_connected: boolean;
+  customer_connected: boolean;
   created_at: string;
 }
 
