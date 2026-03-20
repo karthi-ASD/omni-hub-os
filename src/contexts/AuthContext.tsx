@@ -37,6 +37,8 @@ interface AuthContextType {
   isClientUser: boolean;
   /** The client_id this user is linked to (from client_users) */
   clientId: string | null;
+  /** Resolved user type — SINGLE SOURCE OF TRUTH */
+  userType: UserType;
   /** All businesses — only populated for super_admin */
   allBusinesses: TenantBusiness[];
   /** Selected tenant for super_admin context switching */
