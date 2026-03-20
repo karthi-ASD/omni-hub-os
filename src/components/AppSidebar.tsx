@@ -106,7 +106,6 @@ export function AppSidebar() {
           </div>
         </SidebarHeader>
         <SidebarContent className="px-2">
-          {debugPanel}
 
           {/* Section A: NextWeb Services (always shown) */}
           {NEXTWEB_SERVICES_SECTIONS.map(section => (
