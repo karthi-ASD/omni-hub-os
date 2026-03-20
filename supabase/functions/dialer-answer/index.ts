@@ -24,8 +24,6 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const sessionId = url.searchParams.get("session_id");
     const token = url.searchParams.get("token");
-    const leg = url.searchParams.get("leg") || "agent";
-    const conferenceId = url.searchParams.get("conference") || `dialer-${sessionId}`;
     const expected = Deno.env.get("PLIVO_WEBHOOK_SECRET");
 
     // Token validation
@@ -68,17 +66,12 @@ Deno.serve(async (req) => {
     const customerNumber = session.phone_number;
     console.log("[dialer-answer] Answer XML triggered", {
       session_id: sessionId,
-      leg,
       customer_number: customerNumber,
-      conference_id: conferenceId,
     });
 
-    // Update session only when the customer leg joins, so talk time starts at actual bridge time
     const updates: Record<string, any> = {};
-    if (leg === "customer") {
-      updates.call_status = "connected";
-    }
-    if (leg === "customer" && !session.call_start_time) {
+    updates.call_status = "connected";
+    if (!session.call_start_time) {
       updates.call_start_time = new Date().toISOString();
     }
     if (Object.keys(updates).length > 0) {
@@ -90,21 +83,20 @@ Deno.serve(async (req) => {
       await supabase.from("dialer_call_events").insert({
         session_id: sessionId,
         event_type: "call_answered",
-        metadata: { call_uuid: callUuid, leg, conference_id: conferenceId, customer_number: customerNumber },
+        metadata: { call_uuid: callUuid, customer_number: customerNumber },
       }).then(() => {}, () => {});
     }
 
-    console.log("[dialer-answer] Returning Conference XML", {
+    console.log("[dialer-answer] Returning Dial XML", {
       session_id: sessionId,
-      leg,
-      conference_id: conferenceId,
-      startConferenceOnEnter: "true",
-      endConferenceOnExit: "true",
+      customer_number: customerNumber,
     });
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Conference startConferenceOnEnter="true" endConferenceOnExit="true" record="true">${conferenceId}</Conference>
+  <Dial callerId="${PLIVO_CALLER_ID}">
+    <Number>${customerNumber}</Number>
+  </Dial>
 </Response>`;
 
     return new Response(xml, {
