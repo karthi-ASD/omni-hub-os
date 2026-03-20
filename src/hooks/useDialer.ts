@@ -6,6 +6,8 @@ import {
   initiateCall,
   hangupCall,
   saveDisposition,
+  saveDetailedDisposition,
+  addCallTag,
   insertCallEvent,
   updateAgentState,
   fetchLeadCallHistory,
@@ -14,9 +16,10 @@ import {
   type DialerCallStatus,
   type Disposition,
   type AgentState,
+  type CallTag,
 } from "@/services/dialerService";
 
-const CALL_INIT_TIMEOUT_MS = 30_000; // 30s timeout for call initiation
+const CALL_INIT_TIMEOUT_MS = 30_000;
 
 export function useDialer() {
   const { profile } = useAuth();
@@ -58,7 +61,6 @@ export function useDialer() {
       const status = updated.call_status as DialerCallStatus;
       setCallStatus(status);
 
-      // Sync agent state based on webhook-driven status
       if (status === "connected" && agentState !== "on_call") {
         setAgentState("on_call");
         if (profile?.business_id) updateAgentState(profile.business_id, profile.user_id, "on_call");
@@ -76,7 +78,6 @@ export function useDialer() {
     setPreviousCalls(calls);
   }, []);
 
-  // Prevent duplicate calls — check if already active
   const isCallActive = callStatus !== "idle" && callStatus !== "ended" && callStatus !== "failed" && callStatus !== "busy" && callStatus !== "no-answer";
 
   const startCall = useCallback(async (phoneNumber: string, leadId?: string, clientId?: string) => {
@@ -97,7 +98,6 @@ export function useDialer() {
       setIsMuted(false);
       setCallTimer(0);
 
-      // Optimistic agent state
       await updateAgentState(profile.business_id, profile.user_id, "on_call");
       setAgentState("on_call");
 
@@ -120,8 +120,6 @@ export function useDialer() {
         await updateAgentState(profile.business_id, profile.user_id, "available");
         setAgentState("available");
       } else {
-        // Backend wrote provider_call_id only — status will come from webhook
-        // Set local UI to ringing optimistically for responsiveness
         setCallStatus("ringing");
         await insertCallEvent(sess.id, "call_initiated", { provider_call_id: result.providerCallId });
       }
@@ -130,7 +128,6 @@ export function useDialer() {
     }
   }, [profile, loading, isCallActive]);
 
-  // Hangup — tells backend to send hangup to Plivo; webhook handles status transition
   const endCall = useCallback(async () => {
     if (!session?.id) return;
     const success = await hangupCall(session.id);
@@ -145,11 +142,24 @@ export function useDialer() {
   }, [session, isMuted]);
 
   const submitDisposition = useCallback(async (disposition: Disposition, notes?: string, followUpDate?: string) => {
-    if (!session?.id) return;
+    if (!session?.id || !profile) return;
+    
+    // Save to dialer_sessions (legacy)
     await saveDisposition(session.id, disposition, notes);
+    
+    // Save detailed disposition
+    await saveDetailedDisposition({
+      sessionId: session.id,
+      leadId: session.lead_id,
+      agentId: profile.user_id,
+      dispositionType: disposition,
+      notes,
+      followUpDate,
+    });
+
     await insertCallEvent(session.id, "disposition_set", { disposition, notes });
 
-    if (followUpDate && profile?.business_id) {
+    if (followUpDate && profile.business_id) {
       const { supabase } = await import("@/integrations/supabase/client");
       await supabase.from("reminders").insert({
         business_id: profile.business_id,
@@ -164,6 +174,12 @@ export function useDialer() {
     }
 
     toast.success("Disposition saved");
+  }, [session, profile]);
+
+  const tagCall = useCallback(async (tag: CallTag) => {
+    if (!session?.id || !profile) return;
+    await addCallTag(session.id, tag, profile.user_id);
+    toast.success(`Tagged as ${tag.replace("_", " ")}`);
   }, [session, profile]);
 
   const resetDialer = useCallback(() => {
@@ -195,6 +211,7 @@ export function useDialer() {
     endCall,
     toggleMute,
     submitDisposition,
+    tagCall,
     loadLeadHistory,
     resetDialer,
   };
