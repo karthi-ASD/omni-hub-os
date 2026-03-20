@@ -206,8 +206,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const validateClientTenantMapping = async (
     userId: string,
     profileData: Profile | null,
-    userRoles: AppRole[]
+    userRoles: AppRole[],
+    employeeByHR: boolean
   ) => {
+    // 🔴 CRITICAL: Skip tenant mapping entirely for staff users — they are NEVER clients
+    const hasStaffSignal = userRoles.some((role) =>
+      ["super_admin", "business_admin", "employee", "hr_manager", "manager"].includes(role)
+    ) || employeeByHR;
+
+    if (hasStaffSignal) {
+      console.log("[TenantMapping] Skipped — user is staff", { userId, employeeByHR });
+      setClientUserId(null);
+      setTenantValidationError(null);
+      return profileData;
+    }
+
     try {
       const { data: clientLink } = await supabase
         .from("client_users")
@@ -219,11 +232,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const linkedClientId = clientLink?.client_id || null;
       setClientUserId(linkedClientId);
 
-      const hasPrivilegedNonClientRole = userRoles.some((role) =>
-        ["super_admin", "business_admin", "employee", "hr_manager", "manager"].includes(role)
-      );
-
-      if (!linkedClientId || hasPrivilegedNonClientRole) {
+      if (!linkedClientId) {
         setTenantValidationError(null);
         return profileData;
       }
