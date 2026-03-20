@@ -75,9 +75,15 @@ export function AppSidebar() {
   const location = useLocation();
   const { profile, isSuperAdmin, isBusinessAdmin, isClientUser, roles, signOut } = useAuth();
   const { departmentName } = useEmployeeDepartment();
-  const { hasCustomCRM } = useBusinessCRM();
+  const { hasCustomCRM, crmType } = useBusinessCRM();
 
   const isAdmin = isSuperAdmin || isBusinessAdmin;
+  const activeCRMSections = getCRMSections(crmType);
+
+  // Debug logging for client nav
+  if (isClientUser) {
+    console.log("[AppSidebar] isClientUser:", isClientUser, "hasCustomCRM:", hasCustomCRM, "crmType:", crmType, "crmSections:", activeCRMSections.length);
+  }
 
   // ── Client users get separated navigation ──
   if (isClientUser) {
