@@ -80,6 +80,7 @@ export function useLeads() {
     });
 
     toast.success("Lead created");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "leads", actionType: "create", entityType: "lead", entityId: data.id, description: `Created lead: ${data.name}` });
     await fetchLeads();
     notifySalesDataChanged(["leads", "follow-ups", "dashboard", "pipeline"], "lead:create");
     return data;
