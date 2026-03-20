@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEmployeeDepartment } from "@/hooks/useEmployeeDepartment";
+import { useDialerAccess } from "@/hooks/useDialerAccess";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
 import { NWLogo } from "@/components/NWLogo";
