@@ -2,8 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 /**
  * dialer-answer: Plivo answer_url for the human sales dialer.
- * Returns Plivo XML that keeps the call alive (recording + wait).
- * This is NOT the AI voice agent — this is for human-to-human calls.
+ * Returns Plivo XML that BRIDGES the agent to the customer via <Dial>.
  */
 
 Deno.serve(async (req) => {
@@ -19,6 +18,7 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceKey);
+  const PLIVO_CALLER_ID = Deno.env.get("PLIVO_CALLER_ID") || "";
 
   try {
     const url = new URL(req.url);
@@ -29,7 +29,6 @@ Deno.serve(async (req) => {
     // Token validation
     if (expected && token !== expected) {
       console.warn("[dialer-answer] Unauthorized request rejected");
-      // Still return valid XML to avoid Plivo errors
       return xmlResponse("<Hangup />");
     }
 
@@ -47,49 +46,56 @@ Deno.serve(async (req) => {
 
     console.log("[dialer-answer] Call answered", { session_id: sessionId, call_uuid: callUuid });
 
-    // Update session status to connected
-    if (sessionId) {
-      const updates: Record<string, any> = {
-        call_status: "connected",
-      };
-      // Only set call_start_time if not already set
-      const { data: session } = await supabase
-        .from("dialer_sessions")
-        .select("call_start_time, business_id")
-        .eq("id", sessionId)
-        .maybeSingle();
-
-      if (session && !session.call_start_time) {
-        updates.call_start_time = new Date().toISOString();
-      }
-
-      await supabase.from("dialer_sessions").update(updates).eq("id", sessionId);
-
-      // Log event
-      if (session?.business_id) {
-        await supabase.from("dialer_call_events").insert({
-          session_id: sessionId,
-          event_type: "call_answered",
-          metadata: { call_uuid: callUuid },
-        }).catch(() => {});
-      }
+    if (!sessionId) {
+      console.error("[dialer-answer] No session_id — cannot bridge");
+      return xmlResponse("<Hangup />");
     }
 
-    // Build the hangup callback URL for when the call ends
-    const webhookBase = `${supabaseUrl}/functions/v1/dialer-webhook`;
-    const webhookUrl = `${webhookBase}?session_id=${sessionId}&token=${token || ""}`;
+    // Fetch customer number from session
+    const { data: session, error: sessErr } = await supabase
+      .from("dialer_sessions")
+      .select("phone_number, call_start_time, business_id")
+      .eq("id", sessionId)
+      .maybeSingle();
 
-    // Return Plivo XML that:
-    // 1. Keeps the call alive with a long Wait (up to 1 hour)
-    // 2. The call ends when either party hangs up
-    // 3. Recording is handled by the call creation params (record=true in dialer-initiate)
+    if (sessErr || !session || !session.phone_number) {
+      console.error("[dialer-answer] Session not found or no phone", { sessionId, sessErr });
+      return xmlResponse("<Hangup />");
+    }
+
+    const customerNumber = session.phone_number;
+    console.log("[dialer-answer] Bridging to customer", { session_id: sessionId, customer_number: customerNumber });
+
+    // Update session status to connected
+    const updates: Record<string, any> = { call_status: "connected" };
+    if (!session.call_start_time) {
+      updates.call_start_time = new Date().toISOString();
+    }
+    await supabase.from("dialer_sessions").update(updates).eq("id", sessionId);
+
+    // Log event
+    if (session.business_id) {
+      await supabase.from("dialer_call_events").insert({
+        session_id: sessionId,
+        event_type: "call_answered",
+        metadata: { call_uuid: callUuid, bridging_to: customerNumber },
+      }).then(() => {}, () => {});
+    }
+
+    // Build webhook URL for dial status callbacks
+    const tokenQS = token ? `&token=${token}` : "";
+    const dialActionUrl = `${supabaseUrl}/functions/v1/dialer-webhook?session_id=${sessionId}${tokenQS}`;
+
+    // Return Plivo XML that bridges agent → customer
+    const callerIdAttr = PLIVO_CALLER_ID ? ` callerId="${PLIVO_CALLER_ID}"` : "";
     return xmlResponse(
-      `<Wait length="3600" silence="true" minSilence="30" />`
+      `<Dial${callerIdAttr} timeout="30" action="${dialActionUrl}" method="POST">` +
+      `<Number>${customerNumber}</Number>` +
+      `</Dial>`
     );
   } catch (err) {
     console.error("[dialer-answer] Error:", err);
-    // On error, still return valid XML to not crash the call
-    return xmlResponse(`<Wait length="3600" silence="true" />`);
+    return xmlResponse("<Hangup />");
   }
 });
 
