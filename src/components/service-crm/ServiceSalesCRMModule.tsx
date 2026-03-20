@@ -63,7 +63,7 @@ export function ServiceSalesCRMModule() {
     const selectedLead = leads.find(l => l.id === form.lead_id);
 
     const { error } = await supabase.from("proposals").insert({
-      business_id: profile!.business_id!,
+      business_id: businessId!,
       lead_id: form.lead_id || null,
       title: form.title,
       total_amount: form.total_amount ? parseFloat(form.total_amount) : 0,
