@@ -73,7 +73,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { profile, isSuperAdmin, isBusinessAdmin, isClientUser, roles, signOut } = useAuth();
+  const { profile, isSuperAdmin, isBusinessAdmin, isClientUser, roles, signOut, selectedTenantId, allBusinesses } = useAuth();
   const { departmentName } = useEmployeeDepartment();
   const { hasCustomCRM, crmType } = useBusinessCRM();
 
