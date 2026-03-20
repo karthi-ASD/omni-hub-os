@@ -34,6 +34,7 @@ export function GlobalSearch() {
       case "inquiry": return MessageSquare;
       case "lead": return Target;
       case "deal": return FolderKanban;
+      case "request": return Ticket;
       default: return Search;
     }
   };
