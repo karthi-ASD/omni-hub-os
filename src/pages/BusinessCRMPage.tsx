@@ -5,7 +5,7 @@ import {
   LayoutDashboard, UserPlus, Users, Building2, GitBranch, Landmark,
   Network, CheckSquare, MessageSquare, FileText, TrendingUp, BarChart3,
   Zap, Smartphone, Settings, Activity, Target, FolderKanban,
-  ClipboardList, DollarSign, PhoneCall, StickyNote, Briefcase,
+  ClipboardList, DollarSign, PhoneCall, StickyNote, Briefcase, Sun,
 } from "lucide-react";
 
 // Real Estate CRM modules
@@ -28,12 +28,13 @@ import { BusinessSettingsModule } from "@/components/business-crm/BusinessSettin
 // Service CRM modules
 import { ServiceLeadsModule } from "@/components/service-crm/ServiceLeadsModule";
 import { ServiceSalesCRMModule } from "@/components/service-crm/ServiceSalesCRMModule";
+import { SolarProjectsCRMModule } from "@/components/service-crm/SolarProjectsCRMModule";
 
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, UserPlus, Users, Building2, GitBranch, Landmark,
   Network, CheckSquare, MessageSquare, FileText, TrendingUp, BarChart3,
   Zap, Smartphone, Settings, Activity, Target, FolderKanban,
-  ClipboardList, DollarSign, PhoneCall, StickyNote, Briefcase,
+  ClipboardList, DollarSign, PhoneCall, StickyNote, Briefcase, Sun,
 };
 
 const REAL_ESTATE_MODULE_MAP: Record<string, React.FC> = {
@@ -60,7 +61,7 @@ const SERVICE_MODULE_MAP: Record<string, React.FC> = {
   opportunities: OpportunitiesModule,
   deal_pipeline: DealPipelineModule,
   sales_crm: ServiceSalesCRMModule,
-  projects: () => <div className="text-center py-12 text-muted-foreground">Projects module coming soon</div>,
+  projects: SolarProjectsCRMModule,
   tasks_followups: TasksFollowupsModule,
   calendar: () => <div className="text-center py-12 text-muted-foreground">Calendar coming soon</div>,
   reports: ReportsModule,

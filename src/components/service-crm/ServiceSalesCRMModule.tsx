@@ -106,15 +106,15 @@ export function ServiceSalesCRMModule() {
     if (error) { toast.error("Failed to update"); return; }
     toast.success("Proposal approved! Conversion flow triggered.");
 
-    // Auto-convert linked lead to "won" and create client record
+    // Auto-convert linked lead to "won" and create client + project
     if (proposal && (proposal as any).lead_id) {
       const leadId = (proposal as any).lead_id;
       await supabase.from("leads").update({ stage: "won" }).eq("id", leadId);
 
-      // Get lead data to create client
       const { data: leadData } = await supabase.from("leads").select("*").eq("id", leadId).maybeSingle();
       if (leadData && businessId) {
-        const { error: clientErr } = await supabase.from("clients").insert({
+        // Create client record
+        const { data: clientData, error: clientErr } = await supabase.from("clients").insert({
           business_id: businessId,
           contact_name: leadData.name,
           email: leadData.email,
@@ -124,9 +124,58 @@ export function ServiceSalesCRMModule() {
           city: leadData.suburb || null,
           lead_source: leadData.source || "crm",
           onboarding_status: "pending",
-        });
-        if (!clientErr) {
+        }).select().maybeSingle();
+
+        if (!clientErr && clientData) {
           toast.success("Client profile created from lead");
+        }
+
+        // Auto-create solar project from lead + proposal data
+        const projectName = `${leadData.name || "Solar"} - ${(proposal as any).system_size || "System"}`;
+        const systemKw = (proposal as any).system_size ? parseFloat((proposal as any).system_size) : null;
+        const { data: projectData, error: projErr } = await supabase.from("projects").insert({
+          business_id: businessId,
+          lead_id: leadId,
+          client_id: clientData?.id || null,
+          deal_id: null,
+          project_name: projectName,
+          project_type: "solar_installation",
+          pipeline_stage: "new_project",
+          status: "new",
+          system_size_kw: systemKw,
+          estimated_value: (proposal as any).total_amount || null,
+          priority: "medium",
+          contact_name: leadData.name || null,
+          contact_phone: leadData.phone || null,
+          contact_email: leadData.email || null,
+          address: leadData.suburb || leadData.address || null,
+          notes: (proposal as any).proposal_notes || null,
+          description: (proposal as any).title || null,
+          assigned_manager_user_id: profile!.user_id,
+          start_date: new Date().toISOString().split("T")[0],
+        } as any).select().maybeSingle();
+
+        if (!projErr && projectData) {
+          // Auto-create onboarding tasks as reminders
+          const defaultTasks = [
+            { title: "Call client to confirm details", due_offset: 1 },
+            { title: "Schedule site inspection", due_offset: 2 },
+            { title: "Collect documentation (ID, bills)", due_offset: 3 },
+            { title: "Prepare system design proposal", due_offset: 5 },
+            { title: "Submit permit application", due_offset: 7 },
+          ];
+          const reminders = defaultTasks.map(t => ({
+            business_id: businessId,
+            entity_type: "lead" as const,
+            entity_id: (projectData as any).id,
+            assigned_to_user_id: profile!.user_id,
+            title: `[${projectName}] ${t.title}`,
+            due_at: new Date(Date.now() + t.due_offset * 86400000).toISOString(),
+            created_by_user_id: profile!.user_id,
+            priority: "medium" as const,
+          }));
+          await supabase.from("reminders").insert(reminders as any);
+          toast.success(`Solar project "${projectName}" auto-created with tasks`);
         }
       }
     }
