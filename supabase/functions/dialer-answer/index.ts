@@ -94,17 +94,17 @@ Deno.serve(async (req) => {
       }).then(() => {}, () => {});
     }
 
-    // Return Plivo XML that joins both parties to the same conference bridge
-    const startOnEnter = leg === "agent" ? "true" : "true";
-    const endOnExit = leg === "agent" ? "true" : "false";
-
     console.log("[dialer-answer] Returning Conference XML", {
-      session_id: sessionId, leg, conference_id: conferenceId, startOnEnter, endOnExit,
+      session_id: sessionId,
+      leg,
+      conference_id: conferenceId,
+      startConferenceOnEnter: "true",
+      endConferenceOnExit: "true",
     });
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Conference startConferenceOnEnter="${startOnEnter}" endConferenceOnExit="${endOnExit}" record="true">${conferenceId}</Conference>
+  <Conference startConferenceOnEnter="true" endConferenceOnExit="true" record="true">${conferenceId}</Conference>
 </Response>`;
 
     return new Response(xml, {
