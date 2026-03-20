@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Search, Trash2, RotateCcw, AlertTriangle, Merge, Eye, Pencil, Users, UserX, GitMerge, KeyRound, UserPlus, Loader2, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Search, Trash2, RotateCcw, AlertTriangle, Merge, Eye, Pencil, Users, UserX, GitMerge, KeyRound, UserPlus, Loader2, ShieldCheck, ShieldAlert, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { StatCard } from "@/components/ui/stat-card";
 import { format } from "date-fns";
