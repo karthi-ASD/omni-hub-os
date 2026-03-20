@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { notifySalesDataChanged, useSalesDataAutoRefresh } from "@/lib/salesDataSync";
+import { logActivity as logAI } from "@/lib/activity-logger";
 
 export type DealStage = "new" | "contacted" | "meeting_booked" | "needs_analysis" | "proposal_requested" | "negotiation" | "won" | "lost";
 export type DealStatus = "open" | "won" | "lost" | "archived";
