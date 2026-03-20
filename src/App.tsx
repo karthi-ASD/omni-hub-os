@@ -114,6 +114,8 @@ import ClientPackagePage from "./pages/ClientPackagePage";
 import FinancePackagesPage from "./pages/FinancePackagesPage";
 import NextWebServicesPage from "./pages/NextWebServices";
 import AdminServiceRequestsPage from "./pages/AdminServiceRequests";
+import NextWebMasterDashboardPage from "./pages/NextWebMasterDashboard";
+import NextWebClientsPage from "./pages/NextWebClientsPage";
 import ContentManagementPage from "./pages/ContentManagementPage";
 import WebsiteDevStagesPage from "./pages/WebsiteDevStagesPage";
 import ActivityTimelinePage from "./pages/ActivityTimelinePage";
