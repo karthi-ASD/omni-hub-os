@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useDialer } from "@/hooks/useDialer";
-import { supabase } from "@/integrations/supabase/client";
+import { useDialerAccess } from "@/hooks/useDialerAccess";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { CallTagging } from "@/components/dialer/CallTagging";
 import {
   Phone, PhoneOff, MicOff, Mic, Clock, User, Building2, Hash,
   CheckCircle, XCircle, PhoneForwarded, PhoneMissed, Play, Download,
-  Calendar as CalendarIcon, Delete,
+  Calendar as CalendarIcon, Delete, ShieldAlert, UserX,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -41,12 +42,16 @@ interface LeadContext {
   name: string;
   phone: string;
   company?: string;
+  clientId?: string;
 }
 
 export default function DialerPage() {
   const [searchParams] = useSearchParams();
   const { profile } = useAuth();
   const dialer = useDialer();
+  
+  const clientId = searchParams.get("clientId") || undefined;
+  const { canAccessDialer, isClientUser } = useDialerAccess(clientId);
 
   const [phoneInput, setPhoneInput] = useState("");
   const [notesInput, setNotesInput] = useState("");
@@ -63,21 +68,44 @@ export default function DialerPage() {
 
     if (phone) setPhoneInput(phone);
     if (leadId && name) {
-      setLeadContext({ id: leadId, name: name || "", phone: phone || "", company: company || "" });
+      setLeadContext({ id: leadId, name: name || "", phone: phone || "", company: company || "", clientId: clientId });
       dialer.loadLeadHistory(leadId);
     }
   }, [searchParams]);
 
+  // Permission gate
+  if (!canAccessDialer) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
+        {isClientUser ? (
+          <>
+            <UserX className="h-12 w-12 text-muted-foreground" />
+            <h2 className="text-lg font-semibold">Dialer Not Available</h2>
+            <p className="text-sm text-muted-foreground max-w-md">The dialer is only available to sales team members.</p>
+          </>
+        ) : (
+          <>
+            <ShieldAlert className="h-12 w-12 text-muted-foreground" />
+            <h2 className="text-lg font-semibold">Dialer Access Restricted</h2>
+            <p className="text-sm text-muted-foreground max-w-md">
+              You don't have permission to access the dialer. Contact your administrator if you believe this is an error.
+            </p>
+          </>
+        )}
+      </div>
+    );
+  }
+
   const handleDial = () => {
     if (!phoneInput.trim()) return;
-    dialer.startCall(phoneInput.trim(), leadContext?.id);
+    dialer.startCall(phoneInput.trim(), leadContext?.id, leadContext?.clientId);
   };
 
   const handleDialPadPress = (digit: string) => {
     setPhoneInput((p) => p + digit);
   };
 
-  const handleDisposition = async (disposition: "interested" | "not_interested" | "callback_later" | "no_answer") => {
+  const handleDisposition = async (disposition: "interested" | "not_interested" | "callback_later" | "no_answer" | "wrong_number" | "converted") => {
     if (disposition === "callback_later") {
       setShowFollowUp(true);
       return;
@@ -137,9 +165,7 @@ export default function DialerPage() {
                     </div>
                   )}
                 </div>
-
                 <Separator />
-
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-2">Previous Calls</p>
                   {dialer.previousCalls.length === 0 ? (
@@ -168,9 +194,7 @@ export default function DialerPage() {
                     </div>
                   )}
                 </div>
-
                 <Separator />
-
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-1.5">Notes</p>
                   <Textarea
@@ -197,7 +221,6 @@ export default function DialerPage() {
             <CardTitle className="text-base flex items-center gap-2"><Phone className="h-4 w-4" /> Dialer</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Status */}
             <div className="text-center">
               <Badge className={`${STATUS_COLORS[dialer.callStatus]} text-sm px-3 py-1`}>
                 {dialer.callStatus === "idle" ? "Ready" : dialer.callStatus.charAt(0).toUpperCase() + dialer.callStatus.slice(1)}
@@ -207,7 +230,6 @@ export default function DialerPage() {
               )}
             </div>
 
-            {/* Phone input */}
             <div className="flex gap-2">
               <Input
                 value={phoneInput}
@@ -221,7 +243,6 @@ export default function DialerPage() {
               </Button>
             </div>
 
-            {/* Dial pad */}
             <div className="grid grid-cols-3 gap-2">
               {DIAL_PAD.flat().map((digit) => (
                 <Button
@@ -236,7 +257,6 @@ export default function DialerPage() {
               ))}
             </div>
 
-            {/* Call controls */}
             <div className="flex gap-2 justify-center">
               {!isCallActive ? (
                 <Button
@@ -248,11 +268,7 @@ export default function DialerPage() {
                 </Button>
               ) : (
                 <>
-                  <Button
-                    variant="outline"
-                    className="h-12"
-                    onClick={dialer.toggleMute}
-                  >
+                  <Button variant="outline" className="h-12" onClick={dialer.toggleMute}>
                     {dialer.isMuted ? <MicOff className="h-4 w-4 mr-1" /> : <Mic className="h-4 w-4 mr-1" />}
                     {dialer.isMuted ? "Unmute" : "Mute"}
                   </Button>
@@ -277,39 +293,36 @@ export default function DialerPage() {
             {isCallEnded || dialer.session ? (
               <>
                 <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    className="h-14 flex-col gap-1 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-400"
-                    onClick={() => handleDisposition("interested")}
-                  >
+                  <Button variant="outline" className="h-14 flex-col gap-1 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-400" onClick={() => handleDisposition("interested")}>
                     <CheckCircle className="h-5 w-5 text-emerald-600" />
                     <span className="text-xs">Interested</span>
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="h-14 flex-col gap-1 border-red-200 hover:bg-red-50 hover:border-red-400"
-                    onClick={() => handleDisposition("not_interested")}
-                  >
+                  <Button variant="outline" className="h-14 flex-col gap-1 border-red-200 hover:bg-red-50 hover:border-red-400" onClick={() => handleDisposition("not_interested")}>
                     <XCircle className="h-5 w-5 text-red-600" />
                     <span className="text-xs">Not Interested</span>
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="h-14 flex-col gap-1 border-blue-200 hover:bg-blue-50 hover:border-blue-400"
-                    onClick={() => handleDisposition("callback_later")}
-                  >
+                  <Button variant="outline" className="h-14 flex-col gap-1 border-blue-200 hover:bg-blue-50 hover:border-blue-400" onClick={() => handleDisposition("callback_later")}>
                     <PhoneForwarded className="h-5 w-5 text-blue-600" />
                     <span className="text-xs">Callback Later</span>
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="h-14 flex-col gap-1 border-amber-200 hover:bg-amber-50 hover:border-amber-400"
-                    onClick={() => handleDisposition("no_answer")}
-                  >
+                  <Button variant="outline" className="h-14 flex-col gap-1 border-amber-200 hover:bg-amber-50 hover:border-amber-400" onClick={() => handleDisposition("no_answer")}>
                     <PhoneMissed className="h-5 w-5 text-amber-600" />
                     <span className="text-xs">No Answer</span>
                   </Button>
+                  <Button variant="outline" className="h-14 flex-col gap-1 border-gray-200 hover:bg-gray-50 hover:border-gray-400" onClick={() => handleDisposition("wrong_number")}>
+                    <PhoneOff className="h-5 w-5 text-gray-600" />
+                    <span className="text-xs">Wrong Number</span>
+                  </Button>
+                  <Button variant="outline" className="h-14 flex-col gap-1 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-500" onClick={() => handleDisposition("converted")}>
+                    <CheckCircle className="h-5 w-5 text-emerald-700" />
+                    <span className="text-xs">Converted</span>
+                  </Button>
                 </div>
+
+                {/* Call Tagging */}
+                {dialer.session && (
+                  <CallTagging onTag={dialer.tagCall} disabled={!dialer.session} />
+                )}
 
                 {/* Follow-up scheduler */}
                 {showFollowUp && (
@@ -332,7 +345,6 @@ export default function DialerPage() {
                   </div>
                 )}
 
-                {/* Save notes */}
                 {!leadContext && (
                   <Textarea
                     placeholder="Add call notes..."
@@ -342,7 +354,6 @@ export default function DialerPage() {
                   />
                 )}
 
-                {/* Recording */}
                 {dialer.session?.recording_url && (
                   <div className="border rounded-md p-3 space-y-2">
                     <p className="text-xs font-medium">Recording</p>
