@@ -345,7 +345,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isEmployeeByHR: employeeByHR,
         });
 
-        const validatedProfile = await validateClientTenantMapping(nextSession.user.id, profileData, userRoles);
+        const validatedProfile = await validateClientTenantMapping(nextSession.user.id, profileData, userRoles, employeeByHR);
         const finalBusinessId = validatedProfile?.business_id ?? profileData?.business_id ?? null;
 
         if (userRoles.includes("super_admin")) {
