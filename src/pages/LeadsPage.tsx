@@ -162,7 +162,7 @@ const LeadsPage = () => {
 
                 <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border/50" onClick={e => e.stopPropagation()}>
                   {lead.phone && (
-                    <button onClick={() => navigate(`/dialer?phone=${encodeURIComponent(lead.phone!)}&leadId=${lead.id}&name=${encodeURIComponent(lead.name)}&company=${encodeURIComponent(lead.business_name || '')}`)} className="flex items-center gap-1 text-xs text-emerald-600 font-medium hover:underline">
+                    <button onClick={() => navigate(`/sales/dialer?phone=${encodeURIComponent(lead.phone!)}&leadId=${lead.id}&name=${encodeURIComponent(lead.name)}&company=${encodeURIComponent(lead.business_name || '')}`)} className="flex items-center gap-1 text-xs text-emerald-600 font-medium hover:underline">
                       <Phone className="h-3.5 w-3.5" /> Call Now
                     </button>
                   )}
