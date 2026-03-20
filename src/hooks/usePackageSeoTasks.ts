@@ -108,6 +108,7 @@ export function usePackageSeoTasks(packageId?: string, clientId?: string) {
     const { error } = await supabase.from("seo_tasks").update(updates as any).eq("id", id);
     if (error) { toast.error("Failed to update task"); return; }
     toast.success("Task updated");
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "tasks", actionType: "update", entityType: "seo_task", entityId: id, description: "SEO task updated" });
     fetchTasks();
   };
 
