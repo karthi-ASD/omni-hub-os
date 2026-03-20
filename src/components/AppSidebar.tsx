@@ -86,9 +86,10 @@ export function AppSidebar() {
   } = useAuth();
   const { departmentName } = useEmployeeDepartment();
 
-  // 🔒 SECURITY: Only actual client users see tenant/client nav
-  // Employees in client_business shell must see staff nav
-  const isTenantShell = isClientUser && (dashboardShell === "client_business" || dashboardShell === "client_portal");
+  // 🔒 DO NOT MODIFY — SECURITY CRITICAL
+  // client_business is a shell mode, not a client identity.
+  // Sidebar client navigation must only render for userType === "client".
+  const isTenantShell = isClientUser;
   const isStaffShell = !isTenantShell;
   const activeCRMSections = getCRMSections(activeCRMType);
   const hasCustomCRM = !!activeCRMType && activeCRMType !== "generic";
