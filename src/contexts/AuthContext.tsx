@@ -2,9 +2,11 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { resolveUserType, detectRoleConflict, type UserType } from "@/lib/role-resolver";
+import { resolveAppMode, resolveUserType, detectRoleConflict, type AppMode, type DashboardShell, type UserType } from "@/lib/role-resolver";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
+
+type CRMType = "real_estate" | "service" | "finance" | "generic";
 
 interface Profile {
   id: string;
@@ -21,12 +23,19 @@ interface TenantBusiness {
   status: string;
 }
 
+interface ActiveBusinessContext {
+  id: string;
+  name: string;
+  crm_type: CRMType | null;
+}
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   profile: Profile | null;
   roles: AppRole[];
   loading: boolean;
+  isAuthResolved: boolean;
   tenantValidationError: string | null;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
@@ -39,6 +48,12 @@ interface AuthContextType {
   clientId: string | null;
   /** Resolved user type — SINGLE SOURCE OF TRUTH */
   userType: UserType;
+  /** Resolved shell/app mode for layout and navigation */
+  appMode: AppMode;
+  dashboardShell: DashboardShell;
+  activeTenantId: string | null;
+  activeBusinessName: string | null;
+  activeCRMType: CRMType | null;
   /** All businesses — only populated for super_admin */
   allBusinesses: TenantBusiness[];
   /** Selected tenant for super_admin context switching */
