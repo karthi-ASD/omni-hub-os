@@ -122,8 +122,9 @@ Deno.serve(async (req) => {
     <Conference
       startConferenceOnEnter="true"
       endConferenceOnExit="true"
+      waitSound=""
+      enterSound=""
       record="record-from-start"
-      maxMembers="2"
     >${conferenceId}</Conference>
   </Dial>
 </Response>`;
