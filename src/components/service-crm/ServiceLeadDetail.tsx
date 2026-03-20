@@ -139,7 +139,15 @@ export function ServiceLeadDetail({ lead, onBack, onStageChange }: Props) {
         <Button size="sm" variant="outline" onClick={handleWhatsApp} className="gap-1.5 text-xs"><MessageSquare className="h-3 w-3" />WhatsApp</Button>
         <Button size="sm" variant="outline" onClick={() => setNoteOpen(true)} className="gap-1.5 text-xs"><StickyNote className="h-3 w-3" />Add Note</Button>
         <Button size="sm" variant="outline" onClick={() => setFollowUpOpen(true)} className="gap-1.5 text-xs"><Calendar className="h-3 w-3" />Schedule Follow-up</Button>
-        <Select value={lead.stage} onValueChange={(v) => onStageChange(v as LeadStage)}>
+        <Select value={lead.stage} onValueChange={(v) => {
+          const newStage = v as LeadStage;
+          if (newStage === "lost") {
+            setPendingStage(newStage);
+            setLostReasonOpen(true);
+          } else {
+            onStageChange(newStage);
+          }
+        }}>
           <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
             {Object.entries(STAGE_CONFIG).map(([k, v]) => (
