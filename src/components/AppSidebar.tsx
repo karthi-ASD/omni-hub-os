@@ -78,6 +78,7 @@ export function AppSidebar() {
   const { hasCustomCRM, crmType } = useBusinessCRM();
 
   const isAdmin = isSuperAdmin || isBusinessAdmin;
+  const activeCRMSections = getCRMSections(crmType);
 
   // SINGLE SOURCE OF TRUTH: use userType from resolver
   const isClientUserSafe = userType === "client";
