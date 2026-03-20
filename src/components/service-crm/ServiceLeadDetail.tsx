@@ -47,6 +47,11 @@ export function ServiceLeadDetail({ lead, onBack, onStageChange }: Props) {
   const [tab, setTab] = useState("summary");
   const [noteOpen, setNoteOpen] = useState(false);
   const [followUpOpen, setFollowUpOpen] = useState(false);
+  const [lostReasonOpen, setLostReasonOpen] = useState(false);
+  const [lostReason, setLostReason] = useState("");
+  const [pendingStage, setPendingStage] = useState<LeadStage | null>(null);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [followUpOpen, setFollowUpOpen] = useState(false);
   const [activities, setActivities] = useState<any[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
 
