@@ -23,11 +23,11 @@ const shellMeta = {
     title: "NextWeb Staff Workspace",
     subtitle: "Internal operations, delivery, and service management.",
   },
-  business_admin: {
+  client_business: {
     title: "Business Workspace",
     subtitle: "Tenant-scoped CRM and business operations.",
   },
-  client: {
+  client_portal: {
     title: "Client Portal",
     subtitle: "Your services, reporting, and business growth workspace.",
   },
@@ -44,7 +44,7 @@ const AppShell = () => {
   const businessId = profile?.business_id;
   const isMobile = useIsMobile();
   const shellInfo = shellMeta[dashboardShell];
-  const shellTitle = dashboardShell === "business_admin" || dashboardShell === "client"
+  const shellTitle = dashboardShell === "client_business" || dashboardShell === "client_portal"
     ? activeBusinessName || shellInfo.title
     : shellInfo.title;
 

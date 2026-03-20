@@ -7,7 +7,7 @@
  */
 
 export type UserType = "super_admin" | "business_admin" | "employee" | "client";
-export type AppMode = "super_admin" | "internal_staff" | "business_admin" | "client";
+export type AppMode = "super_admin" | "internal_staff" | "client_business" | "client_portal";
 export type DashboardShell = AppMode;
 
 const INTERNAL_STAFF_ROLES = ["employee", "hr_manager", "manager"] as const;
@@ -37,25 +37,33 @@ export function resolveAppMode({
   roles,
   clientUserId,
   businessId,
-  hasCustomCRM,
 }: {
   roles: string[];
   clientUserId: string | null;
   businessId: string | null;
-  hasCustomCRM: boolean;
 }): AppMode {
+  // 1. Super admin always gets the global shell
   if (roles.includes("super_admin")) return "super_admin";
-  if (hasAnyRole(roles, INTERNAL_STAFF_ROLES)) return "internal_staff";
-  if (roles.includes("business_admin")) return "business_admin";
 
-  const hasTenantContext = !!businessId;
+  // 2. Internal NextWeb staff — ONLY when they have NO businessId
+  //    (NextWeb employees don't belong to a client tenant)
+  if (hasAnyRole(roles, INTERNAL_STAFF_ROLES) && !businessId) {
+    return "internal_staff";
+  }
 
-  if (hasTenantContext && hasCustomCRM) return "business_admin";
-  if (clientUserId) return "client";
-  if (hasTenantContext) return "client";
+  // 3. CRITICAL FIX: Any user belonging to a business → client_business shell
+  //    This catches: business_admin, employees-of-tenant, tenant owners, etc.
+  if (businessId) {
+    return "client_business";
+  }
 
-  // Never fall back to an internal shell for unresolved tenant-side users.
-  return "client";
+  // 4. Client portal user (linked via client_users but no business)
+  if (clientUserId) {
+    return "client_portal";
+  }
+
+  // 5. Safe fallback — portal, never internal
+  return "client_portal";
 }
 
 export function isStaffUser(userType: UserType): boolean {

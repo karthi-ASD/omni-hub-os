@@ -67,7 +67,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   // Tenant-side users get the tenant/client dashboard shell
-  if (isClientUser || dashboardShell === "business_admin") return <ClientDashboardPage />;
+  if (dashboardShell === "client_business" || dashboardShell === "client_portal") return <ClientDashboardPage />;
   const isManager = hasRole("manager");
   const deptLower = departmentName?.toLowerCase() ?? "";
   const isFinanceDept = deptLower.includes("finance") || deptLower.includes("accounts");
