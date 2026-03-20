@@ -119,6 +119,7 @@ const REAL_ESTATE_CRM_SECTIONS: NavSection[] = [
       { label: "Client Portal Management", icon: Shield, to: "/my-crm?tab=client_portal_mgmt" },
       { label: "Ticketing & Support", icon: Inbox, to: "/my-crm?tab=ticketing_support" },
       { label: "Reports & Insights", icon: PieChart, to: "/my-crm?tab=reports" },
+      { label: "AI Assistant", icon: Sparkles, to: "/my-crm?tab=ai_assistant" },
       { label: "Settings", icon: Settings, to: "/my-crm?tab=business_settings" },
     ],
   },

@@ -61,6 +61,7 @@ const REAL_ESTATE_MODULE_MAP: Record<string, React.FC> = {
   ticketing_support: TicketingSupportModule,
   reports: ReportsModule,
   business_settings: BusinessSettingsModule,
+  ai_assistant: ACE1AssistantModule,
 };
 
 const SERVICE_MODULE_MAP: Record<string, React.FC> = {
