@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useLeads } from "@/hooks/useLeads";
 import { useFollowUps } from "@/hooks/useFollowUps";
 import { useAuth } from "@/contexts/AuthContext";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,7 +54,7 @@ const PRIORITY_CONFIG: Record<string, string> = {
 
 export function ServiceLeadsModule() {
   const { leads, loading, createLead, updateStage } = useLeads();
-  const { followUps } = useFollowUps();
+  const { followUps, createFollowUp } = useFollowUps();
   const { profile, roles } = useAuth();
   const [subTab, setSubTab] = useState("new");
   const [search, setSearch] = useState("");
@@ -121,7 +122,7 @@ export function ServiceLeadsModule() {
     if (form.roof_type) customData.roof_type = form.roof_type;
     if (form.installation_notes) customData.installation_notes = form.installation_notes;
 
-    await createLead({
+    const result = await createLead({
       name: form.name.trim(),
       email: form.email.trim(),
       phone: form.phone.trim() || null,
@@ -134,6 +135,25 @@ export function ServiceLeadsModule() {
       property_type: form.property_type || null,
       priority: "medium",
     } as any);
+
+    // Auto-create follow-ups: Day 1 and Day 3
+    if (result?.id) {
+      const today = new Date();
+      await createFollowUp({
+        lead_id: result.id,
+        subject: `Day 1 follow-up: ${form.name.trim()}`,
+        followup_date: format(addDays(today, 1), "yyyy-MM-dd"),
+        followup_type: "call",
+        priority: "high",
+      });
+      await createFollowUp({
+        lead_id: result.id,
+        subject: `Day 3 follow-up: ${form.name.trim()}`,
+        followup_date: format(addDays(today, 3), "yyyy-MM-dd"),
+        followup_type: "call",
+        priority: "medium",
+      });
+    }
 
     setForm({ name: "", email: "", phone: "", address: "", source: "manual" as any, property_type: "", notes: "", monthly_consumption: "", roof_type: "", installation_notes: "" });
     setAddOpen(false);

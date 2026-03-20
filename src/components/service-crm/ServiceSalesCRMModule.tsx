@@ -30,23 +30,24 @@ const PROPOSAL_STATUS_CONFIG: Record<string, { label: string; color: string }> =
 };
 
 export function ServiceSalesCRMModule() {
-  const { profile } = useAuth();
+  const { profile, selectedTenantId } = useAuth();
+  const businessId = profile?.business_id;
   const { leads } = useLeads();
   const qc = useQueryClient();
   const [subTab, setSubTab] = useState("proposals");
   const [createOpen, setCreateOpen] = useState(false);
 
   const { data: proposals = [], isLoading } = useQuery({
-    queryKey: ["service-proposals", profile?.business_id],
+    queryKey: ["service-proposals", businessId],
     queryFn: async () => {
       const { data } = await supabase
         .from("proposals")
         .select("*")
-        .eq("business_id", profile!.business_id!)
+        .eq("business_id", businessId!)
         .order("created_at", { ascending: false });
       return data || [];
     },
-    enabled: !!profile?.business_id,
+    enabled: !!businessId,
   });
 
   const activeLeads = leads.filter(l => !["won", "lost"].includes(l.stage));
@@ -62,7 +63,7 @@ export function ServiceSalesCRMModule() {
     const selectedLead = leads.find(l => l.id === form.lead_id);
 
     const { error } = await supabase.from("proposals").insert({
-      business_id: profile!.business_id!,
+      business_id: businessId!,
       lead_id: form.lead_id || null,
       title: form.title,
       total_amount: form.total_amount ? parseFloat(form.total_amount) : 0,

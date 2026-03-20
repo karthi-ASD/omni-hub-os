@@ -47,6 +47,9 @@ export function ServiceLeadDetail({ lead, onBack, onStageChange }: Props) {
   const [tab, setTab] = useState("summary");
   const [noteOpen, setNoteOpen] = useState(false);
   const [followUpOpen, setFollowUpOpen] = useState(false);
+  const [lostReasonOpen, setLostReasonOpen] = useState(false);
+  const [lostReason, setLostReason] = useState("");
+  const [pendingStage, setPendingStage] = useState<LeadStage | null>(null);
   const [activities, setActivities] = useState<any[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
 
@@ -88,7 +91,8 @@ export function ServiceLeadDetail({ lead, onBack, onStageChange }: Props) {
   const handleWhatsApp = () => {
     if (!lead.phone) { toast.error("No phone number"); return; }
     const phone = lead.phone.replace(/[^0-9+]/g, "");
-    window.open(`https://wa.me/${phone}`, "_blank");
+    const message = encodeURIComponent(`Hi ${lead.name}, regarding your enquiry with us — we'd love to help you with the next steps. Let us know a good time to chat!`);
+    window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
   };
 
   const handleCall = () => {
@@ -133,7 +137,15 @@ export function ServiceLeadDetail({ lead, onBack, onStageChange }: Props) {
         <Button size="sm" variant="outline" onClick={handleWhatsApp} className="gap-1.5 text-xs"><MessageSquare className="h-3 w-3" />WhatsApp</Button>
         <Button size="sm" variant="outline" onClick={() => setNoteOpen(true)} className="gap-1.5 text-xs"><StickyNote className="h-3 w-3" />Add Note</Button>
         <Button size="sm" variant="outline" onClick={() => setFollowUpOpen(true)} className="gap-1.5 text-xs"><Calendar className="h-3 w-3" />Schedule Follow-up</Button>
-        <Select value={lead.stage} onValueChange={(v) => onStageChange(v as LeadStage)}>
+        <Select value={lead.stage} onValueChange={(v) => {
+          const newStage = v as LeadStage;
+          if (newStage === "lost") {
+            setPendingStage(newStage);
+            setLostReasonOpen(true);
+          } else {
+            onStageChange(newStage);
+          }
+        }}>
           <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
             {Object.entries(STAGE_CONFIG).map(([k, v]) => (
@@ -352,6 +364,29 @@ export function ServiceLeadDetail({ lead, onBack, onStageChange }: Props) {
               </Select>
             </div>
             <Button onClick={handleCreateFollowUp} className="w-full">Schedule</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Lost Reason Dialog */}
+      <Dialog open={lostReasonOpen} onOpenChange={setLostReasonOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Reason for Losing Lead</DialogTitle></DialogHeader>
+          <div className="space-y-3 mt-2">
+            <p className="text-sm text-muted-foreground">Please provide a reason for marking this lead as lost. This is required.</p>
+            <div><Label className="text-xs">Reason *</Label>
+              <Textarea value={lostReason} onChange={e => setLostReason(e.target.value)} rows={3} placeholder="e.g. Went with competitor, Budget too high, No response..." />
+            </div>
+            <Button onClick={async () => {
+              if (!lostReason.trim()) { toast.error("Reason is required"); return; }
+              if (pendingStage) {
+                await updateLead(lead.id, { lost_reason: lostReason.trim() } as any);
+                onStageChange(pendingStage);
+              }
+              setLostReason("");
+              setPendingStage(null);
+              setLostReasonOpen(false);
+            }} className="w-full">Confirm &amp; Mark as Lost</Button>
           </div>
         </DialogContent>
       </Dialog>
