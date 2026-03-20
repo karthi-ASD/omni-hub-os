@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type DialerCallStatus = "idle" | "initiating" | "ringing" | "connected" | "ended" | "failed" | "busy" | "no-answer";
+export type DialerCallStatus = "idle" | "initiating" | "ringing" | "bridging" | "connected" | "ended" | "failed" | "busy" | "no-answer";
 export type AgentState = "available" | "on_call" | "offline";
 export type Disposition = "interested" | "not_interested" | "callback_later" | "no_answer" | "wrong_number" | "converted";
 export type CallTag = "hot_lead" | "warm_lead" | "cold_lead" | "spam";
