@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { logActivity as logAI } from "@/lib/activity-logger";
 
 export type ContractStatus = "draft" | "sent" | "signed" | "rejected";
 
@@ -62,6 +63,7 @@ export function useContracts() {
     ]);
 
     toast.success("Contract created");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "create", entityType: "contract", entityId: (data as any).id, description: "Contract created from proposal" });
     fetchContracts();
     return data as any as Contract;
   };
@@ -75,6 +77,7 @@ export function useContracts() {
       payload_json: { entity_type: "contract", entity_id: contractId, actor_user_id: profile.user_id, short_message: "Contract sent for signing" },
     });
     toast.success("Contract sent");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "submit", entityType: "contract", entityId: contractId, description: "Contract sent for signing" });
     fetchContracts();
   };
 
@@ -87,6 +90,7 @@ export function useContracts() {
       payload_json: { entity_type: "contract", entity_id: contractId, actor_user_id: profile.user_id, deal_id: dealId, short_message: "Contract signed!" },
     });
     toast.success("Contract signed!");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "complete", entityType: "contract", entityId: contractId, description: "Contract signed" });
     fetchContracts();
   };
 

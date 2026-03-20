@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { logActivity as logAI } from "@/lib/activity-logger";
 
 export interface PackageSeoTask {
   id: string;
@@ -99,6 +100,7 @@ export function usePackageSeoTasks(packageId?: string, clientId?: string) {
     } as any);
     if (error) { toast.error("Failed to create task"); return; }
     toast.success("Task created");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "tasks", actionType: "create", entityType: "seo_task", description: `Created SEO task: ${input.task_title}` });
     fetchTasks();
   };
 
@@ -106,12 +108,14 @@ export function usePackageSeoTasks(packageId?: string, clientId?: string) {
     const { error } = await supabase.from("seo_tasks").update(updates as any).eq("id", id);
     if (error) { toast.error("Failed to update task"); return; }
     toast.success("Task updated");
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "tasks", actionType: "update", entityType: "seo_task", entityId: id, description: "SEO task updated" });
     fetchTasks();
   };
 
   const deleteTask = async (id: string) => {
     await supabase.from("seo_tasks").delete().eq("id", id);
     toast.success("Task deleted");
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "tasks", actionType: "delete", entityType: "seo_task", entityId: id, description: "SEO task deleted" });
     fetchTasks();
   };
 

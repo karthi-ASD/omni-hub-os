@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { logActivity as logAI } from "@/lib/activity-logger";
 
 export interface UnifiedTicket {
   id: string;
@@ -236,6 +237,7 @@ export function useUnifiedTickets(_departmentFilter?: string) {
     } catch { /* non-critical */ }
 
     toast.success("Ticket created");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: bid, module: "tickets", actionType: "create", entityType: "ticket", entityId: ticket.id, description: `Created ticket: ${ticket.ticket_number} - ${data.subject}` });
     fetchTickets();
     return inserted;
   }, [bid, profile, fetchTickets]);
@@ -254,6 +256,7 @@ export function useUnifiedTickets(_departmentFilter?: string) {
       action_type: "status_changed", old_value: current?.status, new_value: newStatus,
     } as any);
     toast.success(`Status → ${newStatus.replace(/_/g, " ")}`);
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: bid, module: "tickets", actionType: "update", entityType: "ticket", entityId: id, description: `Ticket status: ${current?.status} → ${newStatus}` });
     fetchTickets();
   }, [bid, profile, tickets, fetchTickets]);
 
@@ -267,6 +270,7 @@ export function useUnifiedTickets(_departmentFilter?: string) {
       action_type: "assigned", new_value: userName || userId,
     } as any);
     toast.success("Ticket assigned");
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: bid, module: "tickets", actionType: "assign", entityType: "ticket", entityId: id, description: `Ticket assigned to ${userName || userId}` });
     fetchTickets();
   }, [bid, profile, fetchTickets]);
 
@@ -355,6 +359,7 @@ export function useUnifiedTickets(_departmentFilter?: string) {
       action_type: isInternal ? "internal_note" : "reply_sent", details: content.slice(0, 200),
     } as any);
     toast.success(isInternal ? "Internal note added" : "Reply sent");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: bid, module: "communication", actionType: "submit", entityType: "ticket_message", entityId: ticketId, description: isInternal ? "Internal note added" : "Reply sent on ticket" });
   }, [bid, profile, tickets]);
 
   const fetchAuditLog = useCallback(async (ticketId: string): Promise<TicketAuditEntry[]> => {

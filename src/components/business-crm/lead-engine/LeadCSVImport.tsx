@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logActivity as logAI } from "@/lib/activity-logger";
 import { Upload, FileSpreadsheet, CheckCircle, AlertCircle, ArrowRight, ArrowLeft, Eye, Columns } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
@@ -129,6 +130,7 @@ export function LeadCSVImport({ open, onClose, businessId }: Props) {
       toast.error("Import failed: " + error.message);
     } else {
       toast.success(`${rows.length} leads imported`);
+      logAI({ userId: "", userRole: "staff", businessId: businessId, module: "leads", actionType: "create", entityType: "crm_lead", description: `Imported ${rows.length} leads via CSV` });
       setImportedCount(rows.length);
       setStep("done");
       qc.invalidateQueries({ queryKey: ["crm-leads"] });

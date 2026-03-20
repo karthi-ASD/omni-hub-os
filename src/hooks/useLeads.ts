@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import type { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { notifySalesDataChanged, useSalesDataAutoRefresh } from "@/lib/salesDataSync";
+import { logActivity as logAI } from "@/lib/activity-logger";
 
 type Lead = Database["public"]["Tables"]["leads"]["Row"];
 type LeadInsert = Database["public"]["Tables"]["leads"]["Insert"];
@@ -79,6 +80,7 @@ export function useLeads() {
     });
 
     toast.success("Lead created");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "leads", actionType: "create", entityType: "lead", entityId: data.id, description: `Created lead: ${data.name}` });
     await fetchLeads();
     notifySalesDataChanged(["leads", "follow-ups", "dashboard", "pipeline"], "lead:create");
     return data;
@@ -119,6 +121,7 @@ export function useLeads() {
     });
 
     toast.success("Stage updated");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "leads", actionType: "update", entityType: "lead", entityId: id, description: `Lead stage changed to ${stage}` });
     await fetchLeads();
     notifySalesDataChanged(["leads", "follow-ups", "dashboard", "pipeline"], "lead:update-stage");
   };
@@ -145,6 +148,7 @@ export function useLeads() {
     });
 
     toast.success("Lead assigned");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "leads", actionType: "assign", entityType: "lead", entityId: id, description: `Lead assigned` });
     await fetchLeads();
     notifySalesDataChanged(["leads", "follow-ups", "dashboard", "pipeline"], "lead:assign");
   };

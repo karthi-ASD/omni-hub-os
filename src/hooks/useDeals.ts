@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { notifySalesDataChanged, useSalesDataAutoRefresh } from "@/lib/salesDataSync";
+import { logActivity as logAI } from "@/lib/activity-logger";
 
 export type DealStage = "new" | "contacted" | "meeting_booked" | "needs_analysis" | "proposal_requested" | "negotiation" | "won" | "lost";
 export type DealStatus = "open" | "won" | "lost" | "archived";
@@ -146,6 +147,7 @@ export function useDeals() {
     ]);
 
     toast.success("Deal created");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "create", entityType: "deal", entityId: (data as any).id, description: `Created deal: ${deal.deal_name}` });
     await fetchDeals();
     notifySalesDataChanged(["deals", "dashboard", "pipeline", "proposals"], "deal:create");
     return data as Deal;
@@ -196,6 +198,7 @@ export function useDeals() {
     ]);
 
     toast.success(`Deal moved to ${STAGE_LABELS[toStage]}`);
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "update", entityType: "deal", entityId: dealId, description: `Deal stage: ${fromStage} → ${toStage}` });
     await fetchDeals();
     notifySalesDataChanged(["deals", "dashboard", "pipeline", "proposals"], "deal:change-stage");
   };

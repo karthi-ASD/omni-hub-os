@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CRMLead, calculateLeadScore } from "./LeadEngineTypes";
+import { logActivity as logAI } from "@/lib/activity-logger";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,7 @@ export function LeadDetailDrawer({ lead, open, onClose, employees, businessId }:
     } as any);
 
     toast.success("Lead assigned");
+    logAI({ userId: "", userRole: "staff", businessId, module: "leads", actionType: "assign", entityType: "crm_lead", entityId: lead.id, description: `Lead assigned to team member` });
     qc.invalidateQueries({ queryKey: ["crm-leads"] });
     setAssigning(false);
   };

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { logActivity as logAI } from "@/lib/activity-logger";
 
 export type ProjectStatus = "new" | "in_progress" | "on_hold" | "completed";
 
@@ -101,6 +102,7 @@ export function useProjects() {
     }
 
     toast.success("Project created with onboarding tasks");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "create", entityType: "project", entityId: projectId, description: `Project created: ${input.project_name}` });
     fetchProjects();
     return data as any as Project;
   };
@@ -114,6 +116,7 @@ export function useProjects() {
       payload_json: { entity_type: "project", entity_id: projectId, actor_user_id: profile.user_id, status, short_message: `Project status: ${status}` },
     });
     toast.success("Project status updated");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "crm", actionType: "update", entityType: "project", entityId: projectId, description: `Project status: ${status}` });
     fetchProjects();
   };
 

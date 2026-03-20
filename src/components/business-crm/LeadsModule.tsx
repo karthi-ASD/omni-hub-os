@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusinessCRM } from "@/hooks/useBusinessCRM";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity as logAI } from "@/lib/activity-logger";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -140,6 +141,7 @@ export function LeadsModule() {
     if (error) { toast.error("Failed to add lead"); return; }
 
     // Log activity
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: bid, module: "leads", actionType: "create", entityType: "crm_lead", description: `Created CRM lead: ${form.full_name} (Score: ${score})` });
     toast.success(`Lead added (Score: ${score}, ${temperature.toUpperCase()})`);
     setShowAdd(false);
     setForm({
@@ -156,6 +158,7 @@ export function LeadsModule() {
 
   const moveStage = async (id: string, stage: string) => {
     await supabase.from("crm_leads").update({ stage, updated_at: new Date().toISOString() } as any).eq("id", id);
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: bid, module: "leads", actionType: "update", entityType: "crm_lead", entityId: id, description: `Lead stage → ${stage}` });
     qc.invalidateQueries({ queryKey: ["crm-leads"] });
   };
 

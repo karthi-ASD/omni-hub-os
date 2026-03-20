@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { logActivity as logAI } from "@/lib/activity-logger";
 import { format } from "date-fns";
 import { calculateLeadScore } from "./lead-engine/LeadEngineTypes";
 import {
@@ -56,6 +57,7 @@ export function QualificationDeskModule() {
       updated_at: new Date().toISOString(),
     } as any).eq("id", id);
     toast.success(`Qualified → ${temperature.toUpperCase()} (${score}pts)`);
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "leads", actionType: "update", entityType: "crm_lead", entityId: id, description: `Lead qualified: ${temperature} (${score}pts)` });
     qc.invalidateQueries({ queryKey: ["qual-desk-leads"] });
     qc.invalidateQueries({ queryKey: ["crm-leads"] });
   };
@@ -67,6 +69,7 @@ export function QualificationDeskModule() {
       updated_at: new Date().toISOString(),
     } as any).eq("id", id);
     toast.success("Lead disqualified");
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "leads", actionType: "update", entityType: "crm_lead", entityId: id, description: "Lead disqualified" });
     qc.invalidateQueries({ queryKey: ["qual-desk-leads"] });
     qc.invalidateQueries({ queryKey: ["crm-leads"] });
   };

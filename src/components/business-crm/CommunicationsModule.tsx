@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity as logAI } from "@/lib/activity-logger";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -119,8 +120,10 @@ export function CommunicationsModule() {
         toast.success("Communication logged & follow-up task created", {
           description: `Due: ${format(new Date(form.followup_date + "T00:00:00"), "dd MMM yyyy")}${form.followup_time ? ` at ${form.followup_time}` : ""}`,
         });
+        logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "communication", actionType: "create", entityType: "communication", description: `Communication logged via ${form.channel} + follow-up task` });
       } else {
         toast.success("Communication logged");
+        logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "communication", actionType: "create", entityType: "communication", description: `Communication logged via ${form.channel}` });
       }
 
       setOpen(false);

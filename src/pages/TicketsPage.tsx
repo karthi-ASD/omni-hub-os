@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { logActivity as logAI } from "@/lib/activity-logger";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -92,6 +93,7 @@ const TicketsPage = () => {
       return;
     }
     toast.success("Ticket created");
+    logAI({ userId: profile.user_id, userRole: "staff", businessId: profile.business_id, module: "tickets", actionType: "create", entityType: "ticket", description: `Created ticket: ${form.subject}` });
     setForm({ subject: "", description: "", category: "bug", priority: "medium" });
     setOpen(false);
     fetchTickets();
@@ -100,6 +102,7 @@ const TicketsPage = () => {
   const updateStatus = async (id: string, status: string) => {
     await supabase.from("support_tickets").update({ status }).eq("id", id);
     fetchTickets();
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "tickets", actionType: "update", entityType: "ticket", entityId: id, description: `Ticket status → ${status}` });
     toast.success(`Ticket marked as ${status.replace(/_/g, " ")}`);
   };
 
