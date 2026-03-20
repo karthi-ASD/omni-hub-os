@@ -205,6 +205,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2">
+        {debugPanel}
         {filteredSections.map(section => {
           const visibleItems = filterItems(section.items);
           if (visibleItems.length === 0) return null;
