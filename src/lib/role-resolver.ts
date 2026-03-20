@@ -1,10 +1,12 @@
-/**
- * Central role + shell resolution utilities.
- *
- * Security identity (`UserType`) stays strict and mutually exclusive.
- * UI shell resolution (`AppMode`) is separate so tenant users never fall back
- * into internal NextWeb shells during delayed client-link hydration.
- */
+// 🔒 DO NOT MODIFY — SECURITY CRITICAL
+// Central role + shell resolution utilities.
+//
+// Security identity (`UserType`) stays strict and mutually exclusive.
+// UI shell resolution (`AppMode`) is separate so tenant users never fall back
+// into internal NextWeb shells during delayed client-link hydration.
+//
+// 🚫 NEVER use roles.includes("client") — INVALID DESIGN
+// Client detection MUST ONLY use: clientUserId AND no employee signal
 
 export type UserType = "super_admin" | "business_admin" | "employee" | "client";
 export type AppMode = "super_admin" | "internal_staff" | "client_business" | "client_portal";
