@@ -61,13 +61,13 @@ const KPICard = ({ stat, loading, index }: { stat: StatCard; loading: boolean; i
 const Dashboard = () => {
 
   usePageTitle("Dashboard", "Your NextWeb OS command center — real-time stats, quick actions, and activity feed.");
-  const { profile, isSuperAdmin, hasRole, isClientUser } = useAuth();
+  const { profile, isSuperAdmin, hasRole, isClientUser, dashboardShell } = useAuth();
   const { stats, loading } = useDashboardStats();
   const { departmentName } = useEmployeeDepartment();
   const navigate = useNavigate();
 
-  // Client users get a completely different dashboard
-  if (isClientUser) return <ClientDashboardPage />;
+  // Tenant-side users get the tenant/client dashboard shell
+  if (isClientUser || dashboardShell === "business_admin") return <ClientDashboardPage />;
   const isManager = hasRole("manager");
   const deptLower = departmentName?.toLowerCase() ?? "";
   const isFinanceDept = deptLower.includes("finance") || deptLower.includes("accounts");
