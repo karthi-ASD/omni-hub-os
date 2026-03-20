@@ -44,6 +44,7 @@ const DISPOSITIONS: { value: Disposition; label: string }[] = [
 
 export default function SalesDialerPage() {
   usePageTitle("Sales Dialer");
+  const [searchParams] = useSearchParams();
   const { profile } = useAuth();
   const { canAccessDialer } = useDialerAccess();
   const {
@@ -51,14 +52,18 @@ export default function SalesDialerPage() {
     startCall, endCall, toggleMute, submitDisposition, resetDialer,
   } = useDialer();
 
-  const [phoneInput, setPhoneInput] = useState("");
+  const prefillPhone = searchParams.get("phone") || "";
+  const prefillLeadId = searchParams.get("leadId") || "";
+  const [phoneInput, setPhoneInput] = useState(prefillPhone);
   const [notes, setNotes] = useState("");
   const [disposition, setDisposition] = useState<Disposition | "">("");
 
-  // 🔒 SECURITY: Only sales/admin roles can access this page
-  if (!canAccessDialer) {
-    return <Navigate to="/sales-dashboard" replace />;
-  }
+  // Auto-start call if prefilled from leads page
+  useEffect(() => {
+    if (prefillPhone && prefillLeadId && !isCallActive && !loading && !session) {
+      startCall(prefillPhone, prefillLeadId);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch leads for quick-dial
   const { data: leads, isLoading: leadsLoading } = useQuery({
