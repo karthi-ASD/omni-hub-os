@@ -17,6 +17,7 @@ import { PropertyMatchingModule } from "@/components/business-crm/PropertyMatchi
 import { InvestorsModule } from "@/components/business-crm/InvestorsModule";
 import { OpportunitiesModule } from "@/components/business-crm/OpportunitiesModule";
 import { DealPipelineModule } from "@/components/business-crm/DealPipelineModule";
+import { PropertyInventoryModule } from "@/components/business-crm/PropertyInventoryModule";
 import { ProjectsDevelopersModule } from "@/components/business-crm/ProjectsDevelopersModule";
 import { AccountsCommissionsModule } from "@/components/business-crm/AccountsCommissionsModule";
 import { HRTeamModule } from "@/components/business-crm/HRTeamModule";
