@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CRMLead, calculateLeadScore } from "./LeadEngineTypes";
+import { logActivity as logAI } from "@/lib/activity-logger";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
