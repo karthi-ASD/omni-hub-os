@@ -368,8 +368,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isSuperAdmin = hasRole("super_admin");
   const isBusinessAdmin = hasRole("business_admin");
   const isHRManager = hasRole("hr_manager");
-  const isClientUser = !!clientUserId && !isSuperAdmin;
-  const clientId = clientUserId;
+  const isEmployee = hasRole("employee");
+
+  // STRICT: client user ONLY if they have a client_users link AND no staff/admin role
+  const isClientUser = !!clientUserId && !isSuperAdmin && !isBusinessAdmin && !isEmployee;
+  const clientId = isClientUser ? clientUserId : null;
+
+  // Security guard: log if employee incorrectly has a client_users record
+  if ((isEmployee || isBusinessAdmin) && !!clientUserId) {
+    console.warn("[ROLE CONFLICT] Staff user has client_users record — ignoring client context", {
+      userId: user?.id,
+      roles,
+      clientUserId,
+    });
+  }
   const selectTenant = useCallback((id: string | null) => setSelectedTenantId(id), []);
 
   // KEY FIX: For super_admin, override profile.business_id with selected tenant
