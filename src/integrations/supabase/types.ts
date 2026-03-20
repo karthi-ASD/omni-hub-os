@@ -25775,6 +25775,41 @@ export type Database = {
         }
         Relationships: []
       }
+      system_logs: {
+        Row: {
+          business_id: string | null
+          created_at: string
+          id: string
+          message: string
+          metadata: Json | null
+          type: string
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          type?: string
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_comments: {
         Row: {
           business_id: string

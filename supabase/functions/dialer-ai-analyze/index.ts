@@ -5,6 +5,107 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const DEFAULT_ANALYSIS = {
+  summary: "Analysis unavailable",
+  sentiment: "neutral",
+  score: 50,
+  next_action: "Review manually",
+  priority: "medium",
+  auto_tag: null,
+};
+
+async function callAIWithRetry(
+  apiKey: string,
+  userInput: string,
+  maxRetries = 1,
+  delayMs = 2000,
+): Promise<any> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            {
+              role: "system",
+              content: "You are a sales analyst. Analyze this call and return structured JSON only. No markdown, no explanation.",
+            },
+            { role: "user", content: userInput },
+          ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "analyze_call",
+                description: "Return structured analysis of a sales call",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    summary: { type: "string", description: "2-3 sentence call summary" },
+                    sentiment: { type: "string", enum: ["positive", "neutral", "negative"] },
+                    score: { type: "number", description: "Call quality score 0-100" },
+                    next_action: { type: "string", description: "Recommended next action" },
+                    priority: { type: "string", enum: ["high", "medium", "low"] },
+                    auto_tag: { type: "string", enum: ["hot_lead", "warm_lead", "cold_lead"], description: "Suggested lead tag" },
+                  },
+                  required: ["summary", "sentiment", "score", "next_action", "priority"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          ],
+          tool_choice: { type: "function", function: { name: "analyze_call" } },
+        }),
+      });
+
+      if (!aiResponse.ok) {
+        const errText = await aiResponse.text();
+        console.error(`AI gateway error (attempt ${attempt + 1}):`, aiResponse.status, errText);
+        if (attempt < maxRetries) {
+          await new Promise((r) => setTimeout(r, delayMs));
+          continue;
+        }
+        return null;
+      }
+
+      const aiData = await aiResponse.json();
+      const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+
+      if (toolCall?.function?.arguments) {
+        return typeof toolCall.function.arguments === "string"
+          ? JSON.parse(toolCall.function.arguments)
+          : toolCall.function.arguments;
+      }
+
+      // Fallback: try parsing content
+      const content = aiData.choices?.[0]?.message?.content || "{}";
+      try {
+        return JSON.parse(content);
+      } catch {
+        console.warn("AI returned unparseable content:", content);
+        if (attempt < maxRetries) {
+          await new Promise((r) => setTimeout(r, delayMs));
+          continue;
+        }
+        return null;
+      }
+    } catch (err) {
+      console.error(`AI call exception (attempt ${attempt + 1}):`, err);
+      if (attempt < maxRetries) {
+        await new Promise((r) => setTimeout(r, delayMs));
+        continue;
+      }
+      return null;
+    }
+  }
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -55,7 +156,7 @@ Deno.serve(async (req) => {
 
     const latestDisp = dispositions?.[0];
 
-    // Build AI prompt
+    // Build AI prompt — works even with missing data (failsafe)
     const userInput = JSON.stringify({
       notes: session.notes || latestDisp?.notes || "No notes provided",
       duration: session.call_duration || 0,
@@ -63,73 +164,27 @@ Deno.serve(async (req) => {
       phone_number: session.phone_number,
     });
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "system",
-            content: `You are a sales analyst. Analyze this call and return structured JSON only. No markdown, no explanation.`,
-          },
-          { role: "user", content: userInput },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "analyze_call",
-              description: "Return structured analysis of a sales call",
-              parameters: {
-                type: "object",
-                properties: {
-                  summary: { type: "string", description: "2-3 sentence call summary" },
-                  sentiment: { type: "string", enum: ["positive", "neutral", "negative"] },
-                  score: { type: "number", description: "Call quality score 0-100" },
-                  next_action: { type: "string", description: "Recommended next action" },
-                  priority: { type: "string", enum: ["high", "medium", "low"] },
-                  auto_tag: { type: "string", enum: ["hot_lead", "warm_lead", "cold_lead"], description: "Suggested lead tag" },
-                },
-                required: ["summary", "sentiment", "score", "next_action", "priority"],
-                additionalProperties: false,
-              },
-            },
-          },
-        ],
-        tool_choice: { type: "function", function: { name: "analyze_call" } },
-      }),
-    });
+    // Call AI with retry (1 retry after 2s)
+    let analysis = await callAIWithRetry(LOVABLE_API_KEY, userInput);
 
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      console.error("AI gateway error:", aiResponse.status, errText);
-      return new Response(JSON.stringify({ error: "AI analysis failed" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Fallback if AI completely failed
+    if (!analysis) {
+      console.warn(`[dialer-ai-analyze] AI failed for session ${session_id}, using default analysis`);
+      analysis = { ...DEFAULT_ANALYSIS };
 
-    const aiData = await aiResponse.json();
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    let analysis: any;
-
-    if (toolCall?.function?.arguments) {
-      analysis = typeof toolCall.function.arguments === "string"
-        ? JSON.parse(toolCall.function.arguments)
-        : toolCall.function.arguments;
-    } else {
-      // Fallback: try parsing content
-      const content = aiData.choices?.[0]?.message?.content || "{}";
+      // Log to system_logs
       try {
-        analysis = JSON.parse(content);
-      } catch {
-        analysis = { summary: "Analysis unavailable", sentiment: "neutral", score: 50, next_action: "Review manually", priority: "medium" };
-      }
+        await supabase.from("system_logs").insert({
+          type: "DIALER_AI_FAILURE",
+          message: `AI analysis failed for dialer session ${session_id} after retries`,
+          metadata: { session_id, phone_number: session.phone_number },
+          business_id: session.business_id,
+        });
+      } catch (_) {}
     }
+
+    // Clamp score to 0-100
+    analysis.score = Math.max(0, Math.min(100, Number(analysis.score) || 50));
 
     // Store AI log
     await supabase.from("dialer_ai_logs").insert({
@@ -153,7 +208,6 @@ Deno.serve(async (req) => {
 
     // Update lead priority_score if lead_id exists
     if (session.lead_id) {
-      // Fetch call count for lead
       const { count: callCount } = await supabase
         .from("dialer_sessions")
         .select("id", { count: "exact", head: true })
@@ -169,7 +223,7 @@ Deno.serve(async (req) => {
         .eq("id", session.lead_id);
     }
 
-    // Auto-tag if suggested
+    // Auto-tag if suggested (upsert prevents duplicates)
     if (analysis.auto_tag && session.user_id) {
       await supabase.from("dialer_call_tags").upsert(
         { session_id, tag: analysis.auto_tag, created_by: session.user_id },
@@ -177,13 +231,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Auto-create follow-up reminder if next_action suggests it
+    // Auto-create follow-up reminder if next_action suggests it (duplicate-safe)
     const nextAction = (analysis.next_action || "").toLowerCase();
     if (
       (nextAction.includes("call again") || nextAction.includes("follow up") || nextAction.includes("follow-up")) &&
       session.lead_id && session.business_id
     ) {
-      // Check for existing reminder
       const followUpDate = new Date();
       followUpDate.setDate(followUpDate.getDate() + 2);
 
@@ -215,6 +268,19 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("AI analyze error:", err);
+
+    // Log critical errors to system_logs
+    try {
+      const supabaseUrl2 = Deno.env.get("SUPABASE_URL")!;
+      const serviceKey2 = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const sb2 = createClient(supabaseUrl2, serviceKey2);
+      await sb2.from("system_logs").insert({
+        type: "DIALER_AI_CRASH",
+        message: String(err),
+        metadata: { stack: err instanceof Error ? err.stack : null },
+      });
+    } catch (_) {}
+
     return new Response(JSON.stringify({ error: String(err) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
