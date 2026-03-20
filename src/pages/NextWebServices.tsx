@@ -62,6 +62,7 @@ export default function NextWebServices() {
     title: "",
     description: "",
     request_type: "support_issue",
+    service_category: "general",
     priority: "medium",
   });
 
