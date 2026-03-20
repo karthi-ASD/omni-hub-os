@@ -130,6 +130,7 @@ export default function NextWebServices() {
                 <SelectContent>
                   {CATEGORY_OPTIONS.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                 </SelectContent>
+              </Select>
               <Input
                 placeholder="Request title"
                 value={newRequest.title}
