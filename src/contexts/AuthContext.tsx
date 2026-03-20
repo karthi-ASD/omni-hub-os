@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { resolveAppMode, resolveUserType, detectRoleConflict, type AppMode, type DashboardShell, type UserType } from "@/lib/role-resolver";
+import { resolveAppMode, resolveUserType, detectRoleConflict, assertNoEmployeeClientCrossover, type AppMode, type DashboardShell, type UserType } from "@/lib/role-resolver";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -206,8 +206,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const validateClientTenantMapping = async (
     userId: string,
     profileData: Profile | null,
-    userRoles: AppRole[]
+    userRoles: AppRole[],
+    employeeByHR: boolean
   ) => {
+    // 🔴 CRITICAL: Skip tenant mapping entirely for staff users — they are NEVER clients
+    const hasStaffSignal = userRoles.some((role) =>
+      ["super_admin", "business_admin", "employee", "hr_manager", "manager"].includes(role)
+    ) || employeeByHR;
+
+    if (hasStaffSignal) {
+      console.log("[TenantMapping] Skipped — user is staff", { userId, employeeByHR });
+      setClientUserId(null);
+      setTenantValidationError(null);
+      return profileData;
+    }
+
     try {
       const { data: clientLink } = await supabase
         .from("client_users")
@@ -219,11 +232,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const linkedClientId = clientLink?.client_id || null;
       setClientUserId(linkedClientId);
 
-      const hasPrivilegedNonClientRole = userRoles.some((role) =>
-        ["super_admin", "business_admin", "employee", "hr_manager", "manager"].includes(role)
-      );
-
-      if (!linkedClientId || hasPrivilegedNonClientRole) {
+      if (!linkedClientId) {
         setTenantValidationError(null);
         return profileData;
       }
@@ -336,7 +345,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isEmployeeByHR: employeeByHR,
         });
 
-        const validatedProfile = await validateClientTenantMapping(nextSession.user.id, profileData, userRoles);
+        const validatedProfile = await validateClientTenantMapping(nextSession.user.id, profileData, userRoles, employeeByHR);
         const finalBusinessId = validatedProfile?.business_id ?? profileData?.business_id ?? null;
 
         if (userRoles.includes("super_admin")) {
@@ -518,6 +527,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const conflict = detectRoleConflict({ roles: roles as string[], clientUserId, userId: user?.id, isEmployeeByHR });
   if (conflict) {
     console.warn(conflict);
+  }
+
+  // 🔴 REGRESSION GUARD: Throw if employee is ever classified as client
+  try {
+    assertNoEmployeeClientCrossover({ isEmployeeByHR, roles: roles as string[], userType, userId: user?.id });
+  } catch (e) {
+    console.error(e);
   }
 
   // Debug logging for role resolution
