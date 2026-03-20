@@ -5,6 +5,8 @@ import {
   FolderKanban, FileText, Star, ClipboardList, MessageSquare,
   DollarSign, Handshake, PieChart, PhoneCall, StickyNote,
   Headphones, Globe, Send, Sun, Wrench,
+  LayoutDashboard, Filter, MapPinned, UserCheck, Banknote,
+  Shield, Inbox, HeadphonesIcon,
 } from "lucide-react";
 import type { NavSection } from "./nav-sections";
 import type { CRMType } from "@/hooks/useBusinessCRM";
@@ -35,39 +37,46 @@ export const NEXTWEB_SERVICES_SECTIONS: NavSection[] = [
 // SECTION B: Business CRM Sections (per CRM type)
 // ══════════════════════════════════════════════════════════════
 
-// Real Estate / Investment CRM
+// ── ACE1 Command Centre (Real Estate Investment Advisory) ──
 const REAL_ESTATE_CRM_SECTIONS: NavSection[] = [
   {
-    title: "Sales CRM",
+    title: "Command Centre",
     items: [
-      { label: "Leads", icon: Target, to: "/my-crm?tab=leads" },
-      { label: "Investors", icon: Users, to: "/my-crm?tab=investors" },
-      { label: "Opportunities", icon: FolderKanban, to: "/my-crm?tab=opportunities" },
-      { label: "Deal Pipeline", icon: TrendingUp, to: "/my-crm?tab=deal_pipeline" },
+      { label: "Executive Dashboard", icon: LayoutDashboard, to: "/my-crm?tab=executive_dashboard" },
     ],
   },
   {
-    title: "Sales Admin",
+    title: "Lead Management",
     items: [
-      { label: "Team Performance", icon: Star, to: "/my-crm?tab=portfolio_growth" },
-      { label: "Follow-ups", icon: ClipboardList, to: "/my-crm?tab=tasks_followups" },
-      { label: "Tasks", icon: Briefcase, to: "/my-crm?tab=executive_dashboard" },
+      { label: "Lead Engine", icon: Target, to: "/my-crm?tab=leads" },
+      { label: "Qualification Desk", icon: Filter, to: "/my-crm?tab=qualification_desk" },
+      { label: "Property Matching", icon: MapPinned, to: "/my-crm?tab=property_matching" },
     ],
   },
   {
-    title: "Accounts",
+    title: "Investor Relations",
     items: [
-      { label: "Dashboard", icon: PieChart, to: "/my-crm?tab=reports" },
-      { label: "Client Approvals", icon: Handshake, to: "/my-crm?tab=partners" },
-      { label: "Payments", icon: DollarSign, to: "/my-crm?tab=payments" },
-      { label: "Commissions", icon: DollarSign, to: "/my-crm?tab=commissions" },
+      { label: "Investors & Clients", icon: Users, to: "/my-crm?tab=investors" },
+      { label: "Opportunities & Pipeline", icon: FolderKanban, to: "/my-crm?tab=opportunities" },
+      { label: "Deal Management", icon: Handshake, to: "/my-crm?tab=deal_pipeline" },
+      { label: "Property Inventory", icon: Building2, to: "/my-crm?tab=projects_developers" },
     ],
   },
   {
-    title: "Communication",
+    title: "Operations",
     items: [
-      { label: "Calls", icon: PhoneCall, to: "/my-crm?tab=communications" },
-      { label: "Notes", icon: StickyNote, to: "/my-crm?tab=notes" },
+      { label: "Accounts & Commissions", icon: Banknote, to: "/my-crm?tab=accounts_commissions" },
+      { label: "HR & Team Management", icon: UserCheck, to: "/my-crm?tab=hr_team" },
+      { label: "Tasks & Follow-Ups", icon: ClipboardList, to: "/my-crm?tab=tasks_followups" },
+      { label: "Communication Hub", icon: MessageSquare, to: "/my-crm?tab=communications" },
+    ],
+  },
+  {
+    title: "Support & Insights",
+    items: [
+      { label: "Client Portal Management", icon: Shield, to: "/my-crm?tab=client_portal_mgmt" },
+      { label: "Ticketing & Support", icon: Inbox, to: "/my-crm?tab=ticketing_support" },
+      { label: "Reports & Insights", icon: PieChart, to: "/my-crm?tab=reports" },
       { label: "Settings", icon: Settings, to: "/my-crm?tab=business_settings" },
     ],
   },
@@ -128,6 +137,17 @@ const CRM_SECTIONS_MAP: Record<CRMType, NavSection[]> = {
   finance: FINANCE_CRM_SECTIONS,
   generic: GENERIC_CRM_SECTIONS,
 };
+
+/**
+ * Get the CRM heading label for a given CRM type.
+ * Real estate uses "Command Centre", others use "Business CRM".
+ */
+export function getCRMHeading(crmType: CRMType | null, businessName?: string): string {
+  if (crmType === "real_estate") {
+    return `${businessName || "My"} Command Centre`;
+  }
+  return "My Business CRM";
+}
 
 /**
  * Get CRM sidebar sections for a given CRM type.

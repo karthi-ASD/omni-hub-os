@@ -13,7 +13,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { LogOut } from "lucide-react";
 import { NAV_SECTIONS, type NavItem, type NavSection } from "@/components/sidebar/nav-sections";
-import { NEXTWEB_SERVICES_SECTIONS, getCRMSections } from "@/components/sidebar/client-nav-sections";
+import { NEXTWEB_SERVICES_SECTIONS, getCRMSections, getCRMHeading } from "@/components/sidebar/client-nav-sections";
 
 function matchesDept(list: string[] | undefined, deptName: string | null): boolean {
   if (!list || list.length === 0 || !deptName) return false;
@@ -143,11 +143,11 @@ export function AppSidebar() {
             <>
               <div className="px-2 py-2">
                 <Separator className="bg-sidebar-foreground/10" />
-                {!collapsed && (
-                  <p className="text-[9px] uppercase tracking-widest text-sidebar-foreground/40 font-bold mt-2 px-2">
-                    My Business CRM
-                  </p>
-                )}
+                 {!collapsed && (
+                   <p className="text-[9px] uppercase tracking-widest text-sidebar-foreground/40 font-bold mt-2 px-2">
+                     {getCRMHeading(activeCRMType, activeBusinessName)}
+                   </p>
+                 )}
               </div>
               {activeCRMSections.map(section => (
                 <SidebarNavSection key={section.title} section={section} collapsed={collapsed} pathname={location.pathname} />
