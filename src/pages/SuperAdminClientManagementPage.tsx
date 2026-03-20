@@ -379,6 +379,23 @@ const SuperAdminClientManagementPage = () => {
                         <TableCell className="text-xs">{c.email}</TableCell>
                         <TableCell>{c.phone || "—"}</TableCell>
                         <TableCell>{statusBadge(c.client_status)}</TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant={(c as any).dialer_enabled ? "default" : "outline"}
+                            className={`h-7 text-xs gap-1 ${(c as any).dialer_enabled ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""}`}
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const newVal = !(c as any).dialer_enabled;
+                              await supabase.from("clients").update({ dialer_enabled: newVal } as any).eq("id", c.id);
+                              toast.success(`Dialer ${newVal ? "enabled" : "disabled"} for ${c.contact_name}`);
+                              refetch();
+                            }}
+                          >
+                            <Phone className="h-3 w-3" />
+                            {(c as any).dialer_enabled ? "On" : "Off"}
+                          </Button>
+                        </TableCell>
                         <TableCell className="text-xs">{format(new Date(c.created_at), "dd MMM yyyy")}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
