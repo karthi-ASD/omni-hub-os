@@ -80,8 +80,13 @@ export function AppSidebar() {
   const isAdmin = isSuperAdmin || isBusinessAdmin;
   const activeCRMSections = getCRMSections(crmType);
 
+  // Safety fallback: show client sidebar if user has a CRM type mapped,
+  // even if client_users record is missing
+  const isClientUserSafe = isClientUser || (!!crmType && !isSuperAdmin && !isBusinessAdmin);
+
   console.log("=== SIDEBAR DEBUG ===");
   console.log("isClientUser:", isClientUser);
+  console.log("isClientUserSafe:", isClientUserSafe);
   console.log("isSuperAdmin:", isSuperAdmin);
   console.log("isBusinessAdmin:", isBusinessAdmin);
   console.log("profile.business_id:", profile?.business_id);
