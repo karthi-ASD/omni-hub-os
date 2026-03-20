@@ -57,6 +57,22 @@ export function useGlobalSearch() {
           subtitle: b.status,
         })
       );
+
+      // Search service requests (super admin)
+      const { data: requests } = await supabase
+        .from("nextweb_service_requests" as any)
+        .select("id, title, status, business_id")
+        .ilike("title", `%${query}%`)
+        .limit(5);
+
+      requests?.forEach((r: any) =>
+        allResults.push({
+          type: "request",
+          id: r.id,
+          title: r.title,
+          subtitle: `Request · ${r.status}`,
+        })
+      );
     }
 
     // Search calendar events
