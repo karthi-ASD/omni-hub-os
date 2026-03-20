@@ -256,6 +256,7 @@ export function useUnifiedTickets(_departmentFilter?: string) {
       action_type: "status_changed", old_value: current?.status, new_value: newStatus,
     } as any);
     toast.success(`Status → ${newStatus.replace(/_/g, " ")}`);
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: bid, module: "tickets", actionType: "update", entityType: "ticket", entityId: id, description: `Ticket status: ${current?.status} → ${newStatus}` });
     fetchTickets();
   }, [bid, profile, tickets, fetchTickets]);
 
