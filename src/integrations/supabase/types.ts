@@ -12078,6 +12078,63 @@ export type Database = {
           },
         ]
       }
+      dialer_qa_reviews: {
+        Row: {
+          business_id: string
+          coaching_notes: string | null
+          created_at: string | null
+          flag_reason: string | null
+          id: string
+          is_flagged: boolean | null
+          qa_notes: string | null
+          qa_status: string
+          reviewed_by: string
+          session_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          coaching_notes?: string | null
+          created_at?: string | null
+          flag_reason?: string | null
+          id?: string
+          is_flagged?: boolean | null
+          qa_notes?: string | null
+          qa_status?: string
+          reviewed_by: string
+          session_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          coaching_notes?: string | null
+          created_at?: string | null
+          flag_reason?: string | null
+          id?: string
+          is_flagged?: boolean | null
+          qa_notes?: string | null
+          qa_status?: string
+          reviewed_by?: string
+          session_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dialer_qa_reviews_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dialer_qa_reviews_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "dialer_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dialer_sessions: {
         Row: {
           ai_score: number | null
@@ -28781,7 +28838,38 @@ export type Database = {
         Returns: string
       }
       get_client_id_for_user: { Args: { _user_id: string }; Returns: string }
+      get_dialer_caller_metrics: {
+        Args: {
+          _business_id: string
+          _date_from?: string
+          _date_to?: string
+          _user_id?: string
+        }
+        Returns: Json
+      }
+      get_dialer_daily_metrics: {
+        Args: {
+          _business_id: string
+          _date_from?: string
+          _date_to?: string
+          _user_id?: string
+        }
+        Returns: Json
+      }
+      get_dialer_hourly_metrics: {
+        Args: {
+          _business_id: string
+          _date_from?: string
+          _date_to?: string
+          _user_id?: string
+        }
+        Returns: Json
+      }
       get_dialer_metrics: { Args: { _business_id: string }; Returns: Json }
+      get_dialer_team_metrics: {
+        Args: { _business_id: string; _date_from?: string; _date_to?: string }
+        Returns: Json
+      }
       get_provider_business_id_for_client_user: {
         Args: { _user_id: string }
         Returns: string
