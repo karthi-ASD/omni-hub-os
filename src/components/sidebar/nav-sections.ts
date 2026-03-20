@@ -77,6 +77,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Prospects", icon: Target, to: "/sales/prospects" },
       { label: "Pipeline", icon: FolderKanban, to: "/sales/pipeline" },
       { label: "Clients", icon: Users, to: "/sales/clients" },
+      { label: "Dialer", icon: Phone, to: "/sales/dialer" },
       { label: "Proposals", icon: FileText, to: "/sales/proposals" },
       { label: "Activities", icon: PhoneCall, to: "/sales/activities" },
       { label: "Tools", icon: Wrench, to: "/sales/tools" },
