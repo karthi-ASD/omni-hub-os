@@ -25,30 +25,29 @@ export interface BusinessTheme {
 
 export type CRMType = "real_estate" | "service" | "finance" | "generic";
 
-// Known business IDs
-const ACE1_BUSINESS_ID = "fcd55dac-804b-462f-8a95-1d49cdd0b03d";
-const GREEN_ULTIMATE_BUSINESS_ID = "6b2ce9b9-006d-463f-a194-154a4a429b08";
-
-// Map known business IDs to CRM types (future: fetch from DB)
-const BUSINESS_CRM_TYPE_MAP: Record<string, CRMType> = {
-  [ACE1_BUSINESS_ID]: "real_estate",
-  [GREEN_ULTIMATE_BUSINESS_ID]: "service",
-};
-
 export function useBusinessCRM() {
   const { profile } = useAuth();
   const businessId = profile?.business_id;
 
-  // Check if current user is ACE1
-  const isACE1 = businessId === ACE1_BUSINESS_ID;
+  // Fetch CRM type dynamically from businesses table
+  const { data: businessData } = useQuery({
+    queryKey: ["business-crm-type", businessId],
+    queryFn: async () => {
+      if (!businessId) return null;
+      const { data } = await supabase
+        .from("businesses")
+        .select("id, crm_type")
+        .eq("id", businessId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!businessId,
+    staleTime: 5 * 60 * 1000, // cache for 5 min
+  });
 
-  // Determine CRM type for this business
-  const crmType: CRMType | null = businessId
-    ? BUSINESS_CRM_TYPE_MAP[businessId] || null
-    : null;
-
-  // hasCustomCRM is true if business has a known CRM type (not dependent on DB rows)
-  const hasCustomCRM = !!crmType;
+  const crmType: CRMType | null = (businessData?.crm_type as CRMType) || null;
+  const hasCustomCRM = !!crmType && crmType !== "generic";
+  const isACE1 = crmType === "real_estate";
 
   // Fetch CRM tabs (for the CRM page, not sidebar)
   const { data: tabs = [], refetch: refetchTabs } = useQuery({
@@ -115,7 +114,6 @@ export function useBusinessCRM() {
     },
     enabled: !!businessId,
   });
-
 
   return {
     isACE1,

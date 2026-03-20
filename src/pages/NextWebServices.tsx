@@ -203,10 +203,10 @@ export default function NextWebServices() {
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {[
-              { icon: Search, title: "SEO Services", desc: "Keyword tracking, on-page optimization, backlink strategy" },
-              { icon: Globe, title: "Website Management", desc: "Website development, hosting, domain management" },
-              { icon: BarChart3, title: "Ads Management", desc: "Google Ads, Facebook Ads, campaign optimization" },
-              { icon: Zap, title: "Automation & Integrations", desc: "CRM automation, API integrations, workflow setup" },
+              { icon: Search, title: "SEO Services", desc: "Keyword tracking, on-page optimization, backlink strategy", category: "seo" },
+              { icon: Globe, title: "Website Management", desc: "Website development, hosting, domain management", category: "website" },
+              { icon: BarChart3, title: "Ads Management", desc: "Google Ads, Facebook Ads, campaign optimization", category: "ads" },
+              { icon: Zap, title: "Automation & Integrations", desc: "CRM automation, API integrations, workflow setup", category: "automation" },
             ].map(svc => (
               <Card key={svc.title} className="hover:shadow-md transition-shadow">
                 <CardHeader>
@@ -215,6 +215,17 @@ export default function NextWebServices() {
                   </CardTitle>
                   <CardDescription>{svc.desc}</CardDescription>
                 </CardHeader>
+                <CardContent className="pt-0 flex gap-2">
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => setActiveTab(svc.category)}>
+                    View Details
+                  </Button>
+                  <Button size="sm" className="text-xs" onClick={() => {
+                    setNewRequest(p => ({ ...p, service_category: svc.category }));
+                    setShowNewRequest(true);
+                  }}>
+                    Request Service
+                  </Button>
+                </CardContent>
               </Card>
             ))}
           </div>

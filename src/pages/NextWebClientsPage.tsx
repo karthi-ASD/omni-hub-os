@@ -1,6 +1,6 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,16 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Building2, Eye, Users, Search } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
-
-// Known CRM type map (mirrors useBusinessCRM)
-const CRM_TYPE_MAP: Record<string, string> = {
-  "fcd55dac-804b-462f-8a95-1d49cdd0b03d": "real_estate",
-  "6b2ce9b9-006d-463f-a194-154a4a429b08": "service",
-};
+import { toast } from "sonner";
 
 export default function NextWebClientsPage() {
   const { isSuperAdmin, selectTenant } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
 
   const { data: businesses = [], isLoading } = useQuery({
@@ -26,7 +22,7 @@ export default function NextWebClientsPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("businesses")
-        .select("id, name, status, created_at, slug, email, owner_name")
+        .select("id, name, status, created_at, slug, email, owner_name, crm_type")
         .order("name");
       return data || [];
     },
@@ -56,7 +52,10 @@ export default function NextWebClientsPage() {
   );
 
   const handleSwitchToClient = (businessId: string) => {
+    queryClient.clear();
     selectTenant(businessId);
+    const businessName = businesses.find((b: any) => b.id === businessId)?.name || "Tenant";
+    toast.success(`Switched to ${businessName}`);
     navigate("/dashboard");
   };
 
@@ -111,7 +110,7 @@ export default function NextWebClientsPage() {
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
                       <Badge variant="outline" className="text-[10px] capitalize">
-                        {CRM_TYPE_MAP[b.id] || "—"}
+                        {b.crm_type || "generic"}
                       </Badge>
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell">

@@ -5187,6 +5187,7 @@ export type Database = {
           country: string | null
           created_at: string
           crm_access_status: string
+          crm_type: string | null
           deleted_at: string | null
           domain_name: string | null
           email: string | null
@@ -5229,6 +5230,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           crm_access_status?: string
+          crm_type?: string | null
           deleted_at?: string | null
           domain_name?: string | null
           email?: string | null
@@ -5271,6 +5273,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           crm_access_status?: string
+          crm_type?: string | null
           deleted_at?: string | null
           domain_name?: string | null
           email?: string | null
