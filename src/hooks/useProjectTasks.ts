@@ -35,6 +35,7 @@ export function useProjectTasks(projectId?: string) {
 
   const update = async (id: string, values: Record<string, any>) => {
     await (supabase.from("project_tasks" as any) as any).update(values).eq("id", id);
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: profile?.business_id, module: "tasks", actionType: values.status === "completed" ? "complete" : "update", entityType: "project_task", entityId: id, description: values.status === "completed" ? "Task completed" : "Task updated" });
     fetch();
   };
 
