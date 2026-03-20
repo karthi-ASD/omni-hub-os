@@ -265,9 +265,10 @@ Deno.serve(async (req) => {
 
     const agentCallId = agentResponse.data.request_uuid || agentResponse.data.RequestUUID || null;
 
-    console.log("[dialer-initiate] Creating customer leg", customerPayload);
+    // 1-second delay before customer leg to let agent leg establish
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // Create customer call simultaneously
+    console.log("[dialer-initiate] Creating customer leg", customerPayload);
     let customerResponse: { ok: boolean; status: number; data: any };
     try {
       customerResponse = await createPlivoCall({ authId: PLIVO_AUTH_ID, authToken: PLIVO_AUTH_TOKEN, payload: customerPayload });
