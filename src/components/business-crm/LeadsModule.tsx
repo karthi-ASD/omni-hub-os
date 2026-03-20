@@ -141,6 +141,7 @@ export function LeadsModule() {
     if (error) { toast.error("Failed to add lead"); return; }
 
     // Log activity
+    logAI({ userId: profile?.user_id || "", userRole: "staff", businessId: bid, module: "leads", actionType: "create", entityType: "crm_lead", description: `Created CRM lead: ${form.full_name} (Score: ${score})` });
     toast.success(`Lead added (Score: ${score}, ${temperature.toUpperCase()})`);
     setShowAdd(false);
     setForm({
