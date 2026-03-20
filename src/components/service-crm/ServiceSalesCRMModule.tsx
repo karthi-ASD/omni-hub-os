@@ -37,6 +37,8 @@ export function ServiceSalesCRMModule() {
   const qc = useQueryClient();
   const [subTab, setSubTab] = useState("proposals");
   const [createOpen, setCreateOpen] = useState(false);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [, setSearchParams] = useSearchParams();
 
   const { data: proposals = [], isLoading } = useQuery({
     queryKey: ["service-proposals", businessId],
