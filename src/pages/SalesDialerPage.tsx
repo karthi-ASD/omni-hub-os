@@ -48,6 +48,7 @@ export default function SalesDialerPage() {
   const [searchParams] = useSearchParams();
   const { profile } = useAuth();
   const { canAccessDialer } = useDialerAccess();
+  const browserDialer = useBrowserDialer();
   const {
     session, callStatus, formattedTimer, isMuted, loading, isCallActive,
     startCall, endCall, toggleMute, submitDisposition, resetDialer,
@@ -58,7 +59,6 @@ export default function SalesDialerPage() {
   const [phoneInput, setPhoneInput] = useState(prefillPhone);
   const [notes, setNotes] = useState("");
   const [disposition, setDisposition] = useState<Disposition | "">("");
-  const [logs, setLogs] = useState<string[]>([]);
 
   const pushLog = useCallback((message: string) => {
     setLogs((prev) => [...prev.slice(-19), message]);
