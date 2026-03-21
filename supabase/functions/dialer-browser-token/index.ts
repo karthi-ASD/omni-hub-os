@@ -258,7 +258,8 @@ Deno.serve(async (req) => {
       app_id: PLIVO_APP_ID,
     });
 
-    return jsonRes({ status: "ok", username, password });
+    console.log("PLIVO TOKEN GENERATED", { username, password, app_id: PLIVO_APP_ID });
+    return jsonRes({ status: "ok", username, password, app_id: PLIVO_APP_ID });
   } catch (err) {
     console.error("[dialer-browser-token] Error:", err);
     return jsonRes({ status: "error", error: String(err) });
