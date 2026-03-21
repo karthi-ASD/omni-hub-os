@@ -118,13 +118,13 @@ Deno.serve(async (req) => {
     // Return Conference XML — SAME for both legs
     const xml = `<Response>
   <Dial>
-    <Conference startConferenceOnEnter="${leg === 'agent' ? 'true' : 'false'}" endConferenceOnExit="true" waitSound="" enterSound="" record="record-from-start">
+    <Conference startConferenceOnEnter="${leg === 'agent' ? 'true' : 'false'}" endConferenceOnExit="true" waitSound="" enterSound="" record="record-from-start" >
       ${conferenceId}
     </Conference>
   </Dial>
 </Response>`;
 
-    console.log("[XML RESPONSE SENT]", xml);
+    console.log("[FINAL XML RESPONSE]", xml);
 
     return new Response(xml, {
       status: 200,
