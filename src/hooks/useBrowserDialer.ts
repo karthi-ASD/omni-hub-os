@@ -149,6 +149,8 @@ let permissionListenerBound = false;
 let visibilityListenerBound = false;
 let globalErrorsBound = false;
 let authIdentity: DialerIdentity = null;
+// Module-level pending dial — survives state transitions reliably
+let modulePendingDial: PendingDialIntent | null = null;
 
 // ─── LOG RING BUFFER (last 50 entries) ───
 const MAX_LOG_ENTRIES = 50;
