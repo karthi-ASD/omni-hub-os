@@ -750,10 +750,18 @@ export function useBrowserDialer() {
       }
 
       const normalizedPhone = formatToE164(resolvedPhone);
-      logDialer("DESTINATION_NORMALIZED", { raw: resolvedPhone, normalized: normalizedPhone });
+      logDialer("DIAL_TARGET_NORMALIZED", { raw: resolvedPhone, normalized: normalizedPhone });
 
-      if (!normalizedPhone.startsWith("+") || normalizedPhone.replace(/\D/g, "").length < 8) {
-        logDialer("INVALID_DESTINATION", { normalized: normalizedPhone });
+      if (!normalizedPhone) {
+        logDialer("CALL_BLOCKED_NO_DESTINATION");
+        setStoreState((current) => ({ ...current, status: "failed", loading: false, lastError: "No destination number provided" }));
+        toast.error("No destination number provided.");
+        return;
+      }
+
+      const isValidE164 = /^\+[1-9]\d{6,14}$/.test(normalizedPhone);
+      if (!isValidE164) {
+        logDialer("INVALID_DESTINATION_NUMBER", { destinationNumber: normalizedPhone });
         setStoreState((current) => ({ ...current, status: "failed", loading: false, lastError: "Invalid destination number", latestProviderStatus: "invalid_destination" }));
         toast.error("Please enter a valid phone number.");
         return;
@@ -790,8 +798,10 @@ export function useBrowserDialer() {
       setStoreState((current) => ({ ...current, session: sess }));
       await setAgentAvailability("on_call");
 
-      logDialer("CALL_DIAL_START", { destination: normalizedPhone, sessionId: sess.id });
+      logDialer("CALL_DIAL_START", { destinationNumber: normalizedPhone, sessionId: sess.id });
+      logDialer("PLIVO_CALL_INVOKING_NOW", { destinationNumber: normalizedPhone });
       plivoInstanceRef.client.call(normalizedPhone, { "X-PH-SessionId": sess.id });
+      logDialer("PLIVO_CALL_INVOKED", { destinationNumber: normalizedPhone });
 
       await insertCallEvent(sess.id, "browser_call_initiated", { destination: normalizedPhone, call_mode: "browser" });
       toast.info(`Calling ${normalizedPhone}`);
