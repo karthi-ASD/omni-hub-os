@@ -114,7 +114,6 @@ export default function SalesDialerPage() {
 
   const handleManualCall = () => {
     if (!phoneInput.trim() || isCallActive || loading) return;
-    pushLog("CALL BUTTON CLICKED");
     startCall(phoneInput.trim());
   };
 
