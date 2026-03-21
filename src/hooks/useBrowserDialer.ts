@@ -798,8 +798,10 @@ export function useBrowserDialer() {
       setStoreState((current) => ({ ...current, session: sess }));
       await setAgentAvailability("on_call");
 
-      logDialer("CALL_DIAL_START", { destination: normalizedPhone, sessionId: sess.id });
+      logDialer("CALL_DIAL_START", { destinationNumber: normalizedPhone, sessionId: sess.id });
+      logDialer("PLIVO_CALL_INVOKING_NOW", { destinationNumber: normalizedPhone });
       plivoInstanceRef.client.call(normalizedPhone, { "X-PH-SessionId": sess.id });
+      logDialer("PLIVO_CALL_INVOKED", { destinationNumber: normalizedPhone });
 
       await insertCallEvent(sess.id, "browser_call_initiated", { destination: normalizedPhone, call_mode: "browser" });
       toast.info(`Calling ${normalizedPhone}`);
