@@ -2,13 +2,17 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const PLIVO_WEBRTC_APP_ID = "45801072070731068";
+const PLIVO_WEBRTC_APP_ID = Deno.env.get("PLIVO_APP_ID") || "45801072070731068";
 
 function jsonRes(body: Record<string, unknown>) {
-  return new Response(JSON.stringify(body), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  return new Response(JSON.stringify(body), {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 }
 
 async function plivoFetch(authId: string, plivoAuth: string, path: string, init?: RequestInit) {
@@ -19,21 +23,26 @@ async function plivoFetch(authId: string, plivoAuth: string, path: string, init?
 }
 
 Deno.serve(async (req) => {
-  console.log("DIALER_BROWSER_TOKEN_HIT", req.method);
+  console.log("DIALER_BROWSER_TOKEN_HIT", {
+    method: req.method,
+    url: req.url,
+  });
+
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const supabase = createClient(supabaseUrl, serviceKey);
-
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return jsonRes({ status: "error", error: "Unauthorized" });
+    console.log("CORS_PREFLIGHT_HIT");
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, serviceKey);
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return jsonRes({ status: "error", error: "Unauthorized" });
+    }
+
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) return jsonRes({ status: "error", error: "Invalid token" });
@@ -48,7 +57,9 @@ Deno.serve(async (req) => {
     const PLIVO_AUTH_ID = Deno.env.get("PLIVO_AUTH_ID");
     const PLIVO_AUTH_TOKEN = Deno.env.get("PLIVO_AUTH_TOKEN");
 
-    if (!PLIVO_AUTH_ID || !PLIVO_AUTH_TOKEN) return jsonRes({ status: "error", error: "Plivo credentials not configured" });
+    if (!PLIVO_AUTH_ID || !PLIVO_AUTH_TOKEN || !PLIVO_WEBRTC_APP_ID) {
+      return jsonRes({ status: "error", error: "Plivo credentials not configured" });
+    }
 
     const plivoAuth = "Basic " + btoa(`${PLIVO_AUTH_ID}:${PLIVO_AUTH_TOKEN}`);
     const username = `agent${user.id.replace(/-/g, "").slice(0, 6)}${Date.now()}`;
@@ -64,7 +75,6 @@ Deno.serve(async (req) => {
     console.log("PLIVO_APP_ID_USED", PLIVO_WEBRTC_APP_ID);
 
     const createPayload = { username, password, alias, app_id: PLIVO_WEBRTC_APP_ID };
-
     const createResp = await plivoFetch(PLIVO_AUTH_ID, plivoAuth, `/Endpoint/`, {
       method: "POST",
       body: JSON.stringify(createPayload),
@@ -77,34 +87,50 @@ Deno.serve(async (req) => {
       return jsonRes({ status: "error", error: "Failed to create Plivo endpoint", plivoError: createData });
     }
 
-    const endpointId = createData.endpoint_id;
-    const endpointUsername = createData.username || username;
+    const endpoint = {
+      username: createData.username || username,
+      password,
+      endpoint_id: createData.endpoint_id,
+    };
 
     await supabase.from("dialer_browser_endpoints").upsert({
       business_id: profile.business_id,
       user_id: user.id,
-      plivo_endpoint_id: endpointId,
-      plivo_username: endpointUsername,
-      plivo_password: password,
+      plivo_endpoint_id: endpoint.endpoint_id,
+      plivo_username: endpoint.username,
+      plivo_password: endpoint.password,
       plivo_app_id: PLIVO_WEBRTC_APP_ID,
       is_active: true,
     } as any, { onConflict: "user_id,business_id" });
 
-    console.log("PLIVO_TOKEN_GENERATED_FINAL", {
-      endpoint_id: endpointId,
-      username: endpointUsername,
-      password,
-      app_id: PLIVO_WEBRTC_APP_ID,
+    console.log("PLIVO_TOKEN_RESPONSE", {
+      username: endpoint.username,
+      endpoint_id: endpoint.endpoint_id,
     });
 
-    return jsonRes({
-      username: endpointUsername,
-      password,
-      app_id: PLIVO_WEBRTC_APP_ID,
-      endpoint_id: endpointId,
-    });
+    return new Response(
+      JSON.stringify({
+        username: endpoint.username,
+        password: endpoint.password,
+        app_id: PLIVO_WEBRTC_APP_ID,
+        endpoint_id: endpoint.endpoint_id,
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   } catch (err) {
-    console.error("[token] Error:", err);
-    return jsonRes({ status: "error", error: String(err) });
+    console.error("TOKEN_FUNCTION_ERROR", err);
+    return new Response(
+      JSON.stringify({
+        status: "error",
+        error: String(err),
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 });

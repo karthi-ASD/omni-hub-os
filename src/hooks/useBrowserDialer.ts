@@ -762,9 +762,26 @@ async function initializeVoiceClient() {
 
       await resumeAudioContext();
 
-      const { data, error } = await supabase.functions.invoke("dialer-browser-token");
-      if (error || data?.status === "error" || !data?.username || !data?.password || !data?.app_id) {
-        throw new Error(data?.error || data?.plivoError ? JSON.stringify(data?.plivoError) : error?.message || "Failed to get voice credentials");
+      const sessionResult = await supabase.auth.getSession();
+      const accessToken = sessionResult.data.session?.access_token;
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dialer-browser-token`;
+
+      console.log("CALLING_TOKEN_FUNCTION", { url: functionUrl });
+
+      const res = await fetch(functionUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${accessToken || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({}),
+      });
+
+      console.log("TOKEN_FETCH_RESPONSE_STATUS", res.status);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.status === "error" || !data?.username || !data?.password || !data?.app_id) {
+        throw new Error((data?.plivoError ? JSON.stringify(data.plivoError) : data?.error) || `Token request failed with status ${res.status}`);
       }
 
       // Validate token fields
@@ -783,7 +800,7 @@ async function initializeVoiceClient() {
       }, 500);
     } catch (error) {
       console.log("TOKEN_FETCH_FAILED_FULL", error);
-      logDialer("TOKEN_FETCH_FAILED", { reason: error instanceof Error ? error.message : String(error) });
+      logDialer("TOKEN_FETCH_FAILED", { error: error instanceof Error ? error.message : String(error) });
       setStoreState((current) => ({
         ...current,
         status: "failed",
