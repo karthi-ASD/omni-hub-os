@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
     // Return XML — bridge WebRTC to PSTN
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Dial callerId="${callerId}" answerOnBridge="true" ringTone="us" timeout="30">
+  <Dial answerOnBridge="true" callerId="${callerId}">
     <Number>${destination}</Number>
   </Dial>
 </Response>`;
