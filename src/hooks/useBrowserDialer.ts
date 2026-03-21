@@ -901,7 +901,7 @@ export function useBrowserDialer() {
   useEffect(() => {
     authIdentity = profile?.business_id ? { businessId: profile.business_id, userId: profile.user_id } : null;
     // Always log build version on mount so it's visible in diagnostics
-    logDialer("DIALER_BUILD_VERSION", { version: "pending-dial-fix-v5" });
+    logDialer("DIALER_BUILD_VERSION", { version: "auto-dial-fix-v6" });
     if (!singletonInitialized) {
       singletonInitialized = true;
       logDialer("TEST_LOG_ACTIVE");
