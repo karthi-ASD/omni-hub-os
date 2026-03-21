@@ -65,14 +65,8 @@ Deno.serve(async (req) => {
     const sessionId = body["X-PH-SessionId"] || body["X-Ph-Sessionid"] || body["X-PH-sessionid"] || 
                       body["X-Ph-SessionId"] || body["X-PH-SESSIONID"] || "";
 
-    console.log("[dialer-browser-answer] Received", {
-      to,
-      from,
-      callUuid,
-      direction,
-      sessionId,
-      allKeys: Object.keys(body),
-    });
+    console.log("[DIALER_XML] Incoming request body", JSON.stringify(body));
+    console.log("[DIALER_XML] Parsed fields", { to, from, callUuid, direction, sessionId, allKeys: Object.keys(body) });
 
     // Clean destination number (remove sip: prefix if present)
     let destination = to;

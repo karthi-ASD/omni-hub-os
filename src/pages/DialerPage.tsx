@@ -467,16 +467,17 @@ export default function DialerPage() {
         </Card>
       </div>
 
-      {/* Diagnostics Panel (dev mode) */}
+      {/* Diagnostics & Debug Panel */}
       <Collapsible open={showDiagnostics} onOpenChange={setShowDiagnostics}>
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="sm" className="text-xs text-muted-foreground">
-            <Bug className="h-3 w-3 mr-1" /> {showDiagnostics ? "Hide" : "Show"} Diagnostics
+            <Bug className="h-3 w-3 mr-1" /> {showDiagnostics ? "Hide" : "Show"} Diagnostics & Logs
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent>
           <Card className="mt-2 border-dashed">
-            <CardContent className="py-3">
+            <CardContent className="py-3 space-y-4">
+              {/* State Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                 <div>
                   <p className="font-medium text-muted-foreground">SDK Loaded</p>
@@ -539,6 +540,45 @@ export default function DialerPage() {
                 <div>
                   <p className="font-medium text-muted-foreground">Last Error</p>
                   <p className="text-destructive truncate">{dialer.diagnostics.lastError || "—"}</p>
+                </div>
+              </div>
+
+              {/* Live Log Feed */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs font-medium text-muted-foreground">Live Call Logs (last {dialer.debugLogs.length})</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-[10px] px-2"
+                    onClick={() => {
+                      const text = dialer.debugLogs
+                        .map((l) => `[DIALER][${l.timestamp}] ${l.event} ${l.data ? JSON.stringify(l.data) : ""}`)
+                        .join("\n");
+                      navigator.clipboard.writeText(text);
+                      toast.success("Logs copied to clipboard");
+                    }}
+                  >
+                    Copy All Logs
+                  </Button>
+                </div>
+                <div className="bg-muted/50 rounded-md border p-2 max-h-[300px] overflow-y-auto font-mono text-[10px] leading-4 space-y-0.5">
+                  {dialer.debugLogs.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-4">No logs yet — make a call to see events</p>
+                  ) : (
+                    dialer.debugLogs.map((log, i) => {
+                      const time = log.timestamp.split("T")[1]?.slice(0, 12) || log.timestamp;
+                      const isError = log.event.includes("FAIL") || log.event.includes("ERROR") || log.event.includes("DENIED");
+                      const isSuccess = log.event.includes("SUCCESS") || log.event.includes("GRANTED") || log.event.includes("REGISTERED") || log.event.includes("ANSWERED") || log.event.includes("CONNECTED");
+                      return (
+                        <div key={i} className={`flex gap-1 ${isError ? "text-destructive" : isSuccess ? "text-emerald-600" : "text-foreground/80"}`}>
+                          <span className="text-muted-foreground shrink-0">{time}</span>
+                          <span className="font-semibold shrink-0">{log.event}</span>
+                          {log.data && <span className="text-muted-foreground truncate">{JSON.stringify(log.data)}</span>}
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             </CardContent>
