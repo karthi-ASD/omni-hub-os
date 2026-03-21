@@ -326,8 +326,8 @@ export default function DialerPage() {
               {dialer.callStatus === "ringing" && (
                 <p className="text-xs text-muted-foreground mt-1 animate-pulse">🔊 Ringback playing in your speakers</p>
               )}
-              {dialer.destinationNumber && isCallActive && (
-                <p className="text-xs font-mono text-muted-foreground mt-1">{dialer.destinationNumber}</p>
+              {dialer.diagnostics.destinationNumber && isCallActive && (
+                <p className="text-xs font-mono text-muted-foreground mt-1">{dialer.diagnostics.destinationNumber}</p>
               )}
             </div>
 
