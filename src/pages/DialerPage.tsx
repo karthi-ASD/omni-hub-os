@@ -116,9 +116,13 @@ export default function DialerPage() {
   }
 
   const handleDial = async () => {
-    console.log("🔥 HANDLE_DIAL_CLICKED", { phoneInput, leadId: leadContext?.id, registered: dialer.registered, status: dialer.callStatus });
+    dialer.logEvent("USER_CLICK_CALL", {
+      phoneInput,
+      registered: dialer.registered,
+      status: dialer.callStatus,
+    });
     if (!phoneInput.trim()) {
-      console.log("🔥 HANDLE_DIAL_BLOCKED_EMPTY_INPUT");
+      dialer.logEvent("HANDLE_DIAL_BLOCKED_EMPTY_INPUT");
       return;
     }
     await dialer.startCall(phoneInput.trim(), leadContext?.id, leadContext?.clientId);
@@ -368,10 +372,12 @@ export default function DialerPage() {
                 <Button
                   className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white"
                   onClick={handleDial}
-                  disabled={!canDial}
                 >
                   <Phone className="h-4 w-4 mr-2" />
                   {dialer.loading ? "Starting..." : !dialer.registered ? "Call (will queue)" : "Call from Browser"}
+                </Button>
+                <Button variant="outline" className="h-12" onClick={() => dialer.startCall("+61400000000")}>
+                  TEST CALL
                 </Button>
               ) : (
                 <>
