@@ -267,13 +267,44 @@ export default function SalesDialerPage() {
                   </div>
                 )}
 
-                <div className="mt-5 h-[200px] overflow-y-auto rounded-md bg-foreground p-3 font-mono text-xs text-background">
-                  <div className="mb-2 font-semibold">🔍 DEBUG LOG PANEL</div>
-                  {logs.length === 0 ? (
-                    <div>No logs yet</div>
-                  ) : (
-                    logs.map((log, index) => <div key={`${log}-${index}`}>{log}</div>)
-                  )}
+                <div className="mt-5 rounded-md border bg-muted/30 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-mono text-xs font-semibold">🔍 LIVE DEBUG LOG ({browserDialer.debugLogs.length})</span>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-[10px]"
+                        onClick={() => {
+                          const text = browserDialer.debugLogs
+                            .map((l) => `[${l.timestamp.split("T")[1]?.slice(0, 12)}] ${l.event} ${l.data ? JSON.stringify(l.data) : ""}`)
+                            .join("\n");
+                          navigator.clipboard.writeText(text);
+                          toast.success("Logs copied to clipboard");
+                        }}
+                      >
+                        <Copy className="h-3 w-3 mr-1" /> Copy
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="h-[200px] overflow-y-auto rounded-md bg-foreground p-2 font-mono text-[10px] leading-4 text-background space-y-0.5">
+                    {browserDialer.debugLogs.length === 0 ? (
+                      <div className="text-center py-8 opacity-60">No logs yet — make a call to see events</div>
+                    ) : (
+                      browserDialer.debugLogs.map((log, i) => {
+                        const time = log.timestamp.split("T")[1]?.slice(0, 12) || log.timestamp;
+                        const isError = log.event.includes("FAIL") || log.event.includes("ERROR") || log.event.includes("DENIED");
+                        const isSuccess = log.event.includes("SUCCESS") || log.event.includes("GRANTED") || log.event.includes("REGISTERED") || log.event.includes("ANSWERED") || log.event.includes("CONNECTED");
+                        return (
+                          <div key={i} className={isError ? "text-red-400" : isSuccess ? "text-emerald-400" : ""}>
+                            <span className="opacity-60">[{time}]</span>{" "}
+                            <span className="font-semibold">{log.event}</span>
+                            {log.data && <span className="opacity-60"> {JSON.stringify(log.data)}</span>}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
               </div>
             )}
