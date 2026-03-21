@@ -51,17 +51,20 @@ Deno.serve(async (req) => {
     if (!PLIVO_APP_ID) return jsonRes({ status: "error", error: "PLIVO_APP_ID not configured" });
 
     const plivoAuth = "Basic " + btoa(`${PLIVO_AUTH_ID}:${PLIVO_AUTH_TOKEN}`);
-    const username = `agent${user.id.replace(/-/g, "")}`;
+    const username = `agent${user.id.replace(/-/g, "").slice(0, 12)}${Date.now().toString(36)}`;
     const password = crypto.randomUUID().replace(/-/g, "");
     const alias = profile.full_name || `Agent ${user.id.slice(0, 8)}`;
 
+    // Delete ALL existing endpoints for this user (any username pattern)
     try {
-      const listResp = await plivoFetch(PLIVO_AUTH_ID, plivoAuth, `/Endpoint/?username=${encodeURIComponent(username)}`);
+      const baseUsername = `agent${user.id.replace(/-/g, "").slice(0, 12)}`;
+      const listResp = await plivoFetch(PLIVO_AUTH_ID, plivoAuth, `/Endpoint/`);
       if (listResp.ok) {
         const listData = await listResp.json();
         const endpoints = listData.objects || [];
         for (const endpoint of endpoints) {
-          if (endpoint?.endpoint_id) {
+          if (endpoint?.username?.startsWith(baseUsername) && endpoint?.endpoint_id) {
+            console.log("[token] Deleting old endpoint", { username: endpoint.username, id: endpoint.endpoint_id });
             await plivoFetch(PLIVO_AUTH_ID, plivoAuth, `/Endpoint/${endpoint.endpoint_id}/`, { method: "DELETE" }).catch(() => undefined);
           }
         }
@@ -69,7 +72,7 @@ Deno.serve(async (req) => {
         await listResp.text();
       }
     } catch {
-      // ignore cleanup errors and continue with clean create
+      // ignore cleanup errors
     }
 
     await supabase
@@ -78,21 +81,21 @@ Deno.serve(async (req) => {
       .eq("user_id", user.id)
       .eq("business_id", profile.business_id);
 
+    console.log("PLIVO APP CHECK", { app_id: "45801072070731068" });
+
+    const createPayload = { username, password, alias, app_id: "45801072070731068" };
+    console.log("PLIVO CREATE PAYLOAD", createPayload);
+
     const createResp = await plivoFetch(PLIVO_AUTH_ID, plivoAuth, `/Endpoint/`, {
       method: "POST",
-      body: JSON.stringify({
-        username,
-        password,
-        alias,
-        app_id: "45801072070731068",
-      }),
+      body: JSON.stringify(createPayload),
     });
 
     const createData = await createResp.json();
-    console.log("PLIVO ENDPOINT CREATED CLEAN", createData);
+    console.log("PLIVO CREATE ENDPOINT RESPONSE", { status: createResp.status, ok: createResp.ok, data: createData });
 
     if (!createResp.ok || !createData.endpoint_id) {
-      return jsonRes({ status: "error", error: "Failed to create Plivo endpoint", details: createData });
+      return jsonRes({ status: "error", error: "Failed to create Plivo endpoint", plivoError: createData });
     }
 
     await supabase.from("dialer_browser_endpoints").upsert({
