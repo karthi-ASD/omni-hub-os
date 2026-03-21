@@ -116,23 +116,12 @@ Deno.serve(async (req) => {
         .then(() => {}, () => {});
     }
 
-    // Build webhook URLs for call status callbacks
-    const webhookParams = new URLSearchParams();
-    if (sessionId) webhookParams.set("session_id", sessionId);
-    webhookParams.set("leg", "customer");
-    const PLIVO_WEBHOOK_SECRET = Deno.env.get("PLIVO_WEBHOOK_SECRET") || "";
-    if (PLIVO_WEBHOOK_SECRET) webhookParams.set("token", PLIVO_WEBHOOK_SECRET);
-
-    const actionUrl = `${supabaseUrl}/functions/v1/dialer-webhook?${webhookParams.toString()}`;
-
     // Return XML to dial the destination
     const xml = `<Response>
   <Dial
     callerId="${callerId}"
     answerOnBridge="true"
     timeout="30"
-    action="${actionUrl}"
-    method="POST"
   >
     <Number>${destination}</Number>
   </Dial>
