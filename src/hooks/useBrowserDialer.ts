@@ -583,12 +583,24 @@ async function initializeVoiceClient() {
     logDialer("VOICE_REGISTERING");
 
     try {
+      // Request mic permission early before login to ensure media readiness
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((t) => t.stop());
+        logDialer("EARLY_MIC_PERMISSION_GRANTED");
+        setStoreState((current) => ({ ...current, micPermission: "granted" }));
+      } catch (micErr) {
+        logDialer("EARLY_MIC_PERMISSION_FAILED", { reason: String(micErr) });
+      }
+
+      await resumeAudioContext();
+
       const { data, error } = await supabase.functions.invoke("dialer-browser-token");
       if (error || data?.status === "error" || !data?.username || !data?.password || !data?.app_id) {
-        throw new Error(data?.error || error?.message || "Failed to get voice credentials (missing username, password, or app_id)");
+        throw new Error(data?.error || data?.plivoError ? JSON.stringify(data?.plivoError) : error?.message || "Failed to get voice credentials");
       }
       console.log("TOKEN_RECEIVED_RAW", data);
-      logDialer("TOKEN_RECEIVED_FULL", { username: data.username, hasPassword: !!data.password, app_id: data.app_id });
+      logDialer("TOKEN_RECEIVED_FULL", { username: data.username, hasPassword: !!data.password, app_id: data.app_id, endpoint_id: data.endpoint_id });
       console.log("PLIVO_CLIENT_READY_FOR_LOGIN");
       console.log("PLIVO_FRONTEND_LOGIN_ATTEMPT", {
         username: data.username,
