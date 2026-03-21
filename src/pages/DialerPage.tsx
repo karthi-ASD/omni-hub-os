@@ -505,8 +505,32 @@ export default function DialerPage() {
                   <p>{dialer.diagnostics.currentStatus}</p>
                 </div>
                 <div>
+                  <p className="font-medium text-muted-foreground">Voice Client</p>
+                  <p>{dialer.diagnostics.voiceClientRegistration}</p>
+                </div>
+                <div>
                   <p className="font-medium text-muted-foreground">Destination</p>
                   <p className="font-mono">{dialer.diagnostics.destinationNumber || "—"}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Caller ID</p>
+                  <p>{dialer.diagnostics.selectedCallerId || "—"}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Input Device</p>
+                  <p>{dialer.diagnostics.selectedInputDevice || "—"}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Output Device</p>
+                  <p>{dialer.diagnostics.selectedOutputDevice || "—"}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Provider Status</p>
+                  <p>{dialer.diagnostics.latestProviderStatus || "—"}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Media Status</p>
+                  <p>{dialer.diagnostics.latestBrowserMediaStatus || "—"}</p>
                 </div>
                 <div>
                   <p className="font-medium text-muted-foreground">Last Event</p>
