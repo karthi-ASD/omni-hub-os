@@ -541,6 +541,13 @@ async function initializeVoiceClient() {
       return;
     }
 
+    if (plivoInstanceRef?.client) {
+      try {
+        plivoInstanceRef.client.logout();
+      } catch {}
+      plivoInstanceRef = null;
+    }
+
     const instance = new window.Plivo({ debug: "INFO", permOnClick: true });
     plivoInstanceRef = instance;
     bindPlivoEvents(instance);
@@ -556,8 +563,10 @@ async function initializeVoiceClient() {
       }
       logDialer("TOKEN_RECEIVED_FULL", { username: data.username, hasPassword: !!data.password, app_id: data.app_id });
       console.log("TOKEN_RECEIVED_FULL", { username: data.username, hasPassword: !!data.password, app_id: data.app_id });
-      console.log("LOGIN_ATTEMPT", { username: data.username, passwordLength: data.password?.length, app_id: data.app_id });
-      instance.client.login(data.username, data.password);
+      console.log("LOGIN EXACT VALUES", { username: data.username, password: data.password, app_id: data.app_id });
+      window.setTimeout(() => {
+        instance.client.login(data.username, data.password);
+      }, 500);
     } catch (error) {
       logDialer("TOKEN_FETCH_FAILED", { reason: error instanceof Error ? error.message : String(error) });
       setStoreState((current) => ({
