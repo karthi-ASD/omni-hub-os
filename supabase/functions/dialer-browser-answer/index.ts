@@ -127,7 +127,13 @@ Deno.serve(async (req) => {
 
     // Return XML to dial the destination
     const xml = `<Response>
-  <Dial callerId="${callerId}" action="${actionUrl}" method="POST" callbackUrl="${actionUrl}" callbackMethod="POST">
+  <Dial
+    callerId="${callerId}"
+    answerOnBridge="true"
+    timeout="30"
+    action="${actionUrl}"
+    method="POST"
+  >
     <Number>${destination}</Number>
   </Dial>
 </Response>`;
