@@ -392,8 +392,8 @@ export default function DialerPage() {
                   <RotateCcw className="h-3 w-3 mr-1" /> Redial {dialer.lastCalledNumber}
                 </Button>
               )}
-              {dialer.destinationNumber && (
-                <Button variant="ghost" size="sm" className="text-xs" onClick={() => { navigator.clipboard.writeText(dialer.destinationNumber); toast.success("Copied"); }}>
+              {dialer.diagnostics.destinationNumber && (
+                <Button variant="ghost" size="sm" className="text-xs" onClick={() => { navigator.clipboard.writeText(dialer.diagnostics.destinationNumber); toast.success("Copied"); }}>
                   <Copy className="h-3 w-3 mr-1" /> Copy number
                 </Button>
               )}
