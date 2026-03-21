@@ -13,9 +13,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
  * - Recording is handled by conference record attribute
  */
 
-function xmlResponse(innerXml: string): Response {
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n  ${innerXml}\n</Response>`;
-  return new Response(xml, {
+function hangupResponse(): Response {
+  const hangupXml = `<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n  <Hangup />\n</Response>`;
+  return new Response(hangupXml, {
     status: 200,
     headers: { "Content-Type": "text/xml" },
   });
