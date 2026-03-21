@@ -1,4 +1,4 @@
-console.log("🔥 DIALER HOOK LOADED");
+console.log("🔥 DIALER HOOK LOADED - VERSION 2");
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -648,6 +648,7 @@ export function useBrowserDialer() {
     authIdentity = profile?.business_id ? { businessId: profile.business_id, userId: profile.user_id } : null;
     if (!singletonInitialized) {
       singletonInitialized = true;
+      logDialer("TEST_LOG_ACTIVE");
       void initializeVoiceClient();
     }
   }, [profile?.business_id, profile?.user_id]);
