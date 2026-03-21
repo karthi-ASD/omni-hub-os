@@ -112,10 +112,12 @@ Deno.serve(async (req) => {
     }
 
     // Return XML to dial the destination
-    const xml = `<Response>
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
   <Dial
     callerId="${callerId}"
     answerOnBridge="true"
+    ringTone="us"
     timeout="30"
   >
     <Number>${destination}</Number>
