@@ -60,20 +60,12 @@ export default function SalesDialerPage() {
   const [notes, setNotes] = useState("");
   const [disposition, setDisposition] = useState<Disposition | "">("");
 
-  const pushLog = useCallback((message: string) => {
-    setLogs((prev) => [...prev.slice(-19), message]);
-  }, []);
-
   // Auto-start call if prefilled from leads page
   useEffect(() => {
     if (prefillPhone && prefillLeadId && !isCallActive && !loading && !session) {
       startCall(prefillPhone, prefillLeadId);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    pushLog("DIALER LOADED");
-  }, [pushLog]);
 
   // Fetch leads for quick-dial
   const { data: leads, isLoading: leadsLoading } = useQuery({
