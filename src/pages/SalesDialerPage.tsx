@@ -109,7 +109,6 @@ export default function SalesDialerPage() {
   const handleQuickDial = (lead: any) => {
     if (isCallActive || loading) return;
     setPhoneInput(lead.phone);
-    pushLog("CALL BUTTON CLICKED");
     startCall(lead.phone, lead.id);
   };
 
