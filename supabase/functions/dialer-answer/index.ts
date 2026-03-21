@@ -13,9 +13,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
  * - Recording is handled by conference record attribute
  */
 
-function xmlResponse(innerXml: string): Response {
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n  ${innerXml}\n</Response>`;
-  return new Response(xml, {
+function hangupResponse(): Response {
+  const hangupXml = `<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n  <Hangup />\n</Response>`;
+  return new Response(hangupXml, {
     status: 200,
     headers: { "Content-Type": "text/xml" },
   });
@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     // Token validation
     if (PLIVO_WEBHOOK_SECRET && token !== PLIVO_WEBHOOK_SECRET) {
       console.warn("[dialer-answer] Unauthorized request rejected");
-      return xmlResponse("<Hangup />");
+      return hangupResponse();
     }
 
     const body = await parseTelephonyPayload(req);
@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
 
     if (!sessionId || !conferenceId) {
       console.error("[dialer-answer] Missing session_id or conference_id", { sessionId, conferenceId });
-      return xmlResponse("<Hangup />");
+      return hangupResponse();
     }
 
     console.log("[dialer-answer] Leg answered", {
@@ -118,13 +118,13 @@ Deno.serve(async (req) => {
     // Return Conference XML — SAME for both legs
     const xml = `<Response>
   <Dial>
-    <Conference startConferenceOnEnter="${leg === 'agent' ? 'true' : 'false'}" endConferenceOnExit="true" waitSound="" enterSound="" record="record-from-start">
+    <Conference startConferenceOnEnter="${leg === 'agent' ? 'true' : 'false'}" endConferenceOnExit="true" waitSound="" enterSound="" record="record-from-start" >
       ${conferenceId}
     </Conference>
   </Dial>
 </Response>`;
 
-    console.log("[XML RESPONSE SENT]", xml);
+    console.log("[FINAL XML RESPONSE]", xml);
 
     return new Response(xml, {
       status: 200,
@@ -132,6 +132,6 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("[dialer-answer] Error:", err);
-    return xmlResponse("<Hangup />");
+    return hangupResponse();
   }
 });
