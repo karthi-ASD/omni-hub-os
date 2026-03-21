@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
     if (!PLIVO_AUTH_ID || !PLIVO_AUTH_TOKEN) return jsonRes({ status: "error", error: "Plivo credentials not configured" });
 
     const plivoAuth = "Basic " + btoa(`${PLIVO_AUTH_ID}:${PLIVO_AUTH_TOKEN}`);
-    const username = `agent_${user.id.replace(/-/g, "").slice(0, 8)}_${Date.now()}`;
+    const username = `agent_${user.id.replace(/-/g, "").slice(0, 6)}_${Date.now()}`;
     const password = crypto.randomUUID().replace(/-/g, "").slice(0, 20);
     const alias = profile.full_name || `Agent ${user.id.slice(0, 8)}`;
 
@@ -60,6 +60,8 @@ Deno.serve(async (req) => {
       .update({ is_active: false } as any)
       .eq("user_id", user.id)
       .eq("business_id", profile.business_id);
+
+    console.log("PLIVO_APP_ID_USED", PLIVO_WEBRTC_APP_ID);
 
     const createPayload = { username, password, alias, app_id: PLIVO_WEBRTC_APP_ID };
 
@@ -72,7 +74,7 @@ Deno.serve(async (req) => {
     console.log("PLIVO_CREATE_ENDPOINT_FULL", { status: createResp.status, ok: createResp.ok, data: createData });
 
     if (!createResp.ok || !createData.endpoint_id) {
-      return jsonRes({ status: "error", error: "Failed to create Plivo endpoint", details: createData });
+      return jsonRes({ status: "error", error: "Failed to create Plivo endpoint", plivoError: createData });
     }
 
     const endpointId = createData.endpoint_id;

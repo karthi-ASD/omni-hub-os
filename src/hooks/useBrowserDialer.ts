@@ -602,6 +602,7 @@ async function initializeVoiceClient() {
         instance.client.login(data.username, data.password);
       }, 500);
     } catch (error) {
+      console.log("TOKEN_FETCH_FAILED_FULL", error);
       logDialer("TOKEN_FETCH_FAILED", { reason: error instanceof Error ? error.message : String(error) });
       setStoreState((current) => ({
         ...current,
