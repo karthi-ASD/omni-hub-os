@@ -79,6 +79,20 @@ export default function DialerPage() {
   const [followUpDate, setFollowUpDate] = useState<Date | undefined>();
   const [showFollowUp, setShowFollowUp] = useState(false);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [uiDebugState, setUiDebugState] = useState<{ clicked: boolean; lastClick: string | null }>({ clicked: false, lastClick: null });
+
+  useEffect(() => {
+    if (dialer.callStatus === "connected") {
+      document.body.style.backgroundColor = "#065f46";
+    } else if (dialer.callStatus === "failed") {
+      document.body.style.backgroundColor = "#7f1d1d";
+    } else if (uiDebugState.clicked && (dialer.callStatus === "calling" || dialer.callStatus === "ringing")) {
+      document.body.style.backgroundColor = "#1e293b";
+    } else {
+      document.body.style.backgroundColor = "";
+    }
+    return () => { document.body.style.backgroundColor = ""; };
+  }, [dialer.callStatus, uiDebugState.clicked]);
 
   // Load lead context from URL params
   useEffect(() => {
