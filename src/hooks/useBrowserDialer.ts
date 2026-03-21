@@ -1,4 +1,4 @@
-console.log("🔥 DIALER HOOK LOADED - VERSION 4 - PENDING DIAL FIX");
+console.log("🔥 DIALER HOOK LOADED - VERSION 5 - PENDING DIAL FIX");
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -443,6 +443,8 @@ function bindVisibilityRecovery() {
 
 // ─── Execute the actual SDK call ───
 async function executeOutboundCall(intent: PendingDialIntent) {
+  logDialer("EXECUTE_OUTBOUND_CALL_ENTERED", { raw: intent.phoneNumber });
+
   if (!authIdentity || !plivoInstanceRef?.client) {
     logDialer("EXECUTE_CALL_BLOCKED", { reason: "no_auth_or_client" });
     return;
@@ -868,10 +870,11 @@ export function useBrowserDialer() {
 
   useEffect(() => {
     authIdentity = profile?.business_id ? { businessId: profile.business_id, userId: profile.user_id } : null;
+    // Always log build version on mount so it's visible in diagnostics
+    logDialer("DIALER_BUILD_VERSION", { version: "pending-dial-fix-v5" });
     if (!singletonInitialized) {
       singletonInitialized = true;
       logDialer("TEST_LOG_ACTIVE");
-      logDialer("DIALER_BUILD_VERSION", { version: "pending-dial-fix-v4" });
       void initializeVoiceClient();
     }
   }, [profile?.business_id, profile?.user_id]);
@@ -888,6 +891,7 @@ export function useBrowserDialer() {
   const startCall = useCallback(async (phoneNumber: string, leadId?: string, clientId?: string) => {
     console.log("🔥 START CALL TRIGGERED", { phoneNumber, registered: storeState.registered });
     logDialer("USER_CLICK_CALL", { destination: phoneNumber, leadId, clientId, registered: storeState.registered, currentStatus: storeState.status });
+    logDialer("START_CALL_ENTERED", { rawPhoneNumber: phoneNumber, leadId: leadId ?? null, clientId: clientId ?? null, registered: storeState.registered, status: storeState.status, loading: storeState.loading });
 
     // Block if already in a call or loading
     if (!profile?.business_id) {
