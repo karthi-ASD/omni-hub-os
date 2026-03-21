@@ -369,16 +369,18 @@ export default function DialerPage() {
 
             <div className="flex gap-2 justify-center">
               {!isCallActive ? (
-                <Button
-                  className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white"
-                  onClick={handleDial}
-                >
-                  <Phone className="h-4 w-4 mr-2" />
-                  {dialer.loading ? "Starting..." : !dialer.registered ? "Call (will queue)" : "Call from Browser"}
-                </Button>
-                <Button variant="outline" className="h-12" onClick={() => dialer.startCall("+61400000000")}>
-                  TEST CALL
-                </Button>
+                <>
+                  <Button
+                    className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white"
+                    onClick={handleDial}
+                  >
+                    <Phone className="h-4 w-4 mr-2" />
+                    {dialer.loading ? "Starting..." : !dialer.registered ? "Call (will queue)" : "Call from Browser"}
+                  </Button>
+                  <Button variant="outline" className="h-12" onClick={() => dialer.startCall("+61400000000")}>
+                    TEST CALL
+                  </Button>
+                </>
               ) : (
                 <>
                   <Button variant="outline" className="h-12" onClick={dialer.toggleMute}>
