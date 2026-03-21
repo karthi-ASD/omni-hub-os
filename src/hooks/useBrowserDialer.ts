@@ -109,6 +109,7 @@ let sessionSubId: string | null = null;
 let audioContextRef: AudioContext | null = null;
 let ringbackRef: { ctx: AudioContext; osc1: OscillatorNode; osc2: OscillatorNode; gain: GainNode } | null = null;
 let plivoInstanceRef: PlivoBrowserSDK | null = null;
+let plivoClientGeneration = 0;
 let singletonInitialized = false;
 let sdkInitStarted = false;
 let permissionListenerBound = false;
@@ -403,8 +404,24 @@ function bindVisibilityRecovery() {
 }
 
 // ─── Plivo event binding ───
-function bindPlivoEvents(instance: PlivoBrowserSDK) {
+function isActivePlivoClient(instance: PlivoBrowserSDK, generation: number) {
+  return plivoInstanceRef === instance && plivoClientGeneration === generation;
+}
+
+function destroyPlivoClient() {
+  if (!plivoInstanceRef?.client) return;
+  try {
+    plivoInstanceRef.client.hangup();
+  } catch {}
+  try {
+    plivoInstanceRef.client.logout();
+  } catch {}
+  plivoInstanceRef = null;
+}
+
+function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   instance.client.on("onWebrtcNotSupported", () => {
+    if (!isActivePlivoClient(instance, generation)) return;
     setStoreState((current) => ({
       ...current,
       status: "failed",
@@ -415,16 +432,19 @@ function bindPlivoEvents(instance: PlivoBrowserSDK) {
   });
 
   instance.client.on("onLogin", () => {
+    if (!isActivePlivoClient(instance, generation)) return;
     setStoreState((current) => ({
       ...current,
       registered: true,
       status: current.micPermission === "granted" ? "device_ready" : "registered",
       lastError: null,
     }));
+    console.log("VOICE_REGISTERED");
     logDialer("VOICE_REGISTERED", { providerStatus: "registered" });
   });
 
   instance.client.on("onLoginFailed", (cause: string) => {
+    if (!isActivePlivoClient(instance, generation)) return;
     setStoreState((current) => ({
       ...current,
       registered: false,
@@ -432,14 +452,17 @@ function bindPlivoEvents(instance: PlivoBrowserSDK) {
       lastError: `Voice registration failed: ${cause}`,
       latestProviderStatus: "registration_failed",
     }));
-    logDialer("VOICE_REGISTRATION_FAILED", { reason: cause, providerStatus: cause });
+    console.log("VOICE_REGISTRATION_FAILED_FULL", cause);
+    logDialer("VOICE_REGISTRATION_FAILED_FULL", { reason: cause, providerStatus: cause });
   });
 
   instance.client.on("onConnectionChange", (connection) => {
+    if (!isActivePlivoClient(instance, generation)) return;
     logDialer("PLIVO_CONNECTION_CHANGE", { state: connection?.state || "unknown", providerStatus: connection?.state || "unknown" });
   });
 
   instance.client.on("onMediaPermission", (result: { status: boolean }) => {
+    if (!isActivePlivoClient(instance, generation)) return;
     const mediaStatus = result.status ? "media_permission_granted" : "media_permission_denied";
     logDialer(result.status ? "MIC_PERMISSION_GRANTED" : "MIC_PERMISSION_DENIED", { mediaStatus });
     setStoreState((current) => ({
@@ -456,12 +479,14 @@ function bindPlivoEvents(instance: PlivoBrowserSDK) {
   });
 
   instance.client.on("onCallRemoteRinging", async (callInfo: Plivo.CallInfo) => {
+    if (!isActivePlivoClient(instance, generation)) return;
     logDialer("CALL_REMOTE_RINGING", { callInfoState: callInfo.state || "ringing", providerStatus: callInfo.state || "ringing" });
     setStoreState((current) => ({ ...current, status: "ringing", latestProviderStatus: callInfo.state || "ringing" }));
     await playRingback();
   });
 
   instance.client.on("onCallAnswered", async (callInfo: Plivo.CallInfo) => {
+    if (!isActivePlivoClient(instance, generation)) return;
     logDialer("CALL_ANSWERED", { callInfoState: callInfo.state || "answered", providerStatus: callInfo.state || "answered" });
     stopRingback();
     await resumeAudioContext();
@@ -476,6 +501,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK) {
   });
 
   instance.client.on("onCallTerminated", (callInfo: Plivo.CallInfo) => {
+    if (!isActivePlivoClient(instance, generation)) return;
     logDialer("CALL_TERMINATED", { callInfoState: callInfo.state || "terminated", providerStatus: callInfo.state || "terminated" });
     stopRingback();
     setStoreState((current) => ({
@@ -488,6 +514,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK) {
   });
 
   instance.client.on("onCallFailed", (cause: string) => {
+    if (!isActivePlivoClient(instance, generation)) return;
     logDialer("CALL_FAILED", { reason: cause, providerStatus: cause, mediaStatus: "media_failed" });
     stopRingback();
     setStoreState((current) => ({
@@ -512,7 +539,10 @@ function bindPlivoEvents(instance: PlivoBrowserSDK) {
         "onIncomingCall", "onIncomingCallCanceled", "onIncomingCallIgnored",
       ]) {
         try {
-          instance.client.on(evt, (...args: unknown[]) => rawHandler(evt, ...args));
+          instance.client.on(evt, (...args: unknown[]) => {
+            if (!isActivePlivoClient(instance, generation)) return;
+            rawHandler(evt, ...args);
+          });
         } catch {}
       }
     }
@@ -541,16 +571,12 @@ async function initializeVoiceClient() {
       return;
     }
 
-    if (plivoInstanceRef?.client) {
-      try {
-        plivoInstanceRef.client.logout();
-      } catch {}
-      plivoInstanceRef = null;
-    }
+    destroyPlivoClient();
 
+    const generation = ++plivoClientGeneration;
     const instance = new window.Plivo({ debug: "INFO", permOnClick: true });
     plivoInstanceRef = instance;
-    bindPlivoEvents(instance);
+    bindPlivoEvents(instance, generation);
 
     setStoreState((current) => ({ ...current, sdkReady: true, status: "registering" }));
     logDialer("PLIVO_CLIENT_INIT_SUCCESS");
@@ -561,10 +587,18 @@ async function initializeVoiceClient() {
       if (error || data?.status === "error" || !data?.username || !data?.password || !data?.app_id) {
         throw new Error(data?.error || error?.message || "Failed to get voice credentials (missing username, password, or app_id)");
       }
+      console.log("TOKEN_RECEIVED_RAW", data);
       logDialer("TOKEN_RECEIVED_FULL", { username: data.username, hasPassword: !!data.password, app_id: data.app_id });
-      console.log("TOKEN_RECEIVED_FULL", { username: data.username, hasPassword: !!data.password, app_id: data.app_id });
-      console.log("LOGIN EXACT VALUES", { username: data.username, password: data.password, app_id: data.app_id });
+      console.log("PLIVO_CLIENT_READY_FOR_LOGIN");
+      console.log("PLIVO_FRONTEND_LOGIN_ATTEMPT", {
+        username: data.username,
+        password: data.password,
+        app_id: data.app_id,
+        endpoint_id: data.endpoint_id,
+      });
       window.setTimeout(() => {
+        if (!isActivePlivoClient(instance, generation)) return;
+        console.log("PLIVO_LOGIN_CALLING_NOW");
         instance.client.login(data.username, data.password);
       }, 500);
     } catch (error) {
@@ -840,6 +874,7 @@ export function useBrowserDialer() {
   const resetDialer = useCallback(() => {
     logDialer("DIALER_RESET");
     stopRingback();
+    destroyPlivoClient();
     sessionUnsubRef?.();
     sessionUnsubRef = null;
     sessionSubId = null;
