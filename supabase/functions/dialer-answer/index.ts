@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
 
   const xml = `<Response>
   <Dial>
-    <Conference startConferenceOnEnter="${finalStartConferenceOnEnter}" endConferenceOnExit="true" waitSound="" enterSound="" record="record-from-start" >
+    <Conference startConferenceOnEnter="${finalStartConferenceOnEnter}" endConferenceOnExit="true" stayAlone="true" waitSound="" enterSound="" record="record-from-start" >
       ${finalConferenceId}
     </Conference>
   </Dial>
