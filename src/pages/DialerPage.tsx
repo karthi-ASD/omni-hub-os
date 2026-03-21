@@ -14,7 +14,7 @@ import {
   Phone, PhoneOff, MicOff, Mic, Clock, User, Building2, Hash,
   CheckCircle, XCircle, PhoneForwarded, PhoneMissed, Play, Download,
   Calendar as CalendarIcon, Delete, ShieldAlert, UserX, AlertTriangle,
-  Wifi, WifiOff, Bug,
+  Wifi, WifiOff, Bug, RotateCcw, Copy,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -108,9 +108,7 @@ export default function DialerPage() {
           <>
             <ShieldAlert className="h-12 w-12 text-muted-foreground" />
             <h2 className="text-lg font-semibold">Dialer Access Restricted</h2>
-            <p className="text-sm text-muted-foreground max-w-md">
-              You don't have permission to access the dialer.
-            </p>
+            <p className="text-sm text-muted-foreground max-w-md">You don't have permission to access the dialer.</p>
           </>
         )}
       </div>
@@ -119,13 +117,6 @@ export default function DialerPage() {
 
   const handleDial = async () => {
     if (!phoneInput.trim()) return;
-
-    // Check mic permission first
-    if (dialer.micPermission === "denied" || dialer.micPermission === "prompt" || dialer.micPermission === "unknown") {
-      const granted = await dialer.requestMicPermission();
-      if (!granted) return;
-    }
-
     dialer.startCall(phoneInput.trim(), leadContext?.id, leadContext?.clientId);
   };
 
@@ -153,24 +144,11 @@ export default function DialerPage() {
 
   const isCallActive = dialer.isCallActive;
   const isCallEnded = dialer.callStatus === "ended" || dialer.callStatus === "failed";
-  const isRegistrationPending = dialer.callStatus === "registering";
-  const isReady = dialer.registered && !isCallActive;
+  const canDial = phoneInput.trim().length > 0 && !dialer.loading && !isCallActive;
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      <div
-        style={{
-          background: "red",
-          color: "white",
-          padding: "12px",
-          fontWeight: "bold",
-          textAlign: "center",
-          zIndex: 9999,
-        }}
-      >
-        🚨 DIALER NEW BUILD ACTIVE 🚨
-      </div>
-
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">NextWeb Dialer</h1>
@@ -189,6 +167,11 @@ export default function DialerPage() {
           <Badge variant="outline" className={`${dialer.agentState === "on_call" ? "border-emerald-500 text-emerald-600" : "border-blue-500 text-blue-600"}`}>
             {dialer.agentState === "on_call" ? "On Call" : "Available"}
           </Badge>
+          {dialer.pendingDial && (
+            <Badge variant="outline" className="border-amber-500 text-amber-600 animate-pulse">
+              ⏳ Call queued
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -210,15 +193,20 @@ export default function DialerPage() {
         </Card>
       )}
 
-      {/* Registration error */}
-      {dialer.lastError && !isCallActive && dialer.callStatus === "failed" && !dialer.registered && (
+      {/* Error banner */}
+      {dialer.lastError && !isCallActive && (
         <Card className="border-amber-500/50 bg-amber-50/50">
           <CardContent className="py-3 flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-amber-700">Voice Service Issue</p>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-amber-700">
+                {dialer.callStatus === "failed" && dialer.registered ? "Call Failed" : "Voice Service Issue"}
+              </p>
               <p className="text-xs text-muted-foreground">{dialer.lastError}</p>
             </div>
+            <Button variant="outline" size="sm" onClick={dialer.resetDialer} className="shrink-0">
+              Clear
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -289,10 +277,34 @@ export default function DialerPage() {
                 </div>
               </>
             ) : (
-              <div className="text-center py-8 text-sm text-muted-foreground">
-                <Phone className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                <p>No lead loaded</p>
-                <p className="text-xs mt-1">Click a phone icon in Leads, Clients, or Deals to load context</p>
+              <div className="space-y-4">
+                <div className="text-center py-6 text-sm text-muted-foreground">
+                  <Phone className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                  <p>No lead loaded</p>
+                  <p className="text-xs mt-1">Click a phone icon in Leads, Clients, or Deals to load context</p>
+                </div>
+
+                {/* Recent Numbers */}
+                {dialer.recentNumbers.length > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-2">Recent Numbers</p>
+                      <div className="space-y-1">
+                        {dialer.recentNumbers.slice(0, 5).map((num) => (
+                          <button
+                            key={num}
+                            className="w-full text-left text-xs font-mono px-2 py-1.5 rounded-md hover:bg-muted/50 flex items-center justify-between group"
+                            onClick={() => setPhoneInput(num)}
+                          >
+                            <span>{num}</span>
+                            <Phone className="h-3 w-3 opacity-0 group-hover:opacity-100 text-muted-foreground" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </CardContent>
@@ -314,6 +326,9 @@ export default function DialerPage() {
               {dialer.callStatus === "ringing" && (
                 <p className="text-xs text-muted-foreground mt-1 animate-pulse">🔊 Ringback playing in your speakers</p>
               )}
+              {dialer.destinationNumber && isCallActive && (
+                <p className="text-xs font-mono text-muted-foreground mt-1">{dialer.destinationNumber}</p>
+              )}
             </div>
 
             <div className="flex gap-2">
@@ -323,6 +338,7 @@ export default function DialerPage() {
                 placeholder="+61 4XX XXX XXX"
                 className="font-mono text-lg text-center tracking-wider"
                 disabled={isCallActive}
+                onKeyDown={(e) => { if (e.key === "Enter") handleDial(); }}
               />
               <Button variant="ghost" size="icon" onClick={() => setPhoneInput((p) => p.slice(0, -1))} disabled={isCallActive}>
                 <Delete className="h-4 w-4" />
@@ -348,10 +364,10 @@ export default function DialerPage() {
                 <Button
                   className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white"
                   onClick={handleDial}
-                  disabled={!phoneInput.trim() || dialer.loading || isRegistrationPending || (!dialer.registered && dialer.callStatus !== "registered")}
+                  disabled={!canDial}
                 >
                   <Phone className="h-4 w-4 mr-2" />
-                  {dialer.loading ? "Starting..." : !dialer.registered ? "Voice not ready" : "Call from Browser"}
+                  {dialer.loading ? "Starting..." : !dialer.registered ? "Call (will queue)" : "Call from Browser"}
                 </Button>
               ) : (
                 <>
@@ -366,6 +382,20 @@ export default function DialerPage() {
                     <PhoneOff className="h-4 w-4 mr-2" /> Hang Up
                   </Button>
                 </>
+              )}
+            </div>
+
+            {/* Quick actions */}
+            <div className="flex gap-2 justify-center">
+              {dialer.lastCalledNumber && !isCallActive && (
+                <Button variant="ghost" size="sm" className="text-xs" onClick={dialer.redialLast}>
+                  <RotateCcw className="h-3 w-3 mr-1" /> Redial {dialer.lastCalledNumber}
+                </Button>
+              )}
+              {dialer.destinationNumber && (
+                <Button variant="ghost" size="sm" className="text-xs" onClick={() => { navigator.clipboard.writeText(dialer.destinationNumber); toast.success("Copied"); }}>
+                  <Copy className="h-3 w-3 mr-1" /> Copy number
+                </Button>
               )}
             </div>
 
@@ -532,12 +562,8 @@ export default function DialerPage() {
                   <p>{dialer.diagnostics.selectedCallerId || "—"}</p>
                 </div>
                 <div>
-                  <p className="font-medium text-muted-foreground">Input Device</p>
-                  <p>{dialer.diagnostics.selectedInputDevice || "—"}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground">Output Device</p>
-                  <p>{dialer.diagnostics.selectedOutputDevice || "—"}</p>
+                  <p className="font-medium text-muted-foreground">Pending Dial</p>
+                  <p className="font-mono">{dialer.diagnostics.pendingDialNumber || "—"}</p>
                 </div>
                 <div>
                   <p className="font-medium text-muted-foreground">Provider Status</p>
@@ -546,10 +572,6 @@ export default function DialerPage() {
                 <div>
                   <p className="font-medium text-muted-foreground">Media Status</p>
                   <p>{dialer.diagnostics.latestBrowserMediaStatus || "—"}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground">Last Event</p>
-                  <p>{dialer.diagnostics.lastEvent || "—"}</p>
                 </div>
                 <div>
                   <p className="font-medium text-muted-foreground">Last Error</p>
@@ -582,10 +604,11 @@ export default function DialerPage() {
                   ) : (
                     dialer.debugLogs.map((log, i) => {
                       const time = log.timestamp.split("T")[1]?.slice(0, 12) || log.timestamp;
-                      const isError = log.event.includes("FAIL") || log.event.includes("ERROR") || log.event.includes("DENIED");
-                      const isSuccess = log.event.includes("SUCCESS") || log.event.includes("GRANTED") || log.event.includes("REGISTERED") || log.event.includes("ANSWERED") || log.event.includes("CONNECTED");
+                      const isError = log.event.includes("FAIL") || log.event.includes("ERROR") || log.event.includes("DENIED") || log.event.includes("BLOCKED");
+                      const isSuccess = log.event.includes("SUCCESS") || log.event.includes("GRANTED") || log.event.includes("REGISTERED") || log.event.includes("ANSWERED") || log.event.includes("CONNECTED") || log.event.includes("INVOKED");
+                      const isWarn = log.event.includes("WAITING") || log.event.includes("PENDING") || log.event.includes("PROCEEDING");
                       return (
-                        <div key={i} className={`flex gap-1 ${isError ? "text-destructive" : isSuccess ? "text-emerald-600" : "text-foreground/80"}`}>
+                        <div key={i} className={`flex gap-1 ${isError ? "text-destructive" : isSuccess ? "text-emerald-600" : isWarn ? "text-amber-600" : "text-foreground/80"}`}>
                           <span className="text-muted-foreground shrink-0">{time}</span>
                           <span className="font-semibold shrink-0">{log.event}</span>
                           {log.data && <span className="text-muted-foreground truncate">{JSON.stringify(log.data)}</span>}
