@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
 
     if (!sessionId || !conferenceId) {
       console.error("[dialer-answer] Missing session_id or conference_id", { sessionId, conferenceId });
-      return xmlResponse("<Hangup />");
+      return hangupResponse();
     }
 
     console.log("[dialer-answer] Leg answered", {
