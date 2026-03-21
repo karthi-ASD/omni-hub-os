@@ -77,53 +77,50 @@ Deno.serve(async (req) => {
         endpointId: existing.plivo_endpoint_id,
       });
 
-      // Verify endpoint still exists on Plivo
+      // Always generate a fresh password and update Plivo + DB
+      const freshPassword = crypto.randomUUID().replace(/-/g, "").slice(0, 20);
+
       if (existing.plivo_endpoint_id) {
         try {
-          const checkResp = await fetch(
+          // Update endpoint on Plivo with fresh password and correct app_id
+          const updateResp = await fetch(
             `https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Endpoint/${existing.plivo_endpoint_id}/`,
-            { headers: { Authorization: plivoAuth } }
-          );
-          if (checkResp.ok) {
-            // Update app_id if it changed
-            if (existing.plivo_app_id !== PLIVO_APP_ID) {
-              console.log("[dialer-browser-token] Updating endpoint app_id to fixed PLIVO_APP_ID");
-              await fetch(
-                `https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Endpoint/${existing.plivo_endpoint_id}/`,
-                {
-                  method: "POST",
-                  headers: { Authorization: plivoAuth, "Content-Type": "application/json" },
-                  body: JSON.stringify({ app_id: PLIVO_APP_ID }),
-                }
-              );
-              await supabase.from("dialer_browser_endpoints")
-                .update({ plivo_app_id: PLIVO_APP_ID } as any)
-                .eq("id", existing.id);
+            {
+              method: "POST",
+              headers: { Authorization: plivoAuth, "Content-Type": "application/json" },
+              body: JSON.stringify({ password: freshPassword, app_id: PLIVO_APP_ID }),
             }
+          );
+
+          if (updateResp.ok || updateResp.status === 202) {
+            console.log("[dialer-browser-token] Updated existing endpoint password+app_id", {
+              username: existing.plivo_username,
+              endpointId: existing.plivo_endpoint_id,
+            });
+
+            await supabase.from("dialer_browser_endpoints")
+              .update({ plivo_password: freshPassword, plivo_app_id: PLIVO_APP_ID } as any)
+              .eq("id", existing.id);
+
             return jsonRes({
               status: "ok",
               username: existing.plivo_username,
-              password: existing.plivo_password,
+              password: freshPassword,
             });
           }
-          console.warn("[dialer-browser-token] Endpoint not found on Plivo, will recreate");
+
+          // If endpoint not found on Plivo, mark inactive and recreate below
+          console.warn("[dialer-browser-token] Endpoint update failed, will recreate", updateResp.status);
           await supabase.from("dialer_browser_endpoints")
             .update({ is_active: false } as any)
             .eq("id", existing.id);
-        } catch {
-          // Network error — return existing anyway
-          return jsonRes({
-            status: "ok",
-            username: existing.plivo_username,
-            password: existing.plivo_password,
-          });
+        } catch (err) {
+          console.warn("[dialer-browser-token] Network error updating endpoint:", err);
+          // Still try to return with fresh password — Plivo may accept it
+          await supabase.from("dialer_browser_endpoints")
+            .update({ is_active: false } as any)
+            .eq("id", existing.id);
         }
-      } else {
-        return jsonRes({
-          status: "ok",
-          username: existing.plivo_username,
-          password: existing.plivo_password,
-        });
       }
     }
 
