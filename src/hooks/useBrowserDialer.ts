@@ -581,23 +581,30 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
 
   instance.client.on("onLogin", () => {
     if (!isActivePlivoClient(instance, generation)) return;
+    
+    // Read pending BEFORE updating state
+    const pending = storeState.pendingDialIntent;
+    
     setStoreState((current) => ({
       ...current,
       registered: true,
       status: current.micPermission === "granted" ? "device_ready" : "registered",
       lastError: null,
     }));
+    
     console.log("VOICE_REGISTERED");
-    logDialer("VOICE_REGISTERED", { providerStatus: "registered" });
+    logDialer("VOICE_REGISTERED", { 
+      providerStatus: "registered", 
+      hasPendingDial: !!pending, 
+      pendingNumber: pending?.phoneNumber || null 
+    });
 
     // *** CRITICAL: Check for pending dial intent and execute ***
-    const pending = storeState.pendingDialIntent;
     if (pending) {
       logDialer("CALL_PROCEEDING_AFTER_REGISTRATION", { destination: pending.phoneNumber });
-      // Use setTimeout to ensure state has settled
       setTimeout(() => {
         void executeOutboundCall(pending);
-      }, 200);
+      }, 300);
     }
   });
 
