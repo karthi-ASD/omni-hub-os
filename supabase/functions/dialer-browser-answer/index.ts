@@ -65,14 +65,8 @@ Deno.serve(async (req) => {
     const sessionId = body["X-PH-SessionId"] || body["X-Ph-Sessionid"] || body["X-PH-sessionid"] || 
                       body["X-Ph-SessionId"] || body["X-PH-SESSIONID"] || "";
 
-    console.log("[dialer-browser-answer] Received", {
-      to,
-      from,
-      callUuid,
-      direction,
-      sessionId,
-      allKeys: Object.keys(body),
-    });
+    console.log("[DIALER_XML] Incoming request body", JSON.stringify(body));
+    console.log("[DIALER_XML] Parsed fields", { to, from, callUuid, direction, sessionId, allKeys: Object.keys(body) });
 
     // Clean destination number (remove sip: prefix if present)
     let destination = to;
@@ -92,7 +86,7 @@ Deno.serve(async (req) => {
 
     // Select region-aware caller ID
     const callerId = getCallerIdForNumber(destination);
-    console.log("[dialer-browser-answer] Caller ID selected", { destination, callerId });
+    console.log("[DIALER_XML] Caller ID selected", { destination, callerId });
 
     // Update session in DB if we have a session ID
     if (sessionId) {
@@ -127,14 +121,14 @@ Deno.serve(async (req) => {
   </Dial>
 </Response>`;
 
-    console.log("[dialer-browser-answer] XML Response", xml);
+    console.log("[DIALER_XML] XML Response", xml);
 
     return new Response(xml, {
       status: 200,
       headers: { "Content-Type": "text/xml" },
     });
   } catch (err) {
-    console.error("[dialer-browser-answer] Error:", err);
+    console.error("[DIALER_XML] Error:", err);
 
     // Fallback — hangup cleanly
     const xml = `<Response><Hangup reason="rejected" /></Response>`;
