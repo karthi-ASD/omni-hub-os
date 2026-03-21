@@ -178,7 +178,8 @@ Deno.serve(async (req) => {
             is_active: true,
           } as any, { onConflict: "user_id,business_id" });
 
-          return jsonRes({ status: "ok", username, password });
+          console.log("PLIVO TOKEN GENERATED", { username, password, app_id: PLIVO_APP_ID });
+          return jsonRes({ status: "ok", username, password, app_id: PLIVO_APP_ID });
         }
       }
     } catch (listErr) {
