@@ -11963,6 +11963,53 @@ export type Database = {
           },
         ]
       }
+      dialer_browser_endpoints: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          plivo_app_id: string | null
+          plivo_endpoint_id: string | null
+          plivo_password: string
+          plivo_username: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          plivo_app_id?: string | null
+          plivo_endpoint_id?: string | null
+          plivo_password: string
+          plivo_username: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          plivo_app_id?: string | null
+          plivo_endpoint_id?: string | null
+          plivo_password?: string
+          plivo_username?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dialer_browser_endpoints_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dialer_call_events: {
         Row: {
           created_at: string
@@ -12145,6 +12192,7 @@ export type Database = {
           call_cost: number | null
           call_duration: number | null
           call_end_time: string | null
+          call_mode: string | null
           call_start_time: string | null
           call_status: string
           client_id: string | null
@@ -12171,6 +12219,7 @@ export type Database = {
           call_cost?: number | null
           call_duration?: number | null
           call_end_time?: string | null
+          call_mode?: string | null
           call_start_time?: string | null
           call_status?: string
           client_id?: string | null
@@ -12197,6 +12246,7 @@ export type Database = {
           call_cost?: number | null
           call_duration?: number | null
           call_end_time?: string | null
+          call_mode?: string | null
           call_start_time?: string | null
           call_status?: string
           client_id?: string | null
