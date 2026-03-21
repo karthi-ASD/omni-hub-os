@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     // Token validation
     if (PLIVO_WEBHOOK_SECRET && token !== PLIVO_WEBHOOK_SECRET) {
       console.warn("[dialer-answer] Unauthorized request rejected");
-      return xmlResponse("<Hangup />");
+      return hangupResponse();
     }
 
     const body = await parseTelephonyPayload(req);
