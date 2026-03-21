@@ -128,7 +128,8 @@ Deno.serve(async (req) => {
     }
 
     // Create Plivo Endpoint using fixed PLIVO_APP_ID
-    const username = `agent_${user.id.replace(/-/g, "").slice(0, 16)}`;
+    // Plivo requires alphanumeric-only usernames (no underscores)
+    const username = `agent${user.id.replace(/-/g, "").slice(0, 16)}`;
     const password = crypto.randomUUID().replace(/-/g, "").slice(0, 20);
     const alias = profile.full_name || `Agent ${user.id.slice(0, 8)}`;
 
