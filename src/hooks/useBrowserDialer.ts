@@ -551,11 +551,11 @@ async function initializeVoiceClient() {
 
     try {
       const { data, error } = await supabase.functions.invoke("dialer-browser-token");
-      if (error || data?.status === "error" || !data?.username || !data?.password) {
-        throw new Error(data?.error || error?.message || "Failed to get voice credentials (missing username or password)");
+      if (error || data?.status === "error" || !data?.username || !data?.password || !data?.app_id) {
+        throw new Error(data?.error || error?.message || "Failed to get voice credentials (missing username, password, or app_id)");
       }
-      logDialer("TOKEN_RECEIVED", { username: data.username, hasPassword: !!data.password, app_id: data.app_id });
-      console.log("[DIALER] TOKEN RECEIVED FULL", { username: data.username, passwordLength: data.password?.length, app_id: data.app_id });
+      logDialer("TOKEN_RECEIVED_FULL", { username: data.username, hasPassword: !!data.password, app_id: data.app_id });
+      console.log("TOKEN_RECEIVED_FULL", { username: data.username, hasPassword: !!data.password, app_id: data.app_id });
       instance.client.login(data.username, data.password);
     } catch (error) {
       logDialer("TOKEN_FETCH_FAILED", { reason: error instanceof Error ? error.message : String(error) });
