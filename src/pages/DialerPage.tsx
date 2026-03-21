@@ -579,11 +579,23 @@ export default function DialerPage() {
         </Card>
       </div>
 
+      {/* ===== LIVE EVENT FEED (always visible) ===== */}
+      <div style={{ background: "#000", color: "#0ff", padding: "10px", maxHeight: "150px", overflow: "auto", fontSize: "11px", fontFamily: "monospace", borderRadius: "8px", border: "1px solid #0ff" }}>
+        <div style={{ color: "#888", marginBottom: "4px" }}>LIVE EVENT FEED (last 10):</div>
+        {dialer.debugLogs.length === 0 ? (
+          <div style={{ color: "#666" }}>No events yet</div>
+        ) : (
+          dialer.debugLogs.slice(-10).map((log, i) => (
+            <div key={i}>{log.timestamp.split("T")[1]?.slice(0, 12)} — <strong>{log.event}</strong> {log.data ? JSON.stringify(log.data) : ""}</div>
+          ))
+        )}
+      </div>
+
       {/* Diagnostics & Debug Panel */}
       <Collapsible open={showDiagnostics} onOpenChange={setShowDiagnostics}>
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="sm" className="text-xs text-muted-foreground">
-            <Bug className="h-3 w-3 mr-1" /> {showDiagnostics ? "Hide" : "Show"} Diagnostics & Logs
+            <Bug className="h-3 w-3 mr-1" /> {showDiagnostics ? "Hide" : "Show"} Full Diagnostics
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent>
