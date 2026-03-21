@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "@/components/mobile/BottomNav";
 import { FloatingActionButton } from "@/components/mobile/FloatingActionButton";
 import { MobileHeader } from "@/components/mobile/MobileHeader";
@@ -43,6 +43,7 @@ const ShellLoading = () => (
 
 const AppShell = () => {
   const { profile, isAuthResolved, dashboardShell, activeBusinessName } = useAuth();
+  const location = useLocation();
   const businessId = profile?.business_id;
   const isMobile = useIsMobile();
   useActivityTracking(); // Global activity + behaviour tracking
@@ -50,6 +51,7 @@ const AppShell = () => {
   const shellTitle = dashboardShell === "client_business" || dashboardShell === "client_portal"
     ? activeBusinessName || shellInfo.title
     : shellInfo.title;
+  const hideChatWidget = location.pathname.startsWith("/sales/dialer");
 
   useEffect(() => {
     console.log("[SHELL RENDER]", {
@@ -74,7 +76,7 @@ const AppShell = () => {
         <FloatingActionButton />
         <BottomNav />
         <BroadcastPopup />
-        {businessId && (
+        {businessId && !hideChatWidget && (
           <ChatWidget
             businessId={businessId}
             title="AI Support"
@@ -113,7 +115,7 @@ const AppShell = () => {
           </div>
           <FloatingDialer />
           <BroadcastPopup />
-          {businessId && (
+          {businessId && !hideChatWidget && (
             <ChatWidget
               businessId={businessId}
               title="AI Support"

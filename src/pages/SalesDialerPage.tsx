@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, Navigate } from "react-router-dom";
 import { useDialer } from "@/hooks/useDialer";
 import { useDialerAccess } from "@/hooks/useDialerAccess";
@@ -57,6 +57,11 @@ export default function SalesDialerPage() {
   const [phoneInput, setPhoneInput] = useState(prefillPhone);
   const [notes, setNotes] = useState("");
   const [disposition, setDisposition] = useState<Disposition | "">("");
+  const [logs, setLogs] = useState<string[]>([]);
+
+  const pushLog = useCallback((message: string) => {
+    setLogs((prev) => [...prev.slice(-19), message]);
+  }, []);
 
   // Auto-start call if prefilled from leads page
   useEffect(() => {
@@ -64,6 +69,10 @@ export default function SalesDialerPage() {
       startCall(prefillPhone, prefillLeadId);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    pushLog("DIALER LOADED");
+  }, [pushLog]);
 
   // Fetch leads for quick-dial
   const { data: leads, isLoading: leadsLoading } = useQuery({
@@ -107,11 +116,13 @@ export default function SalesDialerPage() {
   const handleQuickDial = (lead: any) => {
     if (isCallActive || loading) return;
     setPhoneInput(lead.phone);
+    pushLog("CALL BUTTON CLICKED");
     startCall(lead.phone, lead.id);
   };
 
   const handleManualCall = () => {
     if (!phoneInput.trim() || isCallActive || loading) return;
+    pushLog("CALL BUTTON CLICKED");
     startCall(phoneInput.trim());
   };
 
@@ -178,6 +189,9 @@ export default function SalesDialerPage() {
                   End
                 </Button>
               )}
+            </div>
+            <div className="mt-2 rounded-md bg-destructive px-3 py-2 text-center text-sm font-bold text-destructive-foreground">
+              🚨 NEW BUILD ACTIVE 🚨
             </div>
             {isCallActive && (
               <Button
@@ -261,6 +275,15 @@ export default function SalesDialerPage() {
                     </div>
                   </div>
                 )}
+
+                <div className="mt-5 h-[200px] overflow-y-auto rounded-md bg-foreground p-3 font-mono text-xs text-background">
+                  <div className="mb-2 font-semibold">🔍 DEBUG LOG PANEL</div>
+                  {logs.length === 0 ? (
+                    <div>No logs yet</div>
+                  ) : (
+                    logs.map((log, index) => <div key={`${log}-${index}`}>{log}</div>)
+                  )}
+                </div>
               </div>
             )}
           </CardContent>
