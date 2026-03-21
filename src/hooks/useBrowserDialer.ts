@@ -800,7 +800,7 @@ async function initializeVoiceClient() {
       }, 500);
     } catch (error) {
       console.log("TOKEN_FETCH_FAILED_FULL", error);
-      logDialer("TOKEN_FETCH_FAILED", { reason: error instanceof Error ? error.message : String(error) });
+      logDialer("TOKEN_FETCH_FAILED", { error: error instanceof Error ? error.message : String(error) });
       setStoreState((current) => ({
         ...current,
         status: "failed",
