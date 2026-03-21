@@ -132,6 +132,6 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("[dialer-answer] Error:", err);
-    return xmlResponse("<Hangup />");
+    return hangupResponse();
   }
 });
