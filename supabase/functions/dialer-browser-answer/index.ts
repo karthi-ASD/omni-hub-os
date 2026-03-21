@@ -86,7 +86,8 @@ Deno.serve(async (req) => {
 
     // Select region-aware caller ID
     const callerId = getCallerIdForNumber(destination);
-    console.log("[DIALER_XML] Caller ID selected", { destination, callerId });
+    console.log("[DIALER_XML] Destination", destination);
+    console.log("[DIALER_XML] CallerId", callerId);
 
     // Update session in DB if we have a session ID
     if (sessionId) {
@@ -121,7 +122,7 @@ Deno.serve(async (req) => {
   </Dial>
 </Response>`;
 
-    console.log("[DIALER_XML] XML Response", xml);
+    console.log("[DIALER_XML] XML", xml);
 
     return new Response(xml, {
       status: 200,
