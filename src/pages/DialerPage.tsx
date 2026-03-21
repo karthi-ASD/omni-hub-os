@@ -180,7 +180,7 @@ export default function DialerPage() {
         <div>Status: <strong>{dialer.callStatus}</strong></div>
         <div>Clicked: <strong style={{ color: uiDebugState.clicked ? "#4ade80" : "#f87171" }}>{String(uiDebugState.clicked)}</strong></div>
         <div>Last Click: <strong>{uiDebugState.lastClick || "none"}</strong></div>
-        <div>Pending Dial: <strong>{dialer.pendingDial || "none"}</strong></div>
+        <div>Pending Dial: <strong>{dialer.pendingDial ? JSON.stringify(dialer.pendingDial) : "none"}</strong></div>
         <div>Last Error: <strong style={{ color: "#f87171" }}>{dialer.lastError || "none"}</strong></div>
       </div>
 
