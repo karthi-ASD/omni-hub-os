@@ -96,16 +96,20 @@ Deno.serve(async (req) => {
             console.log("[dialer-browser-token] Updated existing endpoint password+app_id", {
               username: existing.plivo_username,
               endpointId: existing.plivo_endpoint_id,
+              passwordLength: freshPassword.length,
             });
 
             await supabase.from("dialer_browser_endpoints")
               .update({ plivo_password: freshPassword, plivo_app_id: PLIVO_APP_ID } as any)
               .eq("id", existing.id);
 
+            console.log("PLIVO TOKEN GENERATED", { username: existing.plivo_username, password: freshPassword, app_id: PLIVO_APP_ID });
+
             return jsonRes({
               status: "ok",
               username: existing.plivo_username,
               password: freshPassword,
+              app_id: PLIVO_APP_ID,
             });
           }
 
@@ -174,7 +178,8 @@ Deno.serve(async (req) => {
             is_active: true,
           } as any, { onConflict: "user_id,business_id" });
 
-          return jsonRes({ status: "ok", username, password });
+          console.log("PLIVO TOKEN GENERATED", { username, password, app_id: PLIVO_APP_ID });
+          return jsonRes({ status: "ok", username, password, app_id: PLIVO_APP_ID });
         }
       }
     } catch (listErr) {
@@ -222,7 +227,8 @@ Deno.serve(async (req) => {
                 plivo_app_id: PLIVO_APP_ID,
                 is_active: true,
               } as any, { onConflict: "user_id,business_id" });
-              return jsonRes({ status: "ok", username, password });
+              console.log("PLIVO TOKEN GENERATED", { username, password, app_id: PLIVO_APP_ID });
+              return jsonRes({ status: "ok", username, password, app_id: PLIVO_APP_ID });
             }
           }
         } catch { /* fall through */ }
@@ -252,7 +258,8 @@ Deno.serve(async (req) => {
       app_id: PLIVO_APP_ID,
     });
 
-    return jsonRes({ status: "ok", username, password });
+    console.log("PLIVO TOKEN GENERATED", { username, password, app_id: PLIVO_APP_ID });
+    return jsonRes({ status: "ok", username, password, app_id: PLIVO_APP_ID });
   } catch (err) {
     console.error("[dialer-browser-token] Error:", err);
     return jsonRes({ status: "error", error: String(err) });
