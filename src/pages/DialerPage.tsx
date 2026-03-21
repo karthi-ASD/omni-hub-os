@@ -116,8 +116,12 @@ export default function DialerPage() {
   }
 
   const handleDial = async () => {
-    if (!phoneInput.trim()) return;
-    dialer.startCall(phoneInput.trim(), leadContext?.id, leadContext?.clientId);
+    console.log("🔥 HANDLE_DIAL_CLICKED", { phoneInput, leadId: leadContext?.id, registered: dialer.registered, status: dialer.callStatus });
+    if (!phoneInput.trim()) {
+      console.log("🔥 HANDLE_DIAL_BLOCKED_EMPTY_INPUT");
+      return;
+    }
+    await dialer.startCall(phoneInput.trim(), leadContext?.id, leadContext?.clientId);
   };
 
   const handleDialPadPress = (digit: string) => {

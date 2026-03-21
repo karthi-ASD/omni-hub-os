@@ -871,6 +871,7 @@ export function useBrowserDialer() {
     if (!singletonInitialized) {
       singletonInitialized = true;
       logDialer("TEST_LOG_ACTIVE");
+      logDialer("DIALER_BUILD_VERSION", { version: "pending-dial-fix-v4" });
       void initializeVoiceClient();
     }
   }, [profile?.business_id, profile?.user_id]);
