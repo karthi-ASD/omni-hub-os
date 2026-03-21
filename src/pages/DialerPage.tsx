@@ -395,19 +395,47 @@ export default function DialerPage() {
               ))}
             </div>
 
-            <div className="flex gap-2 justify-center">
+            <div className="flex gap-2 justify-center flex-wrap">
               {!isCallActive ? (
                 <>
-                  <Button
-                    className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  <button
                     onClick={handleDial}
+                    style={{
+                      backgroundColor: dialer.registered ? "#16a34a" : "#f97316",
+                      color: "white",
+                      padding: "12px 20px",
+                      fontWeight: "bold",
+                      fontSize: "16px",
+                      borderRadius: "8px",
+                      border: "2px solid black",
+                      cursor: "pointer",
+                      flex: 1,
+                    }}
                   >
-                    <Phone className="h-4 w-4 mr-2" />
-                    {dialer.loading ? "Starting..." : !dialer.registered ? "Call (will queue)" : "Call from Browser"}
-                  </Button>
-                  <Button variant="outline" className="h-12" onClick={() => dialer.startCall("+61400000000")}>
-                    TEST CALL
-                  </Button>
+                    {dialer.loading
+                      ? "🚀 STARTING CALL..."
+                      : dialer.registered
+                      ? "📞 CALL NOW"
+                      : "⚠️ WAITING REGISTRATION"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setUiDebugState({ lastClick: new Date().toISOString(), clicked: true });
+                      dialer.logEvent("TEST_CALL_BUTTON_CLICKED", { time: new Date().toISOString() });
+                      dialer.startCall("+61400000000");
+                    }}
+                    style={{
+                      backgroundColor: "#2563eb",
+                      color: "white",
+                      padding: "12px 16px",
+                      borderRadius: "8px",
+                      fontWeight: "bold",
+                      border: "2px solid black",
+                      cursor: "pointer",
+                    }}
+                  >
+                    🧪 TEST CALL
+                  </button>
                 </>
               ) : (
                 <>
