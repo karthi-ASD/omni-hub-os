@@ -173,6 +173,17 @@ export default function DialerPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
+      {/* ===== VISUAL DEBUG PANEL ===== */}
+      <div style={{ background: "#111", color: "#0f0", padding: "10px", fontSize: "12px", fontFamily: "monospace", borderRadius: "8px", border: "2px solid #0f0" }}>
+        <div>BUILD: <strong>pending-dial-fix-v5</strong></div>
+        <div>Registered: <strong style={{ color: dialer.registered ? "#4ade80" : "#f87171" }}>{String(dialer.registered)}</strong></div>
+        <div>Status: <strong>{dialer.callStatus}</strong></div>
+        <div>Clicked: <strong style={{ color: uiDebugState.clicked ? "#4ade80" : "#f87171" }}>{String(uiDebugState.clicked)}</strong></div>
+        <div>Last Click: <strong>{uiDebugState.lastClick || "none"}</strong></div>
+        <div>Pending Dial: <strong>{dialer.pendingDial || "none"}</strong></div>
+        <div>Last Error: <strong style={{ color: "#f87171" }}>{dialer.lastError || "none"}</strong></div>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
