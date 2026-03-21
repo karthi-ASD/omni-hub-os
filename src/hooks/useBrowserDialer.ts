@@ -1,4 +1,4 @@
-console.log("🔥 DIALER HOOK LOADED - VERSION 5 - PENDING DIAL FIX");
+console.log("🔥 DIALER HOOK LOADED - VERSION 6 - AUTO DIAL FIX");
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
