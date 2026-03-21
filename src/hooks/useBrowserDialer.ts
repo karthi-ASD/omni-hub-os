@@ -1,4 +1,16 @@
-console.log("🔥 DIALER HOOK LOADED - VERSION 6 - AUTO DIAL FIX");
+/**
+ * Browser-based Plivo dialer — single source of truth via useSyncExternalStore.
+ *
+ * BUILD: stability-v7
+ *
+ * Key invariants:
+ *  - Status is ONLY set from real SDK events or explicit user actions.
+ *  - On mount, stale transient states are reset to "idle".
+ *  - Tab visibility changes trigger health checks & recovery.
+ *  - Plivo events are bound once per client generation.
+ *  - Pending dial survives re-renders via module-level variable.
+ */
+
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,15 +30,18 @@ import {
   type AgentState,
 } from "@/services/dialerService";
 
+// ─── Types ───────────────────────────────────────────────────────────
 export type BrowserDialerStatus =
   | "idle"
+  | "initializing"
   | "registering"
   | "registered"
   | "requesting_permission"
   | "device_ready"
-  | "calling"
+  | "dialing"
   | "ringing"
   | "connected"
+  | "ending"
   | "ended"
   | "failed"
   | "permission_denied";
@@ -40,8 +55,8 @@ export interface DialerLogEntry {
 export interface BrowserDialerDiagnostics {
   sdkLoaded: boolean;
   registered: boolean;
-  micPermission: "unknown" | "granted" | "denied" | "prompt";
-  callMode: "browser" | "phone_callback";
+  micPermission: MicPermissionState;
+  callMode: "browser";
   currentStatus: BrowserDialerStatus;
   destinationNumber: string;
   selectedCallerId: string;
@@ -53,6 +68,7 @@ export interface BrowserDialerDiagnostics {
   lastError: string | null;
   lastEvent: string | null;
   pendingDialNumber: string | null;
+  clientHealthy: boolean;
 }
 
 export interface CallAttempt {
@@ -103,6 +119,7 @@ interface BrowserDialerStoreState {
   callAttempts: CallAttempt[];
   lastCalledNumber: string;
   recentNumbers: string[];
+  lastActionAt: string | null;
 }
 
 const INITIAL_STATE: BrowserDialerStoreState = {
@@ -129,13 +146,15 @@ const INITIAL_STATE: BrowserDialerStoreState = {
   callAttempts: [],
   lastCalledNumber: "",
   recentNumbers: [],
+  lastActionAt: null,
 };
 
+const BUILD_VERSION = "stability-v7";
 type DialerIdentity = { businessId: string; userId: string } | null;
 
-// ─── Global singletons ───
+// ─── Global singletons ──────────────────────────────────────────────
 const listeners = new Set<() => void>();
-let storeState: BrowserDialerStoreState = INITIAL_STATE;
+let storeState: BrowserDialerStoreState = { ...INITIAL_STATE };
 let timerRef: ReturnType<typeof setInterval> | null = null;
 let sessionUnsubRef: (() => void) | null = null;
 let sessionSubId: string | null = null;
@@ -149,10 +168,10 @@ let permissionListenerBound = false;
 let visibilityListenerBound = false;
 let globalErrorsBound = false;
 let authIdentity: DialerIdentity = null;
-// Module-level pending dial — survives state transitions reliably
 let modulePendingDial: PendingDialIntent | null = null;
+let recoveryInProgress = false;
 
-// ─── LOG RING BUFFER (last 50 entries) ───
+// ─── Log ring buffer ────────────────────────────────────────────────
 const MAX_LOG_ENTRIES = 50;
 const logBuffer: DialerLogEntry[] = [];
 const logListeners = new Set<() => void>();
@@ -162,102 +181,77 @@ function emitLogChange() {
   logSnapshot = [...logBuffer];
   logListeners.forEach((l) => l());
 }
-
 function subscribeToLogs(listener: () => void) {
   logListeners.add(listener);
   return () => logListeners.delete(listener);
 }
-
 function getLogSnapshot() {
   return logSnapshot;
 }
 
-// ─── CORE LOGGER ───
 function logDialer(event: string, data?: Record<string, unknown>) {
   const timestamp = new Date().toISOString();
   console.log(`[DIALER][${timestamp}] ${event}`, data || "");
-
   logBuffer.push({ timestamp, event, data });
   if (logBuffer.length > MAX_LOG_ENTRIES) logBuffer.shift();
   emitLogChange();
-
-  setStoreState((current) => ({
-    ...current,
+  setStoreState((c) => ({
+    ...c,
     lastEvent: event,
-    latestProviderStatus: data?.providerStatus ? String(data.providerStatus) : current.latestProviderStatus,
-    latestBrowserMediaStatus: data?.mediaStatus ? String(data.mediaStatus) : current.latestBrowserMediaStatus,
+    latestProviderStatus: data?.providerStatus ? String(data.providerStatus) : c.latestProviderStatus,
+    latestBrowserMediaStatus: data?.mediaStatus ? String(data.mediaStatus) : c.latestBrowserMediaStatus,
   }));
 }
 
-// ─── GLOBAL ERROR HANDLERS ───
+// ─── Global error handlers ──────────────────────────────────────────
 function bindGlobalErrorHandlers() {
   if (globalErrorsBound || typeof window === "undefined") return;
   globalErrorsBound = true;
-  window.addEventListener("error", (e) => {
-    logDialer("GLOBAL_ERROR", { message: e.message, filename: e.filename, lineno: e.lineno });
-  });
-  window.addEventListener("unhandledrejection", (e) => {
-    logDialer("PROMISE_REJECTION", { reason: String(e.reason) });
-  });
+  window.addEventListener("error", (e) => logDialer("GLOBAL_ERROR", { message: e.message, filename: e.filename }));
+  window.addEventListener("unhandledrejection", (e) => logDialer("PROMISE_REJECTION", { reason: String(e.reason) }));
 }
 
-// ─── Store plumbing ───
+// ─── Store plumbing ─────────────────────────────────────────────────
 function subscribe(listener: () => void) {
   listeners.add(listener);
   return () => listeners.delete(listener);
 }
-
 function emitChange() {
-  listeners.forEach((listener) => listener());
+  listeners.forEach((l) => l());
 }
-
 function getSnapshot() {
   return storeState;
 }
 
 function transitionStatus(nextStatus: BrowserDialerStatus) {
-  const previousStatus = storeState.status;
-
-  if (previousStatus !== "connected" && nextStatus === "connected" && !timerRef) {
+  const prev = storeState.status;
+  // Start timer on connected
+  if (prev !== "connected" && nextStatus === "connected" && !timerRef) {
     timerRef = setInterval(() => {
       storeState = { ...storeState, callTimer: storeState.callTimer + 1 };
       emitChange();
     }, 1000);
   }
-
-  if (previousStatus === "connected" && nextStatus !== "connected" && timerRef) {
+  // Stop timer leaving connected
+  if (prev === "connected" && nextStatus !== "connected" && timerRef) {
     clearInterval(timerRef);
     timerRef = null;
   }
-
+  // Reset timer on terminal states
   if (["idle", "ended", "failed"].includes(nextStatus)) {
-    if (timerRef) {
-      clearInterval(timerRef);
-      timerRef = null;
-    }
+    if (timerRef) { clearInterval(timerRef); timerRef = null; }
     storeState = { ...storeState, callTimer: 0 };
   }
 }
 
-function setStoreState(
-  updater:
-    | Partial<BrowserDialerStoreState>
-    | ((current: BrowserDialerStoreState) => BrowserDialerStoreState),
-) {
-  const nextState =
-    typeof updater === "function"
-      ? updater(storeState)
-      : { ...storeState, ...updater };
-
-  if (nextState.status !== storeState.status) {
-    transitionStatus(nextState.status);
-  }
-
+function setStoreState(updater: Partial<BrowserDialerStoreState> | ((c: BrowserDialerStoreState) => BrowserDialerStoreState)) {
+  const nextState = typeof updater === "function" ? updater(storeState) : { ...storeState, ...updater };
+  if (nextState.status !== storeState.status) transitionStatus(nextState.status);
   storeState = nextState;
   emitChange();
 }
 
-// ─── Helpers ───
+// ─── Helpers ────────────────────────────────────────────────────────
 function formatToE164(phone: string): string {
   const digits = phone.replace(/\D/g, "");
   if (phone.trim().startsWith("+") && digits.length >= 8) return `+${digits}`;
@@ -281,35 +275,31 @@ function getCallerIdForNumber(number: string): string {
   return "Default caller ID";
 }
 
-function getVoiceRegistrationState(state: BrowserDialerStoreState): BrowserDialerDiagnostics["voiceClientRegistration"] {
-  if (state.registered) return "ready";
-  if (state.status === "registering") return "registering";
-  if (state.status === "failed") return "failed";
-  return "offline";
+function isClientHealthy(): boolean {
+  try {
+    return !!(plivoInstanceRef?.client);
+  } catch { return false; }
 }
 
 function addCallAttempt(attempt: CallAttempt) {
-  setStoreState((current) => ({
-    ...current,
-    callAttempts: [attempt, ...current.callAttempts].slice(0, 50),
-  }));
+  setStoreState((c) => ({ ...c, callAttempts: [attempt, ...c.callAttempts].slice(0, 50) }));
 }
 
 function updateCurrentAttempt(updates: Partial<CallAttempt>) {
-  setStoreState((current) => {
-    if (current.callAttempts.length === 0) return current;
-    const [latest, ...rest] = current.callAttempts;
-    return { ...current, callAttempts: [{ ...latest, ...updates }, ...rest] };
+  setStoreState((c) => {
+    if (c.callAttempts.length === 0) return c;
+    const [latest, ...rest] = c.callAttempts;
+    return { ...c, callAttempts: [{ ...latest, ...updates }, ...rest] };
   });
 }
 
-// ─── Audio Context ───
+// ─── Audio Context ──────────────────────────────────────────────────
 function getAudioContext() {
   if (typeof window === "undefined") return null;
   if (!audioContextRef) {
-    const AudioContextCtor = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AudioContextCtor) return null;
-    audioContextRef = new AudioContextCtor();
+    const Ctor = window.AudioContext || (window as any).webkitAudioContext;
+    if (!Ctor) return null;
+    audioContextRef = new Ctor();
   }
   return audioContextRef;
 }
@@ -318,12 +308,10 @@ async function resumeAudioContext() {
   const ctx = getAudioContext();
   if (!ctx) {
     logDialer("AUDIO_RESUME_FAILED", { reason: "no_audio_context" });
-    setStoreState((current) => ({ ...current, latestBrowserMediaStatus: "audio_context_unavailable" }));
     return null;
   }
-  logDialer("AUDIO_CONTEXT_STATE", { state: ctx.state });
   if (ctx.state !== "running") {
-    logDialer("AUDIO_RESUME_ATTEMPT");
+    logDialer("AUDIO_RESUME_ATTEMPT", { state: ctx.state });
     try {
       await ctx.resume();
       logDialer("AUDIO_RESUME_SUCCESS", { state: ctx.state });
@@ -331,119 +319,159 @@ async function resumeAudioContext() {
       logDialer("AUDIO_RESUME_FAILED", { reason: String(err) });
     }
   }
-  setStoreState((current) => ({ ...current, latestBrowserMediaStatus: `audio_context_${ctx.state}` }));
+  setStoreState((c) => ({ ...c, latestBrowserMediaStatus: `audio_context_${ctx.state}` }));
   return ctx;
 }
 
-// ─── Ringback ───
+// ─── Ringback ───────────────────────────────────────────────────────
 async function playRingback() {
   try {
     if (ringbackRef) return;
     const ctx = await resumeAudioContext();
     if (!ctx) return;
-    logDialer("RINGBACK_START");
     const gain = ctx.createGain();
     gain.gain.value = 0;
     gain.connect(ctx.destination);
-    const osc1 = ctx.createOscillator();
-    osc1.frequency.value = 440;
-    osc1.type = "sine";
-    osc1.connect(gain);
-    osc1.start();
-    const osc2 = ctx.createOscillator();
-    osc2.frequency.value = 480;
-    osc2.type = "sine";
-    osc2.connect(gain);
-    osc2.start();
+    const osc1 = ctx.createOscillator(); osc1.frequency.value = 440; osc1.type = "sine"; osc1.connect(gain); osc1.start();
+    const osc2 = ctx.createOscillator(); osc2.frequency.value = 480; osc2.type = "sine"; osc2.connect(gain); osc2.start();
     let time = ctx.currentTime;
-    for (let i = 0; i < 20; i += 1) {
-      gain.gain.setValueAtTime(0.04, time);
-      time += 2;
-      gain.gain.setValueAtTime(0, time);
-      time += 4;
-    }
+    for (let i = 0; i < 20; i++) { gain.gain.setValueAtTime(0.04, time); time += 2; gain.gain.setValueAtTime(0, time); time += 4; }
     ringbackRef = { ctx, osc1, osc2, gain };
-  } catch (error) {
-    logDialer("RINGBACK_START_FAILED", { reason: error instanceof Error ? error.message : String(error) });
+  } catch (e) {
+    logDialer("RINGBACK_START_FAILED", { reason: e instanceof Error ? e.message : String(e) });
   }
 }
 
 function stopRingback() {
   if (!ringbackRef) return;
-  logDialer("RINGBACK_STOP");
   try { ringbackRef.gain.disconnect(); } catch {}
   try { ringbackRef.osc1.stop(); } catch {}
   try { ringbackRef.osc2.stop(); } catch {}
   ringbackRef = null;
 }
 
-// ─── Agent state ───
+// ─── Agent state helper ─────────────────────────────────────────────
 async function setAgentAvailability(state: AgentState) {
   if (!authIdentity) return;
   await updateAgentState(authIdentity.businessId, authIdentity.userId, state);
-  setStoreState((current) => ({ ...current, agentState: state }));
+  setStoreState((c) => ({ ...c, agentState: state }));
 }
 
-// ─── Session subscription ───
+// ─── Session subscription ───────────────────────────────────────────
 function bindSession(sessionId: string) {
   if (sessionSubId === sessionId) return;
   sessionUnsubRef?.();
   sessionUnsubRef = null;
   sessionSubId = sessionId;
-
   logDialer("SESSION_SUBSCRIBED", { sessionId });
-
   sessionUnsubRef = subscribeToSession(sessionId, (updated) => {
     const dbStatus = updated.call_status;
-    setStoreState((current) => ({ ...current, session: updated }));
+    setStoreState((c) => ({ ...c, session: updated }));
     logDialer("SESSION_SUBSCRIPTION_EVENT", { sessionId, dbStatus });
-
     if (dbStatus === "connected") {
       stopRingback();
-      setStoreState((current) => ({ ...current, status: "connected" }));
+      setStoreState((c) => ({ ...c, status: "connected" }));
       updateCurrentAttempt({ status: "connected", answeredAt: new Date().toISOString() });
-      return;
-    }
-    if (dbStatus === "ended") {
+    } else if (dbStatus === "ended") {
       stopRingback();
-      setStoreState((current) => ({ ...current, status: "ended" }));
+      setStoreState((c) => ({ ...c, status: "ended" }));
       updateCurrentAttempt({ status: "ended", endedAt: new Date().toISOString() });
       void setAgentAvailability("available");
-      return;
-    }
-    if (["failed", "busy", "no-answer"].includes(dbStatus)) {
+    } else if (["failed", "busy", "no-answer"].includes(dbStatus)) {
       stopRingback();
-      setStoreState((current) => ({ ...current, status: "failed" }));
+      setStoreState((c) => ({ ...c, status: "failed" }));
       updateCurrentAttempt({ status: dbStatus, failureReason: dbStatus, endedAt: new Date().toISOString() });
       void setAgentAvailability("available");
     }
   });
 }
 
-// ─── Permission listener ───
+// ─── Permission listener ────────────────────────────────────────────
 function bindPermissionListener() {
   if (permissionListenerBound || !navigator.permissions) return;
   navigator.permissions.query({ name: "microphone" as PermissionName }).then((result) => {
     permissionListenerBound = true;
-    setStoreState((current) => ({ ...current, micPermission: result.state as MicPermissionState }));
+    setStoreState((c) => ({ ...c, micPermission: result.state as MicPermissionState }));
     result.addEventListener("change", () => {
       logDialer("MIC_PERMISSION_CHANGE", { state: result.state });
-      setStoreState((current) => ({ ...current, micPermission: result.state as MicPermissionState }));
+      setStoreState((c) => ({ ...c, micPermission: result.state as MicPermissionState }));
     });
   }).catch(() => {});
 }
 
-// ─── Visibility recovery ───
+// ─── Visibility recovery (Tab switch fix) ───────────────────────────
 function bindVisibilityRecovery() {
   if (visibilityListenerBound || typeof document === "undefined") return;
-  document.addEventListener("visibilitychange", () => {
-    logDialer("TAB_VISIBILITY_CHANGE", { visibilityState: document.visibilityState });
-    if (document.visibilityState === "visible") void resumeAudioContext();
-  });
+  document.addEventListener("visibilitychange", handleVisibilityChange);
   visibilityListenerBound = true;
 }
 
-// ─── Execute the actual SDK call ───
+function handleVisibilityChange() {
+  const visible = document.visibilityState === "visible";
+  logDialer("TAB_VISIBILITY_CHANGE", { visibilityState: document.visibilityState });
+
+  if (!visible) return; // Nothing to do when hiding
+
+  // Resume audio
+  void resumeAudioContext();
+
+  // Check client health
+  const healthy = isClientHealthy();
+  const currentStatus = storeState.status;
+  const isTransient = ["dialing", "ringing", "connected"].includes(currentStatus);
+
+  logDialer("TAB_RESUME_HEALTH_CHECK", {
+    healthy,
+    registered: storeState.registered,
+    currentStatus,
+    hasClient: !!plivoInstanceRef?.client,
+  });
+
+  // If client is dead and we're not in an active call, try recovery
+  if (!healthy && !isTransient && !recoveryInProgress) {
+    logDialer("DIALER_STATE_RECOVERY_START", { reason: "client_missing_on_tab_resume" });
+    recoveryInProgress = true;
+    sdkInitStarted = false;
+    singletonInitialized = false;
+    setStoreState((c) => ({ ...c, registered: false, status: "idle", sdkReady: false }));
+    void initializeVoiceClient().finally(() => {
+      recoveryInProgress = false;
+      logDialer("DIALER_STATE_RECOVERY_DONE");
+    });
+    return;
+  }
+
+  // If status is stale transient but there's no active call object, reset
+  if (isTransient && !healthy) {
+    logDialer("STALE_STATUS_RESET", { was: currentStatus, reason: "no_active_client_on_resume" });
+    stopRingback();
+    setStoreState((c) => ({
+      ...c,
+      status: c.registered ? "device_ready" : "idle",
+      dialLock: false,
+      loading: false,
+    }));
+  }
+}
+
+// ─── Reset stale state on mount ─────────────────────────────────────
+function sanitizeStaleState() {
+  const s = storeState;
+  const isTransient = ["dialing", "ringing", "connected", "ending"].includes(s.status);
+  if (isTransient && !isClientHealthy()) {
+    logDialer("MOUNT_STALE_STATE_RESET", { was: s.status });
+    stopRingback();
+    setStoreState((c) => ({
+      ...c,
+      status: c.registered ? "device_ready" : "idle",
+      dialLock: false,
+      loading: false,
+      session: null,
+    }));
+  }
+}
+
+// ─── Execute outbound call ──────────────────────────────────────────
 async function executeOutboundCall(intent: PendingDialIntent) {
   logDialer("EXECUTE_OUTBOUND_CALL_ENTERED", { raw: intent.phoneNumber });
 
@@ -451,13 +479,12 @@ async function executeOutboundCall(intent: PendingDialIntent) {
     logDialer("EXECUTE_CALL_BLOCKED", { reason: "no_auth_or_client" });
     return;
   }
-
   if (storeState.dialLock) {
     logDialer("EXECUTE_CALL_BLOCKED", { reason: "dial_lock_active" });
     return;
   }
 
-  setStoreState((current) => ({ ...current, dialLock: true, loading: true, lastError: null, pendingDialIntent: null }));
+  setStoreState((c) => ({ ...c, dialLock: true, loading: true, lastError: null, pendingDialIntent: null, lastActionAt: new Date().toISOString() }));
 
   try {
     await resumeAudioContext();
@@ -471,17 +498,10 @@ async function executeOutboundCall(intent: PendingDialIntent) {
     const normalizedPhone = formatToE164(resolvedPhone);
     logDialer("DIAL_TARGET_NORMALIZED", { raw: resolvedPhone, normalized: normalizedPhone });
 
-    if (!normalizedPhone) {
-      logDialer("CALL_BLOCKED_NO_DESTINATION");
-      setStoreState((current) => ({ ...current, status: "failed", loading: false, dialLock: false, lastError: "No destination number provided" }));
-      toast.error("No destination number provided.");
-      return;
-    }
-
-    if (!isValidE164(normalizedPhone)) {
-      logDialer("CALL_BLOCKED_INVALID_NUMBER", { destinationNumber: normalizedPhone });
-      logDialer("INVALID_DESTINATION_NUMBER", { destinationNumber: normalizedPhone });
-      setStoreState((current) => ({ ...current, status: "failed", loading: false, dialLock: false, lastError: `Invalid number: ${normalizedPhone}` }));
+    if (!normalizedPhone || !isValidE164(normalizedPhone)) {
+      const reason = !normalizedPhone ? "No destination" : `Invalid: ${normalizedPhone}`;
+      logDialer("CALL_BLOCKED_INVALID_NUMBER", { reason });
+      setStoreState((c) => ({ ...c, status: "failed", loading: false, dialLock: false, lastError: reason }));
       toast.error("Please enter a valid phone number in E.164 format (e.g. +61412345678).");
       return;
     }
@@ -489,36 +509,28 @@ async function executeOutboundCall(intent: PendingDialIntent) {
     const selectedCallerId = getCallerIdForNumber(normalizedPhone);
     logDialer("CALLER_ID_SELECTED", { callerId: selectedCallerId, destination: normalizedPhone });
 
-    // Create call attempt record
-    const attemptId = crypto.randomUUID();
     addCallAttempt({
-      id: attemptId,
+      id: crypto.randomUUID(),
       destinationRaw: intent.phoneNumber,
       destinationNormalized: normalizedPhone,
       startedAt: new Date().toISOString(),
-      ringingAt: null,
-      answeredAt: null,
-      endedAt: null,
-      durationSeconds: 0,
-      status: "calling",
-      failureReason: null,
-      providerStatus: null,
-      leadId: intent.leadId || null,
-      contactId: intent.clientId || null,
+      ringingAt: null, answeredAt: null, endedAt: null,
+      durationSeconds: 0, status: "dialing",
+      failureReason: null, providerStatus: null,
+      leadId: intent.leadId || null, contactId: intent.clientId || null,
     });
 
-    // Add to recent numbers
-    setStoreState((current) => ({
-      ...current,
+    // Status = dialing (NOT ringing — ringing only from SDK event)
+    setStoreState((c) => ({
+      ...c,
       destinationNumber: normalizedPhone,
       selectedCallerId,
-      status: "calling",
+      status: "dialing",
       isMuted: false,
       callTimer: 0,
       lastCalledNumber: normalizedPhone,
-      recentNumbers: [normalizedPhone, ...current.recentNumbers.filter((n) => n !== normalizedPhone)].slice(0, 10),
-      latestProviderStatus: "calling",
-      latestBrowserMediaStatus: "audio_context_ready",
+      recentNumbers: [normalizedPhone, ...c.recentNumbers.filter((n) => n !== normalizedPhone)].slice(0, 10),
+      latestProviderStatus: "dialing",
     }));
 
     const sess = await createDialerSession({
@@ -529,42 +541,37 @@ async function executeOutboundCall(intent: PendingDialIntent) {
       clientId: intent.clientId,
     });
 
-    if (!sess) {
-      throw new Error("Failed to create call session");
-    }
+    if (!sess) throw new Error("Failed to create call session");
 
     logDialer("SESSION_CREATED", { sessionId: sess.id });
     await supabase.from("dialer_sessions").update({ call_mode: "browser", call_status: "initiating" } as never).eq("id", sess.id);
 
     bindSession(sess.id);
-    setStoreState((current) => ({ ...current, session: sess }));
+    setStoreState((c) => ({ ...c, session: sess }));
     await setAgentAvailability("on_call");
 
     logDialer("CALL_DIAL_START", { destinationNumber: normalizedPhone, sessionId: sess.id });
-    logDialer("PLIVO_CALL_INVOKING_NOW", { destinationNumber: normalizedPhone, format: "object" });
 
-    plivoInstanceRef.client.call(normalizedPhone, {
-      "X-PH-SessionId": sess.id,
-    });
+    plivoInstanceRef.client.call(normalizedPhone, { "X-PH-SessionId": sess.id });
 
     logDialer("PLIVO_CALL_INVOKED", { destinationNumber: normalizedPhone });
     await insertCallEvent(sess.id, "browser_call_initiated", { destination: normalizedPhone, call_mode: "browser" });
     toast.info(`Calling ${normalizedPhone}`);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Call initiation failed";
-    logDialer("CALL_START_ERROR", { reason: message, destination: intent.phoneNumber, currentStatus: storeState.status });
-    setStoreState((current) => ({ ...current, status: "failed", lastError: message, latestProviderStatus: "call_start_failed" }));
+    logDialer("CALL_START_ERROR", { reason: message });
+    setStoreState((c) => ({ ...c, status: "failed", lastError: message, latestProviderStatus: "call_start_failed" }));
     updateCurrentAttempt({ status: "failed", failureReason: message, endedAt: new Date().toISOString() });
     await setAgentAvailability("available");
     toast.error(message);
   } finally {
-    setStoreState((current) => ({ ...current, loading: false, dialLock: false }));
+    setStoreState((c) => ({ ...c, loading: false, dialLock: false }));
   }
 }
 
-// ─── Plivo event binding ───
-function isActivePlivoClient(instance: PlivoBrowserSDK, generation: number) {
-  return plivoInstanceRef === instance && plivoClientGeneration === generation;
+// ─── Plivo event binding ────────────────────────────────────────────
+function isActivePlivoClient(instance: PlivoBrowserSDK, gen: number) {
+  return plivoInstanceRef === instance && plivoClientGeneration === gen;
 }
 
 function destroyPlivoClient() {
@@ -575,150 +582,124 @@ function destroyPlivoClient() {
 }
 
 function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
+  const guard = () => isActivePlivoClient(instance, generation);
+
   instance.client.on("onWebrtcNotSupported", () => {
-    if (!isActivePlivoClient(instance, generation)) return;
-    setStoreState((current) => ({
-      ...current,
-      status: "failed",
-      lastError: "Your browser does not support WebRTC calling",
-      latestBrowserMediaStatus: "webrtc_not_supported",
-    }));
-    logDialer("PLIVO_CLIENT_INIT_FAILED", { reason: "webrtc_not_supported" });
+    if (!guard()) return;
+    setStoreState((c) => ({ ...c, status: "failed", lastError: "Browser does not support WebRTC" }));
+    logDialer("PLIVO_WEBRTC_NOT_SUPPORTED");
   });
 
   instance.client.on("onLogin", () => {
-    if (!isActivePlivoClient(instance, generation)) return;
-    
-    // Read pending from BOTH sources for maximum reliability
-    const pendingFromState = storeState.pendingDialIntent;
-    const pendingFromModule = modulePendingDial;
-    const pending = pendingFromModule || pendingFromState;
-    
-    // Clear module-level pending immediately
+    if (!guard()) return;
+    const pending = modulePendingDial || storeState.pendingDialIntent;
     modulePendingDial = null;
-    
-    setStoreState((current) => ({
-      ...current,
+
+    setStoreState((c) => ({
+      ...c,
       registered: true,
-      status: current.micPermission === "granted" ? "device_ready" : "registered",
+      status: c.micPermission === "granted" ? "device_ready" : "registered",
       lastError: null,
       pendingDialIntent: null,
     }));
-    
-    console.log("VOICE_REGISTERED");
-    logDialer("VOICE_REGISTERED", { 
-      providerStatus: "registered", 
+
+    logDialer("VOICE_REGISTERED", {
+      providerStatus: "registered",
       hasPendingDial: !!pending,
-      pendingFromState: !!pendingFromState,
-      pendingFromModule: !!pendingFromModule,
-      pendingNumber: pending?.phoneNumber || null 
+      pendingNumber: pending?.phoneNumber || null,
     });
 
-    // *** CRITICAL: Auto-dial after registration ***
     if (pending) {
       logDialer("AUTO_DIAL_AFTER_REGISTER", { destination: pending.phoneNumber });
-      setTimeout(() => {
-        void executeOutboundCall(pending);
-      }, 300);
+      setTimeout(() => void executeOutboundCall(pending), 300);
     }
   });
 
   instance.client.on("onLoginFailed", (cause: string) => {
-    if (!isActivePlivoClient(instance, generation)) return;
-    setStoreState((current) => ({
-      ...current,
+    if (!guard()) return;
+    setStoreState((c) => ({
+      ...c,
       registered: false,
       status: "failed",
       lastError: `Voice registration failed: ${cause}`,
       latestProviderStatus: "registration_failed",
-      pendingDialIntent: null, // Clear pending intent on registration failure
+      pendingDialIntent: null,
     }));
-    console.log("VOICE_REGISTRATION_FAILED_FULL", cause);
-    logDialer("VOICE_REGISTRATION_FAILED_FULL", { reason: cause, providerStatus: cause });
+    logDialer("VOICE_REGISTRATION_FAILED", { reason: cause });
   });
 
-  instance.client.on("onConnectionChange", (connection) => {
-    if (!isActivePlivoClient(instance, generation)) return;
-    logDialer("PLIVO_CONNECTION_CHANGE", { state: connection?.state || "unknown", providerStatus: connection?.state || "unknown" });
+  instance.client.on("onConnectionChange", (conn) => {
+    if (!guard()) return;
+    logDialer("PLIVO_CONNECTION_CHANGE", { state: conn?.state || "unknown" });
   });
 
   instance.client.on("onMediaPermission", (result: { status: boolean }) => {
-    if (!isActivePlivoClient(instance, generation)) return;
-    const mediaStatus = result.status ? "media_permission_granted" : "media_permission_denied";
-    logDialer(result.status ? "MIC_PERMISSION_GRANTED" : "MIC_PERMISSION_DENIED", { mediaStatus });
-    setStoreState((current) => ({
-      ...current,
+    if (!guard()) return;
+    logDialer(result.status ? "MIC_PERMISSION_GRANTED" : "MIC_PERMISSION_DENIED");
+    setStoreState((c) => ({
+      ...c,
       micPermission: result.status ? "granted" : "denied",
       status: result.status
-        ? current.registered && ["registered", "requesting_permission", "permission_denied"].includes(current.status)
-          ? "device_ready"
-          : current.status
+        ? (c.registered && ["registered", "requesting_permission", "permission_denied"].includes(c.status) ? "device_ready" : c.status)
         : "permission_denied",
-      lastError: result.status ? null : "Microphone permission denied. Please allow microphone access in your browser settings.",
-      latestBrowserMediaStatus: mediaStatus,
+      lastError: result.status ? null : "Microphone permission denied.",
     }));
   });
 
+  // *** RINGING: Only set from this real SDK event ***
   instance.client.on("onCallRemoteRinging", async (callInfo: Plivo.CallInfo) => {
-    if (!isActivePlivoClient(instance, generation)) return;
-    logDialer("CALL_REMOTE_RINGING", { callInfoState: callInfo.state || "ringing", providerStatus: callInfo.state || "ringing" });
-    setStoreState((current) => ({ ...current, status: "ringing", latestProviderStatus: callInfo.state || "ringing" }));
+    if (!guard()) return;
+    logDialer("CALL_REMOTE_RINGING", { callInfoState: callInfo.state || "ringing" });
+    setStoreState((c) => ({ ...c, status: "ringing", latestProviderStatus: "ringing" }));
     updateCurrentAttempt({ status: "ringing", ringingAt: new Date().toISOString(), providerStatus: "ringing" });
     await playRingback();
   });
 
   instance.client.on("onCallAnswered", async (callInfo: Plivo.CallInfo) => {
-    if (!isActivePlivoClient(instance, generation)) return;
-    logDialer("CALL_ANSWERED", { callInfoState: callInfo.state || "answered", providerStatus: callInfo.state || "answered" });
+    if (!guard()) return;
+    logDialer("CALL_ANSWERED", { callInfoState: callInfo.state || "answered" });
     stopRingback();
     await resumeAudioContext();
-    setStoreState((current) => ({
-      ...current,
+    setStoreState((c) => ({
+      ...c,
       status: "connected",
-      latestProviderStatus: callInfo.state || "answered",
+      latestProviderStatus: "answered",
       latestBrowserMediaStatus: "media_connected",
     }));
-    updateCurrentAttempt({ status: "connected", answeredAt: new Date().toISOString(), providerStatus: "answered" });
-    logDialer("CALL_CONNECTED", { mediaStatus: "media_connected" });
+    updateCurrentAttempt({ status: "connected", answeredAt: new Date().toISOString() });
+    logDialer("CALL_CONNECTED");
     void setAgentAvailability("on_call");
   });
 
   instance.client.on("onCallTerminated", (callInfo: Plivo.CallInfo) => {
-    if (!isActivePlivoClient(instance, generation)) return;
-    logDialer("CALL_TERMINATED", { callInfoState: callInfo.state || "terminated", providerStatus: callInfo.state || "terminated" });
+    if (!guard()) return;
+    logDialer("CALL_TERMINATED", { callInfoState: callInfo.state || "terminated" });
     stopRingback();
-    const endedAt = new Date().toISOString();
-    setStoreState((current) => ({
-      ...current,
-      status: "ended",
-      latestProviderStatus: callInfo.state || "terminated",
-      latestBrowserMediaStatus: "media_disconnected",
-    }));
-    updateCurrentAttempt({ status: "ended", endedAt, providerStatus: "terminated" });
+    setStoreState((c) => ({ ...c, status: "ended", latestProviderStatus: "terminated" }));
+    updateCurrentAttempt({ status: "ended", endedAt: new Date().toISOString() });
     void setAgentAvailability("available");
   });
 
   instance.client.on("onCallFailed", (cause: string) => {
-    if (!isActivePlivoClient(instance, generation)) return;
-    logDialer("CALL_FAILED", { reason: cause, providerStatus: cause, destination: storeState.destinationNumber, currentStatus: storeState.status });
+    if (!guard()) return;
+    logDialer("CALL_FAILED", { reason: cause, destination: storeState.destinationNumber });
     stopRingback();
-    setStoreState((current) => ({
-      ...current,
+    setStoreState((c) => ({
+      ...c,
       status: "failed",
       lastError: `Call failed: ${cause}`,
       latestProviderStatus: cause,
-      latestBrowserMediaStatus: "media_failed",
     }));
-    updateCurrentAttempt({ status: "failed", failureReason: cause, endedAt: new Date().toISOString(), providerStatus: cause });
+    updateCurrentAttempt({ status: "failed", failureReason: cause, endedAt: new Date().toISOString() });
     void setAgentAvailability("available");
   });
 
-  // Bind extra raw events for diagnostics
+  // Extra raw events for diagnostics
   try {
-    for (const evt of ["onCalling", "onMediaConnected", "onCallRinging", "onIncomingCall", "onIncomingCallCanceled", "onIncomingCallIgnored"]) {
+    for (const evt of ["onCalling", "onMediaConnected", "onCallRinging", "onIncomingCall", "onIncomingCallCanceled"]) {
       try {
         instance.client.on(evt, (...args: unknown[]) => {
-          if (!isActivePlivoClient(instance, generation)) return;
+          if (!guard()) return;
           logDialer("PLIVO_RAW_EVENT", { eventName: evt, args: args.length > 0 ? args : undefined });
         });
       } catch {}
@@ -726,7 +707,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   } catch {}
 }
 
-// ─── SDK init ───
+// ─── SDK init ───────────────────────────────────────────────────────
 async function initializeVoiceClient() {
   if (sdkInitStarted || typeof window === "undefined") return;
   sdkInitStarted = true;
@@ -734,49 +715,45 @@ async function initializeVoiceClient() {
   bindVisibilityRecovery();
   bindGlobalErrorHandlers();
 
+  logDialer("DIALER_BUILD_VERSION", { version: BUILD_VERSION });
   logDialer("PLIVO_CLIENT_INIT_START");
+  setStoreState((c) => ({ ...c, status: "initializing" }));
 
   const createClient = async () => {
     if (!window.Plivo) {
       sdkInitStarted = false;
       logDialer("PLIVO_CLIENT_INIT_FAILED", { reason: "SDK_not_loaded" });
-      setStoreState((current) => ({
-        ...current,
-        status: "failed",
-        lastError: "Voice SDK failed to load. Check your internet connection.",
-      }));
+      setStoreState((c) => ({ ...c, status: "failed", lastError: "Voice SDK failed to load." }));
       return;
     }
 
     destroyPlivoClient();
-
     const generation = ++plivoClientGeneration;
     const instance = new window.Plivo({ debug: "INFO", permOnClick: true });
     plivoInstanceRef = instance;
     bindPlivoEvents(instance, generation);
 
-    setStoreState((current) => ({ ...current, sdkReady: true, status: "registering" }));
+    setStoreState((c) => ({ ...c, sdkReady: true, status: "registering" }));
     logDialer("PLIVO_CLIENT_INIT_SUCCESS");
-    logDialer("VOICE_REGISTERING");
+
+    // Early mic permission
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((t) => t.stop());
+      logDialer("EARLY_MIC_PERMISSION_GRANTED");
+      setStoreState((c) => ({ ...c, micPermission: "granted" }));
+    } catch (micErr) {
+      logDialer("EARLY_MIC_PERMISSION_FAILED", { reason: String(micErr) });
+    }
+
+    await resumeAudioContext();
 
     try {
-      // Request mic permission early
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach((t) => t.stop());
-        logDialer("EARLY_MIC_PERMISSION_GRANTED");
-        setStoreState((current) => ({ ...current, micPermission: "granted" }));
-      } catch (micErr) {
-        logDialer("EARLY_MIC_PERMISSION_FAILED", { reason: String(micErr) });
-      }
-
-      await resumeAudioContext();
-
       const sessionResult = await supabase.auth.getSession();
       const accessToken = sessionResult.data.session?.access_token;
       const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dialer-browser-token`;
 
-      console.log("CALLING_TOKEN_FUNCTION", { url: functionUrl });
+      logDialer("CALLING_TOKEN_FUNCTION", { url: functionUrl });
 
       const res = await fetch(functionUrl, {
         method: "POST",
@@ -788,31 +765,28 @@ async function initializeVoiceClient() {
         body: JSON.stringify({}),
       });
 
-      console.log("TOKEN_FETCH_RESPONSE_STATUS", res.status);
+      logDialer("TOKEN_FETCH_RESPONSE_STATUS", { status: res.status });
       const data = await res.json().catch(() => ({}));
+
       if (!res.ok || data?.status === "error" || !data?.username || !data?.password || !data?.app_id) {
-        throw new Error((data?.plivoError ? JSON.stringify(data.plivoError) : data?.error) || `Token request failed with status ${res.status}`);
+        throw new Error(data?.error || `Token request failed (${res.status})`);
       }
 
-      // Validate token fields
       if (data.app_id !== "45801072070731068") {
-        logDialer("TOKEN_APP_ID_MISMATCH", { received: data.app_id, expected: "45801072070731068" });
-        throw new Error("Voice configuration mismatch. Contact support.");
+        throw new Error("Voice configuration mismatch.");
       }
 
-      console.log("TOKEN_RECEIVED_RAW", data);
-      logDialer("TOKEN_RECEIVED_FULL", { username: data.username, hasPassword: !!data.password, app_id: data.app_id, endpoint_id: data.endpoint_id });
+      logDialer("TOKEN_RECEIVED_FULL", { username: data.username, hasPassword: !!data.password, app_id: data.app_id });
 
-      window.setTimeout(() => {
+      setTimeout(() => {
         if (!isActivePlivoClient(instance, generation)) return;
-        console.log("PLIVO_LOGIN_CALLING_NOW");
+        logDialer("PLIVO_LOGIN_CALLING");
         instance.client.login(data.username, data.password);
       }, 500);
     } catch (error) {
-      console.log("TOKEN_FETCH_FAILED_FULL", error);
       logDialer("TOKEN_FETCH_FAILED", { error: error instanceof Error ? error.message : String(error) });
-      setStoreState((current) => ({
-        ...current,
+      setStoreState((c) => ({
+        ...c,
         status: "failed",
         lastError: error instanceof Error ? error.message : String(error),
         pendingDialIntent: null,
@@ -828,7 +802,7 @@ async function initializeVoiceClient() {
 
   let attempts = 0;
   const interval = window.setInterval(() => {
-    attempts += 1;
+    attempts++;
     if (window.Plivo) {
       clearInterval(interval);
       void createClient();
@@ -836,63 +810,50 @@ async function initializeVoiceClient() {
       clearInterval(interval);
       sdkInitStarted = false;
       logDialer("PLIVO_CLIENT_INIT_FAILED", { reason: "SDK_load_timeout_10s" });
-      setStoreState((current) => ({
-        ...current,
-        status: "failed",
-        lastError: "Voice SDK failed to load. Check your internet connection.",
-      }));
+      setStoreState((c) => ({ ...c, status: "failed", lastError: "Voice SDK failed to load." }));
     }
   }, 500);
 }
 
-// ─── Mic permission ───
+// ─── Mic permission ─────────────────────────────────────────────────
 async function requestMicrophonePermissionInternal() {
   try {
     logDialer("MIC_PERMISSION_REQUEST");
-    setStoreState((current) => ({ ...current, status: "requesting_permission", lastError: null }));
+    setStoreState((c) => ({ ...c, status: "requesting_permission", lastError: null }));
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     await resumeAudioContext();
-
     const track = stream.getAudioTracks()[0];
     const settings = track?.getSettings();
     const devices = await navigator.mediaDevices.enumerateDevices().catch(() => []);
-    const inputDevice = devices.find((device) => device.kind === "audioinput" && device.deviceId === settings.deviceId);
-    const outputDevice = devices.find((device) => device.kind === "audiooutput");
+    const inputDevice = devices.find((d) => d.kind === "audioinput" && d.deviceId === settings.deviceId);
+    const outputDevice = devices.find((d) => d.kind === "audiooutput");
+    stream.getTracks().forEach((t) => t.stop());
 
-    stream.getTracks().forEach((trackItem) => trackItem.stop());
-
-    const inputLabel = inputDevice?.label || track?.label || "Default microphone";
-    const outputLabel = outputDevice?.label || "System default speaker";
-
-    logDialer("MIC_PERMISSION_GRANTED", { inputDevice: inputLabel, outputDevice: outputLabel });
-
-    setStoreState((current) => ({
-      ...current,
+    logDialer("MIC_PERMISSION_GRANTED", { inputDevice: inputDevice?.label || "Default" });
+    setStoreState((c) => ({
+      ...c,
       micPermission: "granted",
-      status: current.registered ? "device_ready" : "idle",
-      selectedInputDevice: inputLabel,
-      selectedOutputDevice: outputLabel,
-      latestBrowserMediaStatus: "device_ready",
+      status: c.registered ? "device_ready" : "idle",
+      selectedInputDevice: inputDevice?.label || track?.label || "Default microphone",
+      selectedOutputDevice: outputDevice?.label || "System default speaker",
       lastError: null,
     }));
-
     return true;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     logDialer("MIC_PERMISSION_DENIED", { reason: message });
-    setStoreState((current) => ({
-      ...current,
+    setStoreState((c) => ({
+      ...c,
       micPermission: "denied",
       status: "permission_denied",
       lastError: `Microphone access denied: ${message}`,
-      latestBrowserMediaStatus: "permission_denied",
     }));
-    toast.error("Microphone permission denied. Please allow access to make calls.");
+    toast.error("Microphone permission denied.");
     return false;
   }
 }
 
-// ─── Hook ───
+// ─── Hook ───────────────────────────────────────────────────────────
 export function useBrowserDialer() {
   const { profile } = useAuth();
   const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
@@ -900,52 +861,54 @@ export function useBrowserDialer() {
 
   useEffect(() => {
     authIdentity = profile?.business_id ? { businessId: profile.business_id, userId: profile.user_id } : null;
-    // Always log build version on mount so it's visible in diagnostics
-    logDialer("DIALER_BUILD_VERSION", { version: "auto-dial-fix-v6" });
+    logDialer("DIALER_PAGE_MOUNTED", { version: BUILD_VERSION });
+
+    // Reset stale transient state on mount
+    sanitizeStaleState();
+
     if (!singletonInitialized) {
       singletonInitialized = true;
-      logDialer("TEST_LOG_ACTIVE");
       void initializeVoiceClient();
     }
   }, [profile?.business_id, profile?.user_id]);
 
   const loadLeadHistory = useCallback(async (leadId: string) => {
     const calls = await fetchLeadCallHistory(leadId);
-    setStoreState((current) => ({ ...current, previousCalls: calls }));
+    setStoreState((c) => ({ ...c, previousCalls: calls }));
   }, []);
 
-  const requestMicPermission = useCallback(async () => {
-    return requestMicrophonePermissionInternal();
-  }, []);
+  const requestMicPermission = useCallback(async () => requestMicrophonePermissionInternal(), []);
 
   const startCall = useCallback(async (phoneNumber: string, leadId?: string, clientId?: string) => {
-    logDialer("START_CALL_ENTERED", { rawPhoneNumber: phoneNumber, leadId: leadId ?? null, clientId: clientId ?? null, registered: storeState.registered, status: storeState.status, loading: storeState.loading });
+    logDialer("START_CALL_ENTERED", {
+      rawPhoneNumber: phoneNumber,
+      leadId: leadId ?? null,
+      registered: storeState.registered,
+      status: storeState.status,
+      loading: storeState.loading,
+    });
 
-    // Block if already in a call or loading
     if (!profile?.business_id) {
-      logDialer("CALL_BLOCKED_NO_PROFILE");
+      logDialer("CALL_BLOCKED", { reason: "no_profile" });
       return;
     }
-
     if (storeState.dialLock || storeState.loading) {
-      logDialer("CALL_BLOCKED_DIAL_LOCK", { loading: storeState.loading, dialLock: storeState.dialLock });
+      logDialer("CALL_BLOCKED", { reason: "dial_lock_or_loading" });
       toast.warning("A call is already being set up.");
       return;
     }
-
-    if (["calling", "ringing", "connected"].includes(storeState.status)) {
-      logDialer("CALL_BLOCKED_ALREADY_ACTIVE", { currentStatus: storeState.status });
+    if (["dialing", "ringing", "connected"].includes(storeState.status)) {
+      logDialer("CALL_BLOCKED", { reason: "already_active", status: storeState.status });
       toast.warning("A call is already active.");
       return;
     }
-
     if (!phoneNumber.trim()) {
-      logDialer("CALL_BLOCKED_NO_DESTINATION");
+      logDialer("CALL_BLOCKED", { reason: "empty_number" });
       toast.error("Please enter a phone number.");
       return;
     }
 
-    // Check mic permission
+    // Check mic
     if (storeState.micPermission !== "granted") {
       const granted = await requestMicrophonePermissionInternal();
       if (!granted) return;
@@ -953,21 +916,20 @@ export function useBrowserDialer() {
 
     const intent: PendingDialIntent = { phoneNumber: phoneNumber.trim(), leadId, clientId };
 
-    // If not registered, queue the intent and wait for registration
     if (!storeState.registered || !plivoInstanceRef?.client) {
-      logDialer("CALL_WAITING_FOR_REGISTRATION", { destination: phoneNumber.trim(), registered: storeState.registered, hasClient: !!plivoInstanceRef?.client });
-      modulePendingDial = intent; // Module-level for reliability
-      setStoreState((current) => ({ ...current, pendingDialIntent: intent }));
-      toast.info("Waiting for voice registration to complete...");
+      logDialer("CALL_QUEUED_BEFORE_REGISTER", { destination: phoneNumber.trim() });
+      modulePendingDial = intent;
+      setStoreState((c) => ({ ...c, pendingDialIntent: intent }));
+      toast.info("Call queued — waiting for voice registration…");
       return;
     }
 
-    // Already registered — execute immediately
     await executeOutboundCall(intent);
   }, [profile]);
 
   const endCall = useCallback(async () => {
     logDialer("HANGUP_REQUESTED");
+    setStoreState((c) => ({ ...c, status: "ending" }));
     try { plivoInstanceRef?.client?.hangup(); } catch {}
 
     if (storeState.session?.id) {
@@ -976,8 +938,7 @@ export function useBrowserDialer() {
     }
 
     stopRingback();
-    logDialer("CALL_CLEANUP_START");
-    setStoreState((current) => ({ ...current, status: "ended", latestProviderStatus: "hangup_requested", latestBrowserMediaStatus: "media_disconnected" }));
+    setStoreState((c) => ({ ...c, status: "ended" }));
     updateCurrentAttempt({ status: "ended", endedAt: new Date().toISOString() });
     await setAgentAvailability("available");
     logDialer("CALL_CLEANUP_DONE");
@@ -986,17 +947,15 @@ export function useBrowserDialer() {
   const toggleMute = useCallback(() => {
     const client = plivoInstanceRef?.client;
     if (!client) return;
-
     if (storeState.isMuted) {
       client.unmute();
-      setStoreState((current) => ({ ...current, isMuted: false }));
-      logDialer("BROWSER_UNMUTED", { mediaStatus: "microphone_live" });
+      setStoreState((c) => ({ ...c, isMuted: false }));
+      logDialer("BROWSER_UNMUTED");
     } else {
       client.mute();
-      setStoreState((current) => ({ ...current, isMuted: true }));
-      logDialer("BROWSER_MUTED", { mediaStatus: "microphone_muted" });
+      setStoreState((c) => ({ ...c, isMuted: true }));
+      logDialer("BROWSER_MUTED");
     }
-
     if (storeState.session?.id) {
       void insertCallEvent(storeState.session.id, storeState.isMuted ? "browser_unmuted" : "browser_muted");
     }
@@ -1004,7 +963,6 @@ export function useBrowserDialer() {
 
   const submitDisposition = useCallback(async (disposition: Disposition, notes?: string, followUpDate?: string) => {
     if (!storeState.session?.id || !profile) return;
-
     await saveDisposition(storeState.session.id, disposition, notes);
     await saveDetailedDisposition({
       sessionId: storeState.session.id,
@@ -1014,14 +972,12 @@ export function useBrowserDialer() {
       notes,
       followUpDate,
     });
-
     await insertCallEvent(storeState.session.id, "disposition_set", { disposition, notes });
 
     if (followUpDate && profile.business_id) {
       const entityId = storeState.session.lead_id || storeState.session.id;
       const dateOnly = followUpDate.split("T")[0];
       const { count } = await supabase.from("reminders").select("id", { count: "exact", head: true }).eq("entity_id", entityId).eq("assigned_to_user_id", profile.user_id).gte("due_at", dateOnly).lt("due_at", new Date(new Date(dateOnly).getTime() + 86400000).toISOString().split("T")[0]);
-
       if ((count || 0) === 0) {
         await supabase.from("reminders").insert({
           business_id: profile.business_id,
@@ -1035,7 +991,6 @@ export function useBrowserDialer() {
         });
       }
     }
-
     toast.success("Disposition saved");
   }, [profile]);
 
@@ -1051,8 +1006,8 @@ export function useBrowserDialer() {
     sessionUnsubRef?.();
     sessionUnsubRef = null;
     sessionSubId = null;
-    setStoreState((current) => ({
-      ...current,
+    setStoreState((c) => ({
+      ...c,
       session: null,
       callTimer: 0,
       isMuted: false,
@@ -1062,15 +1017,12 @@ export function useBrowserDialer() {
       pendingDialIntent: null,
       dialLock: false,
       latestProviderStatus: null,
-      latestBrowserMediaStatus: current.registered ? "idle_ready" : null,
-      status: current.registered ? (current.micPermission === "granted" ? "device_ready" : "registered") : "idle",
+      status: c.registered ? (c.micPermission === "granted" ? "device_ready" : "registered") : "idle",
     }));
   }, []);
 
   const redialLast = useCallback(async () => {
-    if (storeState.lastCalledNumber) {
-      await startCall(storeState.lastCalledNumber);
-    }
+    if (storeState.lastCalledNumber) await startCall(storeState.lastCalledNumber);
   }, [startCall]);
 
   const diagnostics: BrowserDialerDiagnostics = {
@@ -1083,26 +1035,27 @@ export function useBrowserDialer() {
     selectedCallerId: state.selectedCallerId,
     selectedInputDevice: state.selectedInputDevice,
     selectedOutputDevice: state.selectedOutputDevice,
-    voiceClientRegistration: getVoiceRegistrationState(state),
+    voiceClientRegistration: state.registered ? "ready" : state.status === "registering" ? "registering" : state.status === "failed" ? "failed" : "offline",
     latestProviderStatus: state.latestProviderStatus,
     latestBrowserMediaStatus: state.latestBrowserMediaStatus,
     lastError: state.lastError,
     lastEvent: state.lastEvent,
     pendingDialNumber: state.pendingDialIntent?.phoneNumber || null,
+    clientHealthy: isClientHealthy(),
   };
 
-  const formatTimer = (seconds: number) => `${Math.floor(seconds / 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
+  const fmtTimer = (s: number) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
 
   return {
     session: state.session,
     callStatus: state.status,
     agentState: state.agentState,
     callTimer: state.callTimer,
-    formattedTimer: formatTimer(state.callTimer),
+    formattedTimer: fmtTimer(state.callTimer),
     isMuted: state.isMuted,
     previousCalls: state.previousCalls,
     loading: state.loading,
-    isCallActive: ["calling", "ringing", "connected"].includes(state.status),
+    isCallActive: ["dialing", "ringing", "connected"].includes(state.status),
     registered: state.registered,
     sdkReady: state.sdkReady,
     micPermission: state.micPermission,
