@@ -47,69 +47,66 @@ Deno.serve(async (req) => {
     const PLIVO_AUTH_TOKEN = Deno.env.get("PLIVO_AUTH_TOKEN");
     const PLIVO_APP_ID = Deno.env.get("PLIVO_APP_ID");
 
-    console.log("[token] Env check", { hasAuthId: !!PLIVO_AUTH_ID, hasAuthToken: !!PLIVO_AUTH_TOKEN, appId: PLIVO_APP_ID });
-
     if (!PLIVO_AUTH_ID || !PLIVO_AUTH_TOKEN) return jsonRes({ status: "error", error: "Plivo credentials not configured" });
     if (!PLIVO_APP_ID) return jsonRes({ status: "error", error: "PLIVO_APP_ID not configured" });
 
     const plivoAuth = "Basic " + btoa(`${PLIVO_AUTH_ID}:${PLIVO_AUTH_TOKEN}`);
-    const username = `agent${user.id.replace(/-/g, "").slice(0, 16)}`;
-    const password = crypto.randomUUID().replace(/-/g, "").slice(0, 20);
+    const username = `agent${user.id.replace(/-/g, "")}`;
+    const password = crypto.randomUUID().replace(/-/g, "");
     const alias = profile.full_name || `Agent ${user.id.slice(0, 8)}`;
 
-    // Step 1: Delete ALL existing endpoints for this username
     try {
-      const listResp = await plivoFetch(PLIVO_AUTH_ID, plivoAuth, `/Endpoint/?username=${username}`);
+      const listResp = await plivoFetch(PLIVO_AUTH_ID, plivoAuth, `/Endpoint/?username=${encodeURIComponent(username)}`);
       if (listResp.ok) {
         const listData = await listResp.json();
         const endpoints = listData.objects || [];
-        for (const ep of endpoints) {
-          const epId = ep.endpoint_id;
-          if (epId) {
-            console.log("[token] Deleting old endpoint", { username, endpointId: epId });
-            await plivoFetch(PLIVO_AUTH_ID, plivoAuth, `/Endpoint/${epId}/`, { method: "DELETE" }).catch(() => {});
+        for (const endpoint of endpoints) {
+          if (endpoint?.endpoint_id) {
+            await plivoFetch(PLIVO_AUTH_ID, plivoAuth, `/Endpoint/${endpoint.endpoint_id}/`, { method: "DELETE" }).catch(() => undefined);
           }
         }
       } else {
         await listResp.text();
       }
-    } catch (e) {
-      console.warn("[token] Error listing endpoints for cleanup:", e);
+    } catch {
+      // ignore cleanup errors and continue with clean create
     }
 
-    // Step 2: Mark all DB records inactive
-    await supabase.from("dialer_browser_endpoints")
+    await supabase
+      .from("dialer_browser_endpoints")
       .update({ is_active: false } as any)
       .eq("user_id", user.id)
       .eq("business_id", profile.business_id);
 
-    // Step 3: Create fresh endpoint
-    console.log("[token] Creating fresh endpoint", { username, alias, appId: PLIVO_APP_ID });
     const createResp = await plivoFetch(PLIVO_AUTH_ID, plivoAuth, `/Endpoint/`, {
       method: "POST",
-      body: JSON.stringify({ username, password, alias, app_id: PLIVO_APP_ID }),
+      body: JSON.stringify({
+        username,
+        password,
+        alias,
+        app_id: "45801072070731068",
+      }),
     });
 
     const createData = await createResp.json();
-    console.log("PLIVO ENDPOINT CREATED", createData);
+    console.log("PLIVO ENDPOINT CREATED CLEAN", createData);
 
     if (!createResp.ok || !createData.endpoint_id) {
       return jsonRes({ status: "error", error: "Failed to create Plivo endpoint", details: createData });
     }
 
-    // Step 4: Persist in DB
     await supabase.from("dialer_browser_endpoints").upsert({
       business_id: profile.business_id,
       user_id: user.id,
       plivo_endpoint_id: createData.endpoint_id,
       plivo_username: username,
       plivo_password: password,
-      plivo_app_id: PLIVO_APP_ID,
+      plivo_app_id: "45801072070731068",
       is_active: true,
     } as any, { onConflict: "user_id,business_id" });
 
-    console.log("PLIVO TOKEN GENERATED", { username, password, app_id: PLIVO_APP_ID, endpoint_id: createData.endpoint_id });
-    return jsonRes({ username, password, app_id: PLIVO_APP_ID });
+    console.log("FINAL TOKEN RESPONSE RAW", { username, password, app_id: "45801072070731068" });
+    return jsonRes({ username, password, app_id: "45801072070731068" });
   } catch (err) {
     console.error("[token] Error:", err);
     return jsonRes({ status: "error", error: String(err) });
