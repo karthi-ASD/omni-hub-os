@@ -4,13 +4,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
  * dialer-answer: Plivo answer_url for CONFERENCE-based dialer.
  * Called when EITHER agent OR customer answers their call leg.
  * Returns Plivo XML joining them to the same conference.
- *
- * Conference architecture:
- * - dialer-initiate creates TWO separate calls (agent + customer)
- * - Both calls point answer_url to this function with leg=agent|customer
- * - Both get XML to join the same conference room
- * - Plivo handles audio bridging internally via conference
- * - Recording is handled by conference record attribute
  */
 
 async function parseTelephonyPayload(req: Request): Promise<Record<string, string>> {
@@ -58,14 +51,16 @@ Deno.serve(async (req) => {
         leg,
         conference_id: conferenceId,
       });
-    } else if (!sessionId || !conferenceId) {
+    }
+
+    if (!sessionId || !conferenceId) {
       console.error("[dialer-answer] Missing session_id or conference_id", {
-        sessionId,
-        conferenceId,
+        session_id: sessionId,
+        conference_id: conferenceId,
       });
-      finalConferenceId = conferenceId || "fallback-room";
-      finalStartConferenceOnEnter = "true";
-    } else {
+    }
+
+    if (sessionId && conferenceId) {
       console.log("[dialer-answer] Leg answered", {
         session_id: sessionId,
         leg,
@@ -115,8 +110,6 @@ Deno.serve(async (req) => {
     }
   } catch (err) {
     console.error("[dialer-answer error]", err);
-    finalConferenceId = conferenceId || "fallback-room";
-    finalStartConferenceOnEnter = "true";
   }
 
   const xml = `<Response>
