@@ -31,7 +31,6 @@ Deno.serve(async (req) => {
       return jsonRes({ status: "error", error: "Invalid token" });
     }
 
-    // Get user profile
     const { data: profile } = await supabase
       .from("profiles")
       .select("business_id, full_name")
@@ -44,14 +43,26 @@ Deno.serve(async (req) => {
 
     const PLIVO_AUTH_ID = Deno.env.get("PLIVO_AUTH_ID");
     const PLIVO_AUTH_TOKEN = Deno.env.get("PLIVO_AUTH_TOKEN");
+    const PLIVO_APP_ID = Deno.env.get("PLIVO_APP_ID");
+
+    console.log("[dialer-browser-token] Env check", {
+      hasAuthId: !!PLIVO_AUTH_ID,
+      hasAuthToken: !!PLIVO_AUTH_TOKEN,
+      hasAppId: !!PLIVO_APP_ID,
+      appId: PLIVO_APP_ID,
+    });
 
     if (!PLIVO_AUTH_ID || !PLIVO_AUTH_TOKEN) {
       return jsonRes({ status: "error", error: "Plivo credentials not configured" });
     }
 
+    if (!PLIVO_APP_ID) {
+      return jsonRes({ status: "error", error: "PLIVO_APP_ID not configured. Set it in secrets." });
+    }
+
     const plivoAuth = "Basic " + btoa(`${PLIVO_AUTH_ID}:${PLIVO_AUTH_TOKEN}`);
 
-    // Check for existing endpoint
+    // Check for existing endpoint in DB
     const { data: existing } = await supabase
       .from("dialer_browser_endpoints")
       .select("*")
@@ -61,9 +72,9 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (existing) {
-      console.log("[dialer-browser-token] Returning existing endpoint", {
+      console.log("[dialer-browser-token] Found existing endpoint", {
         username: existing.plivo_username,
-        user_id: user.id,
+        endpointId: existing.plivo_endpoint_id,
       });
 
       // Verify endpoint still exists on Plivo
@@ -74,19 +85,33 @@ Deno.serve(async (req) => {
             { headers: { Authorization: plivoAuth } }
           );
           if (checkResp.ok) {
+            // Update app_id if it changed
+            if (existing.plivo_app_id !== PLIVO_APP_ID) {
+              console.log("[dialer-browser-token] Updating endpoint app_id to fixed PLIVO_APP_ID");
+              await fetch(
+                `https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Endpoint/${existing.plivo_endpoint_id}/`,
+                {
+                  method: "POST",
+                  headers: { Authorization: plivoAuth, "Content-Type": "application/json" },
+                  body: JSON.stringify({ app_id: PLIVO_APP_ID }),
+                }
+              );
+              await supabase.from("dialer_browser_endpoints")
+                .update({ plivo_app_id: PLIVO_APP_ID } as any)
+                .eq("id", existing.id);
+            }
             return jsonRes({
               status: "ok",
               username: existing.plivo_username,
               password: existing.plivo_password,
             });
           }
-          // Endpoint deleted on Plivo — recreate
-          console.warn("[dialer-browser-token] Endpoint not found on Plivo, recreating");
+          console.warn("[dialer-browser-token] Endpoint not found on Plivo, will recreate");
           await supabase.from("dialer_browser_endpoints")
-            .update({ is_active: false })
+            .update({ is_active: false } as any)
             .eq("id", existing.id);
         } catch {
-          // Network error checking — return existing anyway
+          // Network error — return existing anyway
           return jsonRes({
             status: "ok",
             username: existing.plivo_username,
@@ -102,57 +127,16 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Find or create Plivo Application for this business
-    let appId = "";
-
-    const { data: existingApp } = await supabase
-      .from("dialer_browser_endpoints")
-      .select("plivo_app_id")
-      .eq("business_id", profile.business_id)
-      .not("plivo_app_id", "is", null)
-      .limit(1)
-      .maybeSingle();
-
-    if (existingApp?.plivo_app_id) {
-      appId = existingApp.plivo_app_id;
-      console.log("[dialer-browser-token] Reusing existing Plivo app", { appId });
-    } else {
-      // Create new Plivo Application
-      const answerUrl = `${supabaseUrl}/functions/v1/dialer-browser-answer`;
-      const hangupUrl = `${supabaseUrl}/functions/v1/dialer-webhook`;
-
-      console.log("[dialer-browser-token] Creating Plivo Application", { answerUrl, hangupUrl });
-
-      const appResp = await fetch(
-        `https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Application/`,
-        {
-          method: "POST",
-          headers: { Authorization: plivoAuth, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            app_name: `NextWebOS Browser Dialer ${profile.business_id.slice(0, 8)}`,
-            answer_url: answerUrl,
-            answer_method: "POST",
-            hangup_url: hangupUrl,
-            hangup_method: "POST",
-          }),
-        }
-      );
-
-      const appData = await appResp.json();
-      console.log("[dialer-browser-token] Plivo Application response", appData);
-
-      if (!appResp.ok || !appData.app_id) {
-        return jsonRes({ status: "error", error: "Failed to create Plivo application", details: appData });
-      }
-      appId = appData.app_id;
-    }
-
-    // Create Plivo Endpoint for this user
+    // Create Plivo Endpoint using fixed PLIVO_APP_ID
     const username = `agent_${user.id.replace(/-/g, "").slice(0, 16)}`;
     const password = crypto.randomUUID().replace(/-/g, "").slice(0, 20);
     const alias = profile.full_name || `Agent ${user.id.slice(0, 8)}`;
 
-    console.log("[dialer-browser-token] Creating Plivo Endpoint", { username, alias, appId });
+    console.log("[dialer-browser-token] Creating Plivo Endpoint", {
+      username,
+      alias,
+      appId: PLIVO_APP_ID,
+    });
 
     const endpointResp = await fetch(
       `https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Endpoint/`,
@@ -163,7 +147,7 @@ Deno.serve(async (req) => {
           username,
           password,
           alias,
-          app_id: appId,
+          app_id: PLIVO_APP_ID,
         }),
       }
     );
@@ -182,7 +166,7 @@ Deno.serve(async (req) => {
       plivo_endpoint_id: endpointData.endpoint_id,
       plivo_username: username,
       plivo_password: password,
-      plivo_app_id: appId,
+      plivo_app_id: PLIVO_APP_ID,
     } as any);
 
     if (insertError) {
@@ -193,13 +177,10 @@ Deno.serve(async (req) => {
       user_id: user.id,
       username,
       endpoint_id: endpointData.endpoint_id,
+      app_id: PLIVO_APP_ID,
     });
 
-    return jsonRes({
-      status: "ok",
-      username,
-      password,
-    });
+    return jsonRes({ status: "ok", username, password });
   } catch (err) {
     console.error("[dialer-browser-token] Error:", err);
     return jsonRes({ status: "error", error: String(err) });
