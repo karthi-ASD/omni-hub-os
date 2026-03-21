@@ -1,4 +1,4 @@
-console.log("🔥 DIALER HOOK LOADED - VERSION 5 - PENDING DIAL FIX");
+console.log("🔥 DIALER HOOK LOADED - VERSION 6 - AUTO DIAL FIX");
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -149,6 +149,8 @@ let permissionListenerBound = false;
 let visibilityListenerBound = false;
 let globalErrorsBound = false;
 let authIdentity: DialerIdentity = null;
+// Module-level pending dial — survives state transitions reliably
+let modulePendingDial: PendingDialIntent | null = null;
 
 // ─── LOG RING BUFFER (last 50 entries) ───
 const MAX_LOG_ENTRIES = 50;
@@ -587,26 +589,34 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   instance.client.on("onLogin", () => {
     if (!isActivePlivoClient(instance, generation)) return;
     
-    // Read pending BEFORE updating state
-    const pending = storeState.pendingDialIntent;
+    // Read pending from BOTH sources for maximum reliability
+    const pendingFromState = storeState.pendingDialIntent;
+    const pendingFromModule = modulePendingDial;
+    const pending = pendingFromModule || pendingFromState;
+    
+    // Clear module-level pending immediately
+    modulePendingDial = null;
     
     setStoreState((current) => ({
       ...current,
       registered: true,
       status: current.micPermission === "granted" ? "device_ready" : "registered",
       lastError: null,
+      pendingDialIntent: null,
     }));
     
     console.log("VOICE_REGISTERED");
     logDialer("VOICE_REGISTERED", { 
       providerStatus: "registered", 
-      hasPendingDial: !!pending, 
+      hasPendingDial: !!pending,
+      pendingFromState: !!pendingFromState,
+      pendingFromModule: !!pendingFromModule,
       pendingNumber: pending?.phoneNumber || null 
     });
 
-    // *** CRITICAL: Check for pending dial intent and execute ***
+    // *** CRITICAL: Auto-dial after registration ***
     if (pending) {
-      logDialer("CALL_PROCEEDING_AFTER_REGISTRATION", { destination: pending.phoneNumber });
+      logDialer("AUTO_DIAL_AFTER_REGISTER", { destination: pending.phoneNumber });
       setTimeout(() => {
         void executeOutboundCall(pending);
       }, 300);
@@ -891,7 +901,7 @@ export function useBrowserDialer() {
   useEffect(() => {
     authIdentity = profile?.business_id ? { businessId: profile.business_id, userId: profile.user_id } : null;
     // Always log build version on mount so it's visible in diagnostics
-    logDialer("DIALER_BUILD_VERSION", { version: "pending-dial-fix-v5" });
+    logDialer("DIALER_BUILD_VERSION", { version: "auto-dial-fix-v6" });
     if (!singletonInitialized) {
       singletonInitialized = true;
       logDialer("TEST_LOG_ACTIVE");
@@ -945,7 +955,8 @@ export function useBrowserDialer() {
 
     // If not registered, queue the intent and wait for registration
     if (!storeState.registered || !plivoInstanceRef?.client) {
-      logDialer("CALL_WAITING_FOR_REGISTRATION", { destination: phoneNumber.trim() });
+      logDialer("CALL_WAITING_FOR_REGISTRATION", { destination: phoneNumber.trim(), registered: storeState.registered, hasClient: !!plivoInstanceRef?.client });
+      modulePendingDial = intent; // Module-level for reliability
       setStoreState((current) => ({ ...current, pendingDialIntent: intent }));
       toast.info("Waiting for voice registration to complete...");
       return;
