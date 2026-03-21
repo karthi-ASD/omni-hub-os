@@ -10,6 +10,113 @@ function jsonRes(body: Record<string, unknown>) {
   return new Response(JSON.stringify(body), { status: 200, headers: corsHeaders });
 }
 
+type EndpointRecord = {
+  endpoint_id?: string;
+  endpointId?: string;
+  username?: string;
+  alias?: string;
+  password?: string;
+};
+
+async function plivoRequest(
+  authId: string,
+  plivoAuth: string,
+  path: string,
+  init?: RequestInit,
+) {
+  return fetch(`https://api.plivo.com/v1/Account/${authId}${path}`, {
+    ...init,
+    headers: {
+      Authorization: plivoAuth,
+      "Content-Type": "application/json",
+      ...(init?.headers || {}),
+    },
+  });
+}
+
+async function listEndpointByUsername(authId: string, plivoAuth: string, username: string) {
+  const response = await plivoRequest(
+    authId,
+    plivoAuth,
+    `/Endpoint/?username=${encodeURIComponent(username)}`,
+    { headers: { Authorization: plivoAuth } },
+  );
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = await response.json();
+  const endpoint = (data.objects || [])[0] as EndpointRecord | undefined;
+  return endpoint || null;
+}
+
+async function getEndpointById(authId: string, plivoAuth: string, endpointId: string) {
+  const response = await plivoRequest(authId, plivoAuth, `/Endpoint/${endpointId}/`, {
+    headers: { Authorization: plivoAuth },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  return { ok: response.ok, data };
+}
+
+async function updateEndpointPassword(authId: string, plivoAuth: string, endpointId: string, password: string) {
+  return plivoRequest(authId, plivoAuth, `/Endpoint/${endpointId}/`, {
+    method: "POST",
+    body: JSON.stringify({ password }),
+  });
+}
+
+async function deleteEndpoint(authId: string, plivoAuth: string, endpointId: string) {
+  return plivoRequest(authId, plivoAuth, `/Endpoint/${endpointId}/`, {
+    method: "DELETE",
+  });
+}
+
+async function createEndpoint(
+  authId: string,
+  plivoAuth: string,
+  username: string,
+  password: string,
+  alias: string,
+  appId: string,
+) {
+  const response = await plivoRequest(authId, plivoAuth, `/Endpoint/`, {
+    method: "POST",
+    body: JSON.stringify({
+      username,
+      password,
+      alias,
+      app_id: appId,
+    }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  return { ok: response.ok, data };
+}
+
+async function verifyEndpointSync(
+  authId: string,
+  plivoAuth: string,
+  endpointId: string,
+  expectedUsername: string,
+  expectedPassword: string,
+) {
+  const verification = await getEndpointById(authId, plivoAuth, endpointId);
+  const endpoint = verification.data as EndpointRecord;
+  const actualUsername = endpoint.username || expectedUsername;
+  const passwordMatches = typeof endpoint.password === "undefined"
+    ? true
+    : endpoint.password === expectedPassword;
+
+  console.log("PLIVO ENDPOINT VERIFY", {
+    username: actualUsername,
+    password: expectedPassword,
+  });
+
+  return verification.ok && actualUsername === expectedUsername && passwordMatches;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -26,7 +133,11 @@ Deno.serve(async (req) => {
 
   try {
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(token);
+
     if (authError || !user) {
       return jsonRes({ status: "error", error: "Invalid token" });
     }
@@ -61,8 +172,82 @@ Deno.serve(async (req) => {
     }
 
     const plivoAuth = "Basic " + btoa(`${PLIVO_AUTH_ID}:${PLIVO_AUTH_TOKEN}`);
+    const username = `agent${user.id.replace(/-/g, "").slice(0, 16)}`;
+    const password = crypto.randomUUID().replace(/-/g, "").slice(0, 20);
+    const alias = profile.full_name || `Agent ${user.id.slice(0, 8)}`;
 
-    // Check for existing endpoint in DB
+    console.log("USERNAME:", username);
+    console.log("PASSWORD:", password);
+
+    const persistEndpoint = async (endpointId: string) => {
+      await supabase.from("dialer_browser_endpoints").upsert({
+        business_id: profile.business_id,
+        user_id: user.id,
+        plivo_endpoint_id: endpointId,
+        plivo_username: username,
+        plivo_password: password,
+        plivo_app_id: PLIVO_APP_ID,
+        is_active: true,
+      } as any, { onConflict: "user_id,business_id" });
+    };
+
+    const finish = async (endpointId: string) => {
+      await persistEndpoint(endpointId);
+      console.log("PLIVO TOKEN GENERATED", { username, password, app_id: PLIVO_APP_ID });
+      return jsonRes({ username, password, app_id: PLIVO_APP_ID });
+    };
+
+    const syncExistingEndpoint = async (endpointId: string) => {
+      console.log("Reusing endpoint:", username);
+
+      const firstUpdate = await updateEndpointPassword(PLIVO_AUTH_ID, plivoAuth, endpointId, password);
+      if (!firstUpdate.ok) {
+        console.warn("[dialer-browser-token] First password update failed", { endpointId, status: firstUpdate.status });
+      }
+
+      let isVerified = await verifyEndpointSync(PLIVO_AUTH_ID, plivoAuth, endpointId, username, password);
+      if (!isVerified) {
+        console.warn("[dialer-browser-token] Endpoint verify failed, retrying once", { endpointId, username });
+        const retryUpdate = await updateEndpointPassword(PLIVO_AUTH_ID, plivoAuth, endpointId, password);
+        if (!retryUpdate.ok) {
+          console.warn("[dialer-browser-token] Retry password update failed", { endpointId, status: retryUpdate.status });
+        }
+        isVerified = await verifyEndpointSync(PLIVO_AUTH_ID, plivoAuth, endpointId, username, password);
+      }
+
+      if (isVerified) {
+        return finish(endpointId);
+      }
+
+      console.warn("[dialer-browser-token] Endpoint still unsynced, deleting and recreating", { endpointId, username });
+      await deleteEndpoint(PLIVO_AUTH_ID, plivoAuth, endpointId).catch((err) => {
+        console.warn("[dialer-browser-token] Delete endpoint failed", err);
+      });
+
+      return null;
+    };
+
+    const createFreshEndpoint = async () => {
+      console.log("Creating endpoint:", username);
+      const created = await createEndpoint(PLIVO_AUTH_ID, plivoAuth, username, password, alias, PLIVO_APP_ID);
+      console.log("[dialer-browser-token] Plivo Endpoint response", created.data);
+
+      if (created.ok && created.data?.endpoint_id) {
+        return finish(created.data.endpoint_id);
+      }
+
+      const errStr = JSON.stringify(created.data);
+      if (errStr.includes("already") || errStr.includes("exists") || errStr.includes("duplicate")) {
+        const listed = await listEndpointByUsername(PLIVO_AUTH_ID, plivoAuth, username);
+        const listedId = listed?.endpoint_id || listed?.endpointId;
+        if (listedId) {
+          return syncExistingEndpoint(listedId);
+        }
+      }
+
+      return jsonRes({ status: "error", error: "Failed to create Plivo endpoint", details: created.data });
+    };
+
     const { data: existing } = await supabase
       .from("dialer_browser_endpoints")
       .select("*")
@@ -71,195 +256,32 @@ Deno.serve(async (req) => {
       .eq("is_active", true)
       .maybeSingle();
 
-    if (existing) {
+    if (existing?.plivo_endpoint_id) {
       console.log("[dialer-browser-token] Found existing endpoint", {
         username: existing.plivo_username,
         endpointId: existing.plivo_endpoint_id,
       });
 
-      // Always generate a fresh password and update Plivo + DB
-      const freshPassword = crypto.randomUUID().replace(/-/g, "").slice(0, 20);
-
-      if (existing.plivo_endpoint_id) {
-        try {
-          // Update endpoint on Plivo with fresh password and correct app_id
-          const updateResp = await fetch(
-            `https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Endpoint/${existing.plivo_endpoint_id}/`,
-            {
-              method: "POST",
-              headers: { Authorization: plivoAuth, "Content-Type": "application/json" },
-              body: JSON.stringify({ password: freshPassword, app_id: PLIVO_APP_ID }),
-            }
-          );
-
-          if (updateResp.ok || updateResp.status === 202) {
-            console.log("[dialer-browser-token] Updated existing endpoint password+app_id", {
-              username: existing.plivo_username,
-              endpointId: existing.plivo_endpoint_id,
-              passwordLength: freshPassword.length,
-            });
-
-            await supabase.from("dialer_browser_endpoints")
-              .update({ plivo_password: freshPassword, plivo_app_id: PLIVO_APP_ID } as any)
-              .eq("id", existing.id);
-
-            console.log("PLIVO TOKEN GENERATED", { username: existing.plivo_username, password: freshPassword, app_id: PLIVO_APP_ID });
-
-            return jsonRes({
-              status: "ok",
-              username: existing.plivo_username,
-              password: freshPassword,
-              app_id: PLIVO_APP_ID,
-            });
-          }
-
-          // If endpoint not found on Plivo, mark inactive and recreate below
-          console.warn("[dialer-browser-token] Endpoint update failed, will recreate", updateResp.status);
-          await supabase.from("dialer_browser_endpoints")
-            .update({ is_active: false } as any)
-            .eq("id", existing.id);
-        } catch (err) {
-          console.warn("[dialer-browser-token] Network error updating endpoint:", err);
-          // Still try to return with fresh password — Plivo may accept it
-          await supabase.from("dialer_browser_endpoints")
-            .update({ is_active: false } as any)
-            .eq("id", existing.id);
-        }
+      const reused = await syncExistingEndpoint(existing.plivo_endpoint_id);
+      if (reused) {
+        return reused;
       }
     }
 
-    // Create Plivo Endpoint using fixed PLIVO_APP_ID
-    // Plivo requires alphanumeric-only usernames (no underscores/special chars)
-    const username = `agent${user.id.replace(/-/g, "").slice(0, 16)}`;
-    const password = crypto.randomUUID().replace(/-/g, "").slice(0, 20);
-    const alias = profile.full_name || `Agent ${user.id.slice(0, 8)}`;
-
-    console.log("[dialer-browser-token] Creating Plivo Endpoint", {
-      username,
-      alias,
-      appId: PLIVO_APP_ID,
+    const listed = await listEndpointByUsername(PLIVO_AUTH_ID, plivoAuth, username).catch((err) => {
+      console.warn("[dialer-browser-token] Error checking existing endpoints:", err);
+      return null;
     });
 
-    // First, check if endpoint with this username already exists on Plivo
-    let existingEndpointId: string | null = null;
-    try {
-      const listResp = await fetch(
-        `https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Endpoint/?username=${username}`,
-        { headers: { Authorization: plivoAuth } }
-      );
-      if (listResp.ok) {
-        const listData = await listResp.json();
-        const endpoints = listData.objects || [];
-        if (endpoints.length > 0) {
-          existingEndpointId = endpoints[0].endpoint_id;
-          console.log("[dialer-browser-token] Found existing Plivo endpoint", {
-            username,
-            endpointId: existingEndpointId,
-          });
-
-          // Update app_id on existing endpoint
-          await fetch(
-            `https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Endpoint/${existingEndpointId}/`,
-            {
-              method: "POST",
-              headers: { Authorization: plivoAuth, "Content-Type": "application/json" },
-              body: JSON.stringify({ app_id: PLIVO_APP_ID, password }),
-            }
-          );
-
-          // Store/update in DB
-          await supabase.from("dialer_browser_endpoints").upsert({
-            business_id: profile.business_id,
-            user_id: user.id,
-            plivo_endpoint_id: existingEndpointId,
-            plivo_username: username,
-            plivo_password: password,
-            plivo_app_id: PLIVO_APP_ID,
-            is_active: true,
-          } as any, { onConflict: "user_id,business_id" });
-
-          console.log("PLIVO TOKEN GENERATED", { username, password, app_id: PLIVO_APP_ID });
-          return jsonRes({ status: "ok", username, password, app_id: PLIVO_APP_ID });
-        }
+    const listedId = listed?.endpoint_id || listed?.endpointId;
+    if (listedId) {
+      const reused = await syncExistingEndpoint(listedId);
+      if (reused) {
+        return reused;
       }
-    } catch (listErr) {
-      console.warn("[dialer-browser-token] Error checking existing endpoints:", listErr);
     }
 
-    // No existing endpoint found — create new one
-    const endpointResp = await fetch(
-      `https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Endpoint/`,
-      {
-        method: "POST",
-        headers: { Authorization: plivoAuth, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username,
-          password,
-          alias,
-          app_id: PLIVO_APP_ID,
-        }),
-      }
-    );
-
-    const endpointData = await endpointResp.json();
-    console.log("[dialer-browser-token] Plivo Endpoint response", endpointData);
-
-    if (!endpointResp.ok || !endpointData.endpoint_id) {
-      // If error is "already exists", try to list and reuse
-      const errStr = JSON.stringify(endpointData);
-      if (errStr.includes("already") || errStr.includes("exists") || errStr.includes("duplicate")) {
-        console.log("[dialer-browser-token] Endpoint already exists, fetching...");
-        try {
-          const retryList = await fetch(
-            `https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Endpoint/?username=${username}`,
-            { headers: { Authorization: plivoAuth } }
-          );
-          if (retryList.ok) {
-            const retryData = await retryList.json();
-            const eps = retryData.objects || [];
-            if (eps.length > 0) {
-              await supabase.from("dialer_browser_endpoints").upsert({
-                business_id: profile.business_id,
-                user_id: user.id,
-                plivo_endpoint_id: eps[0].endpoint_id,
-                plivo_username: username,
-                plivo_password: password,
-                plivo_app_id: PLIVO_APP_ID,
-                is_active: true,
-              } as any, { onConflict: "user_id,business_id" });
-              console.log("PLIVO TOKEN GENERATED", { username, password, app_id: PLIVO_APP_ID });
-              return jsonRes({ status: "ok", username, password, app_id: PLIVO_APP_ID });
-            }
-          }
-        } catch { /* fall through */ }
-      }
-      return jsonRes({ status: "error", error: "Failed to create Plivo endpoint", details: endpointData });
-    }
-
-    // Store in DB
-    const { error: insertError } = await supabase.from("dialer_browser_endpoints").upsert({
-      business_id: profile.business_id,
-      user_id: user.id,
-      plivo_endpoint_id: endpointData.endpoint_id,
-      plivo_username: username,
-      plivo_password: password,
-      plivo_app_id: PLIVO_APP_ID,
-      is_active: true,
-    } as any, { onConflict: "user_id,business_id" });
-
-    if (insertError) {
-      console.error("[dialer-browser-token] DB insert error", insertError);
-    }
-
-    console.log("[dialer-browser-token] Endpoint provisioned successfully", {
-      user_id: user.id,
-      username,
-      endpoint_id: endpointData.endpoint_id,
-      app_id: PLIVO_APP_ID,
-    });
-
-    console.log("PLIVO TOKEN GENERATED", { username, password, app_id: PLIVO_APP_ID });
-    return jsonRes({ status: "ok", username, password, app_id: PLIVO_APP_ID });
+    return await createFreshEndpoint();
   } catch (err) {
     console.error("[dialer-browser-token] Error:", err);
     return jsonRes({ status: "error", error: String(err) });
