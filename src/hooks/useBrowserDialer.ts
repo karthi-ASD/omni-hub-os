@@ -556,6 +556,7 @@ async function initializeVoiceClient() {
       }
       logDialer("TOKEN_RECEIVED_FULL", { username: data.username, hasPassword: !!data.password, app_id: data.app_id });
       console.log("TOKEN_RECEIVED_FULL", { username: data.username, hasPassword: !!data.password, app_id: data.app_id });
+      console.log("LOGIN_ATTEMPT", { username: data.username, passwordLength: data.password?.length, app_id: data.app_id });
       instance.client.login(data.username, data.password);
     } catch (error) {
       logDialer("TOKEN_FETCH_FAILED", { reason: error instanceof Error ? error.message : String(error) });

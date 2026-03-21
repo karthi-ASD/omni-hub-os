@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
     });
 
     const createData = await createResp.json();
-    console.log("[token] Plivo create response", createData);
+    console.log("PLIVO ENDPOINT CREATED", createData);
 
     if (!createResp.ok || !createData.endpoint_id) {
       return jsonRes({ status: "error", error: "Failed to create Plivo endpoint", details: createData });
