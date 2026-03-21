@@ -477,6 +477,7 @@ async function executeOutboundCall(intent: PendingDialIntent) {
     }
 
     if (!isValidE164(normalizedPhone)) {
+      logDialer("CALL_BLOCKED_INVALID_NUMBER", { destinationNumber: normalizedPhone });
       logDialer("INVALID_DESTINATION_NUMBER", { destinationNumber: normalizedPhone });
       setStoreState((current) => ({ ...current, status: "failed", loading: false, dialLock: false, lastError: `Invalid number: ${normalizedPhone}` }));
       toast.error("Please enter a valid phone number in E.164 format (e.g. +61412345678).");
@@ -889,24 +890,22 @@ export function useBrowserDialer() {
   }, []);
 
   const startCall = useCallback(async (phoneNumber: string, leadId?: string, clientId?: string) => {
-    console.log("🔥 START CALL TRIGGERED", { phoneNumber, registered: storeState.registered });
-    logDialer("USER_CLICK_CALL", { destination: phoneNumber, leadId, clientId, registered: storeState.registered, currentStatus: storeState.status });
     logDialer("START_CALL_ENTERED", { rawPhoneNumber: phoneNumber, leadId: leadId ?? null, clientId: clientId ?? null, registered: storeState.registered, status: storeState.status, loading: storeState.loading });
 
     // Block if already in a call or loading
     if (!profile?.business_id) {
-      logDialer("CALL_BLOCKED", { reason: "no_profile" });
+      logDialer("CALL_BLOCKED_NO_PROFILE");
       return;
     }
 
     if (storeState.dialLock || storeState.loading) {
-      logDialer("CALL_BLOCKED", { reason: "dial_lock_or_loading" });
+      logDialer("CALL_BLOCKED_DIAL_LOCK", { loading: storeState.loading, dialLock: storeState.dialLock });
       toast.warning("A call is already being set up.");
       return;
     }
 
     if (["calling", "ringing", "connected"].includes(storeState.status)) {
-      logDialer("CALL_BLOCKED", { reason: "call_already_active", currentStatus: storeState.status });
+      logDialer("CALL_BLOCKED_ALREADY_ACTIVE", { currentStatus: storeState.status });
       toast.warning("A call is already active.");
       return;
     }
@@ -927,7 +926,7 @@ export function useBrowserDialer() {
 
     // If not registered, queue the intent and wait for registration
     if (!storeState.registered || !plivoInstanceRef?.client) {
-      logDialer("CALL_WAITING_FOR_REGISTRATION", { destination: phoneNumber });
+      logDialer("CALL_WAITING_FOR_REGISTRATION", { destination: phoneNumber.trim() });
       setStoreState((current) => ({ ...current, pendingDialIntent: intent }));
       toast.info("Waiting for voice registration to complete...");
       return;
@@ -1084,6 +1083,7 @@ export function useBrowserDialer() {
     pendingDial: state.pendingDialIntent,
     diagnostics,
     debugLogs: logs,
+    logEvent: logDialer,
     startCall,
     endCall,
     toggleMute,
