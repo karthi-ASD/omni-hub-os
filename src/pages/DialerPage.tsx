@@ -130,13 +130,15 @@ export default function DialerPage() {
   }
 
   const handleDial = async () => {
-    setUiDebugState({ lastClick: new Date().toISOString(), clicked: true });
-    dialer.logEvent("USER_CLICK_CALL_VISUAL", {
+    console.log("HANDLE_DIAL_TRIGGERED");
+    dialer.logEvent("USER_CLICK_CALL", {
       phoneInput,
       registered: dialer.registered,
       status: dialer.callStatus,
       time: new Date().toISOString(),
     });
+    setUiDebugState({ lastClick: new Date().toISOString(), clicked: true });
+    document.body.style.backgroundColor = "#065f46";
     if (!phoneInput.trim()) {
       dialer.logEvent("HANDLE_DIAL_BLOCKED_EMPTY_INPUT");
       toast.error("Enter a phone number first");
