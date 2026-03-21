@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, Navigate } from "react-router-dom";
 import { useDialer } from "@/hooks/useDialer";
+import { useBrowserDialer } from "@/hooks/useBrowserDialer";
 import { useDialerAccess } from "@/hooks/useDialerAccess";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -17,11 +18,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Phone, PhoneOff, PhoneCall, Clock, User, Flame,
-  Mic, MicOff, CheckCircle, XCircle, Brain,
+  Mic, MicOff, CheckCircle, XCircle, Brain, Copy, Trash2,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 import type { Disposition } from "@/services/dialerService";
-
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   idle: { label: "Ready", className: "bg-muted text-muted-foreground" },
   initiating: { label: "Connecting…", className: "bg-amber-500/15 text-amber-700 dark:text-amber-400" },
