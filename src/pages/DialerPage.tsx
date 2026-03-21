@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useDialer } from "@/hooks/useDialer";
+import { useBrowserDialer, type BrowserDialerStatus } from "@/hooks/useBrowserDialer";
 import { useDialerAccess } from "@/hooks/useDialerAccess";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,13 @@ import { CallTagging } from "@/components/dialer/CallTagging";
 import {
   Phone, PhoneOff, MicOff, Mic, Clock, User, Building2, Hash,
   CheckCircle, XCircle, PhoneForwarded, PhoneMissed, Play, Download,
-  Calendar as CalendarIcon, Delete, ShieldAlert, UserX,
+  Calendar as CalendarIcon, Delete, ShieldAlert, UserX, AlertTriangle,
+  Wifi, WifiOff, Bug,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const DIAL_PAD = [
   ["1", "2", "3"],
@@ -26,15 +28,32 @@ const DIAL_PAD = [
   ["*", "0", "#"],
 ];
 
+const STATUS_LABELS: Record<BrowserDialerStatus, string> = {
+  idle: "Ready",
+  registering: "Connecting to voice service...",
+  registered: "Ready to call",
+  requesting_permission: "Requesting microphone access...",
+  device_ready: "Device ready",
+  calling: "Calling destination...",
+  ringing: "Ringing destination...",
+  connected: "Connected",
+  ended: "Call ended",
+  failed: "Call failed",
+  permission_denied: "Microphone access denied",
+};
+
 const STATUS_COLORS: Record<string, string> = {
   idle: "bg-muted text-muted-foreground",
-  initiating: "bg-amber-500/20 text-amber-700",
+  registering: "bg-amber-500/20 text-amber-700",
+  registered: "bg-blue-500/20 text-blue-700",
+  requesting_permission: "bg-amber-500/20 text-amber-700",
+  device_ready: "bg-blue-500/20 text-blue-700",
+  calling: "bg-amber-500/20 text-amber-700",
   ringing: "bg-blue-500/20 text-blue-700",
   connected: "bg-emerald-500/20 text-emerald-700",
   ended: "bg-muted text-muted-foreground",
   failed: "bg-destructive/20 text-destructive",
-  busy: "bg-orange-500/20 text-orange-700",
-  "no-answer": "bg-orange-500/20 text-orange-700",
+  permission_denied: "bg-destructive/20 text-destructive",
 };
 
 interface LeadContext {
@@ -48,8 +67,8 @@ interface LeadContext {
 export default function DialerPage() {
   const [searchParams] = useSearchParams();
   const { profile } = useAuth();
-  const dialer = useDialer();
-  
+  const dialer = useBrowserDialer();
+
   const clientId = searchParams.get("clientId") || undefined;
   const { canAccessDialer, isClientUser } = useDialerAccess(clientId);
 
@@ -58,6 +77,7 @@ export default function DialerPage() {
   const [leadContext, setLeadContext] = useState<LeadContext | null>(null);
   const [followUpDate, setFollowUpDate] = useState<Date | undefined>();
   const [showFollowUp, setShowFollowUp] = useState(false);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
 
   // Load lead context from URL params
   useEffect(() => {
@@ -68,7 +88,7 @@ export default function DialerPage() {
 
     if (phone) setPhoneInput(phone);
     if (leadId && name) {
-      setLeadContext({ id: leadId, name: name || "", phone: phone || "", company: company || "", clientId: clientId });
+      setLeadContext({ id: leadId, name: name || "", phone: phone || "", company: company || "", clientId });
       dialer.loadLeadHistory(leadId);
     }
   }, [searchParams]);
@@ -88,7 +108,7 @@ export default function DialerPage() {
             <ShieldAlert className="h-12 w-12 text-muted-foreground" />
             <h2 className="text-lg font-semibold">Dialer Access Restricted</h2>
             <p className="text-sm text-muted-foreground max-w-md">
-              You don't have permission to access the dialer. Contact your administrator if you believe this is an error.
+              You don't have permission to access the dialer.
             </p>
           </>
         )}
@@ -96,8 +116,15 @@ export default function DialerPage() {
     );
   }
 
-  const handleDial = () => {
+  const handleDial = async () => {
     if (!phoneInput.trim()) return;
+
+    // Check mic permission first
+    if (dialer.micPermission === "denied" || dialer.micPermission === "prompt" || dialer.micPermission === "unknown") {
+      const granted = await dialer.requestMicPermission();
+      if (!granted) return;
+    }
+
     dialer.startCall(phoneInput.trim(), leadContext?.id, leadContext?.clientId);
   };
 
@@ -123,22 +150,64 @@ export default function DialerPage() {
     setShowFollowUp(false);
   };
 
-  const isCallActive = ["initiating", "ringing", "connected"].includes(dialer.callStatus);
+  const isCallActive = dialer.isCallActive;
   const isCallEnded = dialer.callStatus === "ended" || dialer.callStatus === "failed";
+  const isRegistrationPending = dialer.callStatus === "registering";
+  const isReady = dialer.registered && !isCallActive;
 
   return (
     <div className="p-4 md:p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">NextWeb Dialer</h1>
-          <p className="text-sm text-muted-foreground">Browser-based calling with CRM integration</p>
+          <p className="text-sm text-muted-foreground">Browser-based calling — audio plays through your laptop</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className={`${dialer.agentState === "on_call" ? "border-emerald-500 text-emerald-600" : dialer.agentState === "offline" ? "border-destructive text-destructive" : "border-blue-500 text-blue-600"}`}>
-            {dialer.agentState === "on_call" ? "On Call" : dialer.agentState === "offline" ? "Offline" : "Available"}
+          <Badge variant="outline" className={`${dialer.registered ? "border-emerald-500 text-emerald-600" : dialer.callStatus === "registering" ? "border-amber-500 text-amber-600" : "border-destructive text-destructive"}`}>
+            {dialer.registered ? (
+              <><Wifi className="h-3 w-3 mr-1" /> Voice Ready</>
+            ) : dialer.callStatus === "registering" ? (
+              "Connecting..."
+            ) : (
+              <><WifiOff className="h-3 w-3 mr-1" /> Offline</>
+            )}
+          </Badge>
+          <Badge variant="outline" className={`${dialer.agentState === "on_call" ? "border-emerald-500 text-emerald-600" : "border-blue-500 text-blue-600"}`}>
+            {dialer.agentState === "on_call" ? "On Call" : "Available"}
           </Badge>
         </div>
       </div>
+
+      {/* Mic permission warning */}
+      {dialer.micPermission === "denied" && (
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="py-3 flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-destructive">Microphone access denied</p>
+              <p className="text-xs text-muted-foreground">
+                Browser calling requires microphone access. Click the lock icon in your browser's address bar → Site settings → Allow Microphone.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => dialer.requestMicPermission()} className="shrink-0">
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Registration error */}
+      {dialer.lastError && !isCallActive && dialer.callStatus === "failed" && !dialer.registered && (
+        <Card className="border-amber-500/50 bg-amber-50/50">
+          <CardContent className="py-3 flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-amber-700">Voice Service Issue</p>
+              <p className="text-xs text-muted-foreground">{dialer.lastError}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* LEFT PANEL — Lead Context */}
@@ -215,18 +284,21 @@ export default function DialerPage() {
           </CardContent>
         </Card>
 
-        {/* RIGHT PANEL — Dialer */}
+        {/* CENTER PANEL — Dialer */}
         <Card className="lg:col-span-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2"><Phone className="h-4 w-4" /> Dialer</CardTitle>
+            <CardTitle className="text-base flex items-center gap-2"><Phone className="h-4 w-4" /> Browser Dialer</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-center">
-              <Badge className={`${STATUS_COLORS[dialer.callStatus]} text-sm px-3 py-1`}>
-                {dialer.callStatus === "idle" ? "Ready" : dialer.callStatus.charAt(0).toUpperCase() + dialer.callStatus.slice(1)}
+              <Badge className={`${STATUS_COLORS[dialer.callStatus] || "bg-muted text-muted-foreground"} text-sm px-3 py-1`}>
+                {STATUS_LABELS[dialer.callStatus] || dialer.callStatus}
               </Badge>
               {isCallActive && (
                 <p className="text-2xl font-mono font-bold mt-2 tabular-nums">{dialer.formattedTimer}</p>
+              )}
+              {dialer.callStatus === "ringing" && (
+                <p className="text-xs text-muted-foreground mt-1 animate-pulse">🔊 Ringback playing in your speakers</p>
               )}
             </div>
 
@@ -262,9 +334,10 @@ export default function DialerPage() {
                 <Button
                   className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white"
                   onClick={handleDial}
-                  disabled={!phoneInput.trim() || dialer.loading}
+                  disabled={!phoneInput.trim() || dialer.loading || isRegistrationPending || (!dialer.registered && dialer.callStatus !== "registered")}
                 >
-                  <Phone className="h-4 w-4 mr-2" /> {dialer.loading ? "Connecting..." : "Call"}
+                  <Phone className="h-4 w-4 mr-2" />
+                  {dialer.loading ? "Starting..." : !dialer.registered ? "Voice not ready" : "Call from Browser"}
                 </Button>
               ) : (
                 <>
@@ -281,10 +354,24 @@ export default function DialerPage() {
                 </>
               )}
             </div>
+
+            {/* Audio info */}
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground">
+                🎧 Audio uses your laptop speakers & microphone
+              </p>
+              {dialer.micPermission === "unknown" || dialer.micPermission === "prompt" ? (
+                <Button variant="link" size="sm" className="text-xs h-auto p-0 mt-1" onClick={() => dialer.requestMicPermission()}>
+                  Grant microphone access
+                </Button>
+              ) : dialer.micPermission === "granted" ? (
+                <p className="text-xs text-emerald-600 mt-1">✓ Microphone access granted</p>
+              ) : null}
+            </div>
           </CardContent>
         </Card>
 
-        {/* BOTTOM / RIGHT PANEL — Disposition */}
+        {/* RIGHT PANEL — Disposition */}
         <Card className="lg:col-span-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2"><Hash className="h-4 w-4" /> Disposition</CardTitle>
@@ -319,12 +406,10 @@ export default function DialerPage() {
                   </Button>
                 </div>
 
-                {/* Call Tagging */}
                 {dialer.session && (
                   <CallTagging onTag={dialer.tagCall} disabled={!dialer.session} />
                 )}
 
-                {/* Follow-up scheduler */}
                 {showFollowUp && (
                   <div className="border rounded-md p-3 space-y-2 bg-muted/30">
                     <p className="text-xs font-medium">Schedule Follow-up</p>
@@ -381,6 +466,61 @@ export default function DialerPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Diagnostics Panel (dev mode) */}
+      <Collapsible open={showDiagnostics} onOpenChange={setShowDiagnostics}>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" size="sm" className="text-xs text-muted-foreground">
+            <Bug className="h-3 w-3 mr-1" /> {showDiagnostics ? "Hide" : "Show"} Diagnostics
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <Card className="mt-2 border-dashed">
+            <CardContent className="py-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div>
+                  <p className="font-medium text-muted-foreground">SDK Loaded</p>
+                  <p className={dialer.diagnostics.sdkLoaded ? "text-emerald-600" : "text-destructive"}>
+                    {dialer.diagnostics.sdkLoaded ? "✓ Yes" : "✗ No"}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Voice Registered</p>
+                  <p className={dialer.diagnostics.registered ? "text-emerald-600" : "text-destructive"}>
+                    {dialer.diagnostics.registered ? "✓ Yes" : "✗ No"}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Mic Permission</p>
+                  <p className={dialer.diagnostics.micPermission === "granted" ? "text-emerald-600" : dialer.diagnostics.micPermission === "denied" ? "text-destructive" : "text-amber-600"}>
+                    {dialer.diagnostics.micPermission}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Call Mode</p>
+                  <p className="text-blue-600">{dialer.diagnostics.callMode}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Status</p>
+                  <p>{dialer.diagnostics.currentStatus}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Destination</p>
+                  <p className="font-mono">{dialer.diagnostics.destinationNumber || "—"}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Last Event</p>
+                  <p>{dialer.diagnostics.lastEvent || "—"}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground">Last Error</p>
+                  <p className="text-destructive truncate">{dialer.diagnostics.lastError || "—"}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }
