@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
     }
 
     // Create Plivo Endpoint using fixed PLIVO_APP_ID
-    // Plivo requires alphanumeric-only usernames (no underscores)
+    // Plivo requires alphanumeric-only usernames (no underscores/special chars)
     const username = `agent${user.id.replace(/-/g, "").slice(0, 16)}`;
     const password = crypto.randomUUID().replace(/-/g, "").slice(0, 20);
     const alias = profile.full_name || `Agent ${user.id.slice(0, 8)}`;
@@ -139,6 +139,52 @@ Deno.serve(async (req) => {
       appId: PLIVO_APP_ID,
     });
 
+    // First, check if endpoint with this username already exists on Plivo
+    let existingEndpointId: string | null = null;
+    try {
+      const listResp = await fetch(
+        `https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Endpoint/?username=${username}`,
+        { headers: { Authorization: plivoAuth } }
+      );
+      if (listResp.ok) {
+        const listData = await listResp.json();
+        const endpoints = listData.objects || [];
+        if (endpoints.length > 0) {
+          existingEndpointId = endpoints[0].endpoint_id;
+          console.log("[dialer-browser-token] Found existing Plivo endpoint", {
+            username,
+            endpointId: existingEndpointId,
+          });
+
+          // Update app_id on existing endpoint
+          await fetch(
+            `https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Endpoint/${existingEndpointId}/`,
+            {
+              method: "POST",
+              headers: { Authorization: plivoAuth, "Content-Type": "application/json" },
+              body: JSON.stringify({ app_id: PLIVO_APP_ID, password }),
+            }
+          );
+
+          // Store/update in DB
+          await supabase.from("dialer_browser_endpoints").upsert({
+            business_id: profile.business_id,
+            user_id: user.id,
+            plivo_endpoint_id: existingEndpointId,
+            plivo_username: username,
+            plivo_password: password,
+            plivo_app_id: PLIVO_APP_ID,
+            is_active: true,
+          } as any, { onConflict: "user_id,business_id" });
+
+          return jsonRes({ status: "ok", username, password });
+        }
+      }
+    } catch (listErr) {
+      console.warn("[dialer-browser-token] Error checking existing endpoints:", listErr);
+    }
+
+    // No existing endpoint found — create new one
     const endpointResp = await fetch(
       `https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Endpoint/`,
       {
@@ -157,18 +203,46 @@ Deno.serve(async (req) => {
     console.log("[dialer-browser-token] Plivo Endpoint response", endpointData);
 
     if (!endpointResp.ok || !endpointData.endpoint_id) {
+      // If error is "already exists", try to list and reuse
+      const errStr = JSON.stringify(endpointData);
+      if (errStr.includes("already") || errStr.includes("exists") || errStr.includes("duplicate")) {
+        console.log("[dialer-browser-token] Endpoint already exists, fetching...");
+        try {
+          const retryList = await fetch(
+            `https://api.plivo.com/v1/Account/${PLIVO_AUTH_ID}/Endpoint/?username=${username}`,
+            { headers: { Authorization: plivoAuth } }
+          );
+          if (retryList.ok) {
+            const retryData = await retryList.json();
+            const eps = retryData.objects || [];
+            if (eps.length > 0) {
+              await supabase.from("dialer_browser_endpoints").upsert({
+                business_id: profile.business_id,
+                user_id: user.id,
+                plivo_endpoint_id: eps[0].endpoint_id,
+                plivo_username: username,
+                plivo_password: password,
+                plivo_app_id: PLIVO_APP_ID,
+                is_active: true,
+              } as any, { onConflict: "user_id,business_id" });
+              return jsonRes({ status: "ok", username, password });
+            }
+          }
+        } catch { /* fall through */ }
+      }
       return jsonRes({ status: "error", error: "Failed to create Plivo endpoint", details: endpointData });
     }
 
     // Store in DB
-    const { error: insertError } = await supabase.from("dialer_browser_endpoints").insert({
+    const { error: insertError } = await supabase.from("dialer_browser_endpoints").upsert({
       business_id: profile.business_id,
       user_id: user.id,
       plivo_endpoint_id: endpointData.endpoint_id,
       plivo_username: username,
       plivo_password: password,
       plivo_app_id: PLIVO_APP_ID,
-    } as any);
+      is_active: true,
+    } as any, { onConflict: "user_id,business_id" });
 
     if (insertError) {
       console.error("[dialer-browser-token] DB insert error", insertError);
