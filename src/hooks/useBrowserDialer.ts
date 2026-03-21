@@ -1,3 +1,4 @@
+console.log("🔥 DIALER HOOK LOADED");
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
