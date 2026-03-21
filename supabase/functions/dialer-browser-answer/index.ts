@@ -121,14 +121,14 @@ Deno.serve(async (req) => {
   </Dial>
 </Response>`;
 
-    console.log("[dialer-browser-answer] XML Response", xml);
+    console.log("[DIALER_XML] XML Response", xml);
 
     return new Response(xml, {
       status: 200,
       headers: { "Content-Type": "text/xml" },
     });
   } catch (err) {
-    console.error("[dialer-browser-answer] Error:", err);
+    console.error("[DIALER_XML] Error:", err);
 
     // Fallback — hangup cleanly
     const xml = `<Response><Hangup reason="rejected" /></Response>`;
