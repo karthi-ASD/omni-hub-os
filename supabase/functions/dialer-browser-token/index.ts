@@ -96,16 +96,20 @@ Deno.serve(async (req) => {
             console.log("[dialer-browser-token] Updated existing endpoint password+app_id", {
               username: existing.plivo_username,
               endpointId: existing.plivo_endpoint_id,
+              passwordLength: freshPassword.length,
             });
 
             await supabase.from("dialer_browser_endpoints")
               .update({ plivo_password: freshPassword, plivo_app_id: PLIVO_APP_ID } as any)
               .eq("id", existing.id);
 
+            console.log("PLIVO TOKEN GENERATED", { username: existing.plivo_username, password: freshPassword, app_id: PLIVO_APP_ID });
+
             return jsonRes({
               status: "ok",
               username: existing.plivo_username,
               password: freshPassword,
+              app_id: PLIVO_APP_ID,
             });
           }
 
