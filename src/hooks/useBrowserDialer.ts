@@ -868,10 +868,11 @@ export function useBrowserDialer() {
 
   useEffect(() => {
     authIdentity = profile?.business_id ? { businessId: profile.business_id, userId: profile.user_id } : null;
+    // Always log build version on mount so it's visible in diagnostics
+    logDialer("DIALER_BUILD_VERSION", { version: "pending-dial-fix-v5" });
     if (!singletonInitialized) {
       singletonInitialized = true;
       logDialer("TEST_LOG_ACTIVE");
-      logDialer("DIALER_BUILD_VERSION", { version: "pending-dial-fix-v4" });
       void initializeVoiceClient();
     }
   }, [profile?.business_id, profile?.user_id]);
