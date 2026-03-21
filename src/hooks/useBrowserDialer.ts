@@ -1,3 +1,4 @@
+console.log("🔥 DIALER HOOK LOADED");
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -661,6 +662,7 @@ export function useBrowserDialer() {
   }, []);
 
   const startCall = useCallback(async (phoneNumber: string, leadId?: string, clientId?: string) => {
+    console.log("🔥 START CALL TRIGGERED");
     logDialer("USER_CLICK_CALL", { destination: phoneNumber, leadId, clientId });
 
     if (!profile?.business_id || storeState.loading || ["calling", "ringing", "connected"].includes(storeState.status)) {
