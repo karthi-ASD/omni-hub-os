@@ -130,13 +130,15 @@ export default function DialerPage() {
   }
 
   const handleDial = async () => {
-    setUiDebugState({ lastClick: new Date().toISOString(), clicked: true });
-    dialer.logEvent("USER_CLICK_CALL_VISUAL", {
+    console.log("HANDLE_DIAL_TRIGGERED");
+    dialer.logEvent("USER_CLICK_CALL", {
       phoneInput,
       registered: dialer.registered,
       status: dialer.callStatus,
       time: new Date().toISOString(),
     });
+    setUiDebugState({ lastClick: new Date().toISOString(), clicked: true });
+    document.body.style.backgroundColor = "#065f46";
     if (!phoneInput.trim()) {
       dialer.logEvent("HANDLE_DIAL_BLOCKED_EMPTY_INPUT");
       toast.error("Enter a phone number first");
@@ -399,9 +401,13 @@ export default function DialerPage() {
               {!isCallActive ? (
                 <>
                   <button
-                    onClick={handleDial}
+                    onClick={() => {
+                      console.log("CALL BUTTON CLICKED");
+                      alert("CALL CLICKED");
+                      handleDial();
+                    }}
                     style={{
-                      backgroundColor: dialer.registered ? "#16a34a" : "#f97316",
+                      backgroundColor: "#22c55e",
                       color: "white",
                       padding: "12px 20px",
                       fontWeight: "bold",
@@ -412,17 +418,15 @@ export default function DialerPage() {
                       flex: 1,
                     }}
                   >
-                    {dialer.loading
-                      ? "🚀 STARTING CALL..."
-                      : dialer.registered
-                      ? "📞 CALL NOW"
-                      : "⚠️ WAITING REGISTRATION"}
+                    📞 CALL NOW
                   </button>
                   <button
                     onClick={() => {
-                      setUiDebugState({ lastClick: new Date().toISOString(), clicked: true });
-                      dialer.logEvent("TEST_CALL_BUTTON_CLICKED", { time: new Date().toISOString() });
-                      dialer.startCall("+61400000000");
+                      console.log("TEST CALL BUTTON CLICKED");
+                      alert("TEST CALL CLICKED");
+                      document.body.style.backgroundColor = "#065f46";
+                      dialer.logEvent("TEST_DIRECT_CALL_CLICKED", { time: new Date().toISOString() });
+                      dialer.startCall("+919902328888");
                     }}
                     style={{
                       backgroundColor: "#2563eb",
@@ -434,7 +438,7 @@ export default function DialerPage() {
                       cursor: "pointer",
                     }}
                   >
-                    🧪 TEST CALL
+                    🧪 TEST DIRECT CALL
                   </button>
                 </>
               ) : (
