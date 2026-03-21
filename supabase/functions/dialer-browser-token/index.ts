@@ -19,6 +19,7 @@ async function plivoFetch(authId: string, plivoAuth: string, path: string, init?
 }
 
 Deno.serve(async (req) => {
+  console.log("DIALER_BROWSER_TOKEN_HIT", req.method);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
