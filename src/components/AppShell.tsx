@@ -51,7 +51,7 @@ const AppShell = () => {
   const shellTitle = dashboardShell === "client_business" || dashboardShell === "client_portal"
     ? activeBusinessName || shellInfo.title
     : shellInfo.title;
-  const hideChatWidget = location.pathname.startsWith("/sales/dialer");
+  const hideChatWidget = location.pathname.startsWith("/sales/dialer") || location.pathname.startsWith("/dialer");
 
   useEffect(() => {
     console.log("[SHELL RENDER]", {

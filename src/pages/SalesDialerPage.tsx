@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, Navigate } from "react-router-dom";
 import { useDialer } from "@/hooks/useDialer";
+import { useBrowserDialer } from "@/hooks/useBrowserDialer";
 import { useDialerAccess } from "@/hooks/useDialerAccess";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -17,11 +18,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Phone, PhoneOff, PhoneCall, Clock, User, Flame,
-  Mic, MicOff, CheckCircle, XCircle, Brain,
+  Mic, MicOff, CheckCircle, XCircle, Brain, Copy, Trash2,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 import type { Disposition } from "@/services/dialerService";
-
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   idle: { label: "Ready", className: "bg-muted text-muted-foreground" },
   initiating: { label: "Connecting…", className: "bg-amber-500/15 text-amber-700 dark:text-amber-400" },
@@ -47,6 +48,7 @@ export default function SalesDialerPage() {
   const [searchParams] = useSearchParams();
   const { profile } = useAuth();
   const { canAccessDialer } = useDialerAccess();
+  const browserDialer = useBrowserDialer();
   const {
     session, callStatus, formattedTimer, isMuted, loading, isCallActive,
     startCall, endCall, toggleMute, submitDisposition, resetDialer,
@@ -57,11 +59,6 @@ export default function SalesDialerPage() {
   const [phoneInput, setPhoneInput] = useState(prefillPhone);
   const [notes, setNotes] = useState("");
   const [disposition, setDisposition] = useState<Disposition | "">("");
-  const [logs, setLogs] = useState<string[]>([]);
-
-  const pushLog = useCallback((message: string) => {
-    setLogs((prev) => [...prev.slice(-19), message]);
-  }, []);
 
   // Auto-start call if prefilled from leads page
   useEffect(() => {
@@ -69,10 +66,6 @@ export default function SalesDialerPage() {
       startCall(prefillPhone, prefillLeadId);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    pushLog("DIALER LOADED");
-  }, [pushLog]);
 
   // Fetch leads for quick-dial
   const { data: leads, isLoading: leadsLoading } = useQuery({
@@ -116,13 +109,11 @@ export default function SalesDialerPage() {
   const handleQuickDial = (lead: any) => {
     if (isCallActive || loading) return;
     setPhoneInput(lead.phone);
-    pushLog("CALL BUTTON CLICKED");
     startCall(lead.phone, lead.id);
   };
 
   const handleManualCall = () => {
     if (!phoneInput.trim() || isCallActive || loading) return;
-    pushLog("CALL BUTTON CLICKED");
     startCall(phoneInput.trim());
   };
 
@@ -276,13 +267,44 @@ export default function SalesDialerPage() {
                   </div>
                 )}
 
-                <div className="mt-5 h-[200px] overflow-y-auto rounded-md bg-foreground p-3 font-mono text-xs text-background">
-                  <div className="mb-2 font-semibold">🔍 DEBUG LOG PANEL</div>
-                  {logs.length === 0 ? (
-                    <div>No logs yet</div>
-                  ) : (
-                    logs.map((log, index) => <div key={`${log}-${index}`}>{log}</div>)
-                  )}
+                <div className="mt-5 rounded-md border bg-muted/30 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-mono text-xs font-semibold">🔍 LIVE DEBUG LOG ({browserDialer.debugLogs.length})</span>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-[10px]"
+                        onClick={() => {
+                          const text = browserDialer.debugLogs
+                            .map((l) => `[${l.timestamp.split("T")[1]?.slice(0, 12)}] ${l.event} ${l.data ? JSON.stringify(l.data) : ""}`)
+                            .join("\n");
+                          navigator.clipboard.writeText(text);
+                          toast.success("Logs copied to clipboard");
+                        }}
+                      >
+                        <Copy className="h-3 w-3 mr-1" /> Copy
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="h-[200px] overflow-y-auto rounded-md bg-foreground p-2 font-mono text-[10px] leading-4 text-background space-y-0.5">
+                    {browserDialer.debugLogs.length === 0 ? (
+                      <div className="text-center py-8 opacity-60">No logs yet — make a call to see events</div>
+                    ) : (
+                      browserDialer.debugLogs.map((log, i) => {
+                        const time = log.timestamp.split("T")[1]?.slice(0, 12) || log.timestamp;
+                        const isError = log.event.includes("FAIL") || log.event.includes("ERROR") || log.event.includes("DENIED");
+                        const isSuccess = log.event.includes("SUCCESS") || log.event.includes("GRANTED") || log.event.includes("REGISTERED") || log.event.includes("ANSWERED") || log.event.includes("CONNECTED");
+                        return (
+                          <div key={i} className={isError ? "text-red-400" : isSuccess ? "text-emerald-400" : ""}>
+                            <span className="opacity-60">[{time}]</span>{" "}
+                            <span className="font-semibold">{log.event}</span>
+                            {log.data && <span className="opacity-60"> {JSON.stringify(log.data)}</span>}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
               </div>
             )}
