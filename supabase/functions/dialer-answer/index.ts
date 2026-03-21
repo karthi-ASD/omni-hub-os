@@ -77,7 +77,10 @@ Deno.serve(async (req) => {
             call_status: "bridging",
           })
           .eq("id", sessionId)
-          .then(() => {}, () => {});
+          .then(
+            () => {},
+            () => {},
+          );
 
         supabase
           .from("dialer_call_events")
@@ -86,7 +89,10 @@ Deno.serve(async (req) => {
             event_type: "agent_answered",
             metadata: { call_uuid: callUuid, conference_id: conferenceId },
           })
-          .then(() => {}, () => {});
+          .then(
+            () => {},
+            () => {},
+          );
       } else if (leg === "customer") {
         supabase
           .from("dialer_sessions")
@@ -96,7 +102,10 @@ Deno.serve(async (req) => {
             call_start_time: new Date().toISOString(),
           })
           .eq("id", sessionId)
-          .then(() => {}, () => {});
+          .then(
+            () => {},
+            () => {},
+          );
 
         supabase
           .from("dialer_call_events")
@@ -105,18 +114,20 @@ Deno.serve(async (req) => {
             event_type: "customer_connected",
             metadata: { call_uuid: callUuid, conference_id: conferenceId },
           })
-          .then(() => {}, () => {});
+          .then(
+            () => {},
+            () => {},
+          );
       }
     }
   } catch (err) {
     console.error("[dialer-answer error]", err);
   }
 
-  const xml = `<Response>
-  <Dial>
-    <Conference startConferenceOnEnter="${finalStartConferenceOnEnter}" endConferenceOnExit="true" stayAlone="true" waitSound="" enterSound="" record="record-from-start" >
-      ${finalConferenceId}
-    </Conference>
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Dial answerOnBridge="true" callerId="+61468280069">
+    <Number>${destination}</Number>
   </Dial>
 </Response>`;
 
