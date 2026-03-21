@@ -443,6 +443,8 @@ function bindVisibilityRecovery() {
 
 // ─── Execute the actual SDK call ───
 async function executeOutboundCall(intent: PendingDialIntent) {
+  logDialer("EXECUTE_OUTBOUND_CALL_ENTERED", { raw: intent.phoneNumber });
+
   if (!authIdentity || !plivoInstanceRef?.client) {
     logDialer("EXECUTE_CALL_BLOCKED", { reason: "no_auth_or_client" });
     return;
