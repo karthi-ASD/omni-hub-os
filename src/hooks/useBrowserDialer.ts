@@ -955,7 +955,8 @@ export function useBrowserDialer() {
 
     // If not registered, queue the intent and wait for registration
     if (!storeState.registered || !plivoInstanceRef?.client) {
-      logDialer("CALL_WAITING_FOR_REGISTRATION", { destination: phoneNumber.trim() });
+      logDialer("CALL_WAITING_FOR_REGISTRATION", { destination: phoneNumber.trim(), registered: storeState.registered, hasClient: !!plivoInstanceRef?.client });
+      modulePendingDial = intent; // Module-level for reliability
       setStoreState((current) => ({ ...current, pendingDialIntent: intent }));
       toast.info("Waiting for voice registration to complete...");
       return;
