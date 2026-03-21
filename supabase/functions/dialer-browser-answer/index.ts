@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
     action="${actionUrl}"
     method="POST"
   >
-    <Number>${destination}</Number>
+    ${destination}
   </Dial>
 </Response>`;
 
