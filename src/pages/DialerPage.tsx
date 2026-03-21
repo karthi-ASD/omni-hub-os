@@ -130,13 +130,16 @@ export default function DialerPage() {
   }
 
   const handleDial = async () => {
-    dialer.logEvent("USER_CLICK_CALL", {
+    setUiDebugState({ lastClick: new Date().toISOString(), clicked: true });
+    dialer.logEvent("USER_CLICK_CALL_VISUAL", {
       phoneInput,
       registered: dialer.registered,
       status: dialer.callStatus,
+      time: new Date().toISOString(),
     });
     if (!phoneInput.trim()) {
       dialer.logEvent("HANDLE_DIAL_BLOCKED_EMPTY_INPUT");
+      toast.error("Enter a phone number first");
       return;
     }
     await dialer.startCall(phoneInput.trim(), leadContext?.id, leadContext?.clientId);
