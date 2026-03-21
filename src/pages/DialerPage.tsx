@@ -79,6 +79,20 @@ export default function DialerPage() {
   const [followUpDate, setFollowUpDate] = useState<Date | undefined>();
   const [showFollowUp, setShowFollowUp] = useState(false);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [uiDebugState, setUiDebugState] = useState<{ clicked: boolean; lastClick: string | null }>({ clicked: false, lastClick: null });
+
+  useEffect(() => {
+    if (dialer.callStatus === "connected") {
+      document.body.style.backgroundColor = "#065f46";
+    } else if (dialer.callStatus === "failed") {
+      document.body.style.backgroundColor = "#7f1d1d";
+    } else if (uiDebugState.clicked && (dialer.callStatus === "calling" || dialer.callStatus === "ringing")) {
+      document.body.style.backgroundColor = "#1e293b";
+    } else {
+      document.body.style.backgroundColor = "";
+    }
+    return () => { document.body.style.backgroundColor = ""; };
+  }, [dialer.callStatus, uiDebugState.clicked]);
 
   // Load lead context from URL params
   useEffect(() => {
@@ -116,13 +130,16 @@ export default function DialerPage() {
   }
 
   const handleDial = async () => {
-    dialer.logEvent("USER_CLICK_CALL", {
+    setUiDebugState({ lastClick: new Date().toISOString(), clicked: true });
+    dialer.logEvent("USER_CLICK_CALL_VISUAL", {
       phoneInput,
       registered: dialer.registered,
       status: dialer.callStatus,
+      time: new Date().toISOString(),
     });
     if (!phoneInput.trim()) {
       dialer.logEvent("HANDLE_DIAL_BLOCKED_EMPTY_INPUT");
+      toast.error("Enter a phone number first");
       return;
     }
     await dialer.startCall(phoneInput.trim(), leadContext?.id, leadContext?.clientId);
@@ -156,6 +173,17 @@ export default function DialerPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
+      {/* ===== VISUAL DEBUG PANEL ===== */}
+      <div style={{ background: "#111", color: "#0f0", padding: "10px", fontSize: "12px", fontFamily: "monospace", borderRadius: "8px", border: "2px solid #0f0" }}>
+        <div>BUILD: <strong>pending-dial-fix-v5</strong></div>
+        <div>Registered: <strong style={{ color: dialer.registered ? "#4ade80" : "#f87171" }}>{String(dialer.registered)}</strong></div>
+        <div>Status: <strong>{dialer.callStatus}</strong></div>
+        <div>Clicked: <strong style={{ color: uiDebugState.clicked ? "#4ade80" : "#f87171" }}>{String(uiDebugState.clicked)}</strong></div>
+        <div>Last Click: <strong>{uiDebugState.lastClick || "none"}</strong></div>
+        <div>Pending Dial: <strong>{dialer.pendingDial ? JSON.stringify(dialer.pendingDial) : "none"}</strong></div>
+        <div>Last Error: <strong style={{ color: "#f87171" }}>{dialer.lastError || "none"}</strong></div>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -367,19 +395,47 @@ export default function DialerPage() {
               ))}
             </div>
 
-            <div className="flex gap-2 justify-center">
+            <div className="flex gap-2 justify-center flex-wrap">
               {!isCallActive ? (
                 <>
-                  <Button
-                    className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white"
+                  <button
                     onClick={handleDial}
+                    style={{
+                      backgroundColor: dialer.registered ? "#16a34a" : "#f97316",
+                      color: "white",
+                      padding: "12px 20px",
+                      fontWeight: "bold",
+                      fontSize: "16px",
+                      borderRadius: "8px",
+                      border: "2px solid black",
+                      cursor: "pointer",
+                      flex: 1,
+                    }}
                   >
-                    <Phone className="h-4 w-4 mr-2" />
-                    {dialer.loading ? "Starting..." : !dialer.registered ? "Call (will queue)" : "Call from Browser"}
-                  </Button>
-                  <Button variant="outline" className="h-12" onClick={() => dialer.startCall("+61400000000")}>
-                    TEST CALL
-                  </Button>
+                    {dialer.loading
+                      ? "🚀 STARTING CALL..."
+                      : dialer.registered
+                      ? "📞 CALL NOW"
+                      : "⚠️ WAITING REGISTRATION"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setUiDebugState({ lastClick: new Date().toISOString(), clicked: true });
+                      dialer.logEvent("TEST_CALL_BUTTON_CLICKED", { time: new Date().toISOString() });
+                      dialer.startCall("+61400000000");
+                    }}
+                    style={{
+                      backgroundColor: "#2563eb",
+                      color: "white",
+                      padding: "12px 16px",
+                      borderRadius: "8px",
+                      fontWeight: "bold",
+                      border: "2px solid black",
+                      cursor: "pointer",
+                    }}
+                  >
+                    🧪 TEST CALL
+                  </button>
                 </>
               ) : (
                 <>
@@ -523,11 +579,23 @@ export default function DialerPage() {
         </Card>
       </div>
 
+      {/* ===== LIVE EVENT FEED (always visible) ===== */}
+      <div style={{ background: "#000", color: "#0ff", padding: "10px", maxHeight: "150px", overflow: "auto", fontSize: "11px", fontFamily: "monospace", borderRadius: "8px", border: "1px solid #0ff" }}>
+        <div style={{ color: "#888", marginBottom: "4px" }}>LIVE EVENT FEED (last 10):</div>
+        {dialer.debugLogs.length === 0 ? (
+          <div style={{ color: "#666" }}>No events yet</div>
+        ) : (
+          dialer.debugLogs.slice(-10).map((log, i) => (
+            <div key={i}>{log.timestamp.split("T")[1]?.slice(0, 12)} — <strong>{log.event}</strong> {log.data ? JSON.stringify(log.data) : ""}</div>
+          ))
+        )}
+      </div>
+
       {/* Diagnostics & Debug Panel */}
       <Collapsible open={showDiagnostics} onOpenChange={setShowDiagnostics}>
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="sm" className="text-xs text-muted-foreground">
-            <Bug className="h-3 w-3 mr-1" /> {showDiagnostics ? "Hide" : "Show"} Diagnostics & Logs
+            <Bug className="h-3 w-3 mr-1" /> {showDiagnostics ? "Hide" : "Show"} Full Diagnostics
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent>
