@@ -8,7 +8,7 @@ const corsHeaders = {
 const PLIVO_WEBRTC_APP_ID = "45801072070731068";
 
 function jsonRes(body: Record<string, unknown>) {
-  return new Response(JSON.stringify(body), { status: 200, headers: corsHeaders });
+  return new Response(JSON.stringify(body), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 }
 
 async function plivoFetch(authId: string, plivoAuth: string, path: string, init?: RequestInit) {
