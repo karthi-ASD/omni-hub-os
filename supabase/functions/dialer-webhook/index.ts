@@ -259,19 +259,23 @@ Deno.serve(async (req) => {
       const hadConnectedState = !!session.customer_connected || !!session.call_start_time;
       const shouldProcessAI = hadConnectedState && duration >= 3;
 
-      await supabase.from("dialer_call_events").insert({
-        session_id: session.id,
-        event_type: "postcall_pipeline_guard_result",
-        metadata: {
-          hadSession: true,
-          hadConnectedState,
-          connectedDurationMs: duration * 1000,
-          hadTranscript: false,
-          hadRecording: !!(updates.recording_url || session.recording_url),
-          endReason: p.hangup_cause || p.call_status || updates.call_status,
-          shouldProcessAI,
-        },
-      }).catch(() => {});
+      try {
+        await supabase.from("dialer_call_events").insert({
+          session_id: session.id,
+          event_type: "postcall_pipeline_guard_result",
+          metadata: {
+            hadSession: true,
+            hadConnectedState,
+            connectedDurationMs: duration * 1000,
+            hadTranscript: false,
+            hadRecording: !!(updates.recording_url || session.recording_url),
+            endReason: p.hangup_cause || p.call_status || updates.call_status,
+            shouldProcessAI,
+          },
+        });
+      } catch {
+        // ignore logging failure
+      }
 
       if (shouldProcessAI) {
         fetch(`${supabaseUrl}/functions/v1/dialer-ai-analyze`, {
