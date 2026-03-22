@@ -395,96 +395,98 @@ function DialerPageContent() {
 
         {/* CENTER PANEL — Dialer */}
         <div className="lg:col-span-1 space-y-4">
-        <Card>
-            <CardTitle className="text-base flex items-center gap-2"><Phone className="h-4 w-4" /> Browser Dialer</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center">
-              <Badge className={`${STATUS_COLORS[dialer.callStatus] || "bg-muted text-muted-foreground"} text-sm px-3 py-1`}>
-                {STATUS_LABELS[dialer.callStatus] || dialer.callStatus}
-              </Badge>
-              {isCallActive && <p className="text-2xl font-mono font-bold mt-2 tabular-nums">{dialer.formattedTimer}</p>}
-              {dialer.callStatus === "ringing" && <p className="text-xs text-muted-foreground mt-1 animate-pulse">🔊 Ringback playing</p>}
-              {dialer.diagnostics.destinationNumber && isCallActive && <p className="text-xs font-mono text-muted-foreground mt-1">{dialer.diagnostics.destinationNumber}</p>}
-            </div>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2"><Phone className="h-4 w-4" /> Browser Dialer</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-center">
+                <Badge className={`${STATUS_COLORS[dialer.callStatus] || "bg-muted text-muted-foreground"} text-sm px-3 py-1`}>
+                  {STATUS_LABELS[dialer.callStatus] || dialer.callStatus}
+                </Badge>
+                {isCallActive && <p className="text-2xl font-mono font-bold mt-2 tabular-nums">{dialer.formattedTimer}</p>}
+                {dialer.callStatus === "ringing" && <p className="text-xs text-muted-foreground mt-1 animate-pulse">🔊 Ringback playing</p>}
+                {dialer.diagnostics.destinationNumber && isCallActive && <p className="text-xs font-mono text-muted-foreground mt-1">{dialer.diagnostics.destinationNumber}</p>}
+              </div>
 
-            <div className="flex gap-2">
-              <Input value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} placeholder="+61 4XX XXX XXX" className="font-mono text-lg text-center tracking-wider" disabled={isCallActive} onKeyDown={(e) => { if (e.key === "Enter" && canDial) handleDial(); }} />
-              <Button variant="ghost" size="icon" onClick={() => setPhoneInput((p) => p.slice(0, -1))} disabled={isCallActive}><Delete className="h-4 w-4" /></Button>
-            </div>
+              <div className="flex gap-2">
+                <Input value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} placeholder="+61 4XX XXX XXX" className="font-mono text-lg text-center tracking-wider" disabled={isCallActive || isAuthRequired} onKeyDown={(e) => { if (e.key === "Enter" && canDial) handleDial(); }} />
+                <Button variant="ghost" size="icon" onClick={() => setPhoneInput((p) => p.slice(0, -1))} disabled={isCallActive || isAuthRequired}><Delete className="h-4 w-4" /></Button>
+              </div>
 
-            <div className="grid grid-cols-3 gap-2">
-              {DIAL_PAD.flat().map((digit) => (
-                <Button key={digit} variant="outline" className="h-12 text-lg font-mono" onClick={() => handleDialPadPress(digit)} disabled={isCallActive}>{digit}</Button>
-              ))}
-            </div>
+              <div className="grid grid-cols-3 gap-2">
+                {DIAL_PAD.flat().map((digit) => (
+                  <Button key={digit} variant="outline" className="h-12 text-lg font-mono" onClick={() => handleDialPadPress(digit)} disabled={isCallActive || isAuthRequired}>{digit}</Button>
+                ))}
+              </div>
 
-            <div className="flex gap-2 justify-center flex-wrap">
-              {!isCallActive ? (
-                <Button
-                  onClick={handleDial}
-                  disabled={!canDial}
-                  className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[0.97] transition-transform disabled:opacity-50"
-                >
-                  <Phone className="h-4 w-4 mr-2" />
-                  {getCallButtonText()}
-                </Button>
-              ) : (
-                <>
-                  <Button variant="outline" className="h-12" onClick={dialer.toggleMute}>
-                    {dialer.isMuted ? <MicOff className="h-4 w-4 mr-1" /> : <Mic className="h-4 w-4 mr-1" />}
-                    {dialer.isMuted ? "Unmute" : "Mute"}
+              <div className="flex gap-2 justify-center flex-wrap">
+                {!isCallActive ? (
+                  <Button
+                    onClick={handleDial}
+                    disabled={!canDial}
+                    className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[0.97] transition-transform disabled:opacity-50"
+                  >
+                    <Phone className="h-4 w-4 mr-2" />
+                    {getCallButtonText()}
                   </Button>
-                  <Button className="flex-1 h-12 bg-destructive hover:bg-destructive/90 text-destructive-foreground" onClick={dialer.endCall} disabled={dialer.callStatus === "ending"}>
-                    <PhoneOff className="h-4 w-4 mr-2" /> Hang Up
+                ) : (
+                  <>
+                    <Button variant="outline" className="h-12" onClick={dialer.toggleMute}>
+                      {dialer.isMuted ? <MicOff className="h-4 w-4 mr-1" /> : <Mic className="h-4 w-4 mr-1" />}
+                      {dialer.isMuted ? "Unmute" : "Mute"}
+                    </Button>
+                    <Button className="flex-1 h-12 bg-destructive hover:bg-destructive/90 text-destructive-foreground" onClick={dialer.endCall} disabled={dialer.callStatus === "ending"}>
+                      <PhoneOff className="h-4 w-4 mr-2" /> Hang Up
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              {/* Helper text under button */}
+              {(() => {
+                const helper = getCallHelperText();
+                return helper ? (
+                  <p className={`text-xs text-center ${dialer.pendingDial ? "text-amber-600 animate-pulse" : "text-muted-foreground"}`}>
+                    {helper}
+                  </p>
+                ) : null;
+              })()}
+
+              {/* Quick actions */}
+              <div className="flex gap-2 justify-center">
+                {dialer.lastCalledNumber && !isCallActive && (
+                  <Button variant="ghost" size="sm" className="text-xs" onClick={dialer.redialLast}>
+                    <RotateCcw className="h-3 w-3 mr-1" /> Redial {dialer.lastCalledNumber}
                   </Button>
-                </>
-              )}
-            </div>
+                )}
+              </div>
 
-            {/* Helper text under button */}
-            {(() => {
-              const helper = getCallHelperText();
-              return helper ? (
-                <p className={`text-xs text-center ${dialer.pendingDial ? "text-amber-600 animate-pulse" : "text-muted-foreground"}`}>
-                  {helper}
-                </p>
-              ) : null;
-            })()}
+              {/* Audio info */}
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground">🎧 Audio uses your laptop speakers & microphone</p>
+                {(dialer.micPermission === "unknown" || dialer.micPermission === "prompt") ? (
+                  <Button variant="link" size="sm" className="text-xs h-auto p-0 mt-1" onClick={() => dialer.requestMicPermission()}>Grant microphone access</Button>
+                ) : dialer.micPermission === "granted" ? (
+                  <p className="text-xs text-emerald-600 mt-1">✓ Microphone access granted</p>
+                ) : null}
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* Quick actions */}
-            <div className="flex gap-2 justify-center">
-              {dialer.lastCalledNumber && !isCallActive && (
-                <Button variant="ghost" size="sm" className="text-xs" onClick={dialer.redialLast}>
-                  <RotateCcw className="h-3 w-3 mr-1" /> Redial {dialer.lastCalledNumber}
-                </Button>
-              )}
-            </div>
-
-            {/* Audio info */}
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground">🎧 Audio uses your laptop speakers & microphone</p>
-              {(dialer.micPermission === "unknown" || dialer.micPermission === "prompt") ? (
-                <Button variant="link" size="sm" className="text-xs h-auto p-0 mt-1" onClick={() => dialer.requestMicPermission()}>Grant microphone access</Button>
-              ) : dialer.micPermission === "granted" ? (
-                <p className="text-xs text-emerald-600 mt-1">✓ Microphone access granted</p>
-              ) : null}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Call Readiness Panel */}
-        <CallReadinessPanel
-          registered={dialer.registered}
-          micPermission={dialer.micPermission}
-          clientHealthy={dialer.diagnostics.clientHealthy}
-          audioContextState={dialer.diagnostics.latestBrowserMediaStatus}
-          callStatus={dialer.callStatus}
-          logEvent={dialer.logEvent}
-          startCall={dialer.startCall}
-          onReconnect={dialer.reconnectVoice}
-          requestMicPermission={dialer.requestMicPermission}
-        />
+          {/* Call Readiness Panel */}
+          <CallReadinessPanel
+            registered={dialer.registered}
+            micPermission={dialer.micPermission}
+            clientHealthy={dialer.diagnostics.clientHealthy}
+            audioContextState={dialer.diagnostics.latestBrowserMediaStatus}
+            callStatus={dialer.callStatus}
+            logEvent={dialer.logEvent}
+            startCall={dialer.startCall}
+            onReconnect={dialer.reconnectVoice}
+            requestMicPermission={dialer.requestMicPermission}
+          />
+        </div>
 
         {/* RIGHT PANEL — Disposition */}
         <Card className="lg:col-span-1">
