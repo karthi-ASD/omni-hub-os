@@ -365,11 +365,13 @@ const App = () => (
             {/* Protected app shell */}
             <Route
               element={
-                <ProtectedRoute>
-                  <ClientRouteGuard>
-                    <AppShell />
-                  </ClientRouteGuard>
-                </ProtectedRoute>
+                <AppErrorBoundary>
+                  <ProtectedRoute>
+                    <ClientRouteGuard>
+                      <AppShell />
+                    </ClientRouteGuard>
+                  </ProtectedRoute>
+                </AppErrorBoundary>
               }
             >
               <Route path="/dashboard" element={<Dashboard />} />
