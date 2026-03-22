@@ -771,6 +771,43 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   } catch {}
 }
 
+// ─── Connection health monitor ──────────────────────────────────────
+function startConnectionHealthMonitor() {
+  if (connectionHealthInterval) return;
+  connectionHealthInterval = setInterval(() => {
+    if (!storeState.registered) return;
+    const staleDuration = Date.now() - lastConnectedAt;
+    if (staleDuration > 15000) {
+      logDialer("CONNECTION_STALE_REINIT", { staleDurationMs: staleDuration });
+      reinitializeDialer();
+    }
+  }, 10000);
+}
+
+function stopConnectionHealthMonitor() {
+  if (connectionHealthInterval) {
+    clearInterval(connectionHealthInterval);
+    connectionHealthInterval = null;
+  }
+}
+
+function reinitializeDialer() {
+  if (recoveryInProgress) return;
+  recoveryInProgress = true;
+  logDialer("DIALER_REINIT_START");
+  try { plivoInstanceRef?.client?.logout(); } catch {}
+  sdkInitStarted = false;
+  singletonInitialized = false;
+  registrationRetryCount = 0;
+  setStoreState((c) => ({ ...c, registered: false, status: "idle", sdkReady: false }));
+  setTimeout(() => {
+    void initializeVoiceClient().finally(() => {
+      recoveryInProgress = false;
+      logDialer("DIALER_REINIT_DONE");
+    });
+  }, 1000);
+}
+
 // ─── SDK init ───────────────────────────────────────────────────────
 async function initializeVoiceClient() {
   if (sdkInitStarted || typeof window === "undefined") return;
@@ -791,6 +828,26 @@ async function initializeVoiceClient() {
       return;
     }
 
+    // HARD REQUIRE microphone permission before proceeding
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((t) => t.stop());
+      logDialer("MIC_PERMISSION_GRANTED_HARD_CHECK");
+      setStoreState((c) => ({ ...c, micPermission: "granted" }));
+    } catch (micErr) {
+      const reason = micErr instanceof Error ? micErr.message : String(micErr);
+      logDialer("MIC_PERMISSION_BLOCKED", { error: reason });
+      setStoreState((c) => ({
+        ...c,
+        micPermission: "denied",
+        status: "permission_denied",
+        lastError: "Microphone permission is required to use the dialer.",
+      }));
+      sdkInitStarted = false;
+      toast.error("Microphone permission is required to use the dialer. Please allow microphone access and refresh.");
+      return; // STOP initialization completely
+    }
+
     destroyPlivoClient();
     const generation = ++plivoClientGeneration;
     const instance = new window.Plivo({ debug: "INFO", permOnClick: true });
@@ -799,16 +856,6 @@ async function initializeVoiceClient() {
 
     setStoreState((c) => ({ ...c, sdkReady: true, status: "registering" }));
     logDialer("PLIVO_CLIENT_INIT_SUCCESS");
-
-    // Early mic permission
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach((t) => t.stop());
-      logDialer("EARLY_MIC_PERMISSION_GRANTED");
-      setStoreState((c) => ({ ...c, micPermission: "granted" }));
-    } catch (micErr) {
-      logDialer("EARLY_MIC_PERMISSION_FAILED", { reason: String(micErr) });
-    }
 
     await resumeAudioContext();
 
@@ -841,6 +888,14 @@ async function initializeVoiceClient() {
       }
 
       logDialer("TOKEN_RECEIVED_FULL", { username: data.username, hasPassword: !!data.password, app_id: data.app_id });
+
+      // Store credentials for re-login on disconnect/failure
+      lastLoginCredentials = { username: data.username, password: data.password };
+      registrationRetryCount = 0;
+      lastConnectedAt = Date.now();
+
+      // Start connection health monitor
+      startConnectionHealthMonitor();
 
       setTimeout(() => {
         if (!isActivePlivoClient(instance, generation)) return;
