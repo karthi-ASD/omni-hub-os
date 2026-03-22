@@ -1084,6 +1084,14 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
     const reason = (cause || "Unknown").trim();
     const reasonLower = reason.toLowerCase();
 
+    // ── FALSE BUSY DETECTION: Ignore "Busy" if it arrives < 3s after call start ──
+    const elapsed = callStartTimestamp > 0 ? Date.now() - callStartTimestamp : Infinity;
+    if (reasonLower.includes("busy") && elapsed < 3000) {
+      logDialer("FALSE_BUSY_IGNORED", { elapsed, reason, destination: storeState.destinationNumber });
+      // Don't treat this as a real failure — the call may still be routing
+      return;
+    }
+
     // Map provider reasons to specific log events and user-friendly messages
     let userMessage: string;
     let dbStatus: string = "failed";
@@ -1110,7 +1118,8 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
       logEvent = "CALL_FAILED";
     }
 
-    logDialer(logEvent, { reason, destination: storeState.destinationNumber, dbStatus });
+    logDialer(logEvent, { reason, destination: storeState.destinationNumber, dbStatus, elapsed });
+    logDialer("PROVIDER_FAILURE_RAW", { cause, elapsed });
     stopRingback();
 
     setStoreState((c) => ({
@@ -1127,10 +1136,11 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
     // Update DB session with correct terminal status
     if (storeState.session?.id) {
       supabase.from("dialer_sessions").update({ call_status: dbStatus, call_end_time: new Date().toISOString() }).eq("id", storeState.session.id).then(() => {});
-      insertCallEvent(storeState.session.id, logEvent, { reason, dbStatus }).catch(() => {});
+      insertCallEvent(storeState.session.id, logEvent, { reason, dbStatus, elapsed }).catch(() => {});
     }
 
     void setAgentAvailability("available");
+    callStartTimestamp = 0;
 
     // Auto-reset to device_ready after 5 seconds so user can retry
     setTimeout(() => {
