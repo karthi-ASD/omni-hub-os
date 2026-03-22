@@ -126,9 +126,7 @@ Deno.serve(async (req) => {
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Dial answerOnBridge="true" callerId="+61468280069">
-    <Number>${destination}</Number>
-  </Dial>
+  <Conference startConferenceOnEnter="${finalStartConferenceOnEnter}" endConferenceOnExit="true" stayAlone="false" waitSound="">${finalConferenceId}</Conference>
 </Response>`;
 
   console.log("[FINAL XML RESPONSE]", xml);
