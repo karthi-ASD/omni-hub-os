@@ -45,7 +45,8 @@ export type BrowserDialerStatus =
   | "ending"
   | "ended"
   | "failed"
-  | "permission_denied";
+  | "permission_denied"
+  | "auth_required";
 
 export interface DialerLogEntry {
   timestamp: string;
