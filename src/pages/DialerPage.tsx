@@ -302,12 +302,25 @@ function DialerPageContent() {
     return "Call";
   };
 
+  const [audioUnlocking, setAudioUnlocking] = useState(false);
+
+  const handleUnlockAudio = async () => {
+    console.log("AUDIO_ENABLE_BUTTON_CLICKED");
+    setAudioUnlocking(true);
+    try {
+      const result = await dialer.unlockAudio();
+      console.log(result ? "AUDIO_UNLOCK_SUCCEEDED" : "AUDIO_UNLOCK_FAILED");
+    } finally {
+      setAudioUnlocking(false);
+    }
+  };
+
   const getCallHelperText = () => {
-    if (dialer.pendingDial && dialer.pendingDialReason === "audio_not_ready") return "Browser audio is blocked. Click to enable audio, then the queued call will resume automatically.";
+    if (dialer.pendingDial && dialer.pendingDialReason === "audio_not_ready") return "Browser audio is blocked. Click the button below to enable audio, then the queued call will resume automatically.";
     if (dialer.pendingDial) return "Call queued. It will auto-dial as soon as the voice service is ready.";
     if (dialer.callStatus === "registering" || dialer.callStatus === "initializing") return "Waiting for voice registration…";
     if (!dialer.registered && dialer.callStatus !== "failed") return "Connecting to voice service…";
-    if (!dialer.audioReady) return "Audio is not ready yet. Click once to enable browser audio.";
+    if (!dialer.audioReady) return "Browser audio needs to be enabled before you can make calls.";
     if (dialer.registered && dialer.micPermission === "granted") return "Ready to call";
     if (dialer.micPermission !== "granted") return "Microphone access required";
     return null;
