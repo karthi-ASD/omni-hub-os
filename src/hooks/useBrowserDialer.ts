@@ -1094,17 +1094,36 @@ function canPlaceCall(): { ready: boolean; reason: string } {
 }
 
 async function executeOutboundCall(intent: PendingDialIntent) {
-  logDialer("EXECUTE_OUTBOUND_CALL_ENTERED", { raw: intent.phoneNumber });
+  logDialer("EXECUTE_OUTBOUND_CALL_ENTERED", {
+    raw: intent.phoneNumber,
+    audioReady: storeState.audioReady,
+    audioStatus: storeState.audioStatus,
+    registered: storeState.registered,
+    connectionState: storeState.connectionState,
+    dialLock: storeState.dialLock,
+  });
 
   if (!authIdentity) {
     logDialer("EXECUTE_CALL_BLOCKED", { reason: "no_auth" });
     return;
   }
 
-  const readiness = canPlaceCall();
-  if (!readiness.ready) {
-    logDialer("CALL_BLOCKED_NOT_READY", { reason: readiness.reason, status: storeState.status, connectionState: storeState.connectionState, initStatus: storeState.plivoClientInitStatus });
+  // ── RELAXED READINESS: check everything EXCEPT audioReady ──
+  // Audio was already handled by startCall() before we get here.
+  // If we're here, audio is either ready or degraded-ready.
+  if (!plivoInstanceRef?.client || !isClientHealthy()) {
+    logDialer("CALL_BLOCKED_NOT_READY", { reason: "no_client_or_unhealthy" });
+    toast.warning("Voice service not ready. Please wait or reconnect.");
+    return;
+  }
+  if (!storeState.registered || storeState.connectionState !== "connected") {
+    logDialer("CALL_BLOCKED_NOT_READY", { reason: "not_registered_or_disconnected", registered: storeState.registered, connectionState: storeState.connectionState });
     toast.warning("Voice service still connecting. Please wait.");
+    return;
+  }
+  if (storeState.micPermission !== "granted") {
+    logDialer("CALL_BLOCKED_NOT_READY", { reason: "mic_not_granted" });
+    toast.error("Microphone permission required.");
     return;
   }
 
@@ -1116,21 +1135,21 @@ async function executeOutboundCall(intent: PendingDialIntent) {
   setStoreState((c) => ({ ...c, dialLock: true, loading: true, lastError: null, pendingDialIntent: null, lastActionAt: new Date().toISOString() }));
 
   try {
+    // Resume audio context (fast, no blocking)
+    logDialer("PRECALL_AUDIO_CHECK_START");
     await resumeAudioContext();
+    logDialer("PRECALL_AUDIO_CHECK_RESULT", { audioReady: storeState.audioReady, audioStatus: storeState.audioStatus });
 
-    // Initialize audio output before call — hard block if fails
-    const audioOk = await initializeAudioOutput();
-    if (!audioOk) {
-      logDialer("CALL_BLOCKED_AUDIO_PLAYBACK_FAILED");
-      toast.error("Audio blocked by browser. Interact with the page, then click Enable Browser Audio again.");
-      setStoreState((c) => ({ ...c, loading: false, dialLock: false }));
-      return;
-    }
+    // NOTE: No second initializeAudioOutput() call here.
+    // startCall() already ensured audioReady before calling executeOutboundCall().
+    // This eliminates the duplicate audio unlock that was causing stalls.
 
     let resolvedPhone = intent.phoneNumber;
     if (intent.leadId) {
+      logDialer("LEAD_PHONE_LOOKUP_START", { leadId: intent.leadId });
       const { data: lead } = await supabase.from("leads").select("phone").eq("id", intent.leadId).maybeSingle();
       if (lead?.phone) resolvedPhone = lead.phone;
+      logDialer("LEAD_PHONE_LOOKUP_RESULT", { resolved: !!lead?.phone });
     }
 
     const normalizedPhone = formatToE164(resolvedPhone);
@@ -1171,6 +1190,7 @@ async function executeOutboundCall(intent: PendingDialIntent) {
       latestProviderStatus: "dialing",
     }));
 
+    logDialer("OUTBOUND_CALL_SESSION_CREATING", { destination: normalizedPhone });
     const sess = await createDialerSession({
       businessId: authIdentity.businessId,
       userId: authIdentity.userId,
@@ -1179,9 +1199,12 @@ async function executeOutboundCall(intent: PendingDialIntent) {
       clientId: intent.clientId,
     });
 
-    if (!sess) throw new Error("Failed to create call session");
+    if (!sess) {
+      logDialer("OUTBOUND_CALL_SESSION_FAILED");
+      throw new Error("Failed to create call session");
+    }
 
-    logDialer("SESSION_CREATED", { sessionId: sess.id });
+    logDialer("OUTBOUND_CALL_SESSION_CREATED", { sessionId: sess.id });
     await supabase.from("dialer_sessions").update({ call_mode: "browser", call_status: "initiating" } as never).eq("id", sess.id);
 
     bindSession(sess.id);
@@ -1191,21 +1214,52 @@ async function executeOutboundCall(intent: PendingDialIntent) {
     logDialer("CALL_DIAL_START", { destinationNumber: normalizedPhone, sessionId: sess.id });
 
     // Stability delay — let WebRTC settle before invoking call
-    await new Promise((res) => setTimeout(res, 800));
+    await new Promise((res) => setTimeout(res, 500));
     logDialer("CALL_STABILITY_DELAY_DONE");
 
     // Record call start timestamp for false-busy detection
     callStartTimestamp = Date.now();
 
-    logDialer("PLIVO_CALL_INVOKING_NOW", { destination: normalizedPhone });
-    plivoInstanceRef.client.call(normalizedPhone, { "X-PH-SessionId": sess.id });
+    // ── ACTUAL PLIVO CALL INVOCATION ──
+    logDialer("PLIVO_CALL_REQUEST_START", { destination: normalizedPhone, sessionId: sess.id });
+    try {
+      plivoInstanceRef.client.call(normalizedPhone, { "X-PH-SessionId": sess.id });
+      logDialer("PLIVO_CALL_REQUEST_SUCCESS", { destination: normalizedPhone });
+    } catch (callErr) {
+      logDialer("PLIVO_CALL_REQUEST_FAILURE", { error: callErr instanceof Error ? callErr.message : String(callErr) });
+      throw callErr;
+    }
 
     logDialer("PLIVO_CALL_INVOKED", { destinationNumber: normalizedPhone });
     await insertCallEvent(sess.id, "browser_call_initiated", { destination: normalizedPhone, call_mode: "browser" });
     toast.info(`Calling ${normalizedPhone}`);
+
+    // ── DIAL TIMEOUT: If no ringing/connected/failed within 15s, force fail ──
+    setTimeout(() => {
+      if (storeState.status === "dialing" && storeState.session?.id === sess.id) {
+        logDialer("DIAL_TIMEOUT_REACHED", { sessionId: sess.id, destination: normalizedPhone });
+        setStoreState((c) => ({
+          ...c,
+          status: "failed",
+          lastError: "Call did not connect within 15 seconds.",
+          loading: false,
+          dialLock: false,
+        }));
+        updateCurrentAttempt({ status: "failed", failureReason: "dial_timeout", endedAt: new Date().toISOString() });
+        void setAgentAvailability("available");
+        toast.error("Call timed out. Please try again.");
+        // Auto-reset after 5s
+        setTimeout(() => {
+          setStoreState((c) => {
+            if (c.status !== "failed") return c;
+            return { ...c, status: c.registered ? "device_ready" : "idle", lastError: null, session: null };
+          });
+        }, 5000);
+      }
+    }, 15000);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Call initiation failed";
-    logDialer("CALL_START_ERROR", { reason: message });
+    logDialer("CALL_START_ERROR", { reason: message, stack: error instanceof Error ? error.stack?.slice(0, 200) : undefined });
     setStoreState((c) => ({ ...c, status: "failed", lastError: message, latestProviderStatus: "call_start_failed" }));
     updateCurrentAttempt({ status: "failed", failureReason: message, endedAt: new Date().toISOString() });
     await setAgentAvailability("available");
