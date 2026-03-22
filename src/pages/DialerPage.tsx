@@ -121,6 +121,7 @@ function DialerPageContent() {
   const [wrapUpDraft, setWrapUpDraft] = useState(() => {
     return sessionStorage.getItem("dialer_wrapup_draft") || "";
   });
+  const [audioUnlocking, setAudioUnlocking] = useState(false);
 
   // Persist drafts to sessionStorage (survives route changes)
   useEffect(() => {
@@ -302,12 +303,23 @@ function DialerPageContent() {
     return "Call";
   };
 
+  const handleUnlockAudio = async () => {
+    console.log("AUDIO_ENABLE_BUTTON_CLICKED");
+    setAudioUnlocking(true);
+    try {
+      const result = await dialer.unlockAudio();
+      console.log(result ? "AUDIO_UNLOCK_SUCCEEDED" : "AUDIO_UNLOCK_FAILED");
+    } finally {
+      setAudioUnlocking(false);
+    }
+  };
+
   const getCallHelperText = () => {
-    if (dialer.pendingDial && dialer.pendingDialReason === "audio_not_ready") return "Browser audio is blocked. Click to enable audio, then the queued call will resume automatically.";
+    if (dialer.pendingDial && dialer.pendingDialReason === "audio_not_ready") return "Browser audio is blocked. Click the button below to enable audio, then the queued call will resume automatically.";
     if (dialer.pendingDial) return "Call queued. It will auto-dial as soon as the voice service is ready.";
     if (dialer.callStatus === "registering" || dialer.callStatus === "initializing") return "Waiting for voice registration…";
     if (!dialer.registered && dialer.callStatus !== "failed") return "Connecting to voice service…";
-    if (!dialer.audioReady) return "Audio is not ready yet. Click once to enable browser audio.";
+    if (!dialer.audioReady) return "Browser audio needs to be enabled before you can make calls.";
     if (dialer.registered && dialer.micPermission === "granted") return "Ready to call";
     if (dialer.micPermission !== "granted") return "Microphone access required";
     return null;
@@ -525,8 +537,24 @@ function DialerPageContent() {
               })()}
 
               {!dialer.audioReady && !isCallActive && (
-                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => dialer.unlockAudio()}>
-                  Click to enable audio
+                <Button
+                  variant="default"
+                  size="default"
+                  className="w-full gap-2 bg-amber-600 hover:bg-amber-700 text-white font-medium shadow-md"
+                  onClick={handleUnlockAudio}
+                  disabled={audioUnlocking}
+                >
+                  {audioUnlocking ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Enabling audio…
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4" />
+                      Enable Browser Audio
+                    </>
+                  )}
                 </Button>
               )}
 

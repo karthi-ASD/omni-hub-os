@@ -94,6 +94,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
   }
 
   if (!session) {
+    // CRITICAL: If we previously had a stable session, this is likely a transient
+    // token refresh (e.g. tab return). Do NOT redirect to /login — keep rendering
+    // children with the last stable state. This prevents blank page + wrong route.
+    if (hasSettledAccessRef.current) {
+      console.warn("PROTECTED_ROUTE_TRANSIENT_SESSION_LOSS", {
+        reason: "session_null_after_stable_render",
+        route: window.location.pathname,
+      });
+      return <>{children}</>;
+    }
     console.warn("PROTECTED_ROUTE_REDIRECT_BRANCH", { reason: "missing_session" });
     return <Navigate to="/login" replace />;
   }
