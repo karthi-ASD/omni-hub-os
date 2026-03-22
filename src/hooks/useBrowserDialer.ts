@@ -238,6 +238,8 @@ let currentAccessToken: string | null = null;
 let callStartTimestamp: number = 0;
 let listenerAttachCount = 0;
 let queuedCallResumeInFlight = false;
+let audioInitInFlight = false;
+let audioInitPromise: Promise<boolean> | null = null;
 
 const PENDING_DIAL_STORAGE_KEY = "dialer_pending_intent";
 const QUEUED_CALL_TTL_MS = 45000;
