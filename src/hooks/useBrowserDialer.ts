@@ -1173,6 +1173,7 @@ function shouldRunPostCallAI(session: DialerSession | null, callAttempts: CallAt
 }
 
 async function executeOutboundCall(intent: PendingDialIntent) {
+  const callFlowStartMs = Date.now();
   logDialer("EXECUTE_OUTBOUND_CALL_ENTERED", {
     raw: intent.phoneNumber,
     audioReady: storeState.audioReady,
@@ -1180,6 +1181,7 @@ async function executeOutboundCall(intent: PendingDialIntent) {
     registered: storeState.registered,
     connectionState: storeState.connectionState,
     dialLock: storeState.dialLock,
+    CALL_START_TIME: callFlowStartMs,
   });
 
   if (!authIdentity) {
