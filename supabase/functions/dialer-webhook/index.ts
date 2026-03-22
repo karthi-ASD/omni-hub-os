@@ -219,6 +219,19 @@ Deno.serve(async (req) => {
     }
 
     const cs = p.call_status.toLowerCase();
+
+    // Detect "in-progress" as customer connected (for browser-originated calls)
+    if ((cs === "in-progress" || cs === "answered") && !session.customer_connected) {
+      updates.customer_connected = true;
+      if (!session.call_start_time) {
+        updates.call_start_time = new Date().toISOString();
+      }
+      if (session.call_status !== "connected") {
+        updates.call_status = "connected";
+      }
+      console.log("[dialer-webhook] Customer connected (browser path)", { session_id: session.id, dial_status: p.dial_status });
+    }
+
     const isTerminalEvent = ["completed", "hangup", "busy", "no-answer", "cancel", "failed", "rejected"].includes(cs) ||
       ["NORMAL_CLEARING", "ORIGINATOR_CANCEL", "USER_BUSY", "NO_ANSWER", "CALL_REJECTED"].includes(p.hangup_cause);
 
@@ -228,14 +241,24 @@ Deno.serve(async (req) => {
       else if (cs === "no-answer" || cs === "cancel" || p.hangup_cause === "NO_ANSWER" || p.hangup_cause === "ORIGINATOR_CANCEL") terminalStatus = "no-answer";
       else if (cs === "failed" || cs === "rejected" || p.hangup_cause === "CALL_REJECTED") terminalStatus = "failed";
 
-      if (leg === "customer" && !session.customer_connected) {
+      // Check customer_connected from DB or from this same webhook update
+      const wasConnected = !!session.customer_connected || !!updates.customer_connected || !!session.call_start_time;
+
+      if (!wasConnected) {
         updates.call_status = terminalStatus;
         updates.call_end_time = new Date().toISOString();
         console.log("[dialer-webhook] Customer never connected", { session_id: session.id, status: terminalStatus });
       } else {
         updates.call_status = "ended";
         updates.call_end_time = new Date().toISOString();
-        if (p.duration > 0) updates.call_duration = p.duration;
+        // Compute duration from start_time if provider didn't give us one
+        const startTime = session.call_start_time || (updates.call_start_time as string);
+        if (p.duration > 0) {
+          updates.call_duration = p.duration;
+        } else if (startTime) {
+          const computed = Math.round((Date.now() - new Date(startTime).getTime()) / 1000);
+          if (computed > 0) updates.call_duration = computed;
+        }
         if (p.bill_duration > 0) updates.bill_duration = p.bill_duration;
         if (p.total_cost > 0) updates.call_cost = p.total_cost;
       }
