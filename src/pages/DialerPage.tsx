@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { CallReadinessPanel } from "@/components/dialer/CallReadinessPanel";
 import { CallTagging } from "@/components/dialer/CallTagging";
 import {
   Phone, PhoneOff, MicOff, Mic, Clock, User, Building2, Hash,
