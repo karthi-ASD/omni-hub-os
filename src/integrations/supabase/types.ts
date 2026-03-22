@@ -11963,6 +11963,42 @@ export type Database = {
           },
         ]
       }
+      dialer_ai_suggestions: {
+        Row: {
+          business_id: string
+          content: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          session_id: string
+          suggestion_type: string
+          was_copied: boolean | null
+          was_useful: boolean | null
+        }
+        Insert: {
+          business_id: string
+          content: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          session_id: string
+          suggestion_type?: string
+          was_copied?: boolean | null
+          was_useful?: boolean | null
+        }
+        Update: {
+          business_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string
+          suggestion_type?: string
+          was_copied?: boolean | null
+          was_useful?: boolean | null
+        }
+        Relationships: []
+      }
       dialer_browser_endpoints: {
         Row: {
           business_id: string
@@ -12076,6 +12112,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      dialer_call_transcripts: {
+        Row: {
+          business_id: string
+          created_at: string
+          duration_seconds: number | null
+          full_transcript: string | null
+          id: string
+          session_id: string
+          source: string | null
+          speaker_segments: Json | null
+          status: string
+          updated_at: string
+          user_id: string | null
+          word_count: number | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          duration_seconds?: number | null
+          full_transcript?: string | null
+          id?: string
+          session_id: string
+          source?: string | null
+          speaker_segments?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          word_count?: number | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          duration_seconds?: number | null
+          full_transcript?: string | null
+          id?: string
+          session_id?: string
+          source?: string | null
+          speaker_segments?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          word_count?: number | null
+        }
+        Relationships: []
+      }
+      dialer_coaching_events: {
+        Row: {
+          business_id: string
+          content: string
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          session_id: string
+        }
+        Insert: {
+          business_id: string
+          content: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          session_id: string
+        }
+        Update: {
+          business_id?: string
+          content?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string
+        }
+        Relationships: []
       }
       dialer_dispositions: {
         Row: {
@@ -12294,6 +12405,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      dialer_transcripts: {
+        Row: {
+          business_id: string
+          confidence: number | null
+          created_at: string
+          id: string
+          is_final: boolean
+          session_id: string
+          speaker: string
+          text: string
+          timestamp_ms: number
+          user_id: string | null
+        }
+        Insert: {
+          business_id: string
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          is_final?: boolean
+          session_id: string
+          speaker?: string
+          text: string
+          timestamp_ms?: number
+          user_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          is_final?: boolean
+          session_id?: string
+          speaker?: string
+          text?: string
+          timestamp_ms?: number
+          user_id?: string | null
+        }
+        Relationships: []
       }
       dunning_rules: {
         Row: {
