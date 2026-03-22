@@ -122,7 +122,20 @@ Deno.serve(async (req) => {
     }
 
     const callerId = getCallerIdForNumber(destination);
-    console.log("[DIALER_XML] CallerId", { callerId, destination, sessionId, callUuid });
+    console.log("[DIALER_XML] CallerId", { callerId, callerIdEmpty: !callerId, destination, sessionId, callUuid });
+
+    if (!callerId) {
+      console.error("CALLER_ID_MISSING", { destination, sessionId, callUuid, envKeys: {
+        PLIVO_CALLER_ID_AU: !!Deno.env.get("PLIVO_CALLER_ID_AU"),
+        PLIVO_CALLER_ID_IN: !!Deno.env.get("PLIVO_CALLER_ID_IN"),
+        PLIVO_CALLER_ID_DEFAULT: !!Deno.env.get("PLIVO_CALLER_ID_DEFAULT"),
+        PLIVO_CALLER_ID: !!Deno.env.get("PLIVO_CALLER_ID"),
+      }});
+      return new Response(buildSafeExitXml("No caller ID configured for this destination."), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "text/xml" },
+      });
+    }
 
     let session: { provider_call_id: string | null; call_status: string | null } | null = null;
     if (sessionId) {
