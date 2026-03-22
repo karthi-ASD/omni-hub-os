@@ -199,8 +199,8 @@ const INITIAL_STATE: BrowserDialerStoreState = {
   audioReady: false,
 };
 
-const BUILD_VERSION = "stability-v15";
-const DEPLOYED_AT = "2026-03-22T18:00:00Z";
+const BUILD_VERSION = "stability-v16";
+const DEPLOYED_AT = "2026-03-22T21:00:00Z";
 type DialerIdentity = { businessId: string; userId: string } | null;
 
 // ─── Global singletons ──────────────────────────────────────────────
@@ -306,13 +306,20 @@ function getSnapshot() {
   return storeState;
 }
 
+// ─── Timer: timestamp-based elapsed calculation (survives background throttling) ──
+let callConnectedTimestamp: number = 0;
+
 function transitionStatus(nextStatus: BrowserDialerStatus) {
   const prev = storeState.status;
-  // Start timer on connected
+  // Start timer on connected — use timestamp-based approach
   if (prev !== "connected" && nextStatus === "connected" && !timerRef) {
+    callConnectedTimestamp = Date.now();
     timerRef = setInterval(() => {
-      storeState = { ...storeState, callTimer: storeState.callTimer + 1 };
-      emitChange();
+      if (callConnectedTimestamp > 0) {
+        const elapsed = Math.floor((Date.now() - callConnectedTimestamp) / 1000);
+        storeState = { ...storeState, callTimer: elapsed };
+        emitChange();
+      }
     }, 1000);
   }
   // Stop timer leaving connected
@@ -323,6 +330,7 @@ function transitionStatus(nextStatus: BrowserDialerStatus) {
   // Reset timer on terminal states
   if (["idle", "ended", "failed"].includes(nextStatus)) {
     if (timerRef) { clearInterval(timerRef); timerRef = null; }
+    callConnectedTimestamp = 0;
     storeState = { ...storeState, callTimer: 0 };
   }
 }
@@ -659,6 +667,14 @@ function isInActiveCall(): boolean {
 function bindVisibilityRecovery() {
   if (visibilityListenerBound || typeof document === "undefined") return;
   document.addEventListener("visibilitychange", handleVisibilityChange);
+  // Warn on actual tab close during active call — but do NOT auto-destroy
+  window.addEventListener("beforeunload", (e) => {
+    if (isInActiveCall()) {
+      logDialer("BEFOREUNLOAD_DURING_ACTIVE_CALL");
+      e.preventDefault();
+      e.returnValue = "You have an active call. Are you sure you want to leave?";
+    }
+  });
   visibilityListenerBound = true;
 }
 
@@ -1420,10 +1436,14 @@ export function useBrowserDialer() {
     activeHookConsumers += 1;
     authIdentity = profile?.business_id ? { businessId: profile.business_id, userId: profile.user_id } : null;
     setStoreState((c) => ({ ...c, userIdentifier: maskUserIdentifier(profile?.user_id ?? null) }));
-    logDialer("DIALER_PAGE_MOUNTED", { version: BUILD_VERSION });
+    logDialer("DIALER_PAGE_MOUNTED", { version: BUILD_VERSION, consumers: activeHookConsumers });
 
-    // Reset stale transient state on mount
-    sanitizeStaleState();
+    // Only sanitize stale state if there's NO active call — preserve active calls across remounts
+    if (!isInActiveCall()) {
+      sanitizeStaleState();
+    } else {
+      logDialer("ACTIVE_CALL_STATE_PRESERVED_ON_MOUNT", { status: storeState.status, sessionId: storeState.session?.id });
+    }
 
     if (!singletonInitialized) {
       singletonInitialized = true;
@@ -1433,22 +1453,16 @@ export function useBrowserDialer() {
     return () => {
       activeHookConsumers = Math.max(0, activeHookConsumers - 1);
       logDialer("EFFECT_CLEANUP_RUN", { remainingConsumers: activeHookConsumers });
+      // ── CRITICAL CHANGE (stability-v16): NEVER destroy client on unmount ──
+      // The singleton survives across route changes. Only explicit logout or
+      // reinitializeDialer() may destroy it. This prevents call drops on navigation.
       if (activeHookConsumers === 0) {
-        consumerCleanupTimer = window.setTimeout(() => {
-          if (activeHookConsumers > 0) return;
-          // ── CRITICAL: Do NOT destroy client during an active call ──
-          if (isInActiveCall()) {
-            logDialer("CLIENT_DESTROY_BLOCKED_ACTIVE_CALL", { reason: "cleanup_timer_during_call" });
-            return;
-          }
-          stopConnectionHealthMonitor();
-          sessionUnsubRef?.();
-          sessionUnsubRef = null;
-          sessionSubId = null;
-          destroyPlivoClient();
-          singletonInitialized = false;
-          sdkInitStarted = false;
-        }, 1000);
+        logDialer("ALL_CONSUMERS_UNMOUNTED_CLIENT_KEPT_ALIVE", {
+          activeCall: isInActiveCall(),
+          registered: storeState.registered,
+        });
+        // We intentionally do NOT destroy the client here.
+        // singletonInitialized stays true so re-mount reuses existing client.
       }
     };
   }, [profile?.business_id, profile?.user_id]);
