@@ -15,7 +15,8 @@ interface PostCallIntelligenceProps {
 
 export function PostCallIntelligence({ session, coaching, transcriptLines }: PostCallIntelligenceProps) {
   const [pollCount, setPollCount] = useState(0);
-  const maxPolls = 6; // 6 polls × 5s = 30s max wait
+  const [retried, setRetried] = useState(false);
+  const maxPolls = 8; // 8 polls × 4s = 32s max wait
 
   // Poll for AI analysis if not yet available
   const { data: freshSession } = useQuery({
