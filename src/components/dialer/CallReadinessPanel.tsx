@@ -41,7 +41,7 @@ export function CallReadinessPanel({
   onTestToken,
   onTestXml,
 }: CallReadinessPanelProps) {
-  console.log("TEST_PANEL_RENDERED");
+  // Component rendered
   const [micTesting, setMicTesting] = useState(false);
   const [micResult, setMicResult] = useState<"idle" | "success" | "failed">("idle");
   const [micMessage, setMicMessage] = useState<string | null>(null);
