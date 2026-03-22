@@ -1296,17 +1296,18 @@ async function executeOutboundCall(intent: PendingDialIntent) {
     activeProviderInvocation = { sessionId: sess.id, destination: normalizedPhone, startedAt: Date.now() };
     await setAgentAvailability("on_call");
 
-    logDialer("CALL_DIAL_START", { destinationNumber: normalizedPhone, sessionId: sess.id });
+    logDialer("CALL_DIAL_START", { destinationNumber: normalizedPhone, sessionId: sess.id, elapsedMs: Date.now() - callFlowStartMs });
 
     // Stability delay — let WebRTC settle before invoking call
     await new Promise((res) => setTimeout(res, 500));
-    logDialer("CALL_STABILITY_DELAY_DONE");
+    logDialer("CALL_STABILITY_DELAY_DONE", { elapsedMs: Date.now() - callFlowStartMs });
 
     // Record call start timestamp for false-busy detection
     callStartTimestamp = Date.now();
 
     // ── ACTUAL PLIVO CALL INVOCATION ──
-    logDialer("PLIVO_CALL_REQUEST_START", { destination: normalizedPhone, sessionId: sess.id });
+    const plivoCallStartMs = Date.now();
+    logDialer("PLIVO_CALL_REQUEST_START", { destination: normalizedPhone, sessionId: sess.id, elapsedMs: plivoCallStartMs - callFlowStartMs });
     try {
       if (activeProviderInvocation?.sessionId === sess.id && Date.now() - activeProviderInvocation.startedAt < 20000 && activeProviderInvocation.destination === normalizedPhone) {
         const providerCallReturn = plivoInstanceRef.client.call(normalizedPhone, { "X-PH-SessionId": sess.id });
@@ -1314,6 +1315,8 @@ async function executeOutboundCall(intent: PendingDialIntent) {
           destination: normalizedPhone,
           sessionId: sess.id,
           returnType: providerCallReturn === undefined ? "void" : typeof providerCallReturn,
+          plivoCallDurationMs: Date.now() - plivoCallStartMs,
+          totalElapsedMs: Date.now() - callFlowStartMs,
         });
         logDialer("OUTBOUND_CALL_PROVIDER_BIND_SUCCESS", { sessionId: sess.id, destination: normalizedPhone, clientAlive: true });
         logDialer("SESSION_PROVIDER_CORRELATION_CONFIRMED", { sessionId: sess.id, destination: normalizedPhone, bindHeader: "X-PH-SessionId" });
@@ -1321,13 +1324,13 @@ async function executeOutboundCall(intent: PendingDialIntent) {
         throw new Error("Provider call binding guard rejected duplicate invocation.");
       }
     } catch (callErr) {
-      logDialer("PLIVO_CALL_REQUEST_FAILURE", { error: callErr instanceof Error ? callErr.message : String(callErr), sessionId: sess.id, destination: normalizedPhone });
+      logDialer("PLIVO_CALL_REQUEST_FAILURE", { error: callErr instanceof Error ? callErr.message : String(callErr), sessionId: sess.id, destination: normalizedPhone, totalElapsedMs: Date.now() - callFlowStartMs });
       logDialer("OUTBOUND_CALL_PROVIDER_BIND_FAILURE", { error: callErr instanceof Error ? callErr.message : String(callErr), sessionId: sess.id, destination: normalizedPhone });
       endTestAttempt("failed", { sessionId: sess.id, destination: normalizedPhone, reason: callErr instanceof Error ? callErr.message : String(callErr) });
       throw callErr;
     }
 
-    logDialer("PLIVO_CALL_INVOKED", { destinationNumber: normalizedPhone });
+    logDialer("PLIVO_CALL_INVOKED", { destinationNumber: normalizedPhone, totalElapsedMs: Date.now() - callFlowStartMs });
     await insertCallEvent(sess.id, "browser_call_initiated", { destination: normalizedPhone, call_mode: "browser" });
     toast.info(`Calling ${normalizedPhone}`);
 
