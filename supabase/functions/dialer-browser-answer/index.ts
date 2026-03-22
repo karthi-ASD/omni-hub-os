@@ -221,12 +221,28 @@ Deno.serve(async (req) => {
       }
     }
 
-    const xml = buildXml(destination, callerId, sessionId);
-    console.log("[DIALER_XML] Returning XML", { sessionId, callUuid, destination, provider_call_id: providerCallIdAfter || null });
+    // Choose between static test XML or full dynamic XML
+    const xml = STATIC_XML_TEST
+      ? buildStaticTestXml(destination, callerId)
+      : buildXml(destination, callerId, sessionId);
+
+    // CRITICAL: Log the EXACT XML being returned to Plivo
+    console.log("FINAL_XML_OUTPUT", xml);
+    console.log("FINAL_XML_META", {
+      sessionId,
+      callUuid,
+      destination,
+      callerId,
+      callerIdEmpty: !callerId,
+      callerIdLength: callerId.length,
+      destinationLength: destination.length,
+      staticTestMode: STATIC_XML_TEST,
+      provider_call_id: providerCallIdAfter || null,
+    });
 
     return new Response(xml, {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "text/xml; charset=utf-8" },
+      headers: { ...corsHeaders, "Content-Type": "text/xml" },
     });
   } catch (err) {
     console.error("[DIALER_XML] Error", err);
