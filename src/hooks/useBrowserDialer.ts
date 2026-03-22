@@ -867,6 +867,15 @@ function destroyPlivoClient() {
   plivoInstanceRef = null;
   loginInProgress = false;
   clearReloginTimeout();
+  // Reset stale registration state so next init starts clean
+  logDialer("REGISTERED_STATE_RESET", { reason: "client_destroyed" });
+  setStoreState((c) => ({
+    ...c,
+    registered: false,
+    connectionState: "disconnected",
+    plivoClientInitStatus: "idle",
+    sdkReady: false,
+  }));
   logDialer("CLIENT_DESTROYED");
 }
 
