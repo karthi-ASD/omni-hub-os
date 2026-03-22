@@ -125,6 +125,19 @@ function DialerPageContent() {
       sessionStorage.setItem("dialer_lead_context", JSON.stringify(leadContext));
     }
   }, [leadContext]);
+  useEffect(() => {
+    if (followUpDate) {
+      sessionStorage.setItem("dialer_followup_draft", followUpDate.toISOString());
+    } else {
+      sessionStorage.removeItem("dialer_followup_draft");
+    }
+  }, [followUpDate]);
+  useEffect(() => {
+    sessionStorage.setItem("dialer_show_followup", String(showFollowUp));
+  }, [showFollowUp]);
+  useEffect(() => {
+    sessionStorage.setItem("dialer_right_tab", rightTab);
+  }, [rightTab]);
 
   // Live transcript — safe when dialer is null
   const noopLog = useRef((_e: string, _d?: Record<string, unknown>) => {}).current;
