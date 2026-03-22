@@ -478,11 +478,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signOut = useCallback(async () => {
+    const userName = rawProfile?.full_name?.split(" ")[0] || null;
+    console.log("SIGN_OUT_INITIATED", { userName });
+
+    // Clear dialer/session-specific sessionStorage
+    const keysToRemove = [
+      "dialer_phone_draft", "dialer_notes_draft", "dialer_lead_context",
+      "dialer_followup_draft", "dialer_show_followup", "dialer_right_tab",
+      "dialer_disposition_draft", "dialer_callback_reason", "dialer_wrapup_draft",
+      "dialer_view_state", "last_authenticated_route",
+    ];
+    keysToRemove.forEach(k => sessionStorage.removeItem(k));
+    console.log("SESSION_STATE_CLEARED");
+    console.log("TENANT_NAV_STATE_CLEARED");
+
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
     clearAllUserState();
-  }, [clearAllUserState]);
+    console.log("SIGN_OUT_SUCCESS");
+
+    // Store sign-out message for login page to display
+    const message = userName
+      ? `${userName}, you have been signed out successfully.`
+      : "You have been signed out successfully.";
+    sessionStorage.setItem("signout_message", message);
+    console.log("SIGN_OUT_REDIRECT_TARGET", { target: "/login" });
+  }, [clearAllUserState, rawProfile?.full_name]);
 
   const hasRole = useCallback((role: AppRole) => roles.includes(role), [roles]);
   const isSuperAdmin = hasRole("super_admin");

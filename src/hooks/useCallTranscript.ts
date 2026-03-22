@@ -27,8 +27,8 @@ interface UseCallTranscriptOptions {
   onLog?: (event: string, data?: Record<string, unknown>) => void;
 }
 
-const MAX_RECOVERY_ATTEMPTS = 5;
-const RECOVERY_DELAY_MS = 1000;
+const MAX_RECOVERY_ATTEMPTS = 10;
+const RECOVERY_DELAY_MS = 800;
 
 export function useCallTranscript({
   sessionId,
@@ -92,9 +92,14 @@ export function useCallTranscript({
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
-      log("TRANSCRIPT_STARTED");
+      log("TRANSCRIPT_STARTED", { recoveryAttempt: recoveryCountRef.current });
       setStatus("live");
-      recoveryCountRef.current = 0; // Reset on successful start
+      // Only reset recovery count after a sustained period of successful recognition
+      setTimeout(() => {
+        if (shouldRestartRef.current && recognitionRef.current) {
+          recoveryCountRef.current = Math.max(0, recoveryCountRef.current - 1);
+        }
+      }, 5000);
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
@@ -102,6 +107,12 @@ export function useCallTranscript({
         const result = event.results[i];
         const text = result[0].transcript.trim();
         if (!text) continue;
+
+        if (result.isFinal) {
+          log("TRANSCRIPT_FINAL_RECEIVED", { text: text.slice(0, 60), confidence: result[0].confidence });
+        } else {
+          log("TRANSCRIPT_PARTIAL_RECEIVED", { text: text.slice(0, 40) });
+        }
 
         const line: TranscriptLine = {
           id: `${Date.now()}-${i}`,

@@ -15,7 +15,8 @@ interface PostCallIntelligenceProps {
 
 export function PostCallIntelligence({ session, coaching, transcriptLines }: PostCallIntelligenceProps) {
   const [pollCount, setPollCount] = useState(0);
-  const maxPolls = 6; // 6 polls × 5s = 30s max wait
+  const [retried, setRetried] = useState(false);
+  const maxPolls = 8; // 8 polls × 4s = 32s max wait
 
   // Poll for AI analysis if not yet available
   const { data: freshSession } = useQuery({
@@ -32,17 +33,33 @@ export function PostCallIntelligence({ session, coaching, transcriptLines }: Pos
     staleTime: 0,
   });
 
-  // Auto-poll every 5s if no summary yet
+  // Auto-poll every 4s if no summary yet, with a retry trigger
   useEffect(() => {
-    if (session.ai_summary || (freshSession?.ai_summary)) return;
-    if (pollCount >= maxPolls) return;
+    if (session.ai_summary || (freshSession?.ai_summary)) {
+      console.log("POST_CALL_AI_SUCCESS", { sessionId: session.id });
+      return;
+    }
+    if (pollCount >= maxPolls) {
+      // Try one manual retry of the AI analyze function
+      if (!retried && session.id) {
+        setRetried(true);
+        console.log("POST_CALL_AI_RETRYING", { sessionId: session.id });
+        supabase.functions.invoke("dialer-ai-analyze", { body: { session_id: session.id } })
+          .then(() => setPollCount(0))
+          .catch(() => console.log("POST_CALL_AI_FAILED", { sessionId: session.id }));
+      } else {
+        console.log("POST_CALL_AI_TIMEOUT", { sessionId: session.id });
+      }
+      return;
+    }
 
+    console.log("POST_CALL_AI_STARTED", { sessionId: session.id, poll: pollCount + 1 });
     const timer = setTimeout(() => {
       setPollCount(c => c + 1);
-    }, 5000);
+    }, 4000);
 
     return () => clearTimeout(timer);
-  }, [pollCount, session.ai_summary, freshSession?.ai_summary]);
+  }, [pollCount, session.ai_summary, freshSession?.ai_summary, session.id, retried]);
 
   const aiSummary = session.ai_summary || freshSession?.ai_summary;
   const aiScore = session.ai_score ?? freshSession?.ai_score;
@@ -123,11 +140,29 @@ export function PostCallIntelligence({ session, coaching, transcriptLines }: Pos
             </p>
           </div>
         ) : pollFailed ? (
-          <div className="text-center py-4">
-            <p className="text-xs text-muted-foreground">AI analysis not available for this call.</p>
-            <p className="text-[10px] text-muted-foreground mt-1">
-              The call may have been too short or the analysis timed out.
-            </p>
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground text-center">AI analysis not available for this call.</p>
+            {/* Still show recording/transcript even if AI failed */}
+            {recordingUrl && (
+              <div>
+                <p className="text-[10px] font-medium text-muted-foreground">Recording</p>
+                <audio controls className="w-full h-8" src={recordingUrl} preload="none" />
+              </div>
+            )}
+            {duration != null && duration > 0 && (
+              <div>
+                <p className="text-[10px] font-medium text-muted-foreground">Duration</p>
+                <p className="text-xs font-mono">{Math.floor(duration / 60)}:{String(duration % 60).padStart(2, "0")}</p>
+              </div>
+            )}
+            {finalLines.length > 0 && (
+              <div>
+                <p className="text-[10px] font-medium text-muted-foreground">
+                  Transcript ({finalLines.length} segments)
+                </p>
+                <Badge variant="outline" className="text-[10px]">Available for review</Badge>
+              </div>
+            )}
           </div>
         ) : null}
       </CardContent>

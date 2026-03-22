@@ -4,23 +4,27 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useDialerAccess } from "@/hooks/useDialerAccess";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useTeamMetrics, useHourlyMetrics, useDailyMetrics, formatTalkTime } from "@/hooks/useDialerMetrics";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { CallDetailDrawer } from "@/components/dialer/CallDetailDrawer";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
-import { Phone, PhoneForwarded, Clock, Brain, TrendingUp, Users, Trophy, BarChart3 } from "lucide-react";
-import { startOfDay, subDays, startOfWeek, startOfMonth } from "date-fns";
+import { Phone, PhoneForwarded, Clock, Brain, TrendingUp, Users, Trophy, BarChart3, Radio, Headphones } from "lucide-react";
+import { startOfDay, subDays, startOfWeek, startOfMonth, format } from "date-fns";
 
 const COLORS = ["hsl(142 76% 36%)", "hsl(221 83% 53%)", "hsl(45 93% 47%)", "hsl(0 84% 60%)", "hsl(280 67% 50%)", "hsl(20 90% 48%)"];
 
 export default function DialerTeamDashboardPage() {
   usePageTitle("Team Call Dashboard");
-  const { roles } = useAuth();
+  const { profile, roles } = useAuth();
   const { canAccessDialer } = useDialerAccess();
   const [range, setRange] = useState("today");
+  const [selectedSession, setSelectedSession] = useState<string | null>(null);
 
   const isManager = roles.some(r => ["super_admin", "business_admin", "admin", "sales_manager"].includes(r));
 
@@ -40,8 +44,73 @@ export default function DialerTeamDashboardPage() {
   const { data: hourly } = useHourlyMetrics(null, dateRange.from, dateRange.to);
   const { data: daily } = useDailyMetrics(null, dateRange.from, dateRange.to);
 
+  // Live active calls — poll every 10s
+  const { data: liveCalls } = useQuery({
+    queryKey: ["live-active-calls", profile?.business_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("dialer_sessions")
+        .select("id, user_id, phone_number, call_status, call_start_time, lead_id, created_at")
+        .eq("business_id", profile!.business_id!)
+        .in("call_status", ["connected", "ringing", "dialing", "bridging"])
+        .order("created_at", { ascending: false });
+      return (data as any[]) || [];
+    },
+    enabled: !!profile?.business_id && isManager,
+    refetchInterval: 10_000,
+    staleTime: 5_000,
+  });
+
+  // Fetch agent names for live calls
+  const liveUserIds = [...new Set((liveCalls || []).map((c: any) => c.user_id))];
+  const { data: liveAgents } = useQuery({
+    queryKey: ["live-agents", liveUserIds.join(",")],
+    queryFn: async () => {
+      if (!liveUserIds.length) return {};
+      const { data } = await supabase.from("profiles").select("user_id, full_name").in("user_id", liveUserIds);
+      const map: Record<string, string> = {};
+      (data || []).forEach((p: any) => { map[p.user_id] = p.full_name; });
+      return map;
+    },
+    enabled: liveUserIds.length > 0,
+  });
+
+  // Recent team calls for drill-down
+  const { data: recentTeamCalls } = useQuery({
+    queryKey: ["team-recent-calls", profile?.business_id, range],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("dialer_sessions")
+        .select("id, user_id, phone_number, call_status, call_duration, ai_score, ai_summary, created_at, disposition, recording_url, lead_id")
+        .eq("business_id", profile!.business_id!)
+        .gte("created_at", dateRange.from.toISOString())
+        .lt("created_at", dateRange.to.toISOString())
+        .order("created_at", { ascending: false })
+        .limit(50);
+      return (data as any[]) || [];
+    },
+    enabled: !!profile?.business_id,
+    staleTime: 15_000,
+  });
+
+  // Fetch agent names for recent calls
+  const recentUserIds = [...new Set((recentTeamCalls || []).map((c: any) => c.user_id))];
+  const { data: recentAgents } = useQuery({
+    queryKey: ["recent-agents", recentUserIds.join(",")],
+    queryFn: async () => {
+      if (!recentUserIds.length) return {};
+      const { data } = await supabase.from("profiles").select("user_id, full_name").in("user_id", recentUserIds);
+      const map: Record<string, string> = {};
+      (data || []).forEach((p: any) => { map[p.user_id] = p.full_name; });
+      return map;
+    },
+    enabled: recentUserIds.length > 0,
+  });
+
   if (!canAccessDialer) return <Navigate to="/sales-dashboard" replace />;
   if (!isManager) return <Navigate to="/sales/dialer/my-dashboard" replace />;
+
+  console.log("MANAGER_DASHBOARD_LOADED");
 
   const s = team?.summary || { total_calls: 0, connected_calls: 0, total_talk_time: 0, avg_ai_score: 0, recordings_count: 0, conversions: 0, active_callers: 0 };
   const agents = team?.agents || [];
@@ -72,10 +141,12 @@ export default function DialerTeamDashboardPage() {
     { name: "Failed", value: agents.reduce((s: number, a: any) => s + (a.failed || 0), 0) },
   ].filter(d => d.value > 0);
 
+  const activeLiveCalls = liveCalls || [];
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <PageHeader title="Team Call Dashboard" subtitle="Team-wide dialer performance and leaderboard" icon={Users} />
+        <PageHeader title="Team Call Dashboard" subtitle="Team-wide dialer performance, live monitoring & leaderboard" icon={Users} />
         <Select value={range} onValueChange={setRange}>
           <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -88,6 +159,64 @@ export default function DialerTeamDashboardPage() {
           </SelectContent>
         </Select>
       </div>
+
+      {/* ══════ LIVE CALL MONITOR ══════ */}
+      {activeLiveCalls.length > 0 && (
+        <Card className="border-emerald-500/30 bg-emerald-500/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Radio className="h-4 w-4 text-emerald-500 animate-pulse" />
+              Live Calls ({activeLiveCalls.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">Agent</TableHead>
+                  <TableHead className="text-xs">Number</TableHead>
+                  <TableHead className="text-xs">Status</TableHead>
+                  <TableHead className="text-xs">Duration</TableHead>
+                  <TableHead className="text-xs">Started</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {activeLiveCalls.map((call: any) => {
+                  const agentName = liveAgents?.[call.user_id] || "Unknown";
+                  const startTime = call.call_start_time || call.created_at;
+                  const elapsed = startTime ? Math.round((Date.now() - new Date(startTime).getTime()) / 1000) : 0;
+                  const isConnected = call.call_status === "connected";
+
+                  return (
+                    <TableRow key={call.id} className={isConnected ? "bg-emerald-500/5" : ""}>
+                      <TableCell className="font-medium text-xs">{agentName}</TableCell>
+                      <TableCell className="font-mono text-xs">{call.phone_number}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] capitalize ${
+                            isConnected ? "border-emerald-400 text-emerald-700 bg-emerald-500/10" :
+                            "border-amber-400 text-amber-700 bg-amber-500/10"
+                          }`}
+                        >
+                          <Radio className="h-2.5 w-2.5 mr-1 animate-pulse" />
+                          {call.call_status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs tabular-nums">
+                        {formatTalkTime(elapsed)}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {startTime ? format(new Date(startTime), "h:mm a") : "—"}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Summary KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
@@ -150,6 +279,80 @@ export default function DialerTeamDashboardPage() {
                       </TableCell>
                     </TableRow>
                   ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Recent Team Calls */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Headphones className="h-4 w-4" /> Recent Team Calls
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {!recentTeamCalls?.length ? (
+            <p className="text-sm text-muted-foreground text-center py-8">No calls in selected period</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Time</TableHead>
+                    <TableHead className="text-xs">Agent</TableHead>
+                    <TableHead className="text-xs">Number</TableHead>
+                    <TableHead className="text-xs">Status</TableHead>
+                    <TableHead className="text-xs">Duration</TableHead>
+                    <TableHead className="text-xs">Disposition</TableHead>
+                    <TableHead className="text-xs">AI</TableHead>
+                    <TableHead className="text-xs">Rec</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentTeamCalls.map((call: any) => {
+                    const agentName = recentAgents?.[call.user_id] || "Unknown";
+                    return (
+                      <TableRow
+                        key={call.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => setSelectedSession(call.id)}
+                      >
+                        <TableCell className="text-xs whitespace-nowrap tabular-nums">
+                          {format(new Date(call.created_at), "h:mm a")}
+                        </TableCell>
+                        <TableCell className="text-xs font-medium">{agentName}</TableCell>
+                        <TableCell className="font-mono text-xs">{call.phone_number}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={`text-[10px] capitalize ${
+                            call.call_status === "ended" || call.call_status === "connected" ? "border-emerald-200 text-emerald-700" :
+                            call.call_status === "failed" ? "border-destructive/20 text-destructive" :
+                            "border-border text-muted-foreground"
+                          }`}>
+                            {call.call_status?.replace("-", " ")}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-mono tabular-nums text-xs">{formatTalkTime(call.call_duration || 0)}</TableCell>
+                        <TableCell>
+                          {call.disposition ? (
+                            <Badge variant="outline" className="text-[10px] capitalize">{call.disposition.replace("_", " ")}</Badge>
+                          ) : <span className="text-[10px] text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell>
+                          {call.ai_score != null ? (
+                            <span className="text-xs tabular-nums font-medium">{call.ai_score}</span>
+                          ) : <span className="text-[10px] text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell>
+                          {call.recording_url ? (
+                            <Badge variant="outline" className="text-[9px] border-emerald-200 text-emerald-600">REC</Badge>
+                          ) : <span className="text-[10px] text-muted-foreground">—</span>}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -242,6 +445,8 @@ export default function DialerTeamDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <CallDetailDrawer sessionId={selectedSession} open={!!selectedSession} onOpenChange={o => !o && setSelectedSession(null)} />
     </div>
   );
 }
