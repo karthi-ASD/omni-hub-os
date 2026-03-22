@@ -196,6 +196,7 @@ const INITIAL_STATE: BrowserDialerStoreState = {
   hasAccessToken: false,
   audioElementsAttached: false,
   audioPlayable: false,
+  audioReady: false,
 };
 
 const BUILD_VERSION = "stability-v14";
