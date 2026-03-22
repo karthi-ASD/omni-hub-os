@@ -1205,6 +1205,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   instance.client.on("onLogin", () => {
     if (!guard()) return;
     loginInProgress = false;
+    if (loginSafetyTimeoutRef) { clearTimeout(loginSafetyTimeoutRef); loginSafetyTimeoutRef = null; }
     clearReloginTimeout();
     // Capture pending BEFORE clearing — read both sources
     const pending = modulePendingDial || storeState.pendingDialIntent;
