@@ -121,6 +121,7 @@ function DialerPageContent() {
   const [wrapUpDraft, setWrapUpDraft] = useState(() => {
     return sessionStorage.getItem("dialer_wrapup_draft") || "";
   });
+  const [audioUnlocking, setAudioUnlocking] = useState(false);
 
   // Persist drafts to sessionStorage (survives route changes)
   useEffect(() => {
