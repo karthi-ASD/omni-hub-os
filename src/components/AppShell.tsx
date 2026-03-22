@@ -121,6 +121,7 @@ const AppShell = () => {
   return (
     <BrowserDialerProvider>
       <PersistentDialerConsumer />
+      <BusinessThemeProvider>
         <SidebarProvider>
           <div className="min-h-screen flex w-full bg-background">
             <AppSidebar />
