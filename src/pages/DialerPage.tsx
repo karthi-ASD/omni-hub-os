@@ -235,6 +235,29 @@ function DialerPageContent() {
     }
   }, [location.pathname, location.search]);
 
+  const filteredLogs = useMemo(() => {
+    if (!dialer) return [];
+    if (logFilter === "all") return dialer.debugLogs;
+    if (logFilter === "error") {
+      return dialer.debugLogs.filter((log) => log.category === "error" || log.event.includes("FAIL") || log.event.includes("ERROR") || log.event.includes("DENIED"));
+    }
+    return dialer.debugLogs.filter((log) => log.category === logFilter);
+  }, [dialer, logFilter]);
+
+  useEffect(() => {
+    if (pauseLogAutoscroll) return;
+    const viewport = logViewportRef.current;
+    if (!viewport) return;
+    viewport.scrollTop = viewport.scrollHeight;
+  }, [filteredLogs, pauseLogAutoscroll]);
+
+  useEffect(() => {
+    if (!dialer) return;
+    dialer.logEvent("UI_BUILD_MARKER_RENDERED", { buildMarker });
+    dialer.logEvent("UI_BUILD_VERSION_VISIBLE", { buildVersion: dialer.buildVersion, deployedAt: dialer.deployedAt });
+    dialer.logEvent("UI_TEST_CASE_VISIBLE", { testCase: "101", buildVersion: dialer.buildVersion });
+  }, [dialer, buildMarker]);
+
   // ══════════════════════════════════════════════════════════════════
   // AI FEATURES — enabled but strictly isolated from call lifecycle.
   // AI modules only activate AFTER call reaches "connected" state.
@@ -443,28 +466,6 @@ function DialerPageContent() {
     if (dialer.micPermission !== "granted") return "Microphone access required";
     return null;
   };
-
-  const filteredLogs = useMemo(() => {
-    if (logFilter === "all") return dialer.debugLogs;
-    if (logFilter === "error") {
-      return dialer.debugLogs.filter((log) => log.category === "error" || log.event.includes("FAIL") || log.event.includes("ERROR") || log.event.includes("DENIED"));
-    }
-    return dialer.debugLogs.filter((log) => log.category === logFilter);
-  }, [dialer.debugLogs, logFilter]);
-
-  useEffect(() => {
-    if (pauseLogAutoscroll) return;
-    const viewport = logViewportRef.current;
-    if (!viewport) return;
-    viewport.scrollTop = viewport.scrollHeight;
-  }, [filteredLogs, pauseLogAutoscroll]);
-
-  useEffect(() => {
-    if (!dialer) return;
-    dialer.logEvent("UI_BUILD_MARKER_RENDERED", { buildMarker });
-    dialer.logEvent("UI_BUILD_VERSION_VISIBLE", { buildVersion: dialer.buildVersion, deployedAt: dialer.deployedAt });
-    dialer.logEvent("UI_TEST_CASE_VISIBLE", { testCase: "101", buildVersion: dialer.buildVersion });
-  }, [dialer, buildMarker]);
 
   const copyLogs = async () => {
     const text = filteredLogs.map((l) => `[${l.timestamp}] ${l.event} status=${l.status} session=${l.sessionId ?? "-"} call=${l.callId ?? "-"} destination=${l.destination ?? "-"} ${l.payloadPreview ?? ""}`).join("\n");
