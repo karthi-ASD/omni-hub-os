@@ -538,8 +538,24 @@ function DialerPageContent() {
               })()}
 
               {!dialer.audioReady && !isCallActive && (
-                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => dialer.unlockAudio()}>
-                  Click to enable audio
+                <Button
+                  variant="default"
+                  size="default"
+                  className="w-full gap-2 bg-amber-600 hover:bg-amber-700 text-white font-medium shadow-md"
+                  onClick={handleUnlockAudio}
+                  disabled={audioUnlocking}
+                >
+                  {audioUnlocking ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Enabling audio…
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4" />
+                      Enable Browser Audio
+                    </>
+                  )}
                 </Button>
               )}
 
