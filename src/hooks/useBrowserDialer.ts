@@ -783,6 +783,7 @@ function canPlaceCall(): { ready: boolean; reason: string } {
   if (["initializing", "registering"].includes(storeState.status)) return { ready: false, reason: `status_${storeState.status}` };
   if (recoveryInProgress) return { ready: false, reason: "recovery_in_progress" };
   if (loginInProgress) return { ready: false, reason: "login_in_progress" };
+  if (!storeState.audioReady) return { ready: false, reason: "audio_not_ready" };
   return { ready: true, reason: "ok" };
 }
 
