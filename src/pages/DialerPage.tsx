@@ -266,20 +266,18 @@ function DialerPageContent() {
     await dialer.submitDisposition(disposition, notesInput);
     dialer.resetDialer();
     setNotesInput("");
-    sessionStorage.removeItem("dialer_notes_draft");
-    sessionStorage.removeItem("dialer_phone_draft");
-    sessionStorage.removeItem("dialer_followup_draft");
-    sessionStorage.removeItem("dialer_show_followup");
+    setDispositionDraft("");
+    setCallbackReason("");
+    for (const k of ["dialer_notes_draft", "dialer_phone_draft", "dialer_followup_draft", "dialer_show_followup", "dialer_disposition_draft", "dialer_callback_reason"]) sessionStorage.removeItem(k);
   };
 
   const handleFollowUpSubmit = async () => {
     await dialer.submitDisposition("callback_later", notesInput, followUpDate?.toISOString());
     dialer.resetDialer();
     setNotesInput("");
-    sessionStorage.removeItem("dialer_notes_draft");
-    sessionStorage.removeItem("dialer_phone_draft");
-    sessionStorage.removeItem("dialer_followup_draft");
-    sessionStorage.removeItem("dialer_show_followup");
+    setDispositionDraft("");
+    setCallbackReason("");
+    for (const k of ["dialer_notes_draft", "dialer_phone_draft", "dialer_followup_draft", "dialer_show_followup", "dialer_disposition_draft", "dialer_callback_reason"]) sessionStorage.removeItem(k);
     setFollowUpDate(undefined);
     setShowFollowUp(false);
   };
