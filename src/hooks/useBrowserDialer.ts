@@ -154,6 +154,7 @@ interface BrowserDialerStoreState {
   hasAccessToken: boolean;
   audioElementsAttached: boolean;
   audioPlayable: boolean;
+  audioReady: boolean;
 }
 
 const INITIAL_STATE: BrowserDialerStoreState = {
