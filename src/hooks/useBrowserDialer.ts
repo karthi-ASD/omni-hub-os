@@ -150,7 +150,7 @@ const INITIAL_STATE: BrowserDialerStoreState = {
   lastActionAt: null,
 };
 
-const BUILD_VERSION = "call-exec-v8";
+const BUILD_VERSION = "stability-v9";
 type DialerIdentity = { businessId: string; userId: string } | null;
 
 // ─── Global singletons ──────────────────────────────────────────────
@@ -171,6 +171,13 @@ let globalErrorsBound = false;
 let authIdentity: DialerIdentity = null;
 let modulePendingDial: PendingDialIntent | null = null;
 let recoveryInProgress = false;
+
+// ─── Connection health monitor ──────────────────────────────────────
+let lastConnectedAt = Date.now();
+let connectionHealthInterval: ReturnType<typeof setInterval> | null = null;
+let registrationRetryCount = 0;
+const MAX_REGISTRATION_RETRIES = 3;
+let lastLoginCredentials: { username: string; password: string } | null = null;
 
 // ─── Log ring buffer ────────────────────────────────────────────────
 const MAX_LOG_ENTRIES = 50;
