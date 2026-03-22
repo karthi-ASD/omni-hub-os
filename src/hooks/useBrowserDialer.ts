@@ -1682,21 +1682,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
     void setAgentAvailability("available");
     callStartTimestamp = 0;
 
-    // Auto-reset to device_ready after 5 seconds so user can retry
-    setTimeout(() => {
-      setStoreState((c) => {
-        if (c.status !== "failed") return c;
-        logDialer("CALL_STATUS_RESET", { from: "failed", to: c.registered ? "device_ready" : "idle" });
-        return {
-          ...c,
-          status: c.registered ? "device_ready" : "idle",
-          lastError: null,
-          loading: false,
-          dialLock: false,
-          session: null,
-        };
-      });
-    }, 5000);
+    // Stay failed until explicit user retry/reset; no automatic retry/reset while provider flow is being stabilized
   });
 
   // Extra raw events for diagnostics
