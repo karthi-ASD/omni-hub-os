@@ -1325,7 +1325,7 @@ async function initializeVoiceClient() {
     const generation = ++plivoClientGeneration;
     const instance = new window.Plivo({ debug: "INFO", permOnClick: true });
     plivoInstanceRef = instance;
-    logDialer("CLIENT_CREATED", { generation });
+    logDialer("CLIENT_SINGLETON_CREATED", { generation });
     bindPlivoEvents(instance, generation);
 
     setStoreState((c) => ({ ...c, sdkReady: true, status: "registering", plivoClientInitStatus: "client_created", connectionState: "connecting" }));
