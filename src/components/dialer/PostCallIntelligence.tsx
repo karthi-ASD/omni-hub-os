@@ -33,17 +33,33 @@ export function PostCallIntelligence({ session, coaching, transcriptLines }: Pos
     staleTime: 0,
   });
 
-  // Auto-poll every 5s if no summary yet
+  // Auto-poll every 4s if no summary yet, with a retry trigger
   useEffect(() => {
-    if (session.ai_summary || (freshSession?.ai_summary)) return;
-    if (pollCount >= maxPolls) return;
+    if (session.ai_summary || (freshSession?.ai_summary)) {
+      console.log("POST_CALL_AI_SUCCESS", { sessionId: session.id });
+      return;
+    }
+    if (pollCount >= maxPolls) {
+      // Try one manual retry of the AI analyze function
+      if (!retried && session.id) {
+        setRetried(true);
+        console.log("POST_CALL_AI_RETRYING", { sessionId: session.id });
+        supabase.functions.invoke("dialer-ai-analyze", { body: { session_id: session.id } })
+          .then(() => setPollCount(0))
+          .catch(() => console.log("POST_CALL_AI_FAILED", { sessionId: session.id }));
+      } else {
+        console.log("POST_CALL_AI_TIMEOUT", { sessionId: session.id });
+      }
+      return;
+    }
 
+    console.log("POST_CALL_AI_STARTED", { sessionId: session.id, poll: pollCount + 1 });
     const timer = setTimeout(() => {
       setPollCount(c => c + 1);
-    }, 5000);
+    }, 4000);
 
     return () => clearTimeout(timer);
-  }, [pollCount, session.ai_summary, freshSession?.ai_summary]);
+  }, [pollCount, session.ai_summary, freshSession?.ai_summary, session.id, retried]);
 
   const aiSummary = session.ai_summary || freshSession?.ai_summary;
   const aiScore = session.ai_score ?? freshSession?.ai_score;
