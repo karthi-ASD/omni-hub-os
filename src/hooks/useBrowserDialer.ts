@@ -151,7 +151,7 @@ const INITIAL_STATE: BrowserDialerStoreState = {
   lastActionAt: null,
 };
 
-const BUILD_VERSION = "stability-v9";
+const BUILD_VERSION = "stability-v10";
 type DialerIdentity = { businessId: string; userId: string } | null;
 
 // ─── Global singletons ──────────────────────────────────────────────
