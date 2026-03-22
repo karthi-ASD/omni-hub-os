@@ -852,13 +852,13 @@ function handleVisibilityChange() {
   });
 
   // If client is dead and we're not in an active call, try recovery
+  // But do NOT reset singletonInitialized — let the existing state survive
   if (!healthy && !isTransient && !recoveryInProgress) {
     logDialer("DIALER_STATE_RECOVERY_START", { reason: "client_missing_on_tab_resume" });
     recoveryInProgress = true;
-    sdkInitStarted = false;
-    singletonInitialized = false;
     registrationRetryCount = 0;
-    setStoreState((c) => ({ ...c, registered: false, status: "idle", sdkReady: false }));
+    // Do NOT reset sdkInitStarted or singletonInitialized — that causes
+    // the next hook mount to re-run full init which churns state
     void initializeVoiceClient().finally(() => {
       recoveryInProgress = false;
       logDialer("DIALER_STATE_RECOVERY_DONE");
