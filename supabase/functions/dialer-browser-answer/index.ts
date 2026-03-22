@@ -6,7 +6,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
  * Returns Plivo XML to dial the destination PSTN number.
  */
 
-// Region-aware caller ID selection
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -39,9 +38,7 @@ function normalizeDestination(raw: string): string {
 function buildXml(destination: string, callerId: string, sessionId: string) {
   const webhookSecret = Deno.env.get("PLIVO_WEBHOOK_SECRET") || "";
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-  // Recording callback — fires when recording is ready
   const recordingCallbackUrl = `${supabaseUrl}/functions/v1/dialer-webhook?leg=recording&session_id=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(webhookSecret)}`;
-  // Hangup callback — fires when call ends
   const hangupUrl = `${supabaseUrl}/functions/v1/dialer-webhook?leg=customer&session_id=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(webhookSecret)}`;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -49,6 +46,14 @@ function buildXml(destination: string, callerId: string, sessionId: string) {
   <Dial answerOnBridge="true" callerId="${callerId}" record="true" recordingCallbackUrl="${recordingCallbackUrl}" recordingCallbackMethod="POST" action="${hangupUrl}" method="POST" ringTone="us">
     <Number>${destination}</Number>
   </Dial>
+</Response>`;
+}
+
+function buildSafeExitXml(message = "This call attempt is no longer valid.") {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Speak>${message}</Speak>
+  <Hangup reason="rejected" />
 </Response>`;
 }
 
@@ -64,7 +69,6 @@ Deno.serve(async (req) => {
   try {
     const requestUrl = new URL(req.url);
 
-    // Parse body — Plivo sends form-encoded or JSON
     let body: Record<string, string> = {};
     const contentType = req.headers.get("content-type") || "";
 
@@ -72,104 +76,141 @@ Deno.serve(async (req) => {
       try {
         const json = await req.json();
         for (const [k, v] of Object.entries(json)) body[k] = String(v ?? "");
-      } catch { /* ignore */ }
+      } catch {
+        // ignore malformed JSON
+      }
     } else {
       try {
         const text = await req.text();
         body = Object.fromEntries(new URLSearchParams(text));
-      } catch { /* ignore */ }
+      } catch {
+        // ignore malformed form body
+      }
     }
 
-    console.log("[DIALER_XML] Raw body keys:", Object.keys(body));
-    console.log("[DIALER_XML] Raw body:", JSON.stringify(body));
-
-    // Extract destination — Plivo WebRTC sends the dialed number in "To"
-    // It may come as "sip:+61xxx@..." so we clean it
     let destination = requestUrl.searchParams.get("number") || body.To || body.to || body.ForwardTo || "";
     const callUuid = body.CallUUID || body.RequestUUID || "";
     const from = body.From || "";
     const direction = body.Direction || "";
+    const sessionId = body["X-PH-SessionId"] || body["X-Ph-Sessionid"] || body["X-PH-sessionid"] || body["X-Ph-SessionId"] || body["X-PH-SESSIONID"] || "";
 
-    // Extract session ID from custom SIP headers
-    const sessionId = body["X-PH-SessionId"] || body["X-Ph-Sessionid"] || 
-                      body["X-PH-sessionid"] || body["X-Ph-SessionId"] || 
-                      body["X-PH-SESSIONID"] || "";
-
-    // Clean destination: strip sip: prefix and @domain
     destination = normalizeDestination(destination);
 
-    console.log("[DIALER_XML] Parsed:", { destination, callUuid, from, direction, sessionId });
-    console.log("PLIVO_ANSWER_HIT", destination);
+    console.log("ANSWER_FUNCTION_INVOKED", { sessionId, destination, from, direction });
+    console.log("CALL_UUID_RECEIVED", { sessionId, callUuid });
 
     if (!destination || destination.length < 8) {
-      console.error("[DIALER_XML] INVALID/MISSING destination:", { raw_to: body.To, destination });
-      return new Response(
-        `<?xml version="1.0" encoding="UTF-8"?>\n<Response><Speak>Unable to connect your call. Invalid destination.</Speak><Hangup reason="rejected" /></Response>`,
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "text/xml; charset=utf-8" } }
-      );
+      console.error("[DIALER_XML] INVALID/MISSING destination", { raw_to: body.To, destination, sessionId, callUuid });
+      return new Response(buildSafeExitXml("Unable to connect your call. Invalid destination."), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "text/xml; charset=utf-8" },
+      });
     }
 
-    // Select region-aware caller ID
     const callerId = getCallerIdForNumber(destination);
-    console.log("[DIALER_XML] CallerId:", callerId, "Destination:", destination);
+    console.log("[DIALER_XML] CallerId", { callerId, destination, sessionId, callUuid });
 
-    // Update session in DB if we have a session ID
+    let session: { provider_call_id: string | null; call_status: string | null } | null = null;
     if (sessionId) {
-      const { data: session } = await supabase
+      const { data } = await supabase
         .from("dialer_sessions")
         .select("provider_call_id, call_status")
         .eq("id", sessionId)
         .maybeSingle();
-
-      const updates: Record<string, unknown> = {
-        call_mode: "browser",
-      };
-
-      if (!session?.provider_call_id) {
-        updates.provider_call_id = callUuid;
-      }
-
-      if (!session?.call_status || session.call_status === "initiating") {
-        updates.call_status = "dialing";
-      }
-
-      supabase
-        .from("dialer_sessions")
-        .update(updates as never)
-        .eq("id", sessionId)
-        .then(() => {}, () => {});
-
-      supabase
-        .from("dialer_call_events")
-        .insert({
-          session_id: sessionId,
-          event_type: session?.provider_call_id && session.provider_call_id !== callUuid ? "browser_answer_reinvoked" : "browser_answer_xml_served",
-          metadata: {
-            call_uuid: callUuid,
-            destination,
-            caller_id: callerId,
-            direction,
-            previous_provider_call_id: session?.provider_call_id || null,
-            repeated_attempt: !!session?.provider_call_id && session.provider_call_id !== callUuid,
-          },
-        } as never)
-        .then(() => {}, () => {});
+      session = data;
     }
 
-    // Return XML — bridge WebRTC to PSTN with recording enabled
-    const xml = buildXml(destination, callerId, sessionId);
+    const providerCallIdBefore = session?.provider_call_id || null;
+    const isDuplicateCall = !!providerCallIdBefore && !!callUuid && providerCallIdBefore !== callUuid;
+    const isReentry = isDuplicateCall;
 
-    console.log("[DIALER_XML] Returning XML:", xml);
+    console.log("SESSION_PROVIDER_CALL_ID_BEFORE", { sessionId, provider_call_id: providerCallIdBefore });
+    console.log("IS_DUPLICATE_CALL", { sessionId, callUuid, isDuplicateCall });
+    console.log("IS_REENTRY", { sessionId, callUuid, isReentry });
+
+    if (isDuplicateCall) {
+      console.warn("DUPLICATE_PROVIDER_CALL_IGNORED", {
+        sessionId,
+        callUuid,
+        existingProviderCallId: providerCallIdBefore,
+      });
+      console.warn("ANSWER_REENTRY_DETECTED", {
+        sessionId,
+        callUuid,
+        existingProviderCallId: providerCallIdBefore,
+      });
+
+      await supabase.from("dialer_call_events").insert({
+        session_id: sessionId,
+        event_type: "duplicate_provider_call_ignored",
+        metadata: {
+          call_uuid: callUuid,
+          existing_provider_call_id: providerCallIdBefore,
+          destination,
+          caller_id: callerId,
+          direction,
+          is_duplicate_call: true,
+          is_reentry: true,
+        },
+      } as never).catch(() => {});
+
+      return new Response(buildSafeExitXml("Duplicate call attempt ignored."), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "text/xml; charset=utf-8" },
+      });
+    }
+
+    const updates: Record<string, unknown> = {
+      call_mode: "browser",
+    };
+
+    if (!providerCallIdBefore && callUuid) {
+      updates.provider_call_id = callUuid;
+    }
+
+    if (!session?.call_status || session.call_status === "initiating") {
+      updates.call_status = "dialing";
+    }
+
+    if (sessionId && Object.keys(updates).length > 0) {
+      await supabase
+        .from("dialer_sessions")
+        .update(updates as never)
+        .eq("id", sessionId);
+    }
+
+    const providerCallIdAfter = (updates.provider_call_id as string | undefined) || providerCallIdBefore;
+    console.log("SESSION_PROVIDER_CALL_ID_AFTER", { sessionId, provider_call_id: providerCallIdAfter || null });
+
+    if (sessionId) {
+      await supabase.from("dialer_call_events").insert({
+        session_id: sessionId,
+        event_type: "browser_answer_xml_served",
+        metadata: {
+          call_uuid: callUuid,
+          destination,
+          caller_id: callerId,
+          direction,
+          previous_provider_call_id: providerCallIdBefore,
+          current_provider_call_id: providerCallIdAfter || null,
+          is_duplicate_call: false,
+          is_reentry: false,
+        },
+      } as never).catch(() => {});
+    }
+
+    const xml = buildXml(destination, callerId, sessionId);
+    console.log("[DIALER_XML] Returning XML", { sessionId, callUuid, destination, provider_call_id: providerCallIdAfter || null });
 
     return new Response(xml, {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "text/xml; charset=utf-8" },
     });
   } catch (err) {
-    console.error("[DIALER_XML] Error:", err);
-    return new Response(
-      `<?xml version="1.0" encoding="UTF-8"?>\n<Response><Speak>An error occurred connecting your call.</Speak><Hangup reason="rejected" /></Response>`,
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "text/xml; charset=utf-8" } }
-    );
+    console.error("[DIALER_XML] Error", err);
+    return new Response(buildSafeExitXml("An error occurred connecting your call."), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "text/xml; charset=utf-8" },
+    });
   }
 });

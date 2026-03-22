@@ -13,12 +13,16 @@ async function parseTelephonyPayload(req: Request): Promise<Record<string, strin
       const out: Record<string, string> = {};
       for (const [k, v] of Object.entries(json)) out[k] = String(v ?? "");
       return out;
-    } catch { return {}; }
+    } catch {
+      return {};
+    }
   }
   try {
     const text = await req.text();
     return Object.fromEntries(new URLSearchParams(text));
-  } catch { return {}; }
+  } catch {
+    return {};
+  }
 }
 
 interface NormalizedPayload {
@@ -81,7 +85,6 @@ Deno.serve(async (req) => {
   try {
     const querySessionId = url.searchParams.get("session_id");
     const leg = url.searchParams.get("leg") || "unknown";
-
     const body = await parseTelephonyPayload(req);
     const p = normalizePayload(body);
 
@@ -95,7 +98,6 @@ Deno.serve(async (req) => {
       duration: p.duration,
     });
 
-    // Resolve session
     let session: any = null;
     if (querySessionId) {
       const { data } = await supabase
@@ -109,23 +111,69 @@ Deno.serve(async (req) => {
       const { data } = await supabase
         .from("dialer_sessions")
         .select("*")
-        .or(`provider_call_id.eq.${p.call_uuid},customer_call_id.eq.${p.call_uuid}`)
+        .eq("provider_call_id", p.call_uuid)
         .maybeSingle();
       session = data;
     }
 
     if (!session) {
-      console.warn("[dialer-webhook] No session found", { querySessionId, call_uuid: p.call_uuid });
+      console.warn("[dialer-webhook] No session found", { querySessionId, call_uuid: p.call_uuid, leg });
       return new Response(JSON.stringify({ status: "no_session" }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Log event
-    const eventType = leg === "recording" ? "recording_received"
-      : p.call_status.toLowerCase() === "completed" ? "call_completed"
-      : p.hangup_cause ? "hangup"
-      : "webhook_received";
+    const providerCallId = session.provider_call_id || "";
+    const strictMatch = !!p.call_uuid && !!providerCallId && p.call_uuid === providerCallId;
+
+    console.log("SESSION_PROVIDER_CORRELATION_STRICT", {
+      session_id: session.id,
+      incoming_call_uuid: p.call_uuid,
+      provider_call_id: providerCallId,
+      strict_match: strictMatch,
+      leg,
+      event: p.event,
+      call_status: p.call_status,
+    });
+
+    if (!strictMatch) {
+      console.warn("PROVIDER_CALL_MISMATCH", {
+        session_id: session.id,
+        incoming_call_uuid: p.call_uuid,
+        provider_call_id: providerCallId,
+        leg,
+        event: p.event,
+        call_status: p.call_status,
+      });
+
+      await supabase.from("dialer_call_events").insert({
+        session_id: session.id,
+        event_type: "provider_call_mismatch",
+        metadata: {
+          leg,
+          incoming_call_uuid: p.call_uuid || null,
+          provider_call_id: providerCallId || null,
+          event: p.event || null,
+          call_status: p.call_status || null,
+          hangup_cause: p.hangup_cause || null,
+          strict_match: false,
+        },
+      }).catch(() => {});
+
+      return new Response(JSON.stringify({ status: "ignored_mismatch", session_id: session.id }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const eventType = leg === "recording"
+      ? "recording_received"
+      : p.call_status.toLowerCase() === "completed"
+        ? "call_completed"
+        : p.hangup_cause
+          ? "hangup"
+          : "webhook_received";
 
     await supabase.from("dialer_call_events").insert({
       session_id: session.id,
@@ -139,49 +187,44 @@ Deno.serve(async (req) => {
         bill_duration: p.bill_duration,
         cost: p.total_cost,
         recording_url: p.recording_url || null,
+        strict_match: true,
       },
     }).catch(() => {});
 
-    // Build updates
     const updates: Record<string, any> = {};
     const currentIsTerminal = TERMINAL_STATES.includes(session.call_status);
 
-    // Recording URL — ALWAYS accept if valid
     if (p.recording_url && p.recording_url.startsWith("http")) {
       updates.recording_url = p.recording_url;
       console.log("[dialer-webhook] Recording URL captured", { session_id: session.id, url: p.recording_url });
     }
 
-    // Recording-only leg: save and return
     if (leg === "recording") {
       if (Object.keys(updates).length > 0) {
         await supabase.from("dialer_sessions").update(updates).eq("id", session.id);
       }
-      console.log("[dialer-webhook] Recording leg processed", { session_id: session.id });
+      console.log("[dialer-webhook] Recording leg processed", { session_id: session.id, strict_match: true });
       return new Response(JSON.stringify({ status: "ok", session_id: session.id }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Conference-based flow: hangup_url fires when a leg disconnects
     const cs = p.call_status.toLowerCase();
     const isTerminalEvent = ["completed", "hangup", "busy", "no-answer", "cancel", "failed", "rejected"].includes(cs) ||
       ["NORMAL_CLEARING", "ORIGINATOR_CANCEL", "USER_BUSY", "NO_ANSWER", "CALL_REJECTED"].includes(p.hangup_cause);
 
     if (isTerminalEvent && !currentIsTerminal) {
-      // Determine terminal status
       let terminalStatus = "ended";
       if (cs === "busy" || p.hangup_cause === "USER_BUSY") terminalStatus = "busy";
       else if (cs === "no-answer" || cs === "cancel" || p.hangup_cause === "NO_ANSWER" || p.hangup_cause === "ORIGINATOR_CANCEL") terminalStatus = "no-answer";
       else if (cs === "failed" || cs === "rejected" || p.hangup_cause === "CALL_REJECTED") terminalStatus = "failed";
 
-      // For customer leg failing before connect — different handling
       if (leg === "customer" && !session.customer_connected) {
         updates.call_status = terminalStatus;
         updates.call_end_time = new Date().toISOString();
         console.log("[dialer-webhook] Customer never connected", { session_id: session.id, status: terminalStatus });
       } else {
-        // Normal end — either leg hanging up ends the conference
         updates.call_status = "ended";
         updates.call_end_time = new Date().toISOString();
         if (p.duration > 0) updates.call_duration = p.duration;
@@ -189,23 +232,20 @@ Deno.serve(async (req) => {
         if (p.total_cost > 0) updates.call_cost = p.total_cost;
       }
     } else if (currentIsTerminal) {
-      // Already terminal — only update recording/cost fields
       if (p.duration > 0 && !session.call_duration) updates.call_duration = p.duration;
       if (p.bill_duration > 0 && !session.bill_duration) updates.bill_duration = p.bill_duration;
       if (p.total_cost > 0 && !session.call_cost) updates.call_cost = p.total_cost;
     }
 
-    // Apply updates
     if (Object.keys(updates).length > 0) {
       const { error: updateErr } = await supabase.from("dialer_sessions").update(updates).eq("id", session.id);
       if (updateErr) {
-        console.error("[dialer-webhook] Session update failed:", updateErr);
+        console.error("[dialer-webhook] Session update failed", updateErr);
       }
     }
 
     const finalStatus = updates.call_status || session.call_status;
 
-    // Trigger AI analysis on terminal ended state only for genuinely connected calls
     if (updates.call_status === "ended") {
       const duration = updates.call_duration || p.duration || 0;
       const hadConnectedState = !!session.customer_connected || !!session.call_start_time;
@@ -233,7 +273,7 @@ Deno.serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ session_id: session.id }),
-        }).catch((e) => console.error("[dialer-webhook] AI trigger failed:", e));
+        }).catch((e) => console.error("[dialer-webhook] AI trigger failed", e));
       } else {
         await supabase.from("dialer_call_events").insert({
           session_id: session.id,
@@ -243,7 +283,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // System event for terminal states
     if (updates.call_status && TERMINAL_STATES.includes(updates.call_status)) {
       await supabase.from("system_events").insert({
         business_id: session.business_id,
@@ -265,6 +304,7 @@ Deno.serve(async (req) => {
       final_status: finalStatus,
       updated_fields: Object.keys(updates),
       recording_captured: !!updates.recording_url,
+      strict_match: true,
     });
 
     return new Response(JSON.stringify({ status: "ok", session_id: session.id }), {
@@ -272,7 +312,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("[dialer-webhook] Error:", err);
+    console.error("[dialer-webhook] Error", err);
     return new Response(JSON.stringify({ error: String(err) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
