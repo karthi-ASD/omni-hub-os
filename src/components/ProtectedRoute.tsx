@@ -4,7 +4,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import AuthDiagnostics from "@/components/AuthDiagnostics";
-import { logDialerEvent } from "@/hooks/useBrowserDialer";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -69,7 +68,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
   };
 
   useEffect(() => {
-    logDialerEvent("PROTECTED_ROUTE_RENDER", {
+    console.log("PROTECTED_ROUTE_RENDER", {
       hasSession: !!session,
       loading,
       securityCheck,
@@ -81,6 +80,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
   const showBlockingLoader = !hasSettledAccessRef.current && (loading || (user && securityCheck === "loading"));
 
   if (showBlockingLoader) {
+    console.log("PROTECTED_ROUTE_LOADING_BRANCH", {
+      hasSession: !!session,
+      securityCheck,
+      loading,
+    });
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -90,6 +94,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
   }
 
   if (!session) {
+    console.warn("PROTECTED_ROUTE_REDIRECT_BRANCH", { reason: "missing_session" });
     return <Navigate to="/login" replace />;
   }
 
@@ -107,6 +112,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
   }
 
   if (securityCheck === "required") {
+    console.warn("PROTECTED_ROUTE_REDIRECT_BRANCH", { reason: "security_setup_required" });
     return <Navigate to="/security-setup" replace />;
   }
 
@@ -117,10 +123,19 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
   if (requiredRoles && requiredRoles.length > 0) {
     const hasRequired = requiredRoles.some((r) => roles.includes(r));
     if (!hasRequired) {
+      console.warn("PROTECTED_ROUTE_REDIRECT_BRANCH", {
+        reason: "missing_required_role",
+        requiredRoles,
+      });
       return <Navigate to="/dashboard" replace />;
     }
   }
 
+  console.log("PROTECTED_ROUTE_CHILDREN_RETURNED", {
+    loading,
+    securityCheck,
+    hasSession: !!session,
+  });
   return <>{children}</>;
 };
 

@@ -38,48 +38,52 @@ function DialerProviderInner({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     providerMountCount++;
-    dialer.logEvent("PROVIDER_MOUNTED", { mountCount: providerMountCount });
-    dialer.logEvent("SHELL_LEVEL_DIALER_CONSUMER_MOUNTED", { mountCount: providerMountCount });
+    console.log("PROVIDER_MOUNTED", { mountCount: providerMountCount });
     return () => {
-      dialer.logEvent("SHELL_LEVEL_DIALER_CONSUMER_UNMOUNTED", { mountCount: providerMountCount });
-      dialer.logEvent("PROVIDER_UNMOUNT_REASON", { mountCount: providerMountCount, route: window.location.pathname });
-      dialer.logEvent("PROVIDER_UNMOUNTED", { mountCount: providerMountCount });
+      console.error("PROVIDER_UNMOUNT_REASON", {
+        mountCount: providerMountCount,
+        route: window.location.pathname,
+      });
+      console.error("PROVIDER_SHOULD_NOT_UNMOUNT", {
+        mountCount: providerMountCount,
+        route: window.location.pathname,
+      });
     };
-  }, [dialer.logEvent]);
+  }, []);
 
   useEffect(() => {
-    dialer.logEvent("PROVIDER_RENDERED", {
+    console.log("PROVIDER_RENDERED", {
       renderCount: renderCountRef.current,
       route: location.pathname,
       registered: dialer.registered,
       callStatus: dialer.callStatus,
     });
-  }, [location.pathname, dialer.registered, dialer.callStatus, dialer.logEvent]);
+  }, [location.pathname, dialer.registered, dialer.callStatus]);
 
   // Route change detection — proves provider survives navigation
   useEffect(() => {
     if (prevPathRef.current !== location.pathname) {
-      dialer.logEvent("ROUTE_CHANGE_DETECTED", {
+      console.log("ROUTE_CHANGE_DETECTED", {
         from: prevPathRef.current,
         to: location.pathname,
       });
-      dialer.logEvent("DIALER_PROVIDER_STILL_MOUNTED_AFTER_ROUTE_CHANGE", {
+      console.log("DIALER_PROVIDER_STILL_MOUNTED_AFTER_ROUTE_CHANGE", {
         renderCount: renderCountRef.current,
         registered: dialer.registered,
         callStatus: dialer.callStatus,
       });
       prevPathRef.current = location.pathname;
     }
-  }, [location.pathname, dialer.registered, dialer.callStatus, dialer.logEvent]);
+  }, [location.pathname, dialer.registered, dialer.callStatus]);
 
   useEffect(() => {
     if (dialer.registered && dialer.diagnostics.clientHealthy) {
-      dialer.logEvent("CLIENT_SINGLETON_REUSED", {
+      console.log("CLIENT_SINGLETON_REUSED", {
         registered: dialer.registered,
         status: dialer.callStatus,
       });
     }
-  }, [dialer.registered, dialer.diagnostics.clientHealthy, dialer.callStatus, dialer.logEvent]);
+  }, [dialer.registered, dialer.diagnostics.clientHealthy, dialer.callStatus]);
 
   return (
     <BrowserDialerContext.Provider value={dialer}>
