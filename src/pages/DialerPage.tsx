@@ -127,11 +127,15 @@ function DialerPageContent() {
       status: dialer.callStatus,
     });
     if (!phoneInput.trim()) {
-      dialer.logEvent("HANDLE_DIAL_BLOCKED", { reason: "empty_input" });
+      dialer.logEvent("HANDLE_DIAL_BLOCKED_EMPTY_INPUT");
       toast.error("Enter a phone number first");
       return;
     }
-    dialer.logEvent("HANDLE_DIAL_ENTERED", { phoneInput });
+    dialer.logEvent("HANDLE_DIAL_ENTERED", {
+      phoneInput,
+      registered: dialer.registered,
+      status: dialer.callStatus,
+    });
     await dialer.startCall(phoneInput.trim(), leadContext?.id, leadContext?.clientId);
   };
 
