@@ -1246,6 +1246,10 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
     }
   } catch {}
   logDialer("LISTENERS_ATTACH_DONE", { generation, totalAttachCount: listenerAttachCount });
+  logDialer("LISTENER_ATTACH_VALIDATION", { attachCount: listenerAttachCount, expected: plivoClientGeneration });
+  if (listenerAttachCount !== plivoClientGeneration) {
+    logDialer("LISTENER_DUPLICATION_WARNING", { attachCount: listenerAttachCount, generation: plivoClientGeneration });
+  }
 }
 
 // ─── Connection health monitor ──────────────────────────────────────

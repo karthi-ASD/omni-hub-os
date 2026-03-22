@@ -159,7 +159,7 @@ export function CallReadinessPanel({
         case "timeout":
           logEvent("SPEAKER_TEST_COMPLETED_TIMEOUT");
           setSpeakerResult("timeout");
-          setSpeakerMessage("Speaker test timed out. Audio may still work — try a test call.");
+          setSpeakerMessage("Could not confirm audio playback. Please click once and retry.");
           break;
       }
     } catch (err) {

@@ -112,6 +112,12 @@ function DialerPageContent() {
   const [rightTab, setRightTab] = useState(() => {
     return sessionStorage.getItem("dialer_right_tab") || "transcript";
   });
+  const [dispositionDraft, setDispositionDraft] = useState(() => {
+    return sessionStorage.getItem("dialer_disposition_draft") || "";
+  });
+  const [callbackReason, setCallbackReason] = useState(() => {
+    return sessionStorage.getItem("dialer_callback_reason") || "";
+  });
 
   // Persist drafts to sessionStorage (survives route changes)
   useEffect(() => {
@@ -138,6 +144,12 @@ function DialerPageContent() {
   useEffect(() => {
     sessionStorage.setItem("dialer_right_tab", rightTab);
   }, [rightTab]);
+  useEffect(() => {
+    sessionStorage.setItem("dialer_disposition_draft", dispositionDraft);
+  }, [dispositionDraft]);
+  useEffect(() => {
+    sessionStorage.setItem("dialer_callback_reason", callbackReason);
+  }, [callbackReason]);
 
   // Live transcript — safe when dialer is null
   const noopLog = useRef((_e: string, _d?: Record<string, unknown>) => {}).current;
@@ -167,6 +179,16 @@ function DialerPageContent() {
     lastAIRequestRef.current = now;
     aiAssistant.requestAIAssist(transcript.lines);
   }, [transcript.lines, dialer?.isCallActive]);
+
+  // UI rebind safety — detect if we're mounting into an active call
+  useEffect(() => {
+    if (dialer?.isCallActive) {
+      dialer.logEvent("UI_REBOUND_TO_ACTIVE_CALL", {
+        sessionId: dialer.session?.id,
+        status: dialer.callStatus,
+      });
+    }
+  }, []); // only on mount
 
   // Reset AI on call end
   useEffect(() => {
@@ -244,20 +266,18 @@ function DialerPageContent() {
     await dialer.submitDisposition(disposition, notesInput);
     dialer.resetDialer();
     setNotesInput("");
-    sessionStorage.removeItem("dialer_notes_draft");
-    sessionStorage.removeItem("dialer_phone_draft");
-    sessionStorage.removeItem("dialer_followup_draft");
-    sessionStorage.removeItem("dialer_show_followup");
+    setDispositionDraft("");
+    setCallbackReason("");
+    for (const k of ["dialer_notes_draft", "dialer_phone_draft", "dialer_followup_draft", "dialer_show_followup", "dialer_disposition_draft", "dialer_callback_reason"]) sessionStorage.removeItem(k);
   };
 
   const handleFollowUpSubmit = async () => {
     await dialer.submitDisposition("callback_later", notesInput, followUpDate?.toISOString());
     dialer.resetDialer();
     setNotesInput("");
-    sessionStorage.removeItem("dialer_notes_draft");
-    sessionStorage.removeItem("dialer_phone_draft");
-    sessionStorage.removeItem("dialer_followup_draft");
-    sessionStorage.removeItem("dialer_show_followup");
+    setDispositionDraft("");
+    setCallbackReason("");
+    for (const k of ["dialer_notes_draft", "dialer_phone_draft", "dialer_followup_draft", "dialer_show_followup", "dialer_disposition_draft", "dialer_callback_reason"]) sessionStorage.removeItem(k);
     setFollowUpDate(undefined);
     setShowFollowUp(false);
   };
