@@ -178,6 +178,13 @@ export function AppSidebar() {
   }
 
   const filteredSections = isStaffShell ? NAV_SECTIONS.filter(section => {
+    // Hide "My Business CRM" for staff without a configured custom CRM
+    if (section.title === "My Business CRM") {
+      if (!hasCustomCRM) {
+        console.log("CRM_NAV_HIDDEN_IRRELEVANT", { reason: "no_custom_crm_configured" });
+        return false;
+      }
+    }
     if (dashboardShell === "super_admin") return true;
     if (section.title === "Sales" && canAccessDialer) return true;
     if (section.departments && !matchesDept(section.departments, departmentName)) return false;

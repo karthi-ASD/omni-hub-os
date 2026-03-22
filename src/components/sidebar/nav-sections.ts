@@ -209,6 +209,8 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
   // ── My Business CRM (per-business custom workspace) ──
+  // Only shown when a business has a configured CRM type.
+  // Visibility is evaluated in AppSidebar using activeCRMType.
   {
     title: "My Business CRM",
     items: [

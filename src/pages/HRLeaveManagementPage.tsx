@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarDays, Plus, Check, X, Settings, Clock, UserCheck, AlertTriangle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -23,16 +23,40 @@ const HRLeaveManagementPage = () => {
   const { employees } = useHREmployees();
   const canManage = isSuperAdmin || isBusinessAdmin || isHRManager;
 
+  console.log("LEAVE_MODULE_RENDERED", { canManage, userId: user?.id });
+
+  // Find current user's employee record for self-service
+  const currentEmployee = useMemo(() => {
+    if (!user?.id) return null;
+    return employees.find(e => e.user_id === user.id && e.employment_status === "active") || null;
+  }, [employees, user?.id]);
+
+  const isSelfServiceOnly = !canManage;
+
   const [ltOpen, setLtOpen] = useState(false);
   const [ltForm, setLtForm] = useState({ name: "", max_days_per_year: 12, carry_forward: false, approval_required: true });
   const [reqOpen, setReqOpen] = useState(false);
   const [reqForm, setReqForm] = useState({ employee_id: "", leave_type_id: "", start_date: "", end_date: "", num_days: 1, reason: "" });
 
-  const pendingRequests = requests.filter(r => r.status === "pending");
-  const approvedRequests = requests.filter(r => r.status === "approved");
-  const rejectedRequests = requests.filter(r => r.status === "rejected");
+  // Auto-set employee_id for self-service users when dialog opens
+  useEffect(() => {
+    if (reqOpen && isSelfServiceOnly && currentEmployee) {
+      setReqForm(f => ({ ...f, employee_id: currentEmployee.id }));
+      console.log("EMPLOYEE_SELF_SERVICE_SCOPE_APPLIED", { employeeId: currentEmployee.id });
+    }
+  }, [reqOpen, isSelfServiceOnly, currentEmployee]);
 
-  // Employees on leave today
+  // Filter requests: self-service users only see their own
+  const visibleRequests = useMemo(() => {
+    if (canManage) return requests;
+    if (!currentEmployee) return [];
+    return requests.filter(r => r.employee_id === currentEmployee.id);
+  }, [requests, canManage, currentEmployee]);
+
+  const pendingRequests = visibleRequests.filter(r => r.status === "pending");
+  const approvedRequests = visibleRequests.filter(r => r.status === "approved");
+  const rejectedRequests = visibleRequests.filter(r => r.status === "rejected");
+
   const today = format(new Date(), "yyyy-MM-dd");
   const onLeaveToday = approvedRequests.filter(r => r.start_date <= today && r.end_date >= today);
 
@@ -61,42 +85,67 @@ const HRLeaveManagementPage = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Leave Management</h1>
-          <p className="text-muted-foreground mt-1">Configure leave types, track requests & approvals</p>
+          <p className="text-muted-foreground mt-1">
+            {isSelfServiceOnly
+              ? `Your leave requests${currentEmployee ? ` — ${currentEmployee.full_name}` : ""}`
+              : "Configure leave types, track requests & approvals"
+            }
+          </p>
         </div>
         <div className="flex gap-2">
-          <Dialog open={reqOpen} onOpenChange={setReqOpen}>
-            <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" /> New Request</Button></DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>New Leave Request</DialogTitle></DialogHeader>
-              <div className="space-y-3 py-2">
-                <div className="space-y-2"><Label>Employee *</Label>
-                  <Select value={reqForm.employee_id} onValueChange={v => setReqForm({ ...reqForm, employee_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select employee" /></SelectTrigger>
-                    <SelectContent>{employees.filter(e => e.employment_status === "active").map(e => (
-                      <SelectItem key={e.id} value={e.id}>{e.full_name} ({e.employee_code})</SelectItem>
-                    ))}</SelectContent>
-                  </Select>
+          {/* Self-service: employee can only request for themselves */}
+          {(canManage || currentEmployee) && (
+            <Dialog open={reqOpen} onOpenChange={setReqOpen}>
+              <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" /> New Request</Button></DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>New Leave Request</DialogTitle></DialogHeader>
+                <div className="space-y-3 py-2">
+                  {/* Self-service: show read-only employee name, no dropdown */}
+                  {isSelfServiceOnly ? (
+                    <div className="space-y-2">
+                      <Label>Employee</Label>
+                      <Input value={currentEmployee?.full_name || "You"} disabled className="bg-muted" />
+                    </div>
+                  ) : (
+                    <div className="space-y-2"><Label>Employee *</Label>
+                      <Select value={reqForm.employee_id} onValueChange={v => setReqForm({ ...reqForm, employee_id: v })}>
+                        <SelectTrigger><SelectValue placeholder="Select employee" /></SelectTrigger>
+                        <SelectContent>{employees.filter(e => e.employment_status === "active").map(e => (
+                          <SelectItem key={e.id} value={e.id}>{e.full_name} ({e.employee_code})</SelectItem>
+                        ))}</SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  <div className="space-y-2"><Label>Leave Type *</Label>
+                    <Select value={reqForm.leave_type_id} onValueChange={v => setReqForm({ ...reqForm, leave_type_id: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                      <SelectContent>{leaveTypes.filter(lt => lt.status === "active").map(lt => (
+                        <SelectItem key={lt.id} value={lt.id}>{lt.name}</SelectItem>
+                      ))}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2"><Label>Start Date *</Label><Input type="date" value={reqForm.start_date} onChange={e => setReqForm({ ...reqForm, start_date: e.target.value })} /></div>
+                    <div className="space-y-2"><Label>End Date *</Label><Input type="date" value={reqForm.end_date} onChange={e => setReqForm({ ...reqForm, end_date: e.target.value })} /></div>
+                  </div>
+                  <div className="space-y-2"><Label>Days</Label><Input type="number" value={reqForm.num_days} onChange={e => setReqForm({ ...reqForm, num_days: Number(e.target.value) })} /></div>
+                  <div className="space-y-2"><Label>Reason</Label><Textarea value={reqForm.reason} onChange={e => setReqForm({ ...reqForm, reason: e.target.value })} /></div>
+                  <Button onClick={handleAddReq} className="w-full">Submit Request</Button>
                 </div>
-                <div className="space-y-2"><Label>Leave Type *</Label>
-                  <Select value={reqForm.leave_type_id} onValueChange={v => setReqForm({ ...reqForm, leave_type_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-                    <SelectContent>{leaveTypes.filter(lt => lt.status === "active").map(lt => (
-                      <SelectItem key={lt.id} value={lt.id}>{lt.name}</SelectItem>
-                    ))}</SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2"><Label>Start Date *</Label><Input type="date" value={reqForm.start_date} onChange={e => setReqForm({ ...reqForm, start_date: e.target.value })} /></div>
-                  <div className="space-y-2"><Label>End Date *</Label><Input type="date" value={reqForm.end_date} onChange={e => setReqForm({ ...reqForm, end_date: e.target.value })} /></div>
-                </div>
-                <div className="space-y-2"><Label>Days</Label><Input type="number" value={reqForm.num_days} onChange={e => setReqForm({ ...reqForm, num_days: Number(e.target.value) })} /></div>
-                <div className="space-y-2"><Label>Reason</Label><Textarea value={reqForm.reason} onChange={e => setReqForm({ ...reqForm, reason: e.target.value })} /></div>
-                <Button onClick={handleAddReq} className="w-full">Submit Request</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
+
+      {/* No employee record warning */}
+      {isSelfServiceOnly && !currentEmployee && (
+        <Card className="border-amber-200 bg-amber-50/50">
+          <CardContent className="py-4">
+            <p className="text-sm text-amber-700">Your employee record was not found. Please contact HR to set up your profile.</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -108,7 +157,7 @@ const HRLeaveManagementPage = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total</p>
-                <p className="text-xl font-bold">{requests.length}</p>
+                <p className="text-xl font-bold">{visibleRequests.length}</p>
               </div>
             </div>
           </CardContent>
@@ -171,7 +220,7 @@ const HRLeaveManagementPage = () => {
       {onLeaveToday.length > 0 && (
         <Card className="border-0 shadow-elevated bg-blue-500/5 border border-blue-500/10">
           <CardContent className="py-4">
-            <p className="text-sm font-medium text-blue-700 mb-2">📋 Employees on Leave Today</p>
+            <p className="text-sm font-medium text-blue-700 mb-2">📋 {isSelfServiceOnly ? "You are on leave today" : "Employees on Leave Today"}</p>
             <div className="flex flex-wrap gap-2">
               {onLeaveToday.map(r => (
                 <Badge key={r.id} variant="outline" className="text-xs">
@@ -187,7 +236,7 @@ const HRLeaveManagementPage = () => {
         <TabsList>
           <TabsTrigger value="requests"><CalendarDays className="h-4 w-4 mr-1" /> Leave Requests</TabsTrigger>
           <TabsTrigger value="pending"><Clock className="h-4 w-4 mr-1" /> Pending ({pendingRequests.length})</TabsTrigger>
-          <TabsTrigger value="types"><Settings className="h-4 w-4 mr-1" /> Leave Types</TabsTrigger>
+          {canManage && <TabsTrigger value="types"><Settings className="h-4 w-4 mr-1" /> Leave Types</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="requests">
@@ -199,9 +248,9 @@ const HRLeaveManagementPage = () => {
               <TableBody>
                 {reqLoading ? (
                   <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
-                ) : requests.length === 0 ? (
+                ) : visibleRequests.length === 0 ? (
                   <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No leave requests</TableCell></TableRow>
-                ) : requests.map(r => (
+                ) : visibleRequests.map(r => (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">{r.hr_employees?.full_name}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">{r.hr_employees?.departments?.name || "—"}</TableCell>
@@ -267,11 +316,11 @@ const HRLeaveManagementPage = () => {
           </CardContent></Card>
         </TabsContent>
 
-        <TabsContent value="types">
-          <Card className="border-0 shadow-elevated">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Leave Types</CardTitle>
-              {canManage && (
+        {canManage && (
+          <TabsContent value="types">
+            <Card className="border-0 shadow-elevated">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Leave Types</CardTitle>
                 <Dialog open={ltOpen} onOpenChange={setLtOpen}>
                   <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" /> Add Type</Button></DialogTrigger>
                   <DialogContent>
@@ -283,38 +332,38 @@ const HRLeaveManagementPage = () => {
                     </div>
                   </DialogContent>
                 </Dialog>
-              )}
-            </CardHeader>
-            <CardContent>
-              {leaveTypes.length === 0 ? (
-                <p className="text-muted-foreground text-sm text-center py-4">No leave types configured. Add types like Casual Leave, Sick Leave, etc.</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {leaveTypes.map(lt => (
-                    <Card key={lt.id} className="border">
-                      <CardContent className="pt-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-semibold">{lt.name}</h4>
-                          <Badge variant={lt.status === "active" ? "default" : "secondary"}>{lt.status}</Badge>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div>
-                            <p className="text-muted-foreground text-xs">Max Days</p>
-                            <p className="font-medium">{lt.max_days_per_year}/year</p>
+              </CardHeader>
+              <CardContent>
+                {leaveTypes.length === 0 ? (
+                  <p className="text-muted-foreground text-sm text-center py-4">No leave types configured. Add types like Casual Leave, Sick Leave, etc.</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {leaveTypes.map(lt => (
+                      <Card key={lt.id} className="border">
+                        <CardContent className="pt-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-semibold">{lt.name}</h4>
+                            <Badge variant={lt.status === "active" ? "default" : "secondary"}>{lt.status}</Badge>
                           </div>
-                          <div>
-                            <p className="text-muted-foreground text-xs">Approval</p>
-                            <p className="font-medium">{lt.approval_required ? "Required" : "Auto"}</p>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              <p className="text-muted-foreground text-xs">Max Days</p>
+                              <p className="font-medium">{lt.max_days_per_year}/year</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground text-xs">Approval</p>
+                              <p className="font-medium">{lt.approval_required ? "Required" : "Auto"}</p>
+                            </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

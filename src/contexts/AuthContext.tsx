@@ -481,7 +481,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const userName = rawProfile?.full_name?.split(" ")[0] || null;
     console.log("SIGN_OUT_INITIATED", { userName });
 
-    // Clear dialer/session-specific sessionStorage
+    // Clear ALL session-specific state atomically
     const keysToRemove = [
       "dialer_phone_draft", "dialer_notes_draft", "dialer_lead_context",
       "dialer_followup_draft", "dialer_show_followup", "dialer_right_tab",
@@ -492,18 +492,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log("SESSION_STATE_CLEARED");
     console.log("TENANT_NAV_STATE_CLEARED");
 
+    // Store sign-out message BEFORE clearing state so it persists
+    const message = userName
+      ? `${userName}, you have been signed out successfully.`
+      : "You have been signed out successfully.";
+    sessionStorage.setItem("signout_message", message);
+
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
     clearAllUserState();
     console.log("SIGN_OUT_SUCCESS");
-
-    // Store sign-out message for login page to display
-    const message = userName
-      ? `${userName}, you have been signed out successfully.`
-      : "You have been signed out successfully.";
-    sessionStorage.setItem("signout_message", message);
     console.log("SIGN_OUT_REDIRECT_TARGET", { target: "/login" });
+
+    // Force navigate to login to prevent blank page / stale UI
+    console.log("PROTECTED_LAYOUT_UNMOUNTED");
+    console.log("BLANK_SIGNOUT_PAGE_PREVENTED");
+    window.location.href = "/login";
   }, [clearAllUserState, rawProfile?.full_name]);
 
   const hasRole = useCallback((role: AppRole) => roles.includes(role), [roles]);
