@@ -55,7 +55,7 @@ function DialerProviderInner({ children }: { children: ReactNode }) {
       registered: dialer.registered,
       callStatus: dialer.callStatus,
     });
-  });
+  }, [location.pathname, dialer.registered, dialer.callStatus]);
 
   // Route change detection — proves provider survives navigation
   useEffect(() => {
@@ -112,5 +112,9 @@ export function BrowserDialerProvider({ children }: { children: ReactNode }) {
  * Returns null if outside provider or user not authenticated.
  */
 export function useDialerContext() {
-  return useContext(BrowserDialerContext);
+  const context = useContext(BrowserDialerContext);
+  if (!context) {
+    console.error("DIALER CONTEXT MISSING — OUTSIDE PROVIDER");
+  }
+  return context;
 }

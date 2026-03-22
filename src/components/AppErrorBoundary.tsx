@@ -24,7 +24,8 @@ export class AppErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     const componentStack = info.componentStack ?? "unknown";
-    console.error("[AppErrorBoundary] Render error caught:", error, componentStack);
+    console.error("FULL ERROR:", error);
+    console.error("STACK TRACE:", componentStack);
     try {
       logDialerEvent("ERROR_BOUNDARY_TRIGGERED", {
         message: error.message,
