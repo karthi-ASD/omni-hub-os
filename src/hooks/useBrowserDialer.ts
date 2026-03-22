@@ -1089,8 +1089,28 @@ function canPlaceCall(): { ready: boolean; reason: string } {
   if (["initializing", "registering"].includes(storeState.status)) return { ready: false, reason: `status_${storeState.status}` };
   if (recoveryInProgress) return { ready: false, reason: "recovery_in_progress" };
   if (loginInProgress) return { ready: false, reason: "login_in_progress" };
-  if (!storeState.audioReady) return { ready: false, reason: "audio_not_ready" };
+  // Audio gate — allow degraded mode. Only hard-block if not ready at all AND no degraded fallback
+  if (!storeState.audioReady) {
+    const ctx = getAudioContext();
+    if (canUseDegradedAudioMode(ctx)) {
+      // Force audioReady to true in degraded mode so we don't re-block
+      setStoreState((c) => ({ ...c, audioReady: true, audioStatus: "audio_ready_degraded" }));
+    } else {
+      return { ready: false, reason: "audio_not_ready" };
+    }
+  }
   return { ready: true, reason: "ok" };
+}
+
+// Post-call AI guard — prevents AI processing for calls that never connected
+function shouldRunPostCallAI(session: DialerSession | null, callAttempts: CallAttempt[]): { eligible: boolean; reason: string } {
+  if (!session) return { eligible: false, reason: "no_session" };
+  const latest = callAttempts[0];
+  if (!latest) return { eligible: false, reason: "no_call_attempt" };
+  if (latest.status === "connected" || latest.answeredAt) {
+    return { eligible: true, reason: "call_was_connected" };
+  }
+  return { eligible: false, reason: `call_status_${latest.status}` };
 }
 
 async function executeOutboundCall(intent: PendingDialIntent) {
