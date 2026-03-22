@@ -1320,7 +1320,7 @@ async function initializeVoiceClient() {
       return; // STOP initialization completely
     }
 
-    destroyPlivoClient();
+    destroyPlivoClient("new_client_creation");
     const generation = ++plivoClientGeneration;
     const instance = new window.Plivo({ debug: "INFO", permOnClick: true });
     plivoInstanceRef = instance;
