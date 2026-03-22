@@ -317,8 +317,9 @@ export function CallReadinessPanel({
           >
             {speakerTesting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Volume2 className="h-3.5 w-3.5" />}
             Test Speaker
-            {speakerResult === "success" && <CheckCircle className="h-3 w-3 text-emerald-500" />}
-            {speakerResult === "failed" && <XCircle className="h-3 w-3 text-destructive" />}
+            {(speakerResult === "success" || speakerResult === "fallback_success") && <CheckCircle className="h-3 w-3 text-emerald-500" />}
+            {(speakerResult === "failed" || speakerResult === "blocked") && <XCircle className="h-3 w-3 text-destructive" />}
+            {(speakerResult === "timeout" || speakerResult === "unsupported") && <CheckCircle className="h-3 w-3 text-amber-500" />}
           </Button>
 
           <Button
