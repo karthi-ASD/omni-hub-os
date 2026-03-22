@@ -213,6 +213,8 @@ function DialerPageContent() {
     await dialer.submitDisposition(disposition, notesInput);
     dialer.resetDialer();
     setNotesInput("");
+    sessionStorage.removeItem("dialer_notes_draft");
+    sessionStorage.removeItem("dialer_phone_draft");
   };
 
   const handleFollowUpSubmit = async () => {
