@@ -92,9 +92,14 @@ export function useCallTranscript({
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
-      log("TRANSCRIPT_STARTED");
+      log("TRANSCRIPT_STARTED", { recoveryAttempt: recoveryCountRef.current });
       setStatus("live");
-      recoveryCountRef.current = 0; // Reset on successful start
+      // Only reset recovery count after a sustained period of successful recognition
+      setTimeout(() => {
+        if (shouldRestartRef.current && recognitionRef.current) {
+          recoveryCountRef.current = Math.max(0, recoveryCountRef.current - 1);
+        }
+      }, 5000);
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
