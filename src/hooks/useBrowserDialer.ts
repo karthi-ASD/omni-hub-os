@@ -981,7 +981,7 @@ function destroyPlivoClient(reason = "unknown") {
 
 function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   const guard = () => isActivePlivoClient(instance, generation);
-  logDialer("LISTENERS_ATTACHED", { generation });
+  logDialer("LISTENERS_ATTACH_START", { generation });
 
   instance.client.on("onWebrtcNotSupported", () => {
     if (!guard()) return;
