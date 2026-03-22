@@ -101,8 +101,8 @@ function buildStaticTestXml(destination: string, callerId: string) {
   // Minimal Plivo XML — no webhooks, no recording, no extras
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Dial callerId="${callerId}">
-    <Number>${destination}</Number>
+  <Dial callerId="${escapeXmlAttr(callerId)}">
+    <Number>${escapeXmlText(destination)}</Number>
   </Dial>
 </Response>`;
 }
