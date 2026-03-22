@@ -806,6 +806,9 @@ async function executeOutboundCall(intent: PendingDialIntent) {
   try {
     await resumeAudioContext();
 
+    // Initialize audio output before call
+    await initializeAudioOutput();
+
     let resolvedPhone = intent.phoneNumber;
     if (intent.leadId) {
       const { data: lead } = await supabase.from("leads").select("phone").eq("id", intent.leadId).maybeSingle();
@@ -868,8 +871,15 @@ async function executeOutboundCall(intent: PendingDialIntent) {
     await setAgentAvailability("on_call");
 
     logDialer("CALL_DIAL_START", { destinationNumber: normalizedPhone, sessionId: sess.id });
-    logDialer("PLIVO_CALL_INVOKING_NOW", { destination: normalizedPhone });
 
+    // Stability delay — let WebRTC settle before invoking call
+    await new Promise((res) => setTimeout(res, 800));
+    logDialer("CALL_STABILITY_DELAY_DONE");
+
+    // Record call start timestamp for false-busy detection
+    callStartTimestamp = Date.now();
+
+    logDialer("PLIVO_CALL_INVOKING_NOW", { destination: normalizedPhone });
     plivoInstanceRef.client.call(normalizedPhone, { "X-PH-SessionId": sess.id });
 
     logDialer("PLIVO_CALL_INVOKED", { destinationNumber: normalizedPhone });
