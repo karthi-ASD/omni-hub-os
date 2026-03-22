@@ -862,16 +862,21 @@ async function initializeVoiceClient() {
     try {
       const sessionResult = await supabase.auth.getSession();
       const accessToken = sessionResult.data.session?.access_token;
+
+      if (!accessToken) {
+        throw new Error("No active session. Please log in first.");
+      }
+
       const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dialer-browser-token`;
 
-      logDialer("CALLING_TOKEN_FUNCTION", { url: functionUrl });
+      logDialer("CALLING_TOKEN_FUNCTION", { url: functionUrl, hasAccessToken: !!accessToken });
 
       const res = await fetch(functionUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          Authorization: `Bearer ${accessToken || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({}),
       });
