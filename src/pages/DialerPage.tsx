@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { useDialerContext } from "@/contexts/BrowserDialerContext";
 import type { BrowserDialerStatus } from "@/hooks/useBrowserDialer";
@@ -110,6 +110,8 @@ function DialerPageContent() {
     return sessionStorage.getItem("dialer_show_followup") === "true";
   });
   const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [logFilter, setLogFilter] = useState<"all" | "error" | "call" | "audio" | "ai" | "provider">("all");
+  const [pauseLogAutoscroll, setPauseLogAutoscroll] = useState(false);
   const [rightTab, setRightTab] = useState(() => {
     return sessionStorage.getItem("dialer_right_tab") || "transcript";
   });
@@ -123,6 +125,7 @@ function DialerPageContent() {
     return sessionStorage.getItem("dialer_wrapup_draft") || "";
   });
   const [audioUnlocking, setAudioUnlocking] = useState(false);
+  const logViewportRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const route = `${location.pathname}${location.search}`;
@@ -402,6 +405,46 @@ function DialerPageContent() {
     if (dialer.micPermission !== "granted") return "Microphone access required";
     return null;
   };
+
+  const filteredLogs = useMemo(() => {
+    if (logFilter === "all") return dialer.debugLogs;
+    if (logFilter === "error") {
+      return dialer.debugLogs.filter((log) => log.category === "error" || log.event.includes("FAIL") || log.event.includes("ERROR") || log.event.includes("DENIED"));
+    }
+    return dialer.debugLogs.filter((log) => log.category === logFilter);
+  }, [dialer.debugLogs, logFilter]);
+
+  useEffect(() => {
+    if (pauseLogAutoscroll) return;
+    const viewport = logViewportRef.current;
+    if (!viewport) return;
+    viewport.scrollTop = viewport.scrollHeight;
+  }, [filteredLogs, pauseLogAutoscroll]);
+
+  const copyLogs = async () => {
+    const text = filteredLogs.map((l) => `[${l.timestamp}] ${l.event} status=${l.status} session=${l.sessionId ?? "-"} call=${l.callId ?? "-"} destination=${l.destination ?? "-"} ${l.payloadPreview ?? ""}`).join("\n");
+    await navigator.clipboard.writeText(text);
+    toast.success("Logs copied");
+  };
+
+  const downloadLogsJson = () => {
+    const blob = new Blob([JSON.stringify(filteredLogs, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `dialer-logs-${new Date().toISOString()}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const logFilters: Array<{ key: typeof logFilter; label: string }> = [
+    { key: "all", label: "All" },
+    { key: "error", label: "Errors only" },
+    { key: "call", label: "Call lifecycle" },
+    { key: "audio", label: "Audio" },
+    { key: "ai", label: "AI/post-call" },
+    { key: "provider", label: "Provider/Plivo" },
+  ];
 
   return (
     <div className="p-4 md:p-6 space-y-4 max-w-[1600px] mx-auto">
@@ -840,28 +883,54 @@ function DialerPageContent() {
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs font-medium text-muted-foreground">Live Logs ({dialer.debugLogs.length})</p>
-                  <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={() => {
-                    const text = dialer.debugLogs.map((l) => `[${l.timestamp.split("T")[1]?.slice(0, 12)}] ${l.event} ${l.data ? JSON.stringify(l.data) : ""}`).join("\n");
-                    navigator.clipboard.writeText(text);
-                    toast.success("Logs copied");
-                  }}>
-                    <Copy className="h-3 w-3 mr-1" /> Copy
-                  </Button>
+                  <p className="text-xs font-medium text-muted-foreground">Live Logs ({filteredLogs.length}/{dialer.debugLogs.length}, max 1000)</p>
+                  <div className="flex items-center gap-1 flex-wrap justify-end">
+                    <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={() => setPauseLogAutoscroll((current) => !current)}>
+                      {pauseLogAutoscroll ? "Resume Scroll" : "Pause Scroll"}
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={copyLogs}>
+                      <Copy className="h-3 w-3 mr-1" /> Copy Logs
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={downloadLogsJson}>
+                      <Download className="h-3 w-3 mr-1" /> Download Logs JSON
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2" onClick={() => { dialer.clearDebugLogs(); toast.success("Logs cleared"); }}>
+                      Clear Logs
+                    </Button>
+                  </div>
                 </div>
-                <div className="bg-muted/50 rounded-md border p-2 max-h-[250px] overflow-y-auto font-mono text-[10px] leading-4 space-y-0.5">
-                  {dialer.debugLogs.length === 0 ? (
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {logFilters.map((filter) => (
+                    <Button
+                      key={filter.key}
+                      variant={logFilter === filter.key ? "default" : "outline"}
+                      size="sm"
+                      className="h-6 text-[10px] px-2"
+                      onClick={() => setLogFilter(filter.key)}
+                    >
+                      {filter.label}
+                    </Button>
+                  ))}
+                </div>
+                <div ref={logViewportRef} className="bg-muted/50 rounded-md border p-2 max-h-[360px] overflow-y-auto font-mono text-[10px] leading-4 space-y-1">
+                  {filteredLogs.length === 0 ? (
                     <p className="text-muted-foreground text-center py-4">No logs yet</p>
                   ) : (
-                    dialer.debugLogs.map((log, i) => {
-                      const time = log.timestamp.split("T")[1]?.slice(0, 12) || log.timestamp;
-                      const isError = log.event.includes("FAIL") || log.event.includes("ERROR") || log.event.includes("DENIED");
+                    filteredLogs.map((log) => {
+                      const time = log.timestamp.split("T")[1]?.replace("Z", "") || log.timestamp;
+                      const isError = log.category === "error" || log.event.includes("FAIL") || log.event.includes("ERROR") || log.event.includes("DENIED");
                       const isSuccess = log.event.includes("SUCCESS") || log.event.includes("GRANTED") || log.event.includes("REGISTERED") || log.event.includes("CONNECTED");
                       return (
-                        <div key={i} className={`flex gap-1 ${isError ? "text-destructive" : isSuccess ? "text-emerald-600" : "text-foreground/80"}`}>
-                          <span className="text-muted-foreground shrink-0">{time}</span>
-                          <span className="font-semibold shrink-0">{log.event}</span>
-                          {log.data && <span className="text-muted-foreground truncate">{JSON.stringify(log.data)}</span>}
+                        <div key={log.id} className={`rounded border border-border/60 px-2 py-1 ${isError ? "text-destructive" : isSuccess ? "text-emerald-600" : "text-foreground/80"}`}>
+                          <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+                            <span className="text-muted-foreground shrink-0">{time}</span>
+                            <span className="font-semibold shrink-0">{log.event}</span>
+                            <span className="text-muted-foreground">status={log.status}</span>
+                            <span className="text-muted-foreground">session={log.sessionId ?? "-"}</span>
+                            <span className="text-muted-foreground">call={log.callId ?? "-"}</span>
+                            <span className="text-muted-foreground">dest={log.destination ?? "-"}</span>
+                          </div>
+                          {log.payloadPreview && <div className="text-muted-foreground break-all">{log.payloadPreview}</div>}
                         </div>
                       );
                     })

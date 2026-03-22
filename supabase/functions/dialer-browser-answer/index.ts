@@ -115,13 +115,27 @@ Deno.serve(async (req) => {
 
     // Update session in DB if we have a session ID
     if (sessionId) {
+      const { data: session } = await supabase
+        .from("dialer_sessions")
+        .select("provider_call_id, call_status")
+        .eq("id", sessionId)
+        .maybeSingle();
+
+      const updates: Record<string, unknown> = {
+        call_mode: "browser",
+      };
+
+      if (!session?.provider_call_id) {
+        updates.provider_call_id = callUuid;
+      }
+
+      if (!session?.call_status || session.call_status === "initiating") {
+        updates.call_status = "dialing";
+      }
+
       supabase
         .from("dialer_sessions")
-        .update({
-          provider_call_id: callUuid,
-          call_status: "ringing",
-          call_mode: "browser",
-        } as never)
+        .update(updates as never)
         .eq("id", sessionId)
         .then(() => {}, () => {});
 
@@ -129,8 +143,15 @@ Deno.serve(async (req) => {
         .from("dialer_call_events")
         .insert({
           session_id: sessionId,
-          event_type: "browser_call_answered",
-          metadata: { call_uuid: callUuid, destination, caller_id: callerId, direction },
+          event_type: session?.provider_call_id && session.provider_call_id !== callUuid ? "browser_answer_reinvoked" : "browser_answer_xml_served",
+          metadata: {
+            call_uuid: callUuid,
+            destination,
+            caller_id: callerId,
+            direction,
+            previous_provider_call_id: session?.provider_call_id || null,
+            repeated_attempt: !!session?.provider_call_id && session.provider_call_id !== callUuid,
+          },
         } as never)
         .then(() => {}, () => {});
     }
