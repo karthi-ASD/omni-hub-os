@@ -1632,36 +1632,62 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
     const reason = (cause || "Unknown").trim();
     const reasonLower = reason.toLowerCase();
     const elapsed = callStartTimestamp > 0 ? Date.now() - callStartTimestamp : Infinity;
+    const hadRinging = storeState.status === "ringing" || storeState.latestProviderStatus === "ringing";
+    const hadAnswerXml = storeState.session?.provider_call_id != null;
 
-    // Map provider reasons to specific log events and user-friendly messages
+    // ── CLASSIFIED FAILURE ANALYSIS ──
+    let classifiedCause: string;
     let userMessage: string;
     let dbStatus: string = "failed";
     let logEvent: string = "CALL_FAILED";
 
     if (reasonLower.includes("busy")) {
-      userMessage = "The number is currently busy. Please try again later.";
+      if (!hadRinging && elapsed < 5000) {
+        // BUSY before ringing within 5s = likely provider/caller-ID/routing issue, NOT real user busy
+        classifiedCause = "provider_rejected_before_ringing";
+        userMessage = "Call failed before ringing. Possible caller ID or provider routing issue. Check Plivo number verification.";
+        logEvent = "CALL_FAILED_BUSY";
+      } else {
+        classifiedCause = "real_carrier_busy";
+        userMessage = "The number is currently busy. Please try again later.";
+        logEvent = "CALL_FAILED_BUSY";
+      }
       dbStatus = "busy";
-      logEvent = "CALL_FAILED_BUSY";
     } else if (reasonLower.includes("no answer") || reasonLower.includes("noanswer")) {
+      classifiedCause = "no_answer";
       userMessage = "The call was not answered.";
       dbStatus = "no-answer";
       logEvent = "CALL_FAILED_NO_ANSWER";
     } else if (reasonLower.includes("reject")) {
+      classifiedCause = "rejected_by_recipient";
       userMessage = "The call was rejected by the recipient.";
       dbStatus = "failed";
       logEvent = "CALL_FAILED_REJECTED";
     } else if (reasonLower.includes("cancel")) {
+      classifiedCause = "cancelled";
       userMessage = "The call was cancelled.";
       dbStatus = "ended";
       logEvent = "CALL_FAILED_CANCELLED";
     } else {
+      classifiedCause = "unknown_failure";
       userMessage = `Call could not be completed: ${reason}`;
       logEvent = "CALL_FAILED";
     }
 
-    logDialer(logEvent, { reason, destination: storeState.destinationNumber, dbStatus, elapsed });
+    logDialer(logEvent, { reason, destination: storeState.destinationNumber, dbStatus, elapsed, classifiedCause });
     logDialer("PROVIDER_FAILURE_RAW", { cause, elapsed });
-    logDialer(reasonLower.includes("reject") ? "PROVIDER_REJECTED_EVENT" : reasonLower.includes("cancel") ? "PROVIDER_CANCEL_EVENT" : "PROVIDER_FAILED_EVENT", {
+    logDialer("PROVIDER_FAILURE_CLASSIFIED", {
+      rawCause: reason,
+      classifiedCause,
+      callUuid: storeState.session?.provider_call_id ?? null,
+      sessionId: storeState.session?.id ?? null,
+      timeSinceCallStartMs: elapsed,
+      ringingEverObserved: hadRinging,
+      answerXmlServed: hadAnswerXml,
+      callerIdRegion: storeState.selectedCallerId ?? "unknown",
+      destination: storeState.destinationNumber ?? null,
+    });
+    logDialer("PROVIDER_FAILURE_DETAILS", {
       prevState: storeState.status,
       nextState: "failed",
       providerStatus: reason,
@@ -1684,19 +1710,25 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
       loading: false,
       dialLock: false,
     }));
-    updateCurrentAttempt({ status: dbStatus, failureReason: reason, endedAt: new Date().toISOString() });
-    endTestAttempt("failed", { sessionId: storeState.session?.id ?? null, reason, dbStatus });
+    updateCurrentAttempt({ status: dbStatus, failureReason: `${classifiedCause}: ${reason}`, endedAt: new Date().toISOString() });
+    endTestAttempt("failed", { sessionId: storeState.session?.id ?? null, reason, dbStatus, classifiedCause });
 
     // Update DB session with correct terminal status
     if (storeState.session?.id) {
-      supabase.from("dialer_sessions").update({ call_status: dbStatus, call_end_time: new Date().toISOString() }).eq("id", storeState.session.id).then(() => {});
-      insertCallEvent(storeState.session.id, logEvent, { reason, dbStatus, elapsed }).catch(() => {});
+      supabase.from("dialer_sessions").update({ call_status: dbStatus, call_end_time: new Date().toISOString() } as never).eq("id", storeState.session.id).then(() => {});
+      insertCallEvent(storeState.session.id, logEvent, { reason, dbStatus, elapsed, classifiedCause }).catch(() => {});
     }
 
     void setAgentAvailability("available");
     callStartTimestamp = 0;
 
-    // Stay failed until explicit user retry/reset; no automatic retry/reset while provider flow is being stabilized
+    // Auto-reset to device_ready after 5s so agent can try again
+    setTimeout(() => {
+      setStoreState((c) => {
+        if (c.status !== "failed") return c;
+        return { ...c, status: c.registered ? "device_ready" : "idle", lastError: null, session: null };
+      });
+    }, 5000);
   });
 
   // Extra raw events for diagnostics

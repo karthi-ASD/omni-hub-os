@@ -45,6 +45,15 @@ function buildXml(destination: string, callerId: string, sessionId: string) {
   const recordingCallbackUrl = `${supabaseUrl}/functions/v1/dialer-webhook?leg=recording&session_id=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(webhookSecret)}`;
   const hangupUrl = `${supabaseUrl}/functions/v1/dialer-webhook?leg=customer&session_id=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(webhookSecret)}`;
 
+  // SELF-CALL DETECTION: If caller ID equals destination, Plivo will return BUSY instantly
+  if (callerId === destination) {
+    console.warn("SELF_CALL_DETECTED", { callerId, destination, sessionId, warning: "Caller ID equals destination — carrier will likely return BUSY" });
+  }
+
+  // Log exact XML inputs for debugging
+  console.log("XML_DIAL_CALLER_ID", { callerId, callerIdLength: callerId.length });
+  console.log("XML_DIAL_DESTINATION", { destination, destinationLength: destination.length });
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Dial callerId="${callerId}" answerOnBridge="true" record="true" recordingCallbackUrl="${recordingCallbackUrl}" recordingCallbackMethod="POST" action="${hangupUrl}" method="POST">
