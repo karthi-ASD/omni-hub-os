@@ -199,8 +199,8 @@ const INITIAL_STATE: BrowserDialerStoreState = {
   audioReady: false,
 };
 
-const BUILD_VERSION = "stability-v16";
-const DEPLOYED_AT = "2026-03-22T21:00:00Z";
+const BUILD_VERSION = "stability-v17";
+const DEPLOYED_AT = "2026-03-22T22:00:00Z";
 type DialerIdentity = { businessId: string; userId: string } | null;
 
 // ─── Global singletons ──────────────────────────────────────────────
@@ -228,6 +228,7 @@ let activeHookConsumers = 0;
 let consumerCleanupTimer: number | null = null;
 let currentAccessToken: string | null = null;
 let callStartTimestamp: number = 0;
+let listenerAttachCount = 0;
 
 // ─── Connection health monitor ──────────────────────────────────────
 let lastConnectedAt = Date.now();
@@ -996,7 +997,8 @@ function destroyPlivoClient(reason = "unknown") {
 
 function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   const guard = () => isActivePlivoClient(instance, generation);
-  logDialer("LISTENERS_ATTACH_START", { generation });
+  listenerAttachCount++;
+  logDialer("LISTENERS_ATTACH_START", { generation, totalAttachCount: listenerAttachCount });
 
   instance.client.on("onWebrtcNotSupported", () => {
     if (!guard()) return;
@@ -1243,7 +1245,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
       } catch {}
     }
   } catch {}
-  logDialer("LISTENERS_ATTACH_DONE", { generation });
+  logDialer("LISTENERS_ATTACH_DONE", { generation, totalAttachCount: listenerAttachCount });
 }
 
 // ─── Connection health monitor ──────────────────────────────────────

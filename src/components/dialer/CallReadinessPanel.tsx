@@ -41,12 +41,12 @@ export function CallReadinessPanel({
   onTestToken,
   onTestXml,
 }: CallReadinessPanelProps) {
-  console.log("TEST_PANEL_RENDERED");
+  // Component rendered
   const [micTesting, setMicTesting] = useState(false);
   const [micResult, setMicResult] = useState<"idle" | "success" | "failed">("idle");
   const [micMessage, setMicMessage] = useState<string | null>(null);
   const [speakerTesting, setSpeakerTesting] = useState(false);
-  const [speakerResult, setSpeakerResult] = useState<"idle" | "success" | "fallback_success" | "blocked" | "unsupported" | "failed" | "timeout">("idle");
+  const [speakerResult, setSpeakerResult] = useState<"idle" | "success" | "fallback_success" | "blocked" | "failed" | "timeout">("idle");
   const [speakerMessage, setSpeakerMessage] = useState<string | null>(null);
   const [tokenTesting, setTokenTesting] = useState(false);
   const [tokenMessage, setTokenMessage] = useState<string | null>(null);
@@ -319,7 +319,7 @@ export function CallReadinessPanel({
             Test Speaker
             {(speakerResult === "success" || speakerResult === "fallback_success") && <CheckCircle className="h-3 w-3 text-emerald-500" />}
             {(speakerResult === "failed" || speakerResult === "blocked") && <XCircle className="h-3 w-3 text-destructive" />}
-            {(speakerResult === "timeout" || speakerResult === "unsupported") && <CheckCircle className="h-3 w-3 text-amber-500" />}
+            {speakerResult === "timeout" && <CheckCircle className="h-3 w-3 text-amber-500" />}
           </Button>
 
           <Button

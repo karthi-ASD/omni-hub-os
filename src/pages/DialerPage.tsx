@@ -101,10 +101,17 @@ function DialerPageContent() {
       return saved ? JSON.parse(saved) : null;
     } catch { return null; }
   });
-  const [followUpDate, setFollowUpDate] = useState<Date | undefined>();
-  const [showFollowUp, setShowFollowUp] = useState(false);
+  const [followUpDate, setFollowUpDate] = useState<Date | undefined>(() => {
+    const saved = sessionStorage.getItem("dialer_followup_draft");
+    return saved ? new Date(saved) : undefined;
+  });
+  const [showFollowUp, setShowFollowUp] = useState(() => {
+    return sessionStorage.getItem("dialer_show_followup") === "true";
+  });
   const [showDiagnostics, setShowDiagnostics] = useState(false);
-  const [rightTab, setRightTab] = useState("transcript");
+  const [rightTab, setRightTab] = useState(() => {
+    return sessionStorage.getItem("dialer_right_tab") || "transcript";
+  });
 
   // Persist drafts to sessionStorage (survives route changes)
   useEffect(() => {
@@ -118,6 +125,19 @@ function DialerPageContent() {
       sessionStorage.setItem("dialer_lead_context", JSON.stringify(leadContext));
     }
   }, [leadContext]);
+  useEffect(() => {
+    if (followUpDate) {
+      sessionStorage.setItem("dialer_followup_draft", followUpDate.toISOString());
+    } else {
+      sessionStorage.removeItem("dialer_followup_draft");
+    }
+  }, [followUpDate]);
+  useEffect(() => {
+    sessionStorage.setItem("dialer_show_followup", String(showFollowUp));
+  }, [showFollowUp]);
+  useEffect(() => {
+    sessionStorage.setItem("dialer_right_tab", rightTab);
+  }, [rightTab]);
 
   // Live transcript — safe when dialer is null
   const noopLog = useRef((_e: string, _d?: Record<string, unknown>) => {}).current;
@@ -226,6 +246,8 @@ function DialerPageContent() {
     setNotesInput("");
     sessionStorage.removeItem("dialer_notes_draft");
     sessionStorage.removeItem("dialer_phone_draft");
+    sessionStorage.removeItem("dialer_followup_draft");
+    sessionStorage.removeItem("dialer_show_followup");
   };
 
   const handleFollowUpSubmit = async () => {
@@ -234,6 +256,8 @@ function DialerPageContent() {
     setNotesInput("");
     sessionStorage.removeItem("dialer_notes_draft");
     sessionStorage.removeItem("dialer_phone_draft");
+    sessionStorage.removeItem("dialer_followup_draft");
+    sessionStorage.removeItem("dialer_show_followup");
     setFollowUpDate(undefined);
     setShowFollowUp(false);
   };
