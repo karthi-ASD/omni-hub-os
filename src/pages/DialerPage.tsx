@@ -276,8 +276,21 @@ function DialerPageContent() {
         </div>
       </div>
 
+      {/* Auth required warning */}
+      {dialer.callStatus === "auth_required" && (
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="py-3 flex items-center gap-3">
+            <ShieldAlert className="h-5 w-5 text-destructive shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-destructive">🔒 Please log in to use calling features</p>
+              <p className="text-xs text-muted-foreground">The dialer requires an active user session. Please sign in and refresh this page.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Mic permission warning */}
-      {dialer.micPermission === "denied" && (
+      {dialer.micPermission === "denied" && dialer.callStatus !== "auth_required" && (
         <Card className="border-destructive/50 bg-destructive/5">
           <CardContent className="py-3 flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
