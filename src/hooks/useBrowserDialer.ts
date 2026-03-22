@@ -830,6 +830,11 @@ function isActivePlivoClient(instance: PlivoBrowserSDK, gen: number) {
 
 function destroyPlivoClient() {
   if (!plivoInstanceRef?.client) return;
+  // ── CRITICAL: Block destruction during active calls ──
+  if (isInActiveCall()) {
+    logDialer("CLIENT_DESTROY_BLOCKED_ACTIVE_CALL", { status: storeState.status });
+    return;
+  }
   logDialer("LISTENERS_DETACHED");
   try { plivoInstanceRef.client.hangup(); } catch {}
   try { plivoInstanceRef.client.logout(); } catch {}
