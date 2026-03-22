@@ -300,17 +300,21 @@ Deno.serve(async (req) => {
     }
 
     if (updates.call_status && TERMINAL_STATES.includes(updates.call_status)) {
-      await supabase.from("system_events").insert({
-        business_id: session.business_id,
-        event_type: `DIALER_CALL_${updates.call_status.toUpperCase().replace("-", "_")}`,
-        payload_json: {
-          session_id: session.id,
-          phone_number: session.phone_number,
-          duration: updates.call_duration || p.duration,
-          status: updates.call_status,
-          hangup_cause: p.hangup_cause,
-        },
-      }).catch(() => {});
+      try {
+        await supabase.from("system_events").insert({
+          business_id: session.business_id,
+          event_type: `DIALER_CALL_${updates.call_status.toUpperCase().replace("-", "_")}`,
+          payload_json: {
+            session_id: session.id,
+            phone_number: session.phone_number,
+            duration: updates.call_duration || p.duration,
+            status: updates.call_status,
+            hangup_cause: p.hangup_cause,
+          },
+        });
+      } catch {
+        // ignore system event logging failure
+      }
     }
 
     console.log("[dialer-webhook] Done", {
