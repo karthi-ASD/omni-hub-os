@@ -65,19 +65,45 @@ export function CallReadinessPanel({
     setMicTesting(true);
     setMicResult("idle");
     setMicMessage(null);
+    logEvent("TEST_MIC_START");
     logEvent("MIC_TEST_START");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const track = stream.getAudioTracks()[0];
+      const AudioCtor = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx = AudioCtor ? new AudioCtor() : null;
+      const source = ctx ? ctx.createMediaStreamSource(stream) : null;
+      const analyser = ctx ? ctx.createAnalyser() : null;
+      if (source && analyser) {
+        analyser.fftSize = 512;
+        source.connect(analyser);
+      }
+      const buffer = analyser ? new Uint8Array(analyser.fftSize) : null;
+      const startedAt = Date.now();
+      let detectedLevel = 0;
+      while (Date.now() - startedAt < 1200 && analyser && buffer) {
+        analyser.getByteTimeDomainData(buffer);
+        const rms = Math.sqrt(buffer.reduce((sum, v) => {
+          const normalized = (v - 128) / 128;
+          return sum + normalized * normalized;
+        }, 0) / buffer.length);
+        detectedLevel = Math.max(detectedLevel, rms);
+        await new Promise((resolve) => setTimeout(resolve, 80));
+      }
+      if (source) source.disconnect();
+      if (ctx) await ctx.close().catch(() => {});
       logEvent("MIC_PERMISSION_STATUS", { permission: "granted" });
-      logEvent("MIC_STREAM_SUCCESS", { streamObtained: true });
+      logEvent("MIC_STREAM_SUCCESS", { streamObtained: true, detectedLevel });
       logEvent("MIC_TRACK_DETAILS", { label: track?.label || "Unknown", enabled: track?.enabled ?? false });
       stream.getTracks().forEach((t) => t.stop());
+      const micDetected = detectedLevel > 0.01;
+      logEvent(micDetected ? "TEST_MIC_SUCCESS" : "TEST_MIC_FAIL", { detectedLevel });
       logEvent("MIC_TEST_SUCCESS");
       setMicResult("success");
-      setMicMessage(track ? `${track.label || "Microphone detected"} • enabled=${String(track.enabled)}` : "Microphone ready");
+      setMicMessage(track ? `${track.label || "Microphone detected"} • signal=${micDetected ? "detected" : "low"}` : "Microphone ready");
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
+      logEvent("TEST_MIC_FAIL", { error: msg });
       logEvent("MIC_PERMISSION_STATUS", { permission: "blocked" });
       logEvent("MIC_STREAM_FAILED", { error: msg });
       logEvent("MIC_TEST_FAILED", { error: msg });
@@ -111,39 +137,39 @@ export function CallReadinessPanel({
     setSpeakerTesting(true);
     setSpeakerResult("idle");
     setSpeakerMessage(null);
+    logEvent("TEST_SPEAKER_START");
     logEvent("SPEAKER_TEST_START");
 
-    const TIMEOUT_MS = 4000;
-    let sinkIdWorked = true;
+    const TIMEOUT_MS = 2500;
 
     try {
-      const result = await Promise.race<"success" | "fallback" | "blocked" | "timeout">([
+      const result = await Promise.race<"success" | "blocked" | "timeout">([
         (async () => {
-          const audio = new Audio();
-          audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
-          audio.volume = 0.5;
-
-          if (typeof (audio as any).setSinkId === "function") {
-            try {
-              const devices = await navigator.mediaDevices.enumerateDevices();
-              const speaker = devices.find((d: MediaDeviceInfo) => d.kind === "audiooutput");
-              if (speaker?.deviceId) {
-                await (audio as any).setSinkId(speaker.deviceId);
-              }
-            } catch {
-              sinkIdWorked = false;
-              logEvent("SPEAKER_SINKID_UNSUPPORTED");
-            }
-          } else {
-            sinkIdWorked = false;
-          }
-
-          logEvent("SPEAKER_TEST_PLAYING");
+          const AudioCtor = window.AudioContext || (window as any).webkitAudioContext;
+          if (!AudioCtor) return "blocked" as const;
+          const ctx = new AudioCtor();
           try {
-            await audio.play();
+            if (ctx.state !== "running") await ctx.resume();
+            const gain = ctx.createGain();
+            gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.05, ctx.currentTime + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.0);
+            gain.connect(ctx.destination);
+            const osc = ctx.createOscillator();
+            osc.type = "sine";
+            osc.frequency.value = 880;
+            osc.connect(gain);
+            logEvent("SPEAKER_TEST_PLAYING");
+            osc.start();
+            osc.stop(ctx.currentTime + 1.0);
+            await new Promise((resolve) => setTimeout(resolve, 1150));
+            gain.disconnect();
+            await ctx.close().catch(() => {});
             logEvent("SPEAKER_TEST_PLAYED");
-            return sinkIdWorked ? ("success" as const) : ("fallback" as const);
+            logEvent("TEST_SPEAKER_STOP");
+            return "success" as const;
           } catch (playErr) {
+            await ctx.close().catch(() => {});
             logEvent("SPEAKER_TEST_PLAY_BLOCKED", { error: playErr instanceof Error ? playErr.message : String(playErr) });
             return "blocked" as const;
           }
@@ -154,23 +180,23 @@ export function CallReadinessPanel({
       switch (result) {
         case "success":
           logEvent("SPEAKER_TEST_COMPLETED_SUCCESS");
+          logEvent("TEST_SPEAKER_SUCCESS");
           setSpeakerUiState("success", "Speaker working — playback successful", "Confirmed playback");
-          break;
-        case "fallback":
-          logEvent("SPEAKER_TEST_COMPLETED_FALLBACK");
-          setSpeakerUiState("fallback_success", "Speaker working (default output — sink routing unsupported)", "Fallback output used");
           break;
         case "blocked":
           logEvent("SPEAKER_TEST_COMPLETED_BLOCKED");
+          logEvent("TEST_SPEAKER_FAIL", { reason: "blocked" });
           setSpeakerUiState("blocked", "Browser blocked playback. Click anywhere and retry.", "Playback blocked");
           break;
         case "timeout":
           logEvent("SPEAKER_TEST_COMPLETED_TIMEOUT");
+          logEvent("TEST_SPEAKER_FAIL", { reason: "timeout" });
           setSpeakerUiState("timeout", "Could not confirm audio playback. Please click once and retry.", "Retry needed");
           break;
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
+      logEvent("TEST_SPEAKER_FAIL", { error: msg });
       logEvent("SPEAKER_TEST_COMPLETED_FAILED", { error: msg });
       setSpeakerUiState("failed", `Speaker test failed: ${msg}`, "Playback failed");
     } finally {
@@ -244,6 +270,7 @@ export function CallReadinessPanel({
     const testNumber = "+919902328888";
     logEvent("TEST_CALL_TRIGGERED");
     logEvent("TEST_CALL_START", { number: testNumber });
+    logEvent("TEST_CALL_REQUEST_SENT", { number: testNumber });
     await startCall(testNumber);
   };
 

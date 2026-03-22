@@ -205,10 +205,27 @@ Deno.serve(async (req) => {
 
     const finalStatus = updates.call_status || session.call_status;
 
-    // Trigger AI analysis on terminal ended state
+    // Trigger AI analysis on terminal ended state only for genuinely connected calls
     if (updates.call_status === "ended") {
       const duration = updates.call_duration || p.duration || 0;
-      if (duration >= 3) {
+      const hadConnectedState = !!session.customer_connected || !!session.call_start_time;
+      const shouldProcessAI = hadConnectedState && duration >= 3;
+
+      await supabase.from("dialer_call_events").insert({
+        session_id: session.id,
+        event_type: "postcall_pipeline_guard_result",
+        metadata: {
+          hadSession: true,
+          hadConnectedState,
+          connectedDurationMs: duration * 1000,
+          hadTranscript: false,
+          hadRecording: !!(updates.recording_url || session.recording_url),
+          endReason: p.hangup_cause || p.call_status || updates.call_status,
+          shouldProcessAI,
+        },
+      }).catch(() => {});
+
+      if (shouldProcessAI) {
         fetch(`${supabaseUrl}/functions/v1/dialer-ai-analyze`, {
           method: "POST",
           headers: {
@@ -221,7 +238,7 @@ Deno.serve(async (req) => {
         await supabase.from("dialer_call_events").insert({
           session_id: session.id,
           event_type: "early_disconnect",
-          metadata: { duration, reason: "call_ended_within_3s" },
+          metadata: { duration, reason: hadConnectedState ? "call_ended_within_3s" : "call_never_connected" },
         }).catch(() => {});
       }
     }

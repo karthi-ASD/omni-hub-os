@@ -49,8 +49,15 @@ export type BrowserDialerStatus =
   | "auth_required";
 
 export interface DialerLogEntry {
+  id: number;
   timestamp: string;
   event: string;
+  status: BrowserDialerStatus;
+  category: "all" | "error" | "call" | "audio" | "ai" | "provider";
+  sessionId: string | null;
+  callId: string | null;
+  destination: string | null;
+  payloadPreview: string | null;
   data?: Record<string, unknown>;
 }
 
@@ -206,7 +213,7 @@ const INITIAL_STATE: BrowserDialerStoreState = {
   audioStatus: "audio_not_initialized",
 };
 
-const BUILD_VERSION = "stability-v20";
+const BUILD_VERSION = "stability-v21";
 const DEPLOYED_AT = "2026-03-22T10:50:00Z";
 type DialerIdentity = { businessId: string; userId: string } | null;
 
@@ -252,10 +259,41 @@ const MAX_REGISTRATION_RETRIES = 3;
 let lastLoginCredentials: { username: string; password: string } | null = null;
 
 // ─── Log ring buffer ────────────────────────────────────────────────
-const MAX_LOG_ENTRIES = 50;
+const MAX_LOG_ENTRIES = 1000;
 const logBuffer: DialerLogEntry[] = [];
 const logListeners = new Set<() => void>();
 let logSnapshot = [...logBuffer];
+let logSequence = 0;
+let testAttemptCounter = 0;
+let activeTestAttemptNumber: number | null = null;
+let activeProviderInvocation: { sessionId: string; destination: string; startedAt: number } | null = null;
+
+function deriveLogCategory(event: string, data?: Record<string, unknown>): DialerLogEntry["category"] {
+  const combined = `${event} ${JSON.stringify(data || {})}`.toLowerCase();
+  if (["error", "fail", "denied", "timeout", "blocked", "rejected"].some((token) => combined.includes(token))) return "error";
+  if (["audio", "mic", "speaker", "tone", "ringtone", "media"].some((token) => combined.includes(token))) return "audio";
+  if (["plivo", "provider", "connection", "register", "login"].some((token) => combined.includes(token))) return "provider";
+  if (["postcall", "transcript", "coach", "summary", "ai_", "ai"].some((token) => combined.includes(token))) return "ai";
+  if (["call", "dial", "session", "ringing", "connected", "hangup"].some((token) => combined.includes(token))) return "call";
+  return "all";
+}
+
+function extractLogContext(data?: Record<string, unknown>) {
+  const sessionId = (data?.sessionId ?? data?.session_id ?? storeState.session?.id ?? null) as string | null;
+  const callId = (data?.callId ?? data?.call_id ?? data?.providerCallId ?? data?.provider_call_id ?? data?.call_uuid ?? storeState.session?.provider_call_id ?? null) as string | null;
+  const destination = (data?.destination ?? data?.destinationNumber ?? data?.phoneNumber ?? data?.rawPhoneNumber ?? storeState.destinationNumber ?? storeState.pendingDialIntent?.phoneNumber ?? null) as string | null;
+  return { sessionId, callId, destination };
+}
+
+function buildPayloadPreview(data?: Record<string, unknown>) {
+  if (!data) return null;
+  try {
+    const raw = JSON.stringify(data);
+    return raw.length > 220 ? `${raw.slice(0, 217)}…` : raw;
+  } catch {
+    return null;
+  }
+}
 
 function emitLogChange() {
   logSnapshot = [...logBuffer];
@@ -271,8 +309,22 @@ function getLogSnapshot() {
 
 function logDialer(event: string, data?: Record<string, unknown>) {
   const timestamp = new Date().toISOString();
+  const { sessionId, callId, destination } = extractLogContext(data);
+  const category = deriveLogCategory(event, data);
+  const payloadPreview = buildPayloadPreview(data);
   console.log(`[DIALER][${timestamp}] ${event}`, data || "");
-  logBuffer.push({ timestamp, event, data });
+  logBuffer.push({
+    id: ++logSequence,
+    timestamp,
+    event,
+    status: storeState.status,
+    category,
+    sessionId,
+    callId,
+    destination,
+    payloadPreview,
+    data,
+  });
   if (logBuffer.length > MAX_LOG_ENTRIES) logBuffer.shift();
   emitLogChange();
   setStoreState((c) => ({
@@ -285,6 +337,24 @@ function logDialer(event: string, data?: Record<string, unknown>) {
 
 export function logDialerEvent(event: string, data?: Record<string, unknown>) {
   logDialer(event, data);
+}
+
+function clearDialerLogs() {
+  logBuffer.splice(0, logBuffer.length);
+  emitLogChange();
+}
+
+function startTestAttempt(destination: string) {
+  activeTestAttemptNumber = ++testAttemptCounter;
+  logDialer("TEST_ATTEMPT_STARTED", { attemptNumber: activeTestAttemptNumber, destination });
+  logDialer("TEST_ATTEMPT_NUMBER", { attemptNumber: activeTestAttemptNumber, destination });
+}
+
+function endTestAttempt(result: "success" | "failed" | "ended", details?: Record<string, unknown>) {
+  if (activeTestAttemptNumber == null) return;
+  logDialer("TEST_ATTEMPT_ENDED", { attemptNumber: activeTestAttemptNumber, result, ...details });
+  activeTestAttemptNumber = null;
+  activeProviderInvocation = null;
 }
 
 function persistPendingDial(intent: PendingDialIntent | null) {
@@ -735,34 +805,23 @@ function canUseDegradedAudioMode(ctx: AudioContext | null) {
 
 // ─── Ringback ───────────────────────────────────────────────────────
 async function playRingback() {
-  try {
-    logDialer("RINGTONE_PLAY_ATTEMPT");
-    if (ringbackRef) return;
-    const ctx = await resumeAudioContext();
-    if (!ctx) return;
-    const gain = ctx.createGain();
-    gain.gain.value = 0;
-    gain.connect(ctx.destination);
-    const osc1 = ctx.createOscillator(); osc1.frequency.value = 440; osc1.type = "sine"; osc1.connect(gain); osc1.start();
-    const osc2 = ctx.createOscillator(); osc2.frequency.value = 480; osc2.type = "sine"; osc2.connect(gain); osc2.start();
-    let time = ctx.currentTime;
-    for (let i = 0; i < 20; i++) { gain.gain.setValueAtTime(0.04, time); time += 2; gain.gain.setValueAtTime(0, time); time += 4; }
-    ringbackRef = { ctx, osc1, osc2, gain };
-    setStoreState((c) => ({ ...c, audioElementsAttached: true, audioPlayable: true }));
-    logDialer("RINGTONE_PLAY_SUCCESS");
-  } catch (e) {
-    setStoreState((c) => ({ ...c, audioPlayable: false }));
-    logDialer("RINGTONE_PLAY_FAILED", { reason: e instanceof Error ? e.message : String(e) });
-  }
+  logDialer("OUTBOUND_TONE_STARTED", {
+    reason: "provider_ringing_event",
+    mode: "suppressed_local_tone",
+    sessionId: storeState.session?.id ?? null,
+  });
+  setStoreState((c) => ({ ...c, audioElementsAttached: true, audioPlayable: false }));
 }
 
 function stopRingback() {
-  if (!ringbackRef) return;
-  try { ringbackRef.gain.disconnect(); } catch {}
-  try { ringbackRef.osc1.stop(); } catch {}
-  try { ringbackRef.osc2.stop(); } catch {}
+  if (ringbackRef) {
+    try { ringbackRef.gain.disconnect(); } catch {}
+    try { ringbackRef.osc1.stop(); } catch {}
+    try { ringbackRef.osc2.stop(); } catch {}
+  }
   ringbackRef = null;
   setStoreState((c) => ({ ...c, audioPlayable: false }));
+  logDialer("OUTBOUND_TONE_STOPPED", { reason: "call_state_change", sessionId: storeState.session?.id ?? null });
 }
 
 // ─── Agent state helper ─────────────────────────────────────────────
@@ -1183,6 +1242,8 @@ async function executeOutboundCall(intent: PendingDialIntent) {
       return;
     }
 
+    startTestAttempt(normalizedPhone);
+
     const selectedCallerId = getCallerIdForNumber(normalizedPhone);
     logDialer("CALLER_ID_SELECTED", { callerId: selectedCallerId, destination: normalizedPhone });
 
@@ -1224,11 +1285,13 @@ async function executeOutboundCall(intent: PendingDialIntent) {
       throw new Error("Failed to create call session");
     }
 
-    logDialer("OUTBOUND_CALL_SESSION_CREATED", { sessionId: sess.id });
+    logDialer("OUTBOUND_CALL_SESSION_CREATED", { sessionId: sess.id, destination: normalizedPhone, nextState: "dialing" });
     await supabase.from("dialer_sessions").update({ call_mode: "browser", call_status: "initiating" } as never).eq("id", sess.id);
 
+    logDialer("OUTBOUND_CALL_PROVIDER_BIND_START", { sessionId: sess.id, destination: normalizedPhone, clientAlive: !!plivoInstanceRef?.client });
     bindSession(sess.id);
     setStoreState((c) => ({ ...c, session: sess }));
+    activeProviderInvocation = { sessionId: sess.id, destination: normalizedPhone, startedAt: Date.now() };
     await setAgentAvailability("on_call");
 
     logDialer("CALL_DIAL_START", { destinationNumber: normalizedPhone, sessionId: sess.id });
@@ -1243,10 +1306,22 @@ async function executeOutboundCall(intent: PendingDialIntent) {
     // ── ACTUAL PLIVO CALL INVOCATION ──
     logDialer("PLIVO_CALL_REQUEST_START", { destination: normalizedPhone, sessionId: sess.id });
     try {
-      plivoInstanceRef.client.call(normalizedPhone, { "X-PH-SessionId": sess.id });
-      logDialer("PLIVO_CALL_REQUEST_SUCCESS", { destination: normalizedPhone });
+      if (activeProviderInvocation?.sessionId === sess.id && Date.now() - activeProviderInvocation.startedAt < 20000 && activeProviderInvocation.destination === normalizedPhone) {
+        const providerCallReturn = plivoInstanceRef.client.call(normalizedPhone, { "X-PH-SessionId": sess.id });
+        logDialer("PLIVO_CALL_REQUEST_SUCCESS", {
+          destination: normalizedPhone,
+          sessionId: sess.id,
+          returnType: providerCallReturn === undefined ? "void" : typeof providerCallReturn,
+        });
+        logDialer("OUTBOUND_CALL_PROVIDER_BIND_SUCCESS", { sessionId: sess.id, destination: normalizedPhone, clientAlive: true });
+        logDialer("SESSION_PROVIDER_CORRELATION_CONFIRMED", { sessionId: sess.id, destination: normalizedPhone, bindHeader: "X-PH-SessionId" });
+      } else {
+        throw new Error("Provider call binding guard rejected duplicate invocation.");
+      }
     } catch (callErr) {
-      logDialer("PLIVO_CALL_REQUEST_FAILURE", { error: callErr instanceof Error ? callErr.message : String(callErr) });
+      logDialer("PLIVO_CALL_REQUEST_FAILURE", { error: callErr instanceof Error ? callErr.message : String(callErr), sessionId: sess.id, destination: normalizedPhone });
+      logDialer("OUTBOUND_CALL_PROVIDER_BIND_FAILURE", { error: callErr instanceof Error ? callErr.message : String(callErr), sessionId: sess.id, destination: normalizedPhone });
+      endTestAttempt("failed", { sessionId: sess.id, destination: normalizedPhone, reason: callErr instanceof Error ? callErr.message : String(callErr) });
       throw callErr;
     }
 
@@ -1266,6 +1341,7 @@ async function executeOutboundCall(intent: PendingDialIntent) {
           dialLock: false,
         }));
         updateCurrentAttempt({ status: "failed", failureReason: "dial_timeout", endedAt: new Date().toISOString() });
+        endTestAttempt("failed", { sessionId: sess.id, destination: normalizedPhone, reason: "dial_timeout" });
         void setAgentAvailability("available");
         toast.error("Call timed out. Please try again.");
         // Auto-reset after 5s
@@ -1282,6 +1358,7 @@ async function executeOutboundCall(intent: PendingDialIntent) {
     logDialer("CALL_START_ERROR", { reason: message, stack: error instanceof Error ? error.stack?.slice(0, 200) : undefined });
     setStoreState((c) => ({ ...c, status: "failed", lastError: message, latestProviderStatus: "call_start_failed" }));
     updateCurrentAttempt({ status: "failed", failureReason: message, endedAt: new Date().toISOString() });
+    endTestAttempt("failed", { reason: message, sessionId: storeState.session?.id ?? null });
     await setAgentAvailability("available");
     toast.error(message);
   } finally {
@@ -1326,18 +1403,25 @@ function destroyPlivoClient(reason = "unknown") {
 }
 
 function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
-  const guard = () => isActivePlivoClient(instance, generation);
+  const guardEvent = (eventName: string) => {
+    const active = isActivePlivoClient(instance, generation);
+    if (!active) {
+      logDialer("EVENT_RECEIVED_FROM_STALE_GENERATION", { eventName, generation, activeGeneration: plivoClientGeneration });
+    }
+    return active;
+  };
   listenerAttachCount++;
+  logDialer("ACTIVE_CLIENT_GENERATION", { generation, attachCount: listenerAttachCount });
   logDialer("LISTENERS_ATTACH_START", { generation, totalAttachCount: listenerAttachCount });
 
   instance.client.on("onWebrtcNotSupported", () => {
-    if (!guard()) return;
+    if (!guardEvent("onWebrtcNotSupported")) return;
     setStoreState((c) => ({ ...c, status: "failed", lastError: "Browser does not support WebRTC" }));
     logDialer("PLIVO_WEBRTC_NOT_SUPPORTED");
   });
 
   instance.client.on("onLogin", () => {
-    if (!guard()) return;
+    if (!guardEvent("onLogin")) return;
     loginInProgress = false;
     if (loginSafetyTimeoutRef) { clearTimeout(loginSafetyTimeoutRef); loginSafetyTimeoutRef = null; }
     clearReloginTimeout();
@@ -1371,7 +1455,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   });
 
   instance.client.on("onLoginFailed", (cause: string) => {
-    if (!guard()) return;
+    if (!guardEvent("onLoginFailed")) return;
     loginInProgress = false;
     if (loginSafetyTimeoutRef) { clearTimeout(loginSafetyTimeoutRef); loginSafetyTimeoutRef = null; }
     logDialer("VOICE_REGISTRATION_FAILED_FULL", { reason: cause, retryCount: registrationRetryCount });
@@ -1399,9 +1483,11 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   });
 
   instance.client.on("onConnectionChange", (conn) => {
-    if (!guard()) return;
+    if (!guardEvent("onConnectionChange")) return;
     const connState = conn?.state || "unknown";
+    const prevState = storeState.connectionState;
     logDialer("PLIVO_CONNECTION_CHANGE", { state: connState, wasRegistered: storeState.registered, wasLoginInProgress: loginInProgress });
+    logDialer("PROVIDER_CONNECTION_CHANGE", { prevState, nextState: connState, generation, clientAlive: !!plivoInstanceRef?.client, sessionId: storeState.session?.id ?? null });
     setStoreState((c) => ({ ...c, connectionState: connState }));
 
     if (connState === "connected") {
@@ -1429,6 +1515,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
 
     if (connState === "disconnected") {
       logDialer("PLIVO_DISCONNECTED_DETECTED");
+      logDialer("PROVIDER_UNREGISTERED_EVENT", { prevState, nextState: connState, sessionId: storeState.session?.id ?? null });
       const activeCall = isInActiveCall();
       loginInProgress = false;
       if (activeCall) {
@@ -1445,7 +1532,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   });
 
   instance.client.on("onMediaPermission", (result: { status: boolean }) => {
-    if (!guard()) return;
+    if (!guardEvent("onMediaPermission")) return;
     logDialer(result.status ? "MIC_PERMISSION_GRANTED" : "MIC_PERMISSION_DENIED");
     setStoreState((c) => ({
       ...c,
@@ -1459,16 +1546,41 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
 
   // *** RINGING: Only set from this real SDK event ***
   instance.client.on("onCallRemoteRinging", async (callInfo: Plivo.CallInfo) => {
-    if (!guard()) return;
+    if (!guardEvent("onCallRemoteRinging")) return;
+    const prevState = storeState.status;
     logDialer("CALL_REMOTE_RINGING", { callInfoState: callInfo.state || "ringing" });
+    logDialer("PROVIDER_RINGING_EVENT", {
+      prevState,
+      nextState: "ringing",
+      providerStatus: callInfo.state || "ringing",
+      sessionId: storeState.session?.id ?? null,
+      callId: callInfo.callUUID ?? null,
+      clientAlive: !!plivoInstanceRef?.client,
+      activeCallObject: true,
+      remoteMediaTrackReceived: false,
+      localMediaTrackExists: storeState.micPermission === "granted",
+    });
     setStoreState((c) => ({ ...c, status: "ringing", latestProviderStatus: "ringing" }));
+    logDialer("UI_STATUS_UPDATED", { prevState, nextState: "ringing", source: "provider_remote_ringing" });
     updateCurrentAttempt({ status: "ringing", ringingAt: new Date().toISOString(), providerStatus: "ringing" });
     await playRingback();
   });
 
   instance.client.on("onCallAnswered", async (callInfo: Plivo.CallInfo) => {
-    if (!guard()) return;
+    if (!guardEvent("onCallAnswered")) return;
+    const prevState = storeState.status;
     logDialer("CALL_ANSWERED", { callInfoState: callInfo.state || "answered" });
+    logDialer("PROVIDER_ANSWERED_EVENT", {
+      prevState,
+      nextState: "connected",
+      providerStatus: callInfo.state || "answered",
+      sessionId: storeState.session?.id ?? null,
+      callId: callInfo.callUUID ?? null,
+      clientAlive: !!plivoInstanceRef?.client,
+      activeCallObject: true,
+      remoteMediaTrackReceived: true,
+      localMediaTrackExists: storeState.micPermission === "granted",
+    });
     stopRingback();
     await resumeAudioContext();
     logDialer("REMOTE_AUDIO_PLAY_ATTEMPT");
@@ -1483,36 +1595,29 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
     }));
     updateCurrentAttempt({ status: "connected", answeredAt: new Date().toISOString() });
     logDialer("CALL_CONNECTED");
+    logDialer("PROVIDER_CONNECTED_EVENT", { prevState, nextState: "connected", sessionId: storeState.session?.id ?? null, callId: callInfo.callUUID ?? null, remoteMediaTrackReceived: true, localMediaTrackExists: true });
+    logDialer("UI_STATUS_UPDATED", { prevState, nextState: "connected", source: "provider_answered" });
     void setAgentAvailability("on_call");
   });
 
   instance.client.on("onCallTerminated", (callInfo: Plivo.CallInfo) => {
-    if (!guard()) return;
+    if (!guardEvent("onCallTerminated")) return;
+    const prevState = storeState.status;
     logDialer("CALL_TERMINATED", { callInfoState: callInfo.state || "terminated" });
+    logDialer("PROVIDER_HANGUP_EVENT", { prevState, nextState: "ended", providerStatus: callInfo.state || "terminated", sessionId: storeState.session?.id ?? null, callId: callInfo.callUUID ?? null, clientAlive: !!plivoInstanceRef?.client });
     stopRingback();
     setStoreState((c) => ({ ...c, status: "ended", latestProviderStatus: "terminated", audioPlayable: false }));
+    logDialer("UI_STATUS_UPDATED", { prevState, nextState: "ended", source: "provider_terminated" });
     updateCurrentAttempt({ status: "ended", endedAt: new Date().toISOString() });
+    endTestAttempt("ended", { sessionId: storeState.session?.id ?? null, callId: callInfo.callUUID ?? null });
     void setAgentAvailability("available");
   });
 
   instance.client.on("onCallFailed", (cause: string) => {
-    if (!guard()) return;
+    if (!guardEvent("onCallFailed")) return;
     const reason = (cause || "Unknown").trim();
     const reasonLower = reason.toLowerCase();
-
-    // ── FALSE BUSY DETECTION: If "Busy" arrives < 3s, auto-retry once ──
     const elapsed = callStartTimestamp > 0 ? Date.now() - callStartTimestamp : Infinity;
-    if (reasonLower.includes("busy") && elapsed < 3000) {
-      logDialer("FALSE_BUSY_RETRYING", { elapsed, reason, destination: storeState.destinationNumber });
-      setTimeout(() => {
-        if (storeState.destinationNumber && plivoInstanceRef?.client && isInActiveCall()) {
-          plivoInstanceRef.client.call(storeState.destinationNumber, storeState.session?.id ? { "X-PH-SessionId": storeState.session.id } : {});
-          callStartTimestamp = Date.now();
-          logDialer("RETRY_CALL_AFTER_FALSE_BUSY");
-        }
-      }, 1000);
-      return;
-    }
 
     // Map provider reasons to specific log events and user-friendly messages
     let userMessage: string;
@@ -1542,6 +1647,18 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
 
     logDialer(logEvent, { reason, destination: storeState.destinationNumber, dbStatus, elapsed });
     logDialer("PROVIDER_FAILURE_RAW", { cause, elapsed });
+    logDialer(reasonLower.includes("reject") ? "PROVIDER_REJECTED_EVENT" : reasonLower.includes("cancel") ? "PROVIDER_CANCEL_EVENT" : "PROVIDER_FAILED_EVENT", {
+      prevState: storeState.status,
+      nextState: "failed",
+      providerStatus: reason,
+      sessionId: storeState.session?.id ?? null,
+      callId: storeState.session?.provider_call_id ?? null,
+      clientAlive: !!plivoInstanceRef?.client,
+      activeCallObject: isInActiveCall(),
+      remoteMediaTrackReceived: false,
+      localMediaTrackExists: storeState.micPermission === "granted",
+      providerCause: reason,
+    });
     stopRingback();
 
     setStoreState((c) => ({
@@ -1554,6 +1671,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
       dialLock: false,
     }));
     updateCurrentAttempt({ status: dbStatus, failureReason: reason, endedAt: new Date().toISOString() });
+    endTestAttempt("failed", { sessionId: storeState.session?.id ?? null, reason, dbStatus });
 
     // Update DB session with correct terminal status
     if (storeState.session?.id) {
@@ -1586,8 +1704,40 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
     for (const evt of ["onCalling", "onMediaConnected", "onCallRinging", "onIncomingCall", "onIncomingCallCanceled"]) {
       try {
         instance.client.on(evt, (...args: unknown[]) => {
-          if (!guard()) return;
-          logDialer("PLIVO_RAW_EVENT", { eventName: evt, args: args.length > 0 ? args : undefined });
+          if (!guardEvent(evt)) return;
+          if (evt === "onCalling") {
+            logDialer("PROVIDER_CALLING_EVENT", {
+              prevState: storeState.status,
+              nextState: storeState.status,
+              providerStatus: evt,
+              sessionId: storeState.session?.id ?? null,
+              clientAlive: !!plivoInstanceRef?.client,
+              activeCallObject: true,
+            });
+          } else if (evt === "onMediaConnected") {
+            logDialer("PROVIDER_CONNECTED_EVENT", {
+              prevState: storeState.status,
+              nextState: storeState.status,
+              providerStatus: evt,
+              sessionId: storeState.session?.id ?? null,
+              clientAlive: !!plivoInstanceRef?.client,
+              activeCallObject: true,
+              remoteMediaTrackReceived: true,
+            });
+          } else if (evt === "onCallRinging") {
+            logDialer("PROVIDER_RINGING_EVENT", {
+              prevState: storeState.status,
+              nextState: storeState.status,
+              providerStatus: evt,
+              sessionId: storeState.session?.id ?? null,
+              clientAlive: !!plivoInstanceRef?.client,
+              activeCallObject: true,
+            });
+          } else if (evt === "onIncomingCallCanceled") {
+            logDialer("PROVIDER_CANCEL_EVENT", { providerStatus: evt, sessionId: storeState.session?.id ?? null });
+          } else {
+            logDialer("PLIVO_RAW_EVENT", { eventName: evt, args: args.length > 0 ? args : undefined });
+          }
         });
       } catch {}
     }
@@ -2189,6 +2339,7 @@ export function useBrowserDialer() {
     buildVersion: BUILD_VERSION,
     deployedAt: DEPLOYED_AT,
     logEvent: logDialer,
+    clearDebugLogs: clearDialerLogs,
     startCall,
     endCall,
     toggleMute,
