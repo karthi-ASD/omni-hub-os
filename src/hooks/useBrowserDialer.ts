@@ -664,6 +664,8 @@ function isInActiveCall(): boolean {
   return ["dialing", "ringing", "connected", "ending"].includes(storeState.status);
 }
 
+let blurFocusBound = false;
+
 function bindVisibilityRecovery() {
   if (visibilityListenerBound || typeof document === "undefined") return;
   document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -676,6 +678,19 @@ function bindVisibilityRecovery() {
     }
   });
   visibilityListenerBound = true;
+
+  // Window blur/focus logging — NEVER destructive
+  if (!blurFocusBound) {
+    blurFocusBound = true;
+    window.addEventListener("blur", () => {
+      logDialer("WINDOW_BLUR", { activeCall: isInActiveCall(), status: storeState.status });
+    });
+    window.addEventListener("focus", () => {
+      logDialer("WINDOW_FOCUS", { activeCall: isInActiveCall(), status: storeState.status });
+      // Resume audio context on focus, nothing else
+      void resumeAudioContext().catch(() => {});
+    });
+  }
 }
 
 function handleVisibilityChange() {
