@@ -46,7 +46,7 @@ export function CallReadinessPanel({
   const [micResult, setMicResult] = useState<"idle" | "success" | "failed">("idle");
   const [micMessage, setMicMessage] = useState<string | null>(null);
   const [speakerTesting, setSpeakerTesting] = useState(false);
-  const [speakerResult, setSpeakerResult] = useState<"idle" | "success" | "failed">("idle");
+  const [speakerResult, setSpeakerResult] = useState<"idle" | "success" | "fallback_success" | "blocked" | "unsupported" | "failed" | "timeout">("idle");
   const [speakerMessage, setSpeakerMessage] = useState<string | null>(null);
   const [tokenTesting, setTokenTesting] = useState(false);
   const [tokenMessage, setTokenMessage] = useState<string | null>(null);
