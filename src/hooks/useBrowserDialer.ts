@@ -442,15 +442,21 @@ function scheduleLogin(reason: string, username: string, password: string, delay
     logDialer("LOGIN_SKIPPED", { reason: "already_running", requestedBy: reason });
     return;
   }
-  if (storeState.registered || storeState.connectionState === "connected") {
-    logDialer("RELOGIN_SKIPPED_ALREADY_REGISTERED", { requestedBy: reason });
+  // Only skip login if TRULY registered: client exists, connection confirmed, init status confirmed
+  const trulyRegistered = storeState.registered
+    && storeState.connectionState === "connected"
+    && storeState.plivoClientInitStatus === "registered"
+    && isClientHealthy();
+  if (trulyRegistered) {
+    logDialer("RELOGIN_SKIPPED_ALREADY_REGISTERED", { requestedBy: reason, connectionState: storeState.connectionState, initStatus: storeState.plivoClientInitStatus });
     return;
   }
+  logDialer("LOGIN_SKIP_CHECK", { requestedBy: reason, registered: storeState.registered, connectionState: storeState.connectionState, initStatus: storeState.plivoClientInitStatus, healthy: isClientHealthy() });
 
   const runLogin = () => {
     if (!plivoInstanceRef?.client) return;
     loginInProgress = true;
-    setStoreState((c) => ({ ...c, plivoClientInitStatus: "logging_in" }));
+    setStoreState((c) => ({ ...c, plivoClientInitStatus: "logging_in", status: "registering" }));
     logDialer("PLIVO_LOGIN_CALLING", { reason });
     plivoInstanceRef.client.login(username, password);
   };
