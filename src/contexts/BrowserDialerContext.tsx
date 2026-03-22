@@ -6,7 +6,7 @@
  * BUILD: stability-v16
  */
 
-import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import { useBrowserDialer } from "@/hooks/useBrowserDialer";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -14,16 +14,28 @@ type DialerContextValue = ReturnType<typeof useBrowserDialer> | null;
 
 const BrowserDialerContext = createContext<DialerContextValue>(null);
 
-export function BrowserDialerProvider({ children }: { children: ReactNode }) {
-  const { profile } = useAuth();
-  // Only mount the hook when we have an authenticated user with a business
-  const dialer = profile?.business_id ? useBrowserDialer() : null;
-
+function DialerProviderInner({ children }: { children: ReactNode }) {
+  const dialer = useBrowserDialer();
   return (
     <BrowserDialerContext.Provider value={dialer}>
       {children}
     </BrowserDialerContext.Provider>
   );
+}
+
+export function BrowserDialerProvider({ children }: { children: ReactNode }) {
+  const { profile } = useAuth();
+
+  // Only activate dialer for users with a business — avoids conditional hook calls
+  if (!profile?.business_id) {
+    return (
+      <BrowserDialerContext.Provider value={null}>
+        {children}
+      </BrowserDialerContext.Provider>
+    );
+  }
+
+  return <DialerProviderInner>{children}</DialerProviderInner>;
 }
 
 /**
