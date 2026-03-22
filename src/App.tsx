@@ -642,13 +642,13 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><HRDepartmentsPage /></ProtectedRoute>
               } />
               <Route path="/hr/employees" element={
-                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><HREmployeeListPage /></ProtectedRoute>
+                <ProtectedRoute><HREmployeeListPage /></ProtectedRoute>
               } />
               <Route path="/hr/employee/:employeeId" element={
-                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager", "manager"]}><HREmployeeProfilePage /></ProtectedRoute>
+                <ProtectedRoute><HREmployeeProfilePage /></ProtectedRoute>
               } />
               <Route path="/hr/leave" element={
-                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager", "manager"]}><HRLeaveManagementPage /></ProtectedRoute>
+                <ProtectedRoute><HRLeaveManagementPage /></ProtectedRoute>
               } />
               <Route path="/hr/payroll" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><HRPayrollPage /></ProtectedRoute>
@@ -663,7 +663,7 @@ const App = () => (
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager"]}><HRAnalyticsDashboardPage /></ProtectedRoute>
               } />
               <Route path="/hr/attendance" element={
-                <ProtectedRoute requiredRoles={["super_admin", "business_admin", "hr_manager", "manager"]}><WorkforcePage /></ProtectedRoute>
+                <ProtectedRoute><WorkforcePage /></ProtectedRoute>
               } />
               <Route path="/manager-dashboard" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin", "manager"]}><ManagerDashboardPage /></ProtectedRoute>
