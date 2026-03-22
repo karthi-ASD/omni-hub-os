@@ -206,7 +206,7 @@ const INITIAL_STATE: BrowserDialerStoreState = {
   audioStatus: "audio_not_initialized",
 };
 
-const BUILD_VERSION = "stability-v18";
+const BUILD_VERSION = "stability-v19";
 const DEPLOYED_AT = "2026-03-22T23:00:00Z";
 type DialerIdentity = { businessId: string; userId: string } | null;
 
