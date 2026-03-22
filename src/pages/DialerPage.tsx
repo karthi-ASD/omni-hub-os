@@ -144,6 +144,12 @@ function DialerPageContent() {
   useEffect(() => {
     sessionStorage.setItem("dialer_right_tab", rightTab);
   }, [rightTab]);
+  useEffect(() => {
+    sessionStorage.setItem("dialer_disposition_draft", dispositionDraft);
+  }, [dispositionDraft]);
+  useEffect(() => {
+    sessionStorage.setItem("dialer_callback_reason", callbackReason);
+  }, [callbackReason]);
 
   // Live transcript — safe when dialer is null
   const noopLog = useRef((_e: string, _d?: Record<string, unknown>) => {}).current;
