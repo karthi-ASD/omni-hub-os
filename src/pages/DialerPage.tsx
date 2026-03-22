@@ -204,7 +204,8 @@ function DialerPageContent() {
   const isCallActive = dialer.isCallActive;
   const isCallEnded = dialer.callStatus === "ended" || dialer.callStatus === "failed";
   const isAuthRequired = dialer.callStatus === "auth_required";
-  const canDial = phoneInput.trim().length > 0 && !dialer.loading && !isCallActive && !isAuthRequired;
+  const isRegistering = dialer.callStatus === "registering" || dialer.callStatus === "initializing";
+  const canDial = phoneInput.trim().length > 0 && !dialer.loading && !isCallActive && !isAuthRequired && !isRegistering;
 
   const getCallButtonText = () => {
     if (dialer.loading) return "Dialing…";
