@@ -167,9 +167,10 @@ function DialerPageContent() {
     setShowFollowUp(false);
   };
 
+  const isCallActive = dialer.isCallActive;
+  const isCallEnded = dialer.callStatus === "ended" || dialer.callStatus === "failed";
   const isAuthRequired = dialer.callStatus === "auth_required";
   const canDial = phoneInput.trim().length > 0 && !dialer.loading && !isCallActive && !isAuthRequired;
-  const canDial = phoneInput.trim().length > 0 && !dialer.loading && !isCallActive;
 
   // Button text logic
   const getCallButtonText = () => {
