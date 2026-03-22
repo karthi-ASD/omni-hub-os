@@ -287,11 +287,15 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ session_id: session.id }),
         }).catch((e) => console.error("[dialer-webhook] AI trigger failed", e));
       } else {
-        await supabase.from("dialer_call_events").insert({
-          session_id: session.id,
-          event_type: "early_disconnect",
-          metadata: { duration, reason: hadConnectedState ? "call_ended_within_3s" : "call_never_connected" },
-        }).catch(() => {});
+        try {
+          await supabase.from("dialer_call_events").insert({
+            session_id: session.id,
+            event_type: "early_disconnect",
+            metadata: { duration, reason: hadConnectedState ? "call_ended_within_3s" : "call_never_connected" },
+          });
+        } catch {
+          // ignore logging failure
+        }
       }
     }
 
