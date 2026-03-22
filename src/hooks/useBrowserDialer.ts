@@ -213,8 +213,9 @@ const INITIAL_STATE: BrowserDialerStoreState = {
   audioStatus: "audio_not_initialized",
 };
 
-const BUILD_VERSION = "stability-v21";
-const DEPLOYED_AT = "2026-03-22T10:50:00Z";
+const BUILD_VERSION = "stability-v22";
+const DEPLOYED_AT = "2026-03-22T12:35:00Z";
+const AU_TEST_CALL_NUMBER = "+61468280069";
 type DialerIdentity = { businessId: string; userId: string } | null;
 
 // ─── Global singletons ──────────────────────────────────────────────
@@ -267,6 +268,7 @@ let logSequence = 0;
 let testAttemptCounter = 0;
 let activeTestAttemptNumber: number | null = null;
 let activeProviderInvocation: { sessionId: string; destination: string; startedAt: number } | null = null;
+let pendingAttemptSource: "manual" | "au_test" = "manual";
 
 function deriveLogCategory(event: string, data?: Record<string, unknown>): DialerLogEntry["category"] {
   const combined = `${event} ${JSON.stringify(data || {})}`.toLowerCase();
@@ -342,6 +344,10 @@ export function logDialerEvent(event: string, data?: Record<string, unknown>) {
 function clearDialerLogs() {
   logBuffer.splice(0, logBuffer.length);
   emitLogChange();
+}
+
+function reserveAuTestCallAttempt() {
+  pendingAttemptSource = "au_test";
 }
 
 function startTestAttempt(destination: string) {
@@ -1249,8 +1255,25 @@ async function executeOutboundCall(intent: PendingDialIntent) {
     startTestAttempt(normalizedPhone);
 
     const callerIdInfo = getCallerIdForNumber(normalizedPhone);
+    const attemptSource = pendingAttemptSource;
+    pendingAttemptSource = "manual";
     logDialer("CALLER_ID_MAPPING_INPUT", { destination: normalizedPhone });
     logDialer("CALLER_ID_MAPPING_RESULT", { region: callerIdInfo.region, label: callerIdInfo.label, note: "Actual E.164 caller ID is resolved on the backend from environment secrets" });
+
+    if (attemptSource === "au_test") {
+      logDialer("TEST_CALL_AU_ONLY", { destination: normalizedPhone, region: callerIdInfo.region });
+      logDialer("AU_TEST_CALL_TRIGGERED", { destination: normalizedPhone, region: callerIdInfo.region });
+      logDialer("AU_TEST_CALL_DESTINATION", { destination: normalizedPhone });
+      logDialer("AU_TEST_CALL_CALLER_ID", {
+        callerIdRegion: callerIdInfo.region,
+        callerIdLabel: callerIdInfo.label,
+        note: "Final E.164 caller ID is resolved and logged by the backend answer XML flow",
+      });
+      if (normalizedPhone === storeState.session?.provider_call_id) {
+        logDialer("TEST_CALL_INVALID_SELF_CALL_BLOCKED", { destination: normalizedPhone, reason: "destination_matched_existing_provider_call_id" });
+        throw new Error("AU test call blocked because the destination matched the active provider call context.");
+      }
+    }
 
     // Pre-call state reset — clear any stale state from previous attempts
     logDialer("PRECALL_STATE_RESET", { previousStatus: storeState.status, previousSession: storeState.session?.id ?? null, previousError: storeState.lastError });
@@ -1296,7 +1319,10 @@ async function executeOutboundCall(intent: PendingDialIntent) {
       throw new Error("Failed to create call session");
     }
 
-    logDialer("OUTBOUND_CALL_SESSION_CREATED", { sessionId: sess.id, destination: normalizedPhone, nextState: "dialing" });
+    logDialer("OUTBOUND_CALL_SESSION_CREATED", { sessionId: sess.id, destination: normalizedPhone, nextState: "dialing", attemptSource });
+    if (attemptSource === "au_test") {
+      logDialer("AU_TEST_CALL_SESSION_ID", { sessionId: sess.id, destination: normalizedPhone });
+    }
     await supabase.from("dialer_sessions").update({ call_mode: "browser", call_status: "initiating" } as never).eq("id", sess.id);
 
     logDialer("OUTBOUND_CALL_PROVIDER_BIND_START", { sessionId: sess.id, destination: normalizedPhone, clientAlive: !!plivoInstanceRef?.client });
@@ -1357,14 +1383,8 @@ async function executeOutboundCall(intent: PendingDialIntent) {
         updateCurrentAttempt({ status: "failed", failureReason: "dial_timeout", endedAt: new Date().toISOString() });
         endTestAttempt("failed", { sessionId: sess.id, destination: normalizedPhone, reason: "dial_timeout" });
         void setAgentAvailability("available");
-        toast.error("Call timed out. Please try again.");
-        // Auto-reset after 5s
-        setTimeout(() => {
-          setStoreState((c) => {
-            if (c.status !== "failed") return c;
-            return { ...c, status: c.registered ? "device_ready" : "idle", lastError: null, session: null };
-          });
-        }, 5000);
+        toast.error("Call timed out. Please inspect logs, then reset manually.");
+        logDialer("AUTO_RESET_DISABLED_DEBUG", { reason: "dial_timeout", sessionId: sess.id });
       }
     }, 15000);
   } catch (error) {
@@ -1722,13 +1742,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
     void setAgentAvailability("available");
     callStartTimestamp = 0;
 
-    // Auto-reset to device_ready after 5s so agent can try again
-    setTimeout(() => {
-      setStoreState((c) => {
-        if (c.status !== "failed") return c;
-        return { ...c, status: c.registered ? "device_ready" : "idle", lastError: null, session: null };
-      });
-    }, 5000);
+    logDialer("AUTO_RESET_DISABLED_DEBUG", { reason: "provider_failure", sessionId: storeState.session?.id ?? null, classifiedCause });
   });
 
   // Extra raw events for diagnostics
@@ -2258,6 +2272,8 @@ export function useBrowserDialer() {
     sessionUnsubRef?.();
     sessionUnsubRef = null;
     sessionSubId = null;
+    activeProviderInvocation = null;
+    pendingAttemptSource = "manual";
     setStoreState((c) => ({
       ...c,
       session: null,
@@ -2345,6 +2361,17 @@ export function useBrowserDialer() {
 
   const testAnswerXml = useCallback(async () => testAnswerXmlEndpoint(), []);
 
+  const startAuTestCall = useCallback(async () => {
+    const normalized = formatToE164(AU_TEST_CALL_NUMBER);
+    if (!isValidE164(normalized) || !normalized.startsWith("+61")) {
+      logDialer("TEST_CALL_INVALID_SELF_CALL_BLOCKED", { destination: normalized, reason: "invalid_au_test_destination" });
+      throw new Error("AU test call is not configured with a valid Australian E.164 destination.");
+    }
+    reserveAuTestCallAttempt();
+    logDialer("TEST_CALL_AU_ONLY", { destination: normalized });
+    await startCall(normalized);
+  }, [startCall]);
+
   return {
     session: state.session,
     callStatus: state.status,
@@ -2386,5 +2413,6 @@ export function useBrowserDialer() {
     testRegistration,
     testTokenFetch,
     testAnswerXml,
+    startAuTestCall,
   };
 }
