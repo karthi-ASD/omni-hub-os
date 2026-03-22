@@ -62,6 +62,7 @@ const STATUS_COLORS: Record<string, string> = {
   ended: "bg-muted text-muted-foreground",
   failed: "bg-destructive/20 text-destructive",
   permission_denied: "bg-destructive/20 text-destructive",
+  auth_required: "bg-destructive/20 text-destructive",
 };
 
 interface LeadContext {
