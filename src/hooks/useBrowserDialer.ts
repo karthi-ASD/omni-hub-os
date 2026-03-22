@@ -1574,7 +1574,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   instance.client.on("onCallAnswered", async (callInfo: Plivo.CallInfo) => {
     if (!guardEvent("onCallAnswered")) return;
     const prevState = storeState.status;
-    logDialer("CALL_ANSWERED", { callInfoState: callInfo.state || "answered" });
+    logDialer("CALL_ANSWERED", { callInfoState: callInfo.state || "answered", timeSinceCallStartMs: callStartTimestamp ? Date.now() - callStartTimestamp : null });
     logDialer("PROVIDER_ANSWERED_EVENT", {
       prevState,
       nextState: "connected",
