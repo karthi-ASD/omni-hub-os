@@ -452,6 +452,19 @@ function DialerPageContent() {
           </CardContent>
         </Card>
 
+        {/* Call Readiness Panel */}
+        <CallReadinessPanel
+          registered={dialer.registered}
+          micPermission={dialer.micPermission}
+          clientHealthy={dialer.diagnostics.clientHealthy}
+          audioContextState={dialer.diagnostics.latestBrowserMediaStatus}
+          callStatus={dialer.callStatus}
+          logEvent={dialer.logEvent}
+          startCall={dialer.startCall}
+          onReconnect={dialer.reconnectVoice}
+          requestMicPermission={dialer.requestMicPermission}
+        />
+
         {/* RIGHT PANEL — Disposition */}
         <Card className="lg:col-span-1">
           <CardHeader className="pb-3">
