@@ -197,8 +197,8 @@ const INITIAL_STATE: BrowserDialerStoreState = {
   audioPlayable: false,
 };
 
-const BUILD_VERSION = "stability-v13";
-const DEPLOYED_AT = "2026-03-22T07:00:00Z";
+const BUILD_VERSION = "stability-v14";
+const DEPLOYED_AT = "2026-03-22T12:00:00Z";
 type DialerIdentity = { businessId: string; userId: string } | null;
 
 // ─── Global singletons ──────────────────────────────────────────────
@@ -442,15 +442,21 @@ function scheduleLogin(reason: string, username: string, password: string, delay
     logDialer("LOGIN_SKIPPED", { reason: "already_running", requestedBy: reason });
     return;
   }
-  if (storeState.registered || storeState.connectionState === "connected") {
-    logDialer("RELOGIN_SKIPPED_ALREADY_REGISTERED", { requestedBy: reason });
+  // Only skip login if TRULY registered: client exists, connection confirmed, init status confirmed
+  const trulyRegistered = storeState.registered
+    && storeState.connectionState === "connected"
+    && storeState.plivoClientInitStatus === "registered"
+    && isClientHealthy();
+  if (trulyRegistered) {
+    logDialer("RELOGIN_SKIPPED_ALREADY_REGISTERED", { requestedBy: reason, connectionState: storeState.connectionState, initStatus: storeState.plivoClientInitStatus });
     return;
   }
+  logDialer("LOGIN_SKIP_CHECK", { requestedBy: reason, registered: storeState.registered, connectionState: storeState.connectionState, initStatus: storeState.plivoClientInitStatus, healthy: isClientHealthy() });
 
   const runLogin = () => {
     if (!plivoInstanceRef?.client) return;
     loginInProgress = true;
-    setStoreState((c) => ({ ...c, plivoClientInitStatus: "logging_in" }));
+    setStoreState((c) => ({ ...c, plivoClientInitStatus: "logging_in", status: "registering" }));
     logDialer("PLIVO_LOGIN_CALLING", { reason });
     plivoInstanceRef.client.login(username, password);
   };
@@ -725,13 +731,33 @@ function sanitizeStaleState() {
 }
 
 // ─── Execute outbound call ──────────────────────────────────────────
+function canPlaceCall(): { ready: boolean; reason: string } {
+  if (!plivoInstanceRef?.client) return { ready: false, reason: "no_client" };
+  if (!isClientHealthy()) return { ready: false, reason: "client_unhealthy" };
+  if (storeState.connectionState !== "connected") return { ready: false, reason: `connection_${storeState.connectionState}` };
+  if (storeState.plivoClientInitStatus !== "registered") return { ready: false, reason: `init_${storeState.plivoClientInitStatus}` };
+  if (!storeState.registered) return { ready: false, reason: "not_registered" };
+  if (["initializing", "registering"].includes(storeState.status)) return { ready: false, reason: `status_${storeState.status}` };
+  if (recoveryInProgress) return { ready: false, reason: "recovery_in_progress" };
+  if (loginInProgress) return { ready: false, reason: "login_in_progress" };
+  return { ready: true, reason: "ok" };
+}
+
 async function executeOutboundCall(intent: PendingDialIntent) {
   logDialer("EXECUTE_OUTBOUND_CALL_ENTERED", { raw: intent.phoneNumber });
 
-  if (!authIdentity || !plivoInstanceRef?.client) {
-    logDialer("EXECUTE_CALL_BLOCKED", { reason: "no_auth_or_client" });
+  if (!authIdentity) {
+    logDialer("EXECUTE_CALL_BLOCKED", { reason: "no_auth" });
     return;
   }
+
+  const readiness = canPlaceCall();
+  if (!readiness.ready) {
+    logDialer("CALL_BLOCKED_NOT_READY", { reason: readiness.reason, status: storeState.status, connectionState: storeState.connectionState, initStatus: storeState.plivoClientInitStatus });
+    toast.warning("Voice service still connecting. Please wait.");
+    return;
+  }
+
   if (storeState.dialLock) {
     logDialer("EXECUTE_CALL_BLOCKED", { reason: "dial_lock_active" });
     return;
@@ -841,6 +867,15 @@ function destroyPlivoClient() {
   plivoInstanceRef = null;
   loginInProgress = false;
   clearReloginTimeout();
+  // Reset stale registration state so next init starts clean
+  logDialer("REGISTERED_STATE_RESET", { reason: "client_destroyed" });
+  setStoreState((c) => ({
+    ...c,
+    registered: false,
+    connectionState: "disconnected",
+    plivoClientInitStatus: "idle",
+    sdkReady: false,
+  }));
   logDialer("CLIENT_DESTROYED");
 }
 
@@ -1332,12 +1367,15 @@ export function useBrowserDialer() {
   const requestMicPermission = useCallback(async () => requestMicrophonePermissionInternal(), []);
 
   const startCall = useCallback(async (phoneNumber: string, leadId?: string, clientId?: string) => {
+    const readiness = canPlaceCall();
     logDialer("START_CALL_ENTERED", {
       rawPhoneNumber: phoneNumber,
       leadId: leadId ?? null,
       registered: storeState.registered,
       status: storeState.status,
       loading: storeState.loading,
+      canPlaceCall: readiness.ready,
+      readinessReason: readiness.reason,
     });
 
     if (!profile?.business_id) {
@@ -1354,6 +1392,12 @@ export function useBrowserDialer() {
       toast.warning("A call is already active.");
       return;
     }
+    // Block during registering/initializing — these are NOT ready states
+    if (["registering", "initializing"].includes(storeState.status)) {
+      logDialer("CALL_BLOCKED_STATUS_REGISTERING", { status: storeState.status });
+      toast.warning("Voice service still connecting. Please wait.");
+      return;
+    }
     if (!phoneNumber.trim()) {
       logDialer("CALL_BLOCKED", { reason: "empty_number" });
       toast.error("Please enter a phone number.");
@@ -1368,8 +1412,9 @@ export function useBrowserDialer() {
 
     const intent: PendingDialIntent = { phoneNumber: phoneNumber.trim(), leadId, clientId };
 
-    if (!storeState.registered || !plivoInstanceRef?.client) {
-      logDialer("CALL_QUEUED_BEFORE_REGISTER", { destination: phoneNumber.trim() });
+    // Full readiness check — not just registered boolean
+    if (!readiness.ready) {
+      logDialer("CALL_QUEUED_BEFORE_REGISTER", { destination: phoneNumber.trim(), reason: readiness.reason });
       modulePendingDial = intent;
       setStoreState((c) => ({ ...c, pendingDialIntent: intent }));
       toast.info("Call queued — waiting for voice registration…");
