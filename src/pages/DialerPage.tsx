@@ -127,6 +127,11 @@ function DialerPageContent() {
       registered: dialer.registered,
       status: dialer.callStatus,
     });
+    if (dialer.micPermission !== "granted") {
+      dialer.logEvent("HANDLE_DIAL_BLOCKED_MIC_NOT_GRANTED");
+      toast.error("Please enable microphone before making calls.");
+      return;
+    }
     if (!phoneInput.trim()) {
       dialer.logEvent("HANDLE_DIAL_BLOCKED_EMPTY_INPUT");
       toast.error("Enter a phone number first");
