@@ -932,7 +932,7 @@ function DialerPageContent() {
             audioContextState={dialer.diagnostics.latestBrowserMediaStatus}
             callStatus={dialer.callStatus}
             logEvent={dialer.logEvent}
-            startCall={dialer.startCall}
+            startAuTestCall={dialer.startAuTestCall}
             onReconnect={dialer.reconnectVoice}
             requestMicPermission={dialer.requestMicPermission}
             onTestRegistration={dialer.testRegistration}
