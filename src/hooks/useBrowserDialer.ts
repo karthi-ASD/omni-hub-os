@@ -1608,7 +1608,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   instance.client.on("onCallTerminated", (callInfo: Plivo.CallInfo) => {
     if (!guardEvent("onCallTerminated")) return;
     const prevState = storeState.status;
-    logDialer("CALL_TERMINATED", { callInfoState: callInfo.state || "terminated" });
+    logDialer("CALL_TERMINATED", { callInfoState: callInfo.state || "terminated", timeSinceCallStartMs: callStartTimestamp ? Date.now() - callStartTimestamp : null });
     logDialer("PROVIDER_HANGUP_EVENT", { prevState, nextState: "ended", providerStatus: callInfo.state || "terminated", sessionId: storeState.session?.id ?? null, callId: callInfo.callUUID ?? null, clientAlive: !!plivoInstanceRef?.client });
     stopRingback();
     setStoreState((c) => ({ ...c, status: "ended", latestProviderStatus: "terminated", audioPlayable: false }));
