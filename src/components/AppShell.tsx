@@ -59,16 +59,7 @@ const AppShell = () => {
   shellRenderCount.current++;
 
   useEffect(() => {
-    console.log("[DIALER][APP_SHELL_RENDERED]", { renderCount: shellRenderCount.current });
-  });
-
-  useEffect(() => {
-    console.log("[SHELL RENDER]", {
-      dashboardShell,
-      pathname: window.location.pathname,
-      businessId,
-      activeBusinessName,
-    });
+    console.log("[DIALER]", new Date().toISOString(), "APP_SHELL_RENDERED", { renderCount: shellRenderCount.current, dashboardShell, pathname: window.location.pathname });
   }, [dashboardShell, businessId, activeBusinessName]);
 
   if (!isAuthResolved) {

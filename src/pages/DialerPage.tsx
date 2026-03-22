@@ -168,6 +168,16 @@ function DialerPageContent() {
     aiAssistant.requestAIAssist(transcript.lines);
   }, [transcript.lines, dialer?.isCallActive]);
 
+  // UI rebind safety — detect if we're mounting into an active call
+  useEffect(() => {
+    if (dialer?.isCallActive) {
+      dialer.logEvent("UI_REBOUND_TO_ACTIVE_CALL", {
+        sessionId: dialer.session?.id,
+        status: dialer.callStatus,
+      });
+    }
+  }, []); // only on mount
+
   // Reset AI on call end
   useEffect(() => {
     if (!dialer?.isCallActive && transcript.status === "stopped") {
