@@ -68,13 +68,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
     }
   };
 
-  logDialerEvent("PROTECTED_ROUTE_RENDER", {
-    hasSession: !!session,
-    loading,
-    securityCheck,
-    tenantValidationError: !!tenantValidationError,
-    requiredRoles: requiredRoles ?? [],
-  });
+  useEffect(() => {
+    logDialerEvent("PROTECTED_ROUTE_RENDER", {
+      hasSession: !!session,
+      loading,
+      securityCheck,
+      tenantValidationError: !!tenantValidationError,
+      requiredRoles: requiredRoles ?? [],
+    });
+  }, [session, loading, securityCheck, tenantValidationError, requiredRoles]);
 
   const showBlockingLoader = !hasSettledAccessRef.current && (loading || (user && securityCheck === "loading"));
 

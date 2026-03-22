@@ -13,8 +13,7 @@
  */
 
 import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
-import { logDialerEvent, useBrowserDialer } from "@/hooks/useBrowserDialer";
-import { useAuth } from "@/contexts/AuthContext";
+import { useBrowserDialer } from "@/hooks/useBrowserDialer";
 import { useLocation } from "react-router-dom";
 
 type DialerContextValue = ReturnType<typeof useBrowserDialer> | null;
@@ -46,7 +45,7 @@ function DialerProviderInner({ children }: { children: ReactNode }) {
       dialer.logEvent("PROVIDER_UNMOUNT_REASON", { mountCount: providerMountCount, route: window.location.pathname });
       dialer.logEvent("PROVIDER_UNMOUNTED", { mountCount: providerMountCount });
     };
-  }, []);
+  }, [dialer.logEvent]);
 
   useEffect(() => {
     dialer.logEvent("PROVIDER_RENDERED", {
@@ -55,7 +54,7 @@ function DialerProviderInner({ children }: { children: ReactNode }) {
       registered: dialer.registered,
       callStatus: dialer.callStatus,
     });
-  }, [location.pathname, dialer.registered, dialer.callStatus]);
+  }, [location.pathname, dialer.registered, dialer.callStatus, dialer.logEvent]);
 
   // Route change detection — proves provider survives navigation
   useEffect(() => {
@@ -71,7 +70,7 @@ function DialerProviderInner({ children }: { children: ReactNode }) {
       });
       prevPathRef.current = location.pathname;
     }
-  }, [location.pathname]);
+  }, [location.pathname, dialer.registered, dialer.callStatus, dialer.logEvent]);
 
   useEffect(() => {
     if (dialer.registered && dialer.diagnostics.clientHealthy) {
@@ -80,7 +79,7 @@ function DialerProviderInner({ children }: { children: ReactNode }) {
         status: dialer.callStatus,
       });
     }
-  }, [dialer.registered]);
+  }, [dialer.registered, dialer.diagnostics.clientHealthy, dialer.callStatus, dialer.logEvent]);
 
   return (
     <BrowserDialerContext.Provider value={dialer}>

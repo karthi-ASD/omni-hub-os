@@ -1,5 +1,4 @@
 import React from "react";
-import { logDialerEvent } from "@/hooks/useBrowserDialer";
 
 interface State {
   hasError: boolean;
@@ -26,15 +25,6 @@ export class AppErrorBoundary extends React.Component<
     const componentStack = info.componentStack ?? "unknown";
     console.error("FULL ERROR:", error);
     console.error("STACK TRACE:", componentStack);
-    try {
-      logDialerEvent("ERROR_BOUNDARY_TRIGGERED", {
-        message: error.message,
-        name: error.name,
-      });
-      logDialerEvent("ERROR_BOUNDARY_COMPONENT_STACK", {
-        stack: componentStack.slice(0, 500),
-      });
-    } catch {}
     this.setState({ errorInfo: componentStack.slice(0, 300) });
   }
 
