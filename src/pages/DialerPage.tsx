@@ -45,6 +45,7 @@ const STATUS_LABELS: Record<BrowserDialerStatus, string> = {
   ended: "Call ended",
   failed: "Call failed",
   permission_denied: "Microphone access denied",
+  auth_required: "🔒 Login required",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -61,6 +62,7 @@ const STATUS_COLORS: Record<string, string> = {
   ended: "bg-muted text-muted-foreground",
   failed: "bg-destructive/20 text-destructive",
   permission_denied: "bg-destructive/20 text-destructive",
+  auth_required: "bg-destructive/20 text-destructive",
 };
 
 interface LeadContext {
@@ -167,7 +169,8 @@ function DialerPageContent() {
 
   const isCallActive = dialer.isCallActive;
   const isCallEnded = dialer.callStatus === "ended" || dialer.callStatus === "failed";
-  const canDial = phoneInput.trim().length > 0 && !dialer.loading && !isCallActive;
+  const isAuthRequired = dialer.callStatus === "auth_required";
+  const canDial = phoneInput.trim().length > 0 && !dialer.loading && !isCallActive && !isAuthRequired;
 
   // Button text logic
   const getCallButtonText = () => {
@@ -195,7 +198,7 @@ function DialerPageContent() {
             <div className="flex items-center gap-1.5">
               <Activity className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-muted-foreground">Build:</span>
-              <span className="font-semibold">stability-v9</span>
+              <span className="font-semibold">stability-v10</span>
             </div>
             <Separator orientation="vertical" className="h-4" />
             <div>
@@ -274,8 +277,21 @@ function DialerPageContent() {
         </div>
       </div>
 
+      {/* Auth required warning */}
+      {dialer.callStatus === "auth_required" && (
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="py-3 flex items-center gap-3">
+            <ShieldAlert className="h-5 w-5 text-destructive shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-destructive">🔒 Please log in to use calling features</p>
+              <p className="text-xs text-muted-foreground">The dialer requires an active user session. Please sign in and refresh this page.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Mic permission warning */}
-      {dialer.micPermission === "denied" && (
+      {dialer.micPermission === "denied" && dialer.callStatus !== "auth_required" && (
         <Card className="border-destructive/50 bg-destructive/5">
           <CardContent className="py-3 flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
@@ -378,97 +394,99 @@ function DialerPageContent() {
         </Card>
 
         {/* CENTER PANEL — Dialer */}
-        <Card className="lg:col-span-1">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2"><Phone className="h-4 w-4" /> Browser Dialer</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center">
-              <Badge className={`${STATUS_COLORS[dialer.callStatus] || "bg-muted text-muted-foreground"} text-sm px-3 py-1`}>
-                {STATUS_LABELS[dialer.callStatus] || dialer.callStatus}
-              </Badge>
-              {isCallActive && <p className="text-2xl font-mono font-bold mt-2 tabular-nums">{dialer.formattedTimer}</p>}
-              {dialer.callStatus === "ringing" && <p className="text-xs text-muted-foreground mt-1 animate-pulse">🔊 Ringback playing</p>}
-              {dialer.diagnostics.destinationNumber && isCallActive && <p className="text-xs font-mono text-muted-foreground mt-1">{dialer.diagnostics.destinationNumber}</p>}
-            </div>
+        <div className="lg:col-span-1 space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2"><Phone className="h-4 w-4" /> Browser Dialer</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-center">
+                <Badge className={`${STATUS_COLORS[dialer.callStatus] || "bg-muted text-muted-foreground"} text-sm px-3 py-1`}>
+                  {STATUS_LABELS[dialer.callStatus] || dialer.callStatus}
+                </Badge>
+                {isCallActive && <p className="text-2xl font-mono font-bold mt-2 tabular-nums">{dialer.formattedTimer}</p>}
+                {dialer.callStatus === "ringing" && <p className="text-xs text-muted-foreground mt-1 animate-pulse">🔊 Ringback playing</p>}
+                {dialer.diagnostics.destinationNumber && isCallActive && <p className="text-xs font-mono text-muted-foreground mt-1">{dialer.diagnostics.destinationNumber}</p>}
+              </div>
 
-            <div className="flex gap-2">
-              <Input value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} placeholder="+61 4XX XXX XXX" className="font-mono text-lg text-center tracking-wider" disabled={isCallActive} onKeyDown={(e) => { if (e.key === "Enter" && canDial) handleDial(); }} />
-              <Button variant="ghost" size="icon" onClick={() => setPhoneInput((p) => p.slice(0, -1))} disabled={isCallActive}><Delete className="h-4 w-4" /></Button>
-            </div>
+              <div className="flex gap-2">
+                <Input value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} placeholder="+61 4XX XXX XXX" className="font-mono text-lg text-center tracking-wider" disabled={isCallActive || isAuthRequired} onKeyDown={(e) => { if (e.key === "Enter" && canDial) handleDial(); }} />
+                <Button variant="ghost" size="icon" onClick={() => setPhoneInput((p) => p.slice(0, -1))} disabled={isCallActive || isAuthRequired}><Delete className="h-4 w-4" /></Button>
+              </div>
 
-            <div className="grid grid-cols-3 gap-2">
-              {DIAL_PAD.flat().map((digit) => (
-                <Button key={digit} variant="outline" className="h-12 text-lg font-mono" onClick={() => handleDialPadPress(digit)} disabled={isCallActive}>{digit}</Button>
-              ))}
-            </div>
+              <div className="grid grid-cols-3 gap-2">
+                {DIAL_PAD.flat().map((digit) => (
+                  <Button key={digit} variant="outline" className="h-12 text-lg font-mono" onClick={() => handleDialPadPress(digit)} disabled={isCallActive || isAuthRequired}>{digit}</Button>
+                ))}
+              </div>
 
-            <div className="flex gap-2 justify-center flex-wrap">
-              {!isCallActive ? (
-                <Button
-                  onClick={handleDial}
-                  disabled={!canDial}
-                  className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[0.97] transition-transform disabled:opacity-50"
-                >
-                  <Phone className="h-4 w-4 mr-2" />
-                  {getCallButtonText()}
-                </Button>
-              ) : (
-                <>
-                  <Button variant="outline" className="h-12" onClick={dialer.toggleMute}>
-                    {dialer.isMuted ? <MicOff className="h-4 w-4 mr-1" /> : <Mic className="h-4 w-4 mr-1" />}
-                    {dialer.isMuted ? "Unmute" : "Mute"}
+              <div className="flex gap-2 justify-center flex-wrap">
+                {!isCallActive ? (
+                  <Button
+                    onClick={handleDial}
+                    disabled={!canDial}
+                    className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[0.97] transition-transform disabled:opacity-50"
+                  >
+                    <Phone className="h-4 w-4 mr-2" />
+                    {getCallButtonText()}
                   </Button>
-                  <Button className="flex-1 h-12 bg-destructive hover:bg-destructive/90 text-destructive-foreground" onClick={dialer.endCall} disabled={dialer.callStatus === "ending"}>
-                    <PhoneOff className="h-4 w-4 mr-2" /> Hang Up
+                ) : (
+                  <>
+                    <Button variant="outline" className="h-12" onClick={dialer.toggleMute}>
+                      {dialer.isMuted ? <MicOff className="h-4 w-4 mr-1" /> : <Mic className="h-4 w-4 mr-1" />}
+                      {dialer.isMuted ? "Unmute" : "Mute"}
+                    </Button>
+                    <Button className="flex-1 h-12 bg-destructive hover:bg-destructive/90 text-destructive-foreground" onClick={dialer.endCall} disabled={dialer.callStatus === "ending"}>
+                      <PhoneOff className="h-4 w-4 mr-2" /> Hang Up
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              {/* Helper text under button */}
+              {(() => {
+                const helper = getCallHelperText();
+                return helper ? (
+                  <p className={`text-xs text-center ${dialer.pendingDial ? "text-amber-600 animate-pulse" : "text-muted-foreground"}`}>
+                    {helper}
+                  </p>
+                ) : null;
+              })()}
+
+              {/* Quick actions */}
+              <div className="flex gap-2 justify-center">
+                {dialer.lastCalledNumber && !isCallActive && (
+                  <Button variant="ghost" size="sm" className="text-xs" onClick={dialer.redialLast}>
+                    <RotateCcw className="h-3 w-3 mr-1" /> Redial {dialer.lastCalledNumber}
                   </Button>
-                </>
-              )}
-            </div>
+                )}
+              </div>
 
-            {/* Helper text under button */}
-            {(() => {
-              const helper = getCallHelperText();
-              return helper ? (
-                <p className={`text-xs text-center ${dialer.pendingDial ? "text-amber-600 animate-pulse" : "text-muted-foreground"}`}>
-                  {helper}
-                </p>
-              ) : null;
-            })()}
+              {/* Audio info */}
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground">🎧 Audio uses your laptop speakers & microphone</p>
+                {(dialer.micPermission === "unknown" || dialer.micPermission === "prompt") ? (
+                  <Button variant="link" size="sm" className="text-xs h-auto p-0 mt-1" onClick={() => dialer.requestMicPermission()}>Grant microphone access</Button>
+                ) : dialer.micPermission === "granted" ? (
+                  <p className="text-xs text-emerald-600 mt-1">✓ Microphone access granted</p>
+                ) : null}
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* Quick actions */}
-            <div className="flex gap-2 justify-center">
-              {dialer.lastCalledNumber && !isCallActive && (
-                <Button variant="ghost" size="sm" className="text-xs" onClick={dialer.redialLast}>
-                  <RotateCcw className="h-3 w-3 mr-1" /> Redial {dialer.lastCalledNumber}
-                </Button>
-              )}
-            </div>
-
-            {/* Audio info */}
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground">🎧 Audio uses your laptop speakers & microphone</p>
-              {(dialer.micPermission === "unknown" || dialer.micPermission === "prompt") ? (
-                <Button variant="link" size="sm" className="text-xs h-auto p-0 mt-1" onClick={() => dialer.requestMicPermission()}>Grant microphone access</Button>
-              ) : dialer.micPermission === "granted" ? (
-                <p className="text-xs text-emerald-600 mt-1">✓ Microphone access granted</p>
-              ) : null}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Call Readiness Panel */}
-        <CallReadinessPanel
-          registered={dialer.registered}
-          micPermission={dialer.micPermission}
-          clientHealthy={dialer.diagnostics.clientHealthy}
-          audioContextState={dialer.diagnostics.latestBrowserMediaStatus}
-          callStatus={dialer.callStatus}
-          logEvent={dialer.logEvent}
-          startCall={dialer.startCall}
-          onReconnect={dialer.reconnectVoice}
-          requestMicPermission={dialer.requestMicPermission}
-        />
+          {/* Call Readiness Panel */}
+          <CallReadinessPanel
+            registered={dialer.registered}
+            micPermission={dialer.micPermission}
+            clientHealthy={dialer.diagnostics.clientHealthy}
+            audioContextState={dialer.diagnostics.latestBrowserMediaStatus}
+            callStatus={dialer.callStatus}
+            logEvent={dialer.logEvent}
+            startCall={dialer.startCall}
+            onReconnect={dialer.reconnectVoice}
+            requestMicPermission={dialer.requestMicPermission}
+          />
+        </div>
 
         {/* RIGHT PANEL — Disposition */}
         <Card className="lg:col-span-1">

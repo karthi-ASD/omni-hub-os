@@ -45,7 +45,8 @@ export type BrowserDialerStatus =
   | "ending"
   | "ended"
   | "failed"
-  | "permission_denied";
+  | "permission_denied"
+  | "auth_required";
 
 export interface DialerLogEntry {
   timestamp: string;
@@ -150,7 +151,7 @@ const INITIAL_STATE: BrowserDialerStoreState = {
   lastActionAt: null,
 };
 
-const BUILD_VERSION = "stability-v9";
+const BUILD_VERSION = "stability-v10";
 type DialerIdentity = { businessId: string; userId: string } | null;
 
 // ─── Global singletons ──────────────────────────────────────────────
@@ -864,7 +865,15 @@ async function initializeVoiceClient() {
       const accessToken = sessionResult.data.session?.access_token;
 
       if (!accessToken) {
-        throw new Error("No active session. Please log in first.");
+        logDialer("NO_ACTIVE_SESSION");
+        setStoreState((c) => ({
+          ...c,
+          status: "auth_required",
+          registered: false,
+          lastError: "Please log in to use calling features.",
+        }));
+        sdkInitStarted = false;
+        return;
       }
 
       const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dialer-browser-token`;
