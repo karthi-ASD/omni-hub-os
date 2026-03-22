@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import AuthDiagnostics from "@/components/AuthDiagnostics";
+import { logDialerEvent } from "@/hooks/useBrowserDialer";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -67,7 +68,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
     }
   };
 
-  console.log("PROTECTED ROUTE RENDER", {
+  logDialerEvent("PROTECTED_ROUTE_RENDER", {
     hasSession: !!session,
     loading,
     securityCheck,

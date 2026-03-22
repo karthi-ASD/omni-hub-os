@@ -16,6 +16,7 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { BroadcastPopup } from "@/components/notifications/BroadcastPopup";
 import { useActivityTracking } from "@/hooks/useActivityTracking";
+import { logDialerEvent } from "@/hooks/useBrowserDialer";
 import { useEffect, useRef } from "react";
 
 const shellMeta = {
@@ -56,13 +57,42 @@ const AppShell = () => {
   const hideChatWidget = location.pathname.startsWith("/sales/dialer") || location.pathname.startsWith("/dialer");
 
   const shellRenderCount = useRef(0);
+  const prevPathRef = useRef(location.pathname);
+  const hasStableShellRef = useRef(false);
+  const stableShellRef = useRef<{ shell: keyof typeof shellMeta; businessId: string | null; businessName: string | null } | null>(null);
   shellRenderCount.current++;
 
   useEffect(() => {
-    console.log("[DIALER]", new Date().toISOString(), "APP_SHELL_RENDERED", { renderCount: shellRenderCount.current, dashboardShell, pathname: window.location.pathname });
-  }, [dashboardShell, businessId, activeBusinessName]);
+    logDialerEvent("APP_SHELL_RENDER_START", { renderCount: shellRenderCount.current, dashboardShell, pathname: window.location.pathname, isAuthResolved, businessId });
+    if (isAuthResolved) {
+      hasStableShellRef.current = true;
+      stableShellRef.current = { shell: dashboardShell, businessId, businessName: activeBusinessName };
+      logDialerEvent("APP_SHELL_RENDER_SUCCESS", { renderCount: shellRenderCount.current, dashboardShell, pathname: window.location.pathname });
+    } else if (hasStableShellRef.current) {
+      logDialerEvent("APP_SHELL_BLANK_SCREEN_GUARD_TRIGGERED", { pathname: window.location.pathname });
+    } else {
+      logDialerEvent("APP_SHELL_RENDER_BLOCKED_REASON", { reason: "auth_not_resolved_initial", pathname: window.location.pathname });
+    }
+  }, [dashboardShell, businessId, activeBusinessName, isAuthResolved]);
 
-  if (!isAuthResolved) {
+  useEffect(() => {
+    if (prevPathRef.current !== location.pathname) {
+      logDialerEvent("ROUTE_CHANGE_DETECTED", { from: prevPathRef.current, to: location.pathname });
+      logDialerEvent("APP_SHELL_STILL_MOUNTED_AFTER_ROUTE_CHANGE", { renderCount: shellRenderCount.current, to: location.pathname });
+      logDialerEvent("ROUTE_TREE_REBUILT", { from: prevPathRef.current, to: location.pathname });
+      prevPathRef.current = location.pathname;
+    }
+  }, [location.pathname]);
+
+  const effectiveShell = isAuthResolved ? dashboardShell : (stableShellRef.current?.shell ?? dashboardShell);
+  const effectiveBusinessId = isAuthResolved ? businessId : (stableShellRef.current?.businessId ?? businessId);
+  const effectiveBusinessName = isAuthResolved ? activeBusinessName : (stableShellRef.current?.businessName ?? activeBusinessName);
+  const effectiveShellInfo = shellMeta[effectiveShell];
+  const effectiveShellTitle = effectiveShell === "client_business" || effectiveShell === "client_portal"
+    ? effectiveBusinessName || effectiveShellInfo.title
+    : effectiveShellInfo.title;
+
+  if (!isAuthResolved && !hasStableShellRef.current) {
     return <ShellLoading />;
   }
 
@@ -76,9 +106,9 @@ const AppShell = () => {
         <FloatingActionButton />
         <BottomNav />
         <BroadcastPopup />
-        {businessId && !hideChatWidget && (
+        {effectiveBusinessId && !hideChatWidget && (
           <ChatWidget
-            businessId={businessId}
+            businessId={effectiveBusinessId}
             title="AI Support"
             subtitle="Powered by AI • Ask anything"
           />
@@ -99,8 +129,8 @@ const AppShell = () => {
                 <div className="flex items-center gap-3 min-w-0">
                   <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
                   <div className="min-w-0 hidden md:block">
-                    <p className="text-sm font-semibold text-foreground truncate">{shellTitle}</p>
-                    <p className="text-[11px] text-muted-foreground truncate">{shellInfo.subtitle}</p>
+                      <p className="text-sm font-semibold text-foreground truncate">{effectiveShellTitle}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{effectiveShellInfo.subtitle}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -117,9 +147,9 @@ const AppShell = () => {
             </div>
             <FloatingDialer />
             <BroadcastPopup />
-            {businessId && !hideChatWidget && (
+            {effectiveBusinessId && !hideChatWidget && (
               <ChatWidget
-                businessId={businessId}
+                businessId={effectiveBusinessId}
                 title="AI Support"
                 subtitle="Powered by AI • Ask anything"
               />
