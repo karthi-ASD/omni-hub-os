@@ -4,6 +4,9 @@ import { CLIENT_ONLY_ROUTES, STAFF_ONLY_ROUTES } from "@/lib/role-resolver";
 
 const TENANT_ALLOWED_PREFIXES = [
   "/dashboard",
+  "/dialer",
+  "/sales/dialer",
+  "/sales/dialer-dashboard",
   "/my-billing",
   "/my-package",
   "/invoices",

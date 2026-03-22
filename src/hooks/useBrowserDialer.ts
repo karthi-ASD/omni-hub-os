@@ -118,7 +118,7 @@ interface PendingDialIntent {
   expiresAt?: number;
 }
 
-type AudioReadyStatus = "audio_not_initialized" | "audio_resume_pending" | "audio_blocked_by_browser" | "audio_ready";
+type AudioReadyStatus = "audio_not_initialized" | "audio_resume_pending" | "audio_blocked_by_browser" | "audio_ready" | "audio_ready_degraded";
 
 interface BrowserDialerStoreState {
   status: BrowserDialerStatus;
@@ -699,6 +699,10 @@ async function resumeAudioContext() {
   return ctx;
 }
 
+function canUseDegradedAudioMode(ctx: AudioContext | null) {
+  return !!ctx && ctx.state === "running" && storeState.micPermission === "granted";
+}
+
 // ─── Ringback ───────────────────────────────────────────────────────
 async function playRingback() {
   try {
@@ -907,6 +911,7 @@ function sanitizeStaleState() {
 // ─── Audio output initialization ────────────────────────────────────
 async function initializeAudioOutput(): Promise<boolean> {
   try {
+    logDialer("AUDIO_UNLOCK_STARTED");
     const audio = new Audio();
     audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
     audio.volume = 0.01;
@@ -930,19 +935,58 @@ async function initializeAudioOutput(): Promise<boolean> {
     } catch {}
 
     if (!playbackWorked) {
-      setStoreState((c) => ({ ...c, audioReady: false, audioStatus: "audio_blocked_by_browser" }));
+      const ctx = getAudioContext();
+      if (canUseDegradedAudioMode(ctx)) {
+        setStoreState((c) => ({
+          ...c,
+          audioReady: true,
+          audioStatus: "audio_ready_degraded",
+          audioElementsAttached: true,
+          audioPlayable: false,
+          latestBrowserMediaStatus: "audio_output_degraded",
+        }));
+        logDialer("AUDIO_OUTPUT_TEST_RESULT", { status: "blocked_but_degraded_ready", audioContextState: ctx?.state ?? "unknown" });
+        logDialer("AUDIO_GATE_TOO_STRICT", { enabledFallback: true });
+        logDialer("AUDIO_UNLOCK_FINAL_STATE", { ready: true, mode: "degraded" });
+        void maybeResumeQueuedCall("audio_output_degraded_ready");
+        return true;
+      }
+
+      setStoreState((c) => ({ ...c, audioReady: false, audioStatus: "audio_blocked_by_browser", latestBrowserMediaStatus: "audio_output_blocked" }));
+      logDialer("AUDIO_OUTPUT_TEST_RESULT", { status: "blocked", audioContextState: ctx?.state ?? "unknown" });
       logDialer("AUDIO_BLOCKED_BY_BROWSER");
       logDialer("AUDIO_OUTPUT_BLOCKED");
+      logDialer("AUDIO_UNLOCK_FINAL_STATE", { ready: false, mode: "blocked" });
       return false;
     }
 
     logDialer("AUDIO_OUTPUT_READY");
     logDialer("AUDIO_READY_CONFIRMED");
-    setStoreState((c) => ({ ...c, audioReady: true, audioStatus: "audio_ready" }));
+    logDialer("AUDIO_OUTPUT_TEST_RESULT", { status: "success" });
+    setStoreState((c) => ({ ...c, audioReady: true, audioStatus: "audio_ready", latestBrowserMediaStatus: "audio_output_ready" }));
+    logDialer("AUDIO_UNLOCK_FINAL_STATE", { ready: true, mode: "success" });
     void maybeResumeQueuedCall("audio_output_ready");
     return true;
   } catch (e) {
+    const ctx = getAudioContext();
+    if (canUseDegradedAudioMode(ctx)) {
+      setStoreState((c) => ({
+        ...c,
+        audioReady: true,
+        audioStatus: "audio_ready_degraded",
+        audioElementsAttached: true,
+        audioPlayable: false,
+        latestBrowserMediaStatus: "audio_output_exception_degraded",
+      }));
+      logDialer("AUDIO_OUTPUT_TEST_RESULT", { status: "exception_degraded", error: e instanceof Error ? e.message : String(e) });
+      logDialer("AUDIO_GATE_TOO_STRICT", { enabledFallback: true, reason: "exception" });
+      logDialer("AUDIO_UNLOCK_FINAL_STATE", { ready: true, mode: "degraded" });
+      void maybeResumeQueuedCall("audio_output_exception_degraded");
+      return true;
+    }
+
     logDialer("AUDIO_OUTPUT_FALLBACK", { error: e instanceof Error ? e.message : String(e) });
+    logDialer("AUDIO_UNLOCK_FINAL_STATE", { ready: false, mode: "failed" });
     return false;
   }
 }
@@ -990,7 +1034,7 @@ async function executeOutboundCall(intent: PendingDialIntent) {
     const audioOk = await initializeAudioOutput();
     if (!audioOk) {
       logDialer("CALL_BLOCKED_AUDIO_PLAYBACK_FAILED");
-      toast.error("Audio blocked by browser. Click anywhere and retry.");
+      toast.error("Audio blocked by browser. Interact with the page, then click Enable Browser Audio again.");
       setStoreState((c) => ({ ...c, loading: false, dialLock: false }));
       return;
     }
@@ -1648,17 +1692,30 @@ export function useBrowserDialer() {
   const requestMicPermission = useCallback(async () => requestMicrophonePermissionInternal(), []);
 
   const unlockAudio = useCallback(async () => {
+    logDialer("AUDIO_ENABLE_BUTTON_CLICKED");
     logDialer("AUDIO_RESUME_TRIGGERED_BY_USER", { source: "manual_unlock_action" });
-    await resumeAudioContext();
+    if (storeState.micPermission !== "granted") {
+      const granted = await requestMicrophonePermissionInternal();
+      if (!granted) {
+        logDialer("AUDIO_UNLOCK_FINAL_STATE", { ready: false, mode: "mic_denied" });
+        return { ready: false, status: storeState.audioStatus };
+      }
+    }
+
+    const ctx = await resumeAudioContext();
+    logDialer("AUDIO_CONTEXT_RESUME_RESULT", { state: ctx?.state ?? "unavailable" });
     const ready = await initializeAudioOutput();
     if (ready) {
-      logDialer("AUDIO_RESUME_COMPLETED", { source: "manual_unlock_action" });
-      toast.success("Audio enabled. Resuming queued call if ready.");
+      const status = storeState.audioStatus;
+      logDialer("AUDIO_READY_UI_UPDATED", { ready: storeState.audioReady, status });
+      logDialer("CALL_READY_AFTER_AUDIO_UNLOCK", { status });
+      logDialer("AUDIO_RESUME_COMPLETED", { source: "manual_unlock_action", status });
+      toast.success(status === "audio_ready_degraded" ? "Audio ready. You can place calls in fallback mode." : "Audio ready. You can place calls.");
       void maybeResumeQueuedCall("manual_unlock_action");
-      return true;
+      return { ready: true, status };
     }
-    toast.error("Browser audio is blocked. Click anywhere and retry.");
-    return false;
+    toast.error("Browser blocked audio. Interact with the page, then click Enable Browser Audio again.");
+    return { ready: false, status: storeState.audioStatus };
   }, []);
 
   const startCall = useCallback(async (phoneNumber: string, leadId?: string, clientId?: string) => {
@@ -1717,7 +1774,8 @@ export function useBrowserDialer() {
       logDialer("CALL_QUEUED_BEFORE_REGISTER", { destination: phoneNumber.trim(), reason: finalReadiness.reason });
       storeQueuedCall(intent, finalReadiness.reason);
       if (finalReadiness.reason === "audio_not_ready") {
-        toast.error("Browser audio is blocked. Click to enable audio, then retry.");
+        logDialer("CALL_BLOCKED_AUDIO_NOT_READY", { audioStatus: storeState.audioStatus });
+        toast.error("Browser audio is blocked. Click Enable Browser Audio to continue.");
       } else {
         toast.info("Call queued. It will auto-dial as soon as the voice service is ready.");
       }
