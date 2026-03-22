@@ -1641,7 +1641,12 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
     let dbStatus: string = "failed";
     let logEvent: string = "CALL_FAILED";
 
-    if (reasonLower.includes("busy")) {
+    if (reasonLower.includes("invalid") && (reasonLower.includes("xml") || reasonLower.includes("answer"))) {
+      classifiedCause = "invalid_answer_xml";
+      userMessage = "Call failed because the provider rejected malformed Answer XML. Check edge function XML escaping.";
+      dbStatus = "failed";
+      logEvent = "CALL_FAILED_INVALID_XML";
+    } else if (reasonLower.includes("busy")) {
       if (!hadRinging && elapsed < 5000) {
         // BUSY before ringing within 5s = likely provider/caller-ID/routing issue, NOT real user busy
         classifiedCause = "provider_rejected_before_ringing";
