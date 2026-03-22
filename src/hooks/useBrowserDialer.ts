@@ -206,7 +206,7 @@ const INITIAL_STATE: BrowserDialerStoreState = {
   audioStatus: "audio_not_initialized",
 };
 
-const BUILD_VERSION = "stability-v18";
+const BUILD_VERSION = "stability-v19";
 const DEPLOYED_AT = "2026-03-22T23:00:00Z";
 type DialerIdentity = { businessId: string; userId: string } | null;
 
@@ -580,6 +580,8 @@ async function fetchBrowserToken(context: "init" | "test" = "test") {
   return { ...data, url: functionUrl, status: res.status };
 }
 
+let loginSafetyTimeoutRef: number | null = null;
+
 function scheduleLogin(reason: string, username: string, password: string, delayMs = 0) {
   if (!plivoInstanceRef?.client) {
     logDialer("LOGIN_SKIPPED", { reason: "missing_client", requestedBy: reason });
@@ -606,6 +608,32 @@ function scheduleLogin(reason: string, username: string, password: string, delay
     setStoreState((c) => ({ ...c, plivoClientInitStatus: "logging_in", status: "registering" }));
     logDialer("PLIVO_LOGIN_CALLING", { reason });
     plivoInstanceRef.client.login(username, password);
+
+    // ── SAFETY NET: If onLogin/onLoginFailed never fires (e.g. "Already registered"),
+    // resolve state after a timeout by checking actual connection status ──
+    if (loginSafetyTimeoutRef) clearTimeout(loginSafetyTimeoutRef);
+    loginSafetyTimeoutRef = window.setTimeout(() => {
+      loginSafetyTimeoutRef = null;
+      if (!loginInProgress) return; // Already resolved by onLogin/onLoginFailed
+      logDialer("LOGIN_SAFETY_TIMEOUT", {
+        registered: storeState.registered,
+        connectionState: storeState.connectionState,
+        hasClient: !!plivoInstanceRef?.client,
+      });
+      loginInProgress = false;
+      // If the connection is alive, the SDK accepted the login silently ("Already registered")
+      if (storeState.connectionState === "connected" && isClientHealthy()) {
+        logDialer("LOGIN_SAFETY_FORCE_REGISTERED", { reason: "connection_alive_after_timeout" });
+        setStoreState((c) => ({
+          ...c,
+          registered: true,
+          status: c.micPermission === "granted" ? "device_ready" : "registered",
+          lastError: null,
+          plivoClientInitStatus: "registered",
+        }));
+        void maybeResumeQueuedCall("login_safety_registered");
+      }
+    }, 5000);
   };
 
   if (delayMs > 0) {
@@ -870,10 +898,26 @@ function handleVisibilityChange() {
     return;
   }
 
-  // If not registered but client exists, force re-login
-  if (!storeState.registered && healthy && !recoveryInProgress && lastLoginCredentials) {
-    logDialer("REINIT_AFTER_TAB_RETURN", { reason: "not_registered_but_client_exists" });
-    scheduleLogin("tab_return", lastLoginCredentials.username, lastLoginCredentials.password, 500);
+  // If not registered but client exists AND connection is alive, force registered state
+  // This handles the "Already registered" SDK warning case on tab return
+  if (!storeState.registered && healthy && !recoveryInProgress) {
+    if (storeState.connectionState === "connected") {
+      logDialer("TAB_RETURN_FORCE_REGISTERED", { reason: "connection_alive_and_healthy" });
+      loginInProgress = false;
+      if (loginSafetyTimeoutRef) { clearTimeout(loginSafetyTimeoutRef); loginSafetyTimeoutRef = null; }
+      setStoreState((c) => ({
+        ...c,
+        registered: true,
+        status: c.micPermission === "granted" ? "device_ready" : "registered",
+        lastError: null,
+        plivoClientInitStatus: "registered",
+      }));
+      return;
+    }
+    if (lastLoginCredentials) {
+      logDialer("REINIT_AFTER_TAB_RETURN", { reason: "not_registered_but_client_exists" });
+      scheduleLogin("tab_return", lastLoginCredentials.username, lastLoginCredentials.password, 500);
+    }
     return;
   }
 
@@ -1177,6 +1221,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   instance.client.on("onLogin", () => {
     if (!guard()) return;
     loginInProgress = false;
+    if (loginSafetyTimeoutRef) { clearTimeout(loginSafetyTimeoutRef); loginSafetyTimeoutRef = null; }
     clearReloginTimeout();
     // Capture pending BEFORE clearing — read both sources
     const pending = modulePendingDial || storeState.pendingDialIntent;
@@ -1210,6 +1255,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   instance.client.on("onLoginFailed", (cause: string) => {
     if (!guard()) return;
     loginInProgress = false;
+    if (loginSafetyTimeoutRef) { clearTimeout(loginSafetyTimeoutRef); loginSafetyTimeoutRef = null; }
     logDialer("VOICE_REGISTRATION_FAILED_FULL", { reason: cause, retryCount: registrationRetryCount });
 
     if (registrationRetryCount < MAX_REGISTRATION_RETRIES && lastLoginCredentials) {
@@ -1237,13 +1283,29 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   instance.client.on("onConnectionChange", (conn) => {
     if (!guard()) return;
     const connState = conn?.state || "unknown";
-    logDialer("PLIVO_CONNECTION_CHANGE", { state: connState });
+    logDialer("PLIVO_CONNECTION_CHANGE", { state: connState, wasRegistered: storeState.registered, wasLoginInProgress: loginInProgress });
     setStoreState((c) => ({ ...c, connectionState: connState }));
 
     if (connState === "connected") {
       lastConnectedAt = Date.now();
-      loginInProgress = false;
       clearReloginTimeout();
+      // ── CRITICAL FIX: If connection is "connected", the SIP registration succeeded.
+      // The SDK may not fire onLogin again if it was "Already registered".
+      // Force registered=true if not already set. ──
+      if (!storeState.registered) {
+        logDialer("CONNECTION_CONNECTED_FORCE_REGISTERED", { wasLoginInProgress: loginInProgress });
+        loginInProgress = false;
+        if (loginSafetyTimeoutRef) { clearTimeout(loginSafetyTimeoutRef); loginSafetyTimeoutRef = null; }
+        setStoreState((c) => ({
+          ...c,
+          registered: true,
+          status: c.micPermission === "granted" ? "device_ready" : "registered",
+          lastError: null,
+          plivoClientInitStatus: "registered",
+        }));
+      } else {
+        loginInProgress = false;
+      }
       void maybeResumeQueuedCall("connection_connected");
     }
 
