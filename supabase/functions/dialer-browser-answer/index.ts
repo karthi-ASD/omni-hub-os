@@ -35,6 +35,10 @@ function normalizeDestination(raw: string): string {
   return destination.replace(/[^\d+]/g, "");
 }
 
+// STATIC_XML_TEST: Set to true to bypass all dynamic logic and return hardcoded XML
+// This isolates whether the issue is in our logic vs Plivo app config
+const STATIC_XML_TEST = false;
+
 function buildXml(destination: string, callerId: string, sessionId: string) {
   const webhookSecret = Deno.env.get("PLIVO_WEBHOOK_SECRET") || "";
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -43,7 +47,17 @@ function buildXml(destination: string, callerId: string, sessionId: string) {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Dial answerOnBridge="true" callerId="${callerId}" record="true" recordingCallbackUrl="${recordingCallbackUrl}" recordingCallbackMethod="POST" action="${hangupUrl}" method="POST" ringTone="us">
+  <Dial callerId="${callerId}" answerOnBridge="true" record="true" recordingCallbackUrl="${recordingCallbackUrl}" recordingCallbackMethod="POST" action="${hangupUrl}" method="POST">
+    <Number>${destination}</Number>
+  </Dial>
+</Response>`;
+}
+
+function buildStaticTestXml(destination: string, callerId: string) {
+  // Minimal Plivo XML — no webhooks, no recording, no extras
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Dial callerId="${callerId}">
     <Number>${destination}</Number>
   </Dial>
 </Response>`;
