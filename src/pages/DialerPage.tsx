@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useDialerContext } from "@/contexts/BrowserDialerContext";
 import type { BrowserDialerStatus } from "@/hooks/useBrowserDialer";
 import { useCallTranscript } from "@/hooks/useCallTranscript";
@@ -83,6 +83,7 @@ interface LeadContext {
 
 function DialerPageContent() {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const { profile } = useAuth();
   const dialer = useDialerContext();
 
@@ -123,6 +124,41 @@ function DialerPageContent() {
   });
   const [audioUnlocking, setAudioUnlocking] = useState(false);
 
+  useEffect(() => {
+    const route = `${location.pathname}${location.search}`;
+    console.log("DIALER_PAGE_MOUNTED", { route });
+    sessionStorage.setItem("last_authenticated_route", route);
+    console.log("LAST_ROUTE_SAVED", { route });
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        console.warn("DIALER_PAGE_VISIBILITY_HIDDEN", { route });
+        return;
+      }
+
+      console.log("DIALER_PAGE_VISIBILITY_VISIBLE", { route });
+      if (window.location.pathname === "/sales/dialer" || window.location.pathname === "/dialer") {
+        console.log("DIALER_ROUTE_STILL_ACTIVE_ON_TAB_RETURN", { route: window.location.pathname + window.location.search });
+        console.log("DIALER_VIEW_RESTORED_AFTER_TAB_RETURN", {
+          callStatus: dialer?.callStatus ?? null,
+          audioStatus: dialer?.audioStatus ?? null,
+        });
+      } else {
+        console.error("TAB_RETURN_DIALER_BLANK_GUARD", {
+          expectedRoute: route,
+          currentRoute: window.location.pathname + window.location.search,
+        });
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      console.warn("DIALER_PAGE_UNMOUNTED", { route });
+      console.error("DIALER_PAGE_UNMOUNT_REASON", { route, currentRoute: window.location.pathname + window.location.search });
+    };
+  }, [location.pathname, location.search]);
+
   // Persist drafts to sessionStorage (survives route changes)
   useEffect(() => {
     sessionStorage.setItem("dialer_phone_draft", phoneInput);
@@ -157,6 +193,43 @@ function DialerPageContent() {
   useEffect(() => {
     sessionStorage.setItem("dialer_wrapup_draft", wrapUpDraft);
   }, [wrapUpDraft]);
+
+  useEffect(() => {
+    try {
+      const route = `${location.pathname}${location.search}`;
+      sessionStorage.setItem("last_authenticated_route", route);
+      sessionStorage.setItem("dialer_view_state", JSON.stringify({
+        route,
+        phoneInput,
+        notesInput,
+        leadContext,
+        followUpDate: followUpDate?.toISOString() ?? null,
+        showFollowUp,
+        rightTab,
+        dispositionDraft,
+        callbackReason,
+        wrapUpDraft,
+        pendingDial: dialer?.pendingDial ?? null,
+        pendingDialReason: dialer?.pendingDialReason ?? null,
+        audioStatus: dialer?.audioStatus ?? null,
+        callStatus: dialer?.callStatus ?? null,
+      }));
+      console.log("DIALER_VIEW_STATE_SAVED", { route, callStatus: dialer?.callStatus ?? null, audioStatus: dialer?.audioStatus ?? null });
+    } catch (error) {
+      console.error("DIALER_VIEW_RESTORE_FAILED", { error: error instanceof Error ? error.message : String(error) });
+    }
+  }, [location.pathname, location.search, phoneInput, notesInput, leadContext, followUpDate, showFollowUp, rightTab, dispositionDraft, callbackReason, wrapUpDraft, dialer?.pendingDial, dialer?.pendingDialReason, dialer?.audioStatus, dialer?.callStatus]);
+
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem("dialer_view_state");
+      if (!saved) return;
+      console.log("DIALER_VIEW_STATE_RESTORED", { route: `${location.pathname}${location.search}` });
+      console.log("DIALER_ROUTE_RESTORED", { route: `${location.pathname}${location.search}` });
+    } catch (error) {
+      console.error("DIALER_VIEW_RESTORE_FAILED", { error: error instanceof Error ? error.message : String(error) });
+    }
+  }, [location.pathname, location.search]);
 
   // Live transcript — safe when dialer is null
   const noopLog = useRef((_e: string, _d?: Record<string, unknown>) => {}).current;
@@ -308,19 +381,21 @@ function DialerPageContent() {
     setAudioUnlocking(true);
     try {
       const result = await dialer.unlockAudio();
-      console.log(result ? "AUDIO_UNLOCK_SUCCEEDED" : "AUDIO_UNLOCK_FAILED");
+      console.log(result.ready ? "AUDIO_UNLOCK_SUCCEEDED" : "AUDIO_UNLOCK_FAILED", result);
     } finally {
       setAudioUnlocking(false);
     }
   };
 
   const getCallHelperText = () => {
+    if (dialer.audioStatus === "audio_ready_degraded") return "Audio ready. You can place calls. Browser speaker verification was blocked, so fallback mode is active.";
     if (dialer.pendingDial && dialer.pendingDialReason === "audio_not_ready") return "Browser audio is blocked. Click the button below to enable audio, then the queued call will resume automatically.";
     if (dialer.pendingDial) return "Call queued. It will auto-dial as soon as the voice service is ready.";
     if (dialer.callStatus === "registering" || dialer.callStatus === "initializing") return "Waiting for voice registration…";
     if (!dialer.registered && dialer.callStatus !== "failed") return "Connecting to voice service…";
-    if (!dialer.audioReady) return "Browser audio needs to be enabled before you can make calls.";
-    if (dialer.registered && dialer.micPermission === "granted") return "Ready to call";
+    if (dialer.audioStatus === "audio_blocked_by_browser") return "Browser blocked audio. Interact with the page, then click Enable Browser Audio again.";
+    if (!dialer.audioReady) return "Audio is not ready yet. Click Enable Browser Audio to unlock calling.";
+    if (dialer.registered && dialer.micPermission === "granted") return "Audio ready. You can place calls.";
     if (dialer.micPermission !== "granted") return "Microphone access required";
     return null;
   };
