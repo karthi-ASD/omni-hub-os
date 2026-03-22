@@ -580,6 +580,8 @@ async function fetchBrowserToken(context: "init" | "test" = "test") {
   return { ...data, url: functionUrl, status: res.status };
 }
 
+let loginSafetyTimeoutRef: number | null = null;
+
 function scheduleLogin(reason: string, username: string, password: string, delayMs = 0) {
   if (!plivoInstanceRef?.client) {
     logDialer("LOGIN_SKIPPED", { reason: "missing_client", requestedBy: reason });
@@ -606,6 +608,32 @@ function scheduleLogin(reason: string, username: string, password: string, delay
     setStoreState((c) => ({ ...c, plivoClientInitStatus: "logging_in", status: "registering" }));
     logDialer("PLIVO_LOGIN_CALLING", { reason });
     plivoInstanceRef.client.login(username, password);
+
+    // ── SAFETY NET: If onLogin/onLoginFailed never fires (e.g. "Already registered"),
+    // resolve state after a timeout by checking actual connection status ──
+    if (loginSafetyTimeoutRef) clearTimeout(loginSafetyTimeoutRef);
+    loginSafetyTimeoutRef = window.setTimeout(() => {
+      loginSafetyTimeoutRef = null;
+      if (!loginInProgress) return; // Already resolved by onLogin/onLoginFailed
+      logDialer("LOGIN_SAFETY_TIMEOUT", {
+        registered: storeState.registered,
+        connectionState: storeState.connectionState,
+        hasClient: !!plivoInstanceRef?.client,
+      });
+      loginInProgress = false;
+      // If the connection is alive, the SDK accepted the login silently ("Already registered")
+      if (storeState.connectionState === "connected" && isClientHealthy()) {
+        logDialer("LOGIN_SAFETY_FORCE_REGISTERED", { reason: "connection_alive_after_timeout" });
+        setStoreState((c) => ({
+          ...c,
+          registered: true,
+          status: c.micPermission === "granted" ? "device_ready" : "registered",
+          lastError: null,
+          plivoClientInitStatus: "registered",
+        }));
+        void maybeResumeQueuedCall("login_safety_registered");
+      }
+    }, 5000);
   };
 
   if (delayMs > 0) {
