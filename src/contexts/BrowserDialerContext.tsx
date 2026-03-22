@@ -55,7 +55,7 @@ function DialerProviderInner({ children }: { children: ReactNode }) {
       registered: dialer.registered,
       callStatus: dialer.callStatus,
     });
-  });
+  }, [location.pathname, dialer.registered, dialer.callStatus]);
 
   // Route change detection — proves provider survives navigation
   useEffect(() => {
