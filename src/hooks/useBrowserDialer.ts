@@ -1367,12 +1367,15 @@ export function useBrowserDialer() {
   const requestMicPermission = useCallback(async () => requestMicrophonePermissionInternal(), []);
 
   const startCall = useCallback(async (phoneNumber: string, leadId?: string, clientId?: string) => {
+    const readiness = canPlaceCall();
     logDialer("START_CALL_ENTERED", {
       rawPhoneNumber: phoneNumber,
       leadId: leadId ?? null,
       registered: storeState.registered,
       status: storeState.status,
       loading: storeState.loading,
+      canPlaceCall: readiness.ready,
+      readinessReason: readiness.reason,
     });
 
     if (!profile?.business_id) {
@@ -1389,6 +1392,12 @@ export function useBrowserDialer() {
       toast.warning("A call is already active.");
       return;
     }
+    // Block during registering/initializing — these are NOT ready states
+    if (["registering", "initializing"].includes(storeState.status)) {
+      logDialer("CALL_BLOCKED_STATUS_REGISTERING", { status: storeState.status });
+      toast.warning("Voice service still connecting. Please wait.");
+      return;
+    }
     if (!phoneNumber.trim()) {
       logDialer("CALL_BLOCKED", { reason: "empty_number" });
       toast.error("Please enter a phone number.");
@@ -1403,8 +1412,9 @@ export function useBrowserDialer() {
 
     const intent: PendingDialIntent = { phoneNumber: phoneNumber.trim(), leadId, clientId };
 
-    if (!storeState.registered || !plivoInstanceRef?.client) {
-      logDialer("CALL_QUEUED_BEFORE_REGISTER", { destination: phoneNumber.trim() });
+    // Full readiness check — not just registered boolean
+    if (!readiness.ready) {
+      logDialer("CALL_QUEUED_BEFORE_REGISTER", { destination: phoneNumber.trim(), reason: readiness.reason });
       modulePendingDial = intent;
       setStoreState((c) => ({ ...c, pendingDialIntent: intent }));
       toast.info("Call queued — waiting for voice registration…");
