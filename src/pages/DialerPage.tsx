@@ -246,6 +246,8 @@ function DialerPageContent() {
     setNotesInput("");
     sessionStorage.removeItem("dialer_notes_draft");
     sessionStorage.removeItem("dialer_phone_draft");
+    sessionStorage.removeItem("dialer_followup_draft");
+    sessionStorage.removeItem("dialer_show_followup");
   };
 
   const handleFollowUpSubmit = async () => {
@@ -254,6 +256,8 @@ function DialerPageContent() {
     setNotesInput("");
     sessionStorage.removeItem("dialer_notes_draft");
     sessionStorage.removeItem("dialer_phone_draft");
+    sessionStorage.removeItem("dialer_followup_draft");
+    sessionStorage.removeItem("dialer_show_followup");
     setFollowUpDate(undefined);
     setShowFollowUp(false);
   };
