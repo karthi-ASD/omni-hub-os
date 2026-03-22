@@ -551,6 +551,7 @@ async function executeOutboundCall(intent: PendingDialIntent) {
     await setAgentAvailability("on_call");
 
     logDialer("CALL_DIAL_START", { destinationNumber: normalizedPhone, sessionId: sess.id });
+    logDialer("PLIVO_CALL_INVOKING_NOW", { destination: normalizedPhone });
 
     plivoInstanceRef.client.call(normalizedPhone, { "X-PH-SessionId": sess.id });
 
