@@ -16,7 +16,7 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { BroadcastPopup } from "@/components/notifications/BroadcastPopup";
 import { useActivityTracking } from "@/hooks/useActivityTracking";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 const shellMeta = {
   super_admin: {
