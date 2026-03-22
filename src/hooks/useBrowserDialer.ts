@@ -865,7 +865,15 @@ async function initializeVoiceClient() {
       const accessToken = sessionResult.data.session?.access_token;
 
       if (!accessToken) {
-        throw new Error("No active session. Please log in first.");
+        logDialer("NO_ACTIVE_SESSION");
+        setStoreState((c) => ({
+          ...c,
+          status: "auth_required",
+          registered: false,
+          lastError: "Please log in to use calling features.",
+        }));
+        sdkInitStarted = false;
+        return;
       }
 
       const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dialer-browser-token`;
