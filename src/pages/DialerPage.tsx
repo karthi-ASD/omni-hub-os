@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useBrowserDialer, type BrowserDialerStatus } from "@/hooks/useBrowserDialer";
+import { useDialerContext } from "@/contexts/BrowserDialerContext";
+import type { BrowserDialerStatus } from "@/hooks/useBrowserDialer";
 import { useCallTranscript } from "@/hooks/useCallTranscript";
 import { useAICallAssistant } from "@/hooks/useAICallAssistant";
 import { useDialerAccess } from "@/hooks/useDialerAccess";
