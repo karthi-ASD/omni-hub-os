@@ -39,6 +39,24 @@ function normalizeDestination(raw: string): string {
 // This isolates whether the issue is in our logic vs Plivo app config
 const STATIC_XML_TEST = false;
 
+/** Escape a string for use inside an XML attribute value */
+function escapeXmlAttr(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+/** Escape a string for use as XML text content */
+function escapeXmlText(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 function buildXml(destination: string, callerId: string, sessionId: string) {
   const webhookSecret = Deno.env.get("PLIVO_WEBHOOK_SECRET") || "";
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -53,13 +71,30 @@ function buildXml(destination: string, callerId: string, sessionId: string) {
   // Log exact XML inputs for debugging
   console.log("XML_DIAL_CALLER_ID", { callerId, callerIdLength: callerId.length });
   console.log("XML_DIAL_DESTINATION", { destination, destinationLength: destination.length });
+  console.log("XML_ACTION_URL", hangupUrl);
+  console.log("XML_RECORDING_CALLBACK_URL", recordingCallbackUrl);
 
-  return `<?xml version="1.0" encoding="UTF-8"?>
+  // XML-escape ALL dynamic values to prevent invalid XML (& must be &amp; in attributes)
+  const safeCallerId = escapeXmlAttr(callerId);
+  const safeRecordingUrl = escapeXmlAttr(recordingCallbackUrl);
+  const safeHangupUrl = escapeXmlAttr(hangupUrl);
+  const safeDestination = escapeXmlText(destination);
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Dial callerId="${callerId}" answerOnBridge="true" record="true" recordingCallbackUrl="${recordingCallbackUrl}" recordingCallbackMethod="POST" action="${hangupUrl}" method="POST">
-    <Number>${destination}</Number>
+  <Dial callerId="${safeCallerId}" answerOnBridge="true" record="true" recordingCallbackUrl="${safeRecordingUrl}" recordingCallbackMethod="POST" action="${safeHangupUrl}" method="POST">
+    <Number>${safeDestination}</Number>
   </Dial>
 </Response>`;
+
+  // Basic XML well-formedness check
+  if (xml.includes('&session_id=') || xml.includes('&token=')) {
+    console.error("XML_VALIDATION_FAILED", { reason: "Unescaped & found in XML output" });
+  } else {
+    console.log("XML_VALIDATION_PASSED");
+  }
+
+  return xml;
 }
 
 function buildStaticTestXml(destination: string, callerId: string) {
