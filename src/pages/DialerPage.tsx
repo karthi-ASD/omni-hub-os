@@ -112,6 +112,12 @@ function DialerPageContent() {
   const [rightTab, setRightTab] = useState(() => {
     return sessionStorage.getItem("dialer_right_tab") || "transcript";
   });
+  const [dispositionDraft, setDispositionDraft] = useState(() => {
+    return sessionStorage.getItem("dialer_disposition_draft") || "";
+  });
+  const [callbackReason, setCallbackReason] = useState(() => {
+    return sessionStorage.getItem("dialer_callback_reason") || "";
+  });
 
   // Persist drafts to sessionStorage (survives route changes)
   useEffect(() => {
