@@ -1,13 +1,14 @@
 /**
  * Browser-based Plivo dialer — single source of truth via useSyncExternalStore.
  *
- * BUILD: call-exec-v8
+ * BUILD: stability-v9
  *
  * Key invariants:
+ *  - Mic permission is HARD REQUIRED before Plivo init proceeds.
+ *  - Connection health is monitored; stale connections trigger re-login.
+ *  - Registration failures retry up to 3 times automatically.
+ *  - Tab visibility changes trigger health checks, audio resume & recovery.
  *  - Status is ONLY set from real SDK events or explicit user actions.
- *  - On mount, stale transient states are reset to "idle".
- *  - Tab visibility changes trigger health checks & recovery.
- *  - Plivo events are bound once per client generation.
  *  - Pending dial survives re-renders via module-level variable.
  */
 
@@ -149,7 +150,7 @@ const INITIAL_STATE: BrowserDialerStoreState = {
   lastActionAt: null,
 };
 
-const BUILD_VERSION = "call-exec-v8";
+const BUILD_VERSION = "stability-v9";
 type DialerIdentity = { businessId: string; userId: string } | null;
 
 // ─── Global singletons ──────────────────────────────────────────────
@@ -170,6 +171,13 @@ let globalErrorsBound = false;
 let authIdentity: DialerIdentity = null;
 let modulePendingDial: PendingDialIntent | null = null;
 let recoveryInProgress = false;
+
+// ─── Connection health monitor ──────────────────────────────────────
+let lastConnectedAt = Date.now();
+let connectionHealthInterval: ReturnType<typeof setInterval> | null = null;
+let registrationRetryCount = 0;
+const MAX_REGISTRATION_RETRIES = 3;
+let lastLoginCredentials: { username: string; password: string } | null = null;
 
 // ─── Log ring buffer ────────────────────────────────────────────────
 const MAX_LOG_ENTRIES = 50;
@@ -412,8 +420,8 @@ function handleVisibilityChange() {
 
   if (!visible) return; // Nothing to do when hiding
 
-  // Resume audio
-  void resumeAudioContext();
+  // Resume audio safely
+  void resumeAudioContext().catch(() => {});
 
   // Check client health
   const healthy = isClientHealthy();
@@ -427,17 +435,33 @@ function handleVisibilityChange() {
     hasClient: !!plivoInstanceRef?.client,
   });
 
+  // If in an active call, just resume audio — don't touch state
+  if (isTransient && healthy) return;
+
   // If client is dead and we're not in an active call, try recovery
   if (!healthy && !isTransient && !recoveryInProgress) {
     logDialer("DIALER_STATE_RECOVERY_START", { reason: "client_missing_on_tab_resume" });
     recoveryInProgress = true;
     sdkInitStarted = false;
     singletonInitialized = false;
+    registrationRetryCount = 0;
     setStoreState((c) => ({ ...c, registered: false, status: "idle", sdkReady: false }));
     void initializeVoiceClient().finally(() => {
       recoveryInProgress = false;
       logDialer("DIALER_STATE_RECOVERY_DONE");
     });
+    return;
+  }
+
+  // If not registered but client exists, force re-login
+  if (!storeState.registered && healthy && !recoveryInProgress && lastLoginCredentials) {
+    logDialer("REINIT_AFTER_TAB_RETURN", { reason: "not_registered_but_client_exists" });
+    try { plivoInstanceRef?.client?.logout(); } catch {}
+    setTimeout(() => {
+      if (lastLoginCredentials && plivoInstanceRef?.client) {
+        plivoInstanceRef.client.login(lastLoginCredentials.username, lastLoginCredentials.password);
+      }
+    }, 1000);
     return;
   }
 
@@ -624,20 +648,53 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
 
   instance.client.on("onLoginFailed", (cause: string) => {
     if (!guard()) return;
-    setStoreState((c) => ({
-      ...c,
-      registered: false,
-      status: "failed",
-      lastError: `Voice registration failed: ${cause}`,
-      latestProviderStatus: "registration_failed",
-      pendingDialIntent: null,
-    }));
-    logDialer("VOICE_REGISTRATION_FAILED", { reason: cause });
+    logDialer("VOICE_REGISTRATION_FAILED_FULL", { reason: cause, retryCount: registrationRetryCount });
+
+    if (registrationRetryCount < MAX_REGISTRATION_RETRIES && lastLoginCredentials) {
+      registrationRetryCount++;
+      logDialer("REGISTRATION_FAILED_RETRY", { attempt: registrationRetryCount, maxRetries: MAX_REGISTRATION_RETRIES });
+      try { instance.client.logout(); } catch {}
+      setTimeout(() => {
+        if (!guard() || !lastLoginCredentials) return;
+        logDialer("REGISTRATION_RETRY_LOGIN", { attempt: registrationRetryCount });
+        instance.client.login(lastLoginCredentials.username, lastLoginCredentials.password);
+      }, 2000);
+    } else {
+      setStoreState((c) => ({
+        ...c,
+        registered: false,
+        status: "failed",
+        lastError: `Voice registration failed: ${cause} (after ${registrationRetryCount} retries)`,
+        latestProviderStatus: "registration_failed",
+        pendingDialIntent: null,
+      }));
+    }
   });
 
   instance.client.on("onConnectionChange", (conn) => {
     if (!guard()) return;
-    logDialer("PLIVO_CONNECTION_CHANGE", { state: conn?.state || "unknown" });
+    const connState = conn?.state || "unknown";
+    logDialer("PLIVO_CONNECTION_CHANGE", { state: connState });
+
+    if (connState === "connected") {
+      lastConnectedAt = Date.now();
+    }
+
+    if (connState === "disconnected") {
+      logDialer("PLIVO_DISCONNECTED_DETECTED");
+      // If not in an active call, force re-login after delay
+      const isInCall = ["dialing", "ringing", "connected"].includes(storeState.status);
+      if (!isInCall && lastLoginCredentials) {
+        logDialer("FORCE_RELOGIN", { reason: "connection_disconnected" });
+        setStoreState((c) => ({ ...c, registered: false, status: "idle" }));
+        try { instance.client.logout(); } catch {}
+        setTimeout(() => {
+          if (!guard() || !lastLoginCredentials) return;
+          logDialer("RELOGIN_ATTEMPT_AFTER_DISCONNECT");
+          instance.client.login(lastLoginCredentials.username, lastLoginCredentials.password);
+        }, 1000);
+      }
+    }
   });
 
   instance.client.on("onMediaPermission", (result: { status: boolean }) => {
@@ -714,6 +771,43 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   } catch {}
 }
 
+// ─── Connection health monitor ──────────────────────────────────────
+function startConnectionHealthMonitor() {
+  if (connectionHealthInterval) return;
+  connectionHealthInterval = setInterval(() => {
+    if (!storeState.registered) return;
+    const staleDuration = Date.now() - lastConnectedAt;
+    if (staleDuration > 15000) {
+      logDialer("CONNECTION_STALE_REINIT", { staleDurationMs: staleDuration });
+      reinitializeDialer();
+    }
+  }, 10000);
+}
+
+function stopConnectionHealthMonitor() {
+  if (connectionHealthInterval) {
+    clearInterval(connectionHealthInterval);
+    connectionHealthInterval = null;
+  }
+}
+
+function reinitializeDialer() {
+  if (recoveryInProgress) return;
+  recoveryInProgress = true;
+  logDialer("DIALER_REINIT_START");
+  try { plivoInstanceRef?.client?.logout(); } catch {}
+  sdkInitStarted = false;
+  singletonInitialized = false;
+  registrationRetryCount = 0;
+  setStoreState((c) => ({ ...c, registered: false, status: "idle", sdkReady: false }));
+  setTimeout(() => {
+    void initializeVoiceClient().finally(() => {
+      recoveryInProgress = false;
+      logDialer("DIALER_REINIT_DONE");
+    });
+  }, 1000);
+}
+
 // ─── SDK init ───────────────────────────────────────────────────────
 async function initializeVoiceClient() {
   if (sdkInitStarted || typeof window === "undefined") return;
@@ -734,6 +828,26 @@ async function initializeVoiceClient() {
       return;
     }
 
+    // HARD REQUIRE microphone permission before proceeding
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((t) => t.stop());
+      logDialer("MIC_PERMISSION_GRANTED_HARD_CHECK");
+      setStoreState((c) => ({ ...c, micPermission: "granted" }));
+    } catch (micErr) {
+      const reason = micErr instanceof Error ? micErr.message : String(micErr);
+      logDialer("MIC_PERMISSION_BLOCKED", { error: reason });
+      setStoreState((c) => ({
+        ...c,
+        micPermission: "denied",
+        status: "permission_denied",
+        lastError: "Microphone permission is required to use the dialer.",
+      }));
+      sdkInitStarted = false;
+      toast.error("Microphone permission is required to use the dialer. Please allow microphone access and refresh.");
+      return; // STOP initialization completely
+    }
+
     destroyPlivoClient();
     const generation = ++plivoClientGeneration;
     const instance = new window.Plivo({ debug: "INFO", permOnClick: true });
@@ -742,16 +856,6 @@ async function initializeVoiceClient() {
 
     setStoreState((c) => ({ ...c, sdkReady: true, status: "registering" }));
     logDialer("PLIVO_CLIENT_INIT_SUCCESS");
-
-    // Early mic permission
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach((t) => t.stop());
-      logDialer("EARLY_MIC_PERMISSION_GRANTED");
-      setStoreState((c) => ({ ...c, micPermission: "granted" }));
-    } catch (micErr) {
-      logDialer("EARLY_MIC_PERMISSION_FAILED", { reason: String(micErr) });
-    }
 
     await resumeAudioContext();
 
@@ -784,6 +888,14 @@ async function initializeVoiceClient() {
       }
 
       logDialer("TOKEN_RECEIVED_FULL", { username: data.username, hasPassword: !!data.password, app_id: data.app_id });
+
+      // Store credentials for re-login on disconnect/failure
+      lastLoginCredentials = { username: data.username, password: data.password };
+      registrationRetryCount = 0;
+      lastConnectedAt = Date.now();
+
+      // Start connection health monitor
+      startConnectionHealthMonitor();
 
       setTimeout(() => {
         if (!isActivePlivoClient(instance, generation)) return;
