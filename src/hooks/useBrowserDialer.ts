@@ -931,6 +931,7 @@ export function useBrowserDialer() {
       return;
     }
 
+    logDialer("START_CALL_REGISTERED_PATH", { number: phoneNumber.trim() });
     await executeOutboundCall(intent);
   }, [profile]);
 
