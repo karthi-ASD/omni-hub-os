@@ -948,19 +948,25 @@ function isActivePlivoClient(instance: PlivoBrowserSDK, gen: number) {
   return plivoInstanceRef === instance && plivoClientGeneration === gen;
 }
 
-function destroyPlivoClient() {
-  if (!plivoInstanceRef?.client) return;
-  // ── CRITICAL: Block destruction during active calls ──
-  if (isInActiveCall()) {
-    logDialer("CLIENT_DESTROY_BLOCKED_ACTIVE_CALL", { status: storeState.status });
+function destroyPlivoClient(reason = "unknown") {
+  logDialer("CLIENT_DESTROY_REQUESTED", { reason, hasClient: !!plivoInstanceRef?.client, status: storeState.status });
+  if (!plivoInstanceRef?.client) {
+    logDialer("CLIENT_DESTROY_SKIPPED_NON_FATAL", { reason: "no_client" });
     return;
   }
-  logDialer("LISTENERS_DETACHED");
+  // ── CRITICAL: Block destruction during active calls ──
+  if (isInActiveCall()) {
+    logDialer("CLIENT_DESTROY_BLOCKED_ACTIVE_CALL", { status: storeState.status, reason });
+    return;
+  }
+  logDialer("CLIENT_DESTROY_ALLOWED", { reason });
+  logDialer("LISTENERS_DETACH_START");
   try { plivoInstanceRef.client.hangup(); } catch {}
   try { plivoInstanceRef.client.logout(); } catch {}
   plivoInstanceRef = null;
   loginInProgress = false;
   clearReloginTimeout();
+  logDialer("LISTENERS_DETACH_DONE");
   // Reset stale registration state so next init starts clean
   logDialer("REGISTERED_STATE_RESET", { reason: "client_destroyed" });
   setStoreState((c) => ({
@@ -970,7 +976,7 @@ function destroyPlivoClient() {
     plivoClientInitStatus: "idle",
     sdkReady: false,
   }));
-  logDialer("CLIENT_DESTROYED");
+  logDialer("CLIENT_DESTROY_REASON", { reason });
 }
 
 function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
