@@ -812,8 +812,14 @@ async function executeOutboundCall(intent: PendingDialIntent) {
   try {
     await resumeAudioContext();
 
-    // Initialize audio output before call
-    await initializeAudioOutput();
+    // Initialize audio output before call — hard block if fails
+    const audioOk = await initializeAudioOutput();
+    if (!audioOk) {
+      logDialer("CALL_BLOCKED_AUDIO_PLAYBACK_FAILED");
+      toast.error("Audio blocked by browser. Click anywhere and retry.");
+      setStoreState((c) => ({ ...c, loading: false, dialLock: false }));
+      return;
+    }
 
     let resolvedPhone = intent.phoneNumber;
     if (intent.leadId) {
