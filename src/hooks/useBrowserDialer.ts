@@ -1245,7 +1245,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
       } catch {}
     }
   } catch {}
-  logDialer("LISTENERS_ATTACH_DONE", { generation });
+  logDialer("LISTENERS_ATTACH_DONE", { generation, totalAttachCount: listenerAttachCount });
 }
 
 // ─── Connection health monitor ──────────────────────────────────────
