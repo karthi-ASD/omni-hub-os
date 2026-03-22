@@ -235,42 +235,72 @@ function DialerPageContent() {
   }, [location.pathname, location.search]);
 
   // ══════════════════════════════════════════════════════════════════
-  // AI KILL SWITCH — set to false to completely disable AI features
-  // during call lifecycle. Set to true ONLY after base calling works.
+  // AI FEATURES — enabled but strictly isolated from call lifecycle.
+  // AI modules only activate AFTER call reaches "connected" state.
+  // They NEVER block dialing, ringing, or call establishment.
   // ══════════════════════════════════════════════════════════════════
-  const DIALER_AI_ENABLED = false;
+  const DIALER_AI_ENABLED = true;
 
-  // Live transcript — COMPLETELY DISABLED when kill switch is off
+  const isCallConnected = dialer?.callStatus === "connected";
+  const logFn = dialer?.logEvent;
+
+  // Live transcript — only activates when call is CONNECTED
   const noopLog = useRef((_e: string, _d?: Record<string, unknown>) => {}).current;
+  const safeLog = logFn || noopLog;
+
+  // Gate: AI modules receive null session/business until connected
+  const aiSessionId = (DIALER_AI_ENABLED && isCallConnected) ? (dialer?.session?.id || null) : null;
+  const aiBusinessId = (DIALER_AI_ENABLED && isCallConnected) ? (profile?.business_id || null) : null;
+
+  // Log AI initialization gates
+  useEffect(() => {
+    if (!DIALER_AI_ENABLED || !dialer?.callStatus) return;
+    if (isCallConnected) {
+      safeLog("AI_TRANSCRIPT_INIT_ALLOWED_CONNECTED", { sessionId: dialer?.session?.id });
+      safeLog("AI_ASSISTANT_INIT_ALLOWED_CONNECTED", { sessionId: dialer?.session?.id });
+    } else if (dialer?.callStatus === "dialing" || dialer?.callStatus === "ringing") {
+      safeLog("AI_TRANSCRIPT_INIT_BLOCKED_PRECONNECT", { status: dialer?.callStatus });
+      safeLog("AI_ASSISTANT_INIT_BLOCKED_PRECONNECT", { status: dialer?.callStatus });
+    }
+  }, [dialer?.callStatus, isCallConnected]);
+
   const transcript = useCallTranscript({
-    sessionId: DIALER_AI_ENABLED ? (dialer?.session?.id || null) : null,
-    businessId: DIALER_AI_ENABLED ? (profile?.business_id || null) : null,
-    userId: DIALER_AI_ENABLED ? (profile?.user_id || null) : null,
-    isCallConnected: DIALER_AI_ENABLED && dialer?.callStatus === "connected",
-    onLog: dialer?.logEvent || noopLog,
+    sessionId: aiSessionId,
+    businessId: aiBusinessId,
+    userId: (DIALER_AI_ENABLED && isCallConnected) ? (profile?.user_id || null) : null,
+    isCallConnected: DIALER_AI_ENABLED && isCallConnected,
+    onLog: safeLog,
   });
 
-  // AI assistant — COMPLETELY DISABLED when kill switch is off
+  // AI assistant — only activates when call is CONNECTED
   const aiAssistant = useAICallAssistant({
-    sessionId: DIALER_AI_ENABLED ? (dialer?.session?.id || null) : null,
-    businessId: DIALER_AI_ENABLED ? (profile?.business_id || null) : null,
-    onLog: dialer?.logEvent || noopLog,
+    sessionId: aiSessionId,
+    businessId: aiBusinessId,
+    onLog: safeLog,
   });
 
-  // Periodically feed transcript to AI during active call — ONLY when connected AND AI enabled
+  // Periodically feed transcript to AI — STRICTLY after connected
   const lastAIRequestRef = useRef<number>(0);
   useEffect(() => {
-    if (!DIALER_AI_ENABLED) return; // Kill switch
-    // Guard: only process AI when call is actually connected (not just dialing/ringing)
-    if (dialer?.callStatus !== "connected") return;
+    if (!DIALER_AI_ENABLED) return;
+    if (!isCallConnected) {
+      if (dialer?.callStatus && dialer.callStatus !== "idle" && dialer.callStatus !== "device_ready") {
+        safeLog("AI_POSTCALL_SKIPPED_NOT_CONNECTED", { status: dialer.callStatus });
+      }
+      return;
+    }
     if (transcript.lines.length === 0) return;
     const finalLines = transcript.lines.filter((l) => l.isFinal);
     if (finalLines.length < 2) return;
     const now = Date.now();
     if (now - lastAIRequestRef.current < 10000) return;
     lastAIRequestRef.current = now;
-    dialer?.logEvent("POSTCALL_PIPELINE_GUARD_RESULT", { hadSession: !!dialer?.session, hadConnectedState: true, shouldProcessAI: true });
-    aiAssistant.requestAIAssist(transcript.lines);
+    safeLog("AI_POSTCALL_ALLOWED_CONNECTED_CALL", { hadSession: !!dialer?.session, hadConnectedState: true, shouldProcessAI: true });
+    try {
+      aiAssistant.requestAIAssist(transcript.lines);
+    } catch (err) {
+      safeLog("AI_MODULE_ERROR_NON_BLOCKING", { error: err instanceof Error ? err.message : String(err) });
+    }
   }, [transcript.lines, dialer?.callStatus]);
 
   // UI rebind safety — detect if we're mounting into an active call
