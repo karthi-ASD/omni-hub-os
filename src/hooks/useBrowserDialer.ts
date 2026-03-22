@@ -1619,16 +1619,18 @@ export function useBrowserDialer() {
       activeHookConsumers = Math.max(0, activeHookConsumers - 1);
       logDialer("EFFECT_CLEANUP_RUN", { remainingConsumers: activeHookConsumers });
       logDialer("CONSUMER_COUNT_CHANGED", { consumers: activeHookConsumers });
-      // ── CRITICAL CHANGE (stability-v16): NEVER destroy client on unmount ──
-      // The singleton survives across route changes. Only explicit logout or
-      // reinitializeDialer() may destroy it. This prevents call drops on navigation.
+      // ── CRITICAL (stability-v18): NEVER destroy client on unmount ──
+      // Zero consumers is normal when page-level dialer unmounts but
+      // PersistentDialerConsumer at shell level keeps count >= 1.
+      // Even if it somehow hits zero, we keep the singleton alive.
       if (activeHookConsumers === 0) {
-        logDialer("ZERO_CONSUMER_STATE_UNEXPECTED", { route: typeof window !== "undefined" ? window.location.pathname : "unknown" });
-        logDialer("ALL_CONSUMERS_UNMOUNTED_CLIENT_KEPT_ALIVE", {
+        logDialer("ZERO_CONSUMERS_DETECTED_BUT_IGNORED", {
+          route: typeof window !== "undefined" ? window.location.pathname : "unknown",
+          visibilityState: typeof document !== "undefined" ? document.visibilityState : "unknown",
           activeCall: isInActiveCall(),
           registered: storeState.registered,
         });
-        // We intentionally do NOT destroy the client here.
+        // Intentionally do NOT destroy client, clear state, or reset anything.
         // singletonInitialized stays true so re-mount reuses existing client.
       }
     };
