@@ -898,10 +898,26 @@ function handleVisibilityChange() {
     return;
   }
 
-  // If not registered but client exists, force re-login
-  if (!storeState.registered && healthy && !recoveryInProgress && lastLoginCredentials) {
-    logDialer("REINIT_AFTER_TAB_RETURN", { reason: "not_registered_but_client_exists" });
-    scheduleLogin("tab_return", lastLoginCredentials.username, lastLoginCredentials.password, 500);
+  // If not registered but client exists AND connection is alive, force registered state
+  // This handles the "Already registered" SDK warning case on tab return
+  if (!storeState.registered && healthy && !recoveryInProgress) {
+    if (storeState.connectionState === "connected") {
+      logDialer("TAB_RETURN_FORCE_REGISTERED", { reason: "connection_alive_and_healthy" });
+      loginInProgress = false;
+      if (loginSafetyTimeoutRef) { clearTimeout(loginSafetyTimeoutRef); loginSafetyTimeoutRef = null; }
+      setStoreState((c) => ({
+        ...c,
+        registered: true,
+        status: c.micPermission === "granted" ? "device_ready" : "registered",
+        lastError: null,
+        plivoClientInitStatus: "registered",
+      }));
+      return;
+    }
+    if (lastLoginCredentials) {
+      logDialer("REINIT_AFTER_TAB_RETURN", { reason: "not_registered_but_client_exists" });
+      scheduleLogin("tab_return", lastLoginCredentials.username, lastLoginCredentials.password, 500);
+    }
     return;
   }
 
