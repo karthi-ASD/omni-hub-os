@@ -1252,6 +1252,11 @@ export function useBrowserDialer() {
       if (activeHookConsumers === 0) {
         consumerCleanupTimer = window.setTimeout(() => {
           if (activeHookConsumers > 0) return;
+          // ── CRITICAL: Do NOT destroy client during an active call ──
+          if (isInActiveCall()) {
+            logDialer("CLIENT_DESTROY_BLOCKED_ACTIVE_CALL", { reason: "cleanup_timer_during_call" });
+            return;
+          }
           stopConnectionHealthMonitor();
           sessionUnsubRef?.();
           sessionUnsubRef = null;
