@@ -118,6 +118,9 @@ function DialerPageContent() {
   const [callbackReason, setCallbackReason] = useState(() => {
     return sessionStorage.getItem("dialer_callback_reason") || "";
   });
+  const [wrapUpDraft, setWrapUpDraft] = useState(() => {
+    return sessionStorage.getItem("dialer_wrapup_draft") || "";
+  });
 
   // Persist drafts to sessionStorage (survives route changes)
   useEffect(() => {
@@ -150,6 +153,9 @@ function DialerPageContent() {
   useEffect(() => {
     sessionStorage.setItem("dialer_callback_reason", callbackReason);
   }, [callbackReason]);
+  useEffect(() => {
+    sessionStorage.setItem("dialer_wrapup_draft", wrapUpDraft);
+  }, [wrapUpDraft]);
 
   // Live transcript — safe when dialer is null
   const noopLog = useRef((_e: string, _d?: Record<string, unknown>) => {}).current;
@@ -268,7 +274,8 @@ function DialerPageContent() {
     setNotesInput("");
     setDispositionDraft("");
     setCallbackReason("");
-    for (const k of ["dialer_notes_draft", "dialer_phone_draft", "dialer_followup_draft", "dialer_show_followup", "dialer_disposition_draft", "dialer_callback_reason"]) sessionStorage.removeItem(k);
+    setWrapUpDraft("");
+    for (const k of ["dialer_notes_draft", "dialer_phone_draft", "dialer_followup_draft", "dialer_show_followup", "dialer_disposition_draft", "dialer_callback_reason", "dialer_wrapup_draft"]) sessionStorage.removeItem(k);
   };
 
   const handleFollowUpSubmit = async () => {
@@ -277,7 +284,8 @@ function DialerPageContent() {
     setNotesInput("");
     setDispositionDraft("");
     setCallbackReason("");
-    for (const k of ["dialer_notes_draft", "dialer_phone_draft", "dialer_followup_draft", "dialer_show_followup", "dialer_disposition_draft", "dialer_callback_reason"]) sessionStorage.removeItem(k);
+    setWrapUpDraft("");
+    for (const k of ["dialer_notes_draft", "dialer_phone_draft", "dialer_followup_draft", "dialer_show_followup", "dialer_disposition_draft", "dialer_callback_reason", "dialer_wrapup_draft"]) sessionStorage.removeItem(k);
     setFollowUpDate(undefined);
     setShowFollowUp(false);
   };
@@ -295,9 +303,11 @@ function DialerPageContent() {
   };
 
   const getCallHelperText = () => {
-    if (dialer.pendingDial) return "Call queued. Will auto-dial when ready.";
+    if (dialer.pendingDial && dialer.pendingDialReason === "audio_not_ready") return "Browser audio is blocked. Click to enable audio, then the queued call will resume automatically.";
+    if (dialer.pendingDial) return "Call queued. It will auto-dial as soon as the voice service is ready.";
     if (dialer.callStatus === "registering" || dialer.callStatus === "initializing") return "Waiting for voice registration…";
     if (!dialer.registered && dialer.callStatus !== "failed") return "Connecting to voice service…";
+    if (!dialer.audioReady) return "Audio is not ready yet. Click once to enable browser audio.";
     if (dialer.registered && dialer.micPermission === "granted") return "Ready to call";
     if (dialer.micPermission !== "granted") return "Microphone access required";
     return null;
@@ -514,6 +524,12 @@ function DialerPageContent() {
                 return helper ? <p className={`text-[10px] text-center ${dialer.pendingDial ? "text-amber-600 animate-pulse" : "text-muted-foreground"}`}>{helper}</p> : null;
               })()}
 
+              {!dialer.audioReady && !isCallActive && (
+                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => dialer.unlockAudio()}>
+                  Click to enable audio
+                </Button>
+              )}
+
               {dialer.lastCalledNumber && !isCallActive && (
                 <Button variant="ghost" size="sm" className="w-full text-xs" onClick={dialer.redialLast}>
                   <RotateCcw className="h-3 w-3 mr-1" /> Redial {dialer.lastCalledNumber}
@@ -542,6 +558,7 @@ function DialerPageContent() {
                   </div>
                   {dialer.session && <CallTagging onTag={dialer.tagCall} disabled={!dialer.session} />}
                   <Textarea placeholder="Call notes..." value={notesInput} onChange={(e) => setNotesInput(e.target.value)} className="text-xs min-h-[50px]" />
+                  <Textarea placeholder="Wrap-up / callback reason..." value={wrapUpDraft} onChange={(e) => { setWrapUpDraft(e.target.value); setCallbackReason(e.target.value); }} className="text-xs min-h-[40px]" />
                   {showFollowUp && (
                     <div className="border rounded-md p-2 space-y-2 bg-muted/30">
                       <p className="text-xs font-medium">Schedule Follow-up</p>
@@ -554,6 +571,7 @@ function DialerPageContent() {
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={followUpDate} onSelect={setFollowUpDate} initialFocus /></PopoverContent>
                       </Popover>
+                      <Textarea placeholder="Reason for callback" value={callbackReason} onChange={(e) => setCallbackReason(e.target.value)} className="text-xs min-h-[40px]" />
                       <Button className="w-full" size="sm" onClick={handleFollowUpSubmit} disabled={!followUpDate}>Save & Schedule</Button>
                     </div>
                   )}

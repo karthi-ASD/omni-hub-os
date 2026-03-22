@@ -113,7 +113,12 @@ interface PendingDialIntent {
   phoneNumber: string;
   leadId?: string;
   clientId?: string;
+  blockedReason?: string;
+  queuedAt?: number;
+  expiresAt?: number;
 }
+
+type AudioReadyStatus = "audio_not_initialized" | "audio_resume_pending" | "audio_blocked_by_browser" | "audio_ready";
 
 interface BrowserDialerStoreState {
   status: BrowserDialerStatus;
@@ -155,6 +160,7 @@ interface BrowserDialerStoreState {
   audioElementsAttached: boolean;
   audioPlayable: boolean;
   audioReady: boolean;
+  audioStatus: AudioReadyStatus;
 }
 
 const INITIAL_STATE: BrowserDialerStoreState = {
@@ -197,6 +203,7 @@ const INITIAL_STATE: BrowserDialerStoreState = {
   audioElementsAttached: false,
   audioPlayable: false,
   audioReady: false,
+  audioStatus: "audio_not_initialized",
 };
 
 const BUILD_VERSION = "stability-v17";
@@ -219,6 +226,7 @@ let permissionListenerBound = false;
 let visibilityListenerBound = false;
 let globalErrorsBound = false;
 let authIdentity: DialerIdentity = null;
+let lastStableAuthIdentity: DialerIdentity = null;
 let modulePendingDial: PendingDialIntent | null = null;
 let recoveryInProgress = false;
 let initPromise: Promise<void> | null = null;
@@ -229,6 +237,10 @@ let consumerCleanupTimer: number | null = null;
 let currentAccessToken: string | null = null;
 let callStartTimestamp: number = 0;
 let listenerAttachCount = 0;
+let queuedCallResumeInFlight = false;
+
+const PENDING_DIAL_STORAGE_KEY = "dialer_pending_intent";
+const QUEUED_CALL_TTL_MS = 45000;
 
 // ─── Connection health monitor ──────────────────────────────────────
 let lastConnectedAt = Date.now();
@@ -269,6 +281,105 @@ function logDialer(event: string, data?: Record<string, unknown>) {
   }));
 }
 
+export function logDialerEvent(event: string, data?: Record<string, unknown>) {
+  logDialer(event, data);
+}
+
+function persistPendingDial(intent: PendingDialIntent | null) {
+  if (typeof sessionStorage === "undefined") return;
+  try {
+    if (!intent) {
+      sessionStorage.removeItem(PENDING_DIAL_STORAGE_KEY);
+      return;
+    }
+    sessionStorage.setItem(PENDING_DIAL_STORAGE_KEY, JSON.stringify(intent));
+  } catch {}
+}
+
+function readPendingDial(): PendingDialIntent | null {
+  if (typeof sessionStorage === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(PENDING_DIAL_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearQueuedCall(reason: string) {
+  const pending = modulePendingDial || storeState.pendingDialIntent;
+  if (pending) {
+    logDialer("QUEUED_CALL_CLEARED", { reason, destination: pending.phoneNumber, blockedReason: pending.blockedReason ?? null });
+  }
+  modulePendingDial = null;
+  persistPendingDial(null);
+  setStoreState((c) => ({ ...c, pendingDialIntent: null }));
+}
+
+function storeQueuedCall(intent: PendingDialIntent, blockedReason: string) {
+  const queuedIntent = { ...intent, blockedReason, queuedAt: Date.now(), expiresAt: Date.now() + QUEUED_CALL_TTL_MS };
+  modulePendingDial = queuedIntent;
+  persistPendingDial(queuedIntent);
+  logDialer("QUEUED_CALL_STORED", { destination: queuedIntent.phoneNumber, blockedReason, expiresAt: queuedIntent.expiresAt });
+  logDialer("QUEUED_CALL_BLOCK_REASON", { blockedReason });
+  setStoreState((c) => ({ ...c, pendingDialIntent: queuedIntent }));
+}
+
+function isReadyForQueuedCallResume() {
+  return !!(
+    (modulePendingDial || storeState.pendingDialIntent) &&
+    storeState.audioReady &&
+    storeState.registered &&
+    storeState.connectionState === "connected" &&
+    storeState.plivoClientInitStatus === "registered" &&
+    !isInActiveCall() &&
+    !recoveryInProgress &&
+    !loginInProgress &&
+    !storeState.loading &&
+    !storeState.dialLock &&
+    plivoInstanceRef?.client &&
+    isClientHealthy()
+  );
+}
+
+async function maybeResumeQueuedCall(trigger: string) {
+  const pending = modulePendingDial || storeState.pendingDialIntent;
+  if (!pending) return;
+
+  logDialer("QUEUED_CALL_READINESS_RECHECK", {
+    trigger,
+    destination: pending.phoneNumber,
+    blockedReason: pending.blockedReason ?? null,
+    audioReady: storeState.audioReady,
+    registered: storeState.registered,
+    connectionState: storeState.connectionState,
+    initStatus: storeState.plivoClientInitStatus,
+  });
+
+  if (pending.expiresAt && Date.now() > pending.expiresAt) {
+    logDialer("QUEUED_CALL_EXPIRED", { destination: pending.phoneNumber, blockedReason: pending.blockedReason ?? null });
+    toast.error("Queued call expired. Please try again.");
+    clearQueuedCall("expired");
+    return;
+  }
+
+  if (!isReadyForQueuedCallResume() || queuedCallResumeInFlight) return;
+
+  queuedCallResumeInFlight = true;
+  logDialer("QUEUED_CALL_READY_TO_RESUME", { trigger, destination: pending.phoneNumber });
+  clearQueuedCall("resuming");
+
+  try {
+    logDialer("QUEUED_CALL_RESUMING_NOW", { trigger, destination: pending.phoneNumber });
+    await executeOutboundCall(pending);
+    logDialer("QUEUED_CALL_RESUME_SUCCESS", { trigger, destination: pending.phoneNumber });
+  } catch (error) {
+    logDialer("QUEUED_CALL_RESUME_FAILED", { trigger, destination: pending.phoneNumber, error: error instanceof Error ? error.message : String(error) });
+  } finally {
+    queuedCallResumeInFlight = false;
+  }
+}
+
 // ─── Global error handlers ──────────────────────────────────────────
 let userInteractionBound = false;
 function bindGlobalErrorHandlers() {
@@ -283,11 +394,17 @@ function bindGlobalErrorHandlers() {
         const ctx = getAudioContext();
         if (ctx && ctx.state !== "running") {
           await ctx.resume();
+          logDialer("AUDIO_RESUME_TRIGGERED_BY_USER");
           logDialer("AUDIO_CONTEXT_RESUMED_USER_INTERACTION");
         }
         // Pre-warm audio readiness on first click
         if (!storeState.audioReady) {
-          await initializeAudioOutput();
+          setStoreState((c) => ({ ...c, audioStatus: "audio_resume_pending" }));
+          const audioReady = await initializeAudioOutput();
+          if (audioReady) {
+            logDialer("AUDIO_RESUME_COMPLETED");
+            void maybeResumeQueuedCall("user_interaction_audio_ready");
+          }
         }
       } catch {}
     }, { once: true });
@@ -571,7 +688,10 @@ async function resumeAudioContext() {
     try {
       await ctx.resume();
       logDialer("AUDIO_RESUME_SUCCESS", { state: ctx.state });
+      setStoreState((c) => ({ ...c, audioStatus: ctx.state === "running" ? "audio_resume_pending" : c.audioStatus }));
     } catch (err) {
+      setStoreState((c) => ({ ...c, audioStatus: "audio_resume_pending" }));
+      logDialer("AUDIO_RESUME_PENDING_USER_GESTURE", { state: ctx.state });
       logDialer("AUDIO_RESUME_FAILED", { reason: String(err) });
     }
   }
@@ -810,12 +930,16 @@ async function initializeAudioOutput(): Promise<boolean> {
     } catch {}
 
     if (!playbackWorked) {
+      setStoreState((c) => ({ ...c, audioReady: false, audioStatus: "audio_blocked_by_browser" }));
+      logDialer("AUDIO_BLOCKED_BY_BROWSER");
       logDialer("AUDIO_OUTPUT_BLOCKED");
       return false;
     }
 
     logDialer("AUDIO_OUTPUT_READY");
-    setStoreState((c) => ({ ...c, audioReady: true }));
+    logDialer("AUDIO_READY_CONFIRMED");
+    setStoreState((c) => ({ ...c, audioReady: true, audioStatus: "audio_ready" }));
+    void maybeResumeQueuedCall("audio_output_ready");
     return true;
   } catch (e) {
     logDialer("AUDIO_OUTPUT_FALLBACK", { error: e instanceof Error ? e.message : String(e) });
@@ -1033,10 +1157,8 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
 
     if (pending) {
       logDialer("AUTO_DIAL_AFTER_REGISTER", { destination: pending.phoneNumber });
-      // Clear pendingDialIntent only when execution starts
       setTimeout(() => {
-        setStoreState((c) => ({ ...c, pendingDialIntent: null }));
-        void executeOutboundCall(pending);
+        void maybeResumeQueuedCall("registered_event");
       }, 300);
     }
   });
@@ -1078,6 +1200,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
       lastConnectedAt = Date.now();
       loginInProgress = false;
       clearReloginTimeout();
+      void maybeResumeQueuedCall("connection_connected");
     }
 
     if (connState === "disconnected") {
@@ -1462,9 +1585,18 @@ export function useBrowserDialer() {
       consumerCleanupTimer = null;
     }
     activeHookConsumers += 1;
-    authIdentity = profile?.business_id ? { businessId: profile.business_id, userId: profile.user_id } : null;
+    if (profile?.business_id) {
+      authIdentity = { businessId: profile.business_id, userId: profile.user_id };
+      lastStableAuthIdentity = authIdentity;
+    } else if (lastStableAuthIdentity) {
+      authIdentity = lastStableAuthIdentity;
+      logDialer("BUSINESS_PROFILE_TRANSIENT_CHANGE", { preservedBusinessId: lastStableAuthIdentity.businessId });
+    } else {
+      authIdentity = null;
+    }
     setStoreState((c) => ({ ...c, userIdentifier: maskUserIdentifier(profile?.user_id ?? null) }));
     logDialer("DIALER_PAGE_MOUNTED", { version: BUILD_VERSION, consumers: activeHookConsumers });
+    logDialer("CONSUMER_COUNT_CHANGED", { consumers: activeHookConsumers });
 
     // Only sanitize stale state if there's NO active call — preserve active calls across remounts
     if (!isInActiveCall()) {
@@ -1475,16 +1607,23 @@ export function useBrowserDialer() {
 
     if (!singletonInitialized) {
       singletonInitialized = true;
+      const persistedPending = readPendingDial();
+      if (persistedPending && !modulePendingDial) {
+        modulePendingDial = persistedPending;
+        setStoreState((c) => ({ ...c, pendingDialIntent: persistedPending }));
+      }
       void initializeVoiceClient();
     }
 
     return () => {
       activeHookConsumers = Math.max(0, activeHookConsumers - 1);
       logDialer("EFFECT_CLEANUP_RUN", { remainingConsumers: activeHookConsumers });
+      logDialer("CONSUMER_COUNT_CHANGED", { consumers: activeHookConsumers });
       // ── CRITICAL CHANGE (stability-v16): NEVER destroy client on unmount ──
       // The singleton survives across route changes. Only explicit logout or
       // reinitializeDialer() may destroy it. This prevents call drops on navigation.
       if (activeHookConsumers === 0) {
+        logDialer("ZERO_CONSUMER_STATE_UNEXPECTED", { route: typeof window !== "undefined" ? window.location.pathname : "unknown" });
         logDialer("ALL_CONSUMERS_UNMOUNTED_CLIENT_KEPT_ALIVE", {
           activeCall: isInActiveCall(),
           registered: storeState.registered,
@@ -1495,12 +1634,30 @@ export function useBrowserDialer() {
     };
   }, [profile?.business_id, profile?.user_id]);
 
+  useEffect(() => {
+    void maybeResumeQueuedCall("hook_state_change");
+  }, [state.pendingDialIntent?.phoneNumber, state.audioReady, state.registered, state.connectionState, state.plivoClientInitStatus, state.loading, state.dialLock, state.status]);
+
   const loadLeadHistory = useCallback(async (leadId: string) => {
     const calls = await fetchLeadCallHistory(leadId);
     setStoreState((c) => ({ ...c, previousCalls: calls }));
   }, []);
 
   const requestMicPermission = useCallback(async () => requestMicrophonePermissionInternal(), []);
+
+  const unlockAudio = useCallback(async () => {
+    logDialer("AUDIO_RESUME_TRIGGERED_BY_USER", { source: "manual_unlock_action" });
+    await resumeAudioContext();
+    const ready = await initializeAudioOutput();
+    if (ready) {
+      logDialer("AUDIO_RESUME_COMPLETED", { source: "manual_unlock_action" });
+      toast.success("Audio enabled. Resuming queued call if ready.");
+      void maybeResumeQueuedCall("manual_unlock_action");
+      return true;
+    }
+    toast.error("Browser audio is blocked. Click anywhere and retry.");
+    return false;
+  }, []);
 
   const startCall = useCallback(async (phoneNumber: string, leadId?: string, clientId?: string) => {
     const readiness = canPlaceCall();
@@ -1547,13 +1704,21 @@ export function useBrowserDialer() {
     }
 
     const intent: PendingDialIntent = { phoneNumber: phoneNumber.trim(), leadId, clientId };
+    if (!storeState.audioReady) {
+      await resumeAudioContext();
+      await initializeAudioOutput();
+    }
+    const finalReadiness = canPlaceCall();
 
     // Full readiness check — not just registered boolean
-    if (!readiness.ready) {
-      logDialer("CALL_QUEUED_BEFORE_REGISTER", { destination: phoneNumber.trim(), reason: readiness.reason });
-      modulePendingDial = intent;
-      setStoreState((c) => ({ ...c, pendingDialIntent: intent }));
-      toast.info("Call queued — waiting for voice registration…");
+    if (!finalReadiness.ready) {
+      logDialer("CALL_QUEUED_BEFORE_REGISTER", { destination: phoneNumber.trim(), reason: finalReadiness.reason });
+      storeQueuedCall(intent, finalReadiness.reason);
+      if (finalReadiness.reason === "audio_not_ready") {
+        toast.error("Browser audio is blocked. Click to enable audio, then retry.");
+      } else {
+        toast.info("Call queued. It will auto-dial as soon as the voice service is ready.");
+      }
       return;
     }
 
@@ -1745,6 +1910,9 @@ export function useBrowserDialer() {
     recentNumbers: state.recentNumbers,
     callAttempts: state.callAttempts,
     pendingDial: state.pendingDialIntent,
+    pendingDialReason: state.pendingDialIntent?.blockedReason ?? null,
+    audioReady: state.audioReady,
+    audioStatus: state.audioStatus,
     diagnostics,
     debugLogs: logs,
     buildVersion: BUILD_VERSION,
@@ -1760,6 +1928,7 @@ export function useBrowserDialer() {
     requestMicPermission,
     redialLast,
     reconnectVoice,
+    unlockAudio,
     testRegistration,
     testTokenFetch,
     testAnswerXml,

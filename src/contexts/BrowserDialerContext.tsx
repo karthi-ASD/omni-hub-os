@@ -7,7 +7,7 @@
  */
 
 import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
-import { useBrowserDialer } from "@/hooks/useBrowserDialer";
+import { logDialerEvent, useBrowserDialer } from "@/hooks/useBrowserDialer";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "react-router-dom";
 
@@ -27,10 +27,22 @@ function DialerProviderInner({ children }: { children: ReactNode }) {
   useEffect(() => {
     providerMountCount++;
     dialer.logEvent("PROVIDER_MOUNTED", { mountCount: providerMountCount });
+    dialer.logEvent("SHELL_LEVEL_DIALER_CONSUMER_MOUNTED", { mountCount: providerMountCount });
     return () => {
+      dialer.logEvent("SHELL_LEVEL_DIALER_CONSUMER_UNMOUNTED", { mountCount: providerMountCount });
+      dialer.logEvent("PROVIDER_UNMOUNT_REASON", { mountCount: providerMountCount, route: window.location.pathname });
       dialer.logEvent("PROVIDER_UNMOUNTED", { mountCount: providerMountCount });
     };
   }, []);
+
+  useEffect(() => {
+    dialer.logEvent("PROVIDER_RENDERED", {
+      renderCount: renderCountRef.current,
+      route: location.pathname,
+      registered: dialer.registered,
+      callStatus: dialer.callStatus,
+    });
+  });
 
   // Route change detection — proves provider survives navigation
   useEffect(() => {
@@ -66,14 +78,32 @@ function DialerProviderInner({ children }: { children: ReactNode }) {
 
 export function BrowserDialerProvider({ children }: { children: ReactNode }) {
   const { profile } = useAuth();
+  const stableBusinessIdRef = useRef<string | null>(profile?.business_id ?? null);
+
+  if (profile?.business_id) {
+    stableBusinessIdRef.current = profile.business_id;
+  }
+
+  const effectiveBusinessId = profile?.business_id ?? stableBusinessIdRef.current;
 
   // Only activate dialer for users with a business — avoids conditional hook calls
-  if (!profile?.business_id) {
+  if (!effectiveBusinessId) {
+    logDialerEvent("PROVIDER_RENDER_GUARD_REASON", {
+      reason: "no_business_id",
+      route: typeof window !== "undefined" ? window.location.pathname : "unknown",
+    });
     return (
       <BrowserDialerContext.Provider value={null}>
         {children}
       </BrowserDialerContext.Provider>
     );
+  }
+
+  if (!profile?.business_id && effectiveBusinessId) {
+    logDialerEvent("BUSINESS_PROFILE_TRANSIENT_CHANGE", {
+      preservedBusinessId: effectiveBusinessId,
+      route: typeof window !== "undefined" ? window.location.pathname : "unknown",
+    });
   }
 
   return <DialerProviderInner>{children}</DialerProviderInner>;

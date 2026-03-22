@@ -91,6 +91,17 @@ export function CallReadinessPanel({
 
   const speakerTestGuard = useRef(false);
 
+  const setSpeakerUiState = (
+    result: "idle" | "success" | "fallback_success" | "blocked" | "failed" | "timeout",
+    message: string | null,
+    label: string,
+  ) => {
+    setSpeakerResult(result);
+    setSpeakerMessage(message);
+    logEvent("SPEAKER_TEST_UI_STATE_SET", { result, message });
+    logEvent("SPEAKER_TEST_RESULT_LABEL", { result, label });
+  };
+
   const handleTestSpeaker = async () => {
     if (speakerTestGuard.current) {
       logEvent("SPEAKER_TEST_CONCURRENT_BLOCKED");
@@ -143,30 +154,25 @@ export function CallReadinessPanel({
       switch (result) {
         case "success":
           logEvent("SPEAKER_TEST_COMPLETED_SUCCESS");
-          setSpeakerResult("success");
-          setSpeakerMessage("Speaker working — playback successful");
+          setSpeakerUiState("success", "Speaker working — playback successful", "Confirmed playback");
           break;
         case "fallback":
           logEvent("SPEAKER_TEST_COMPLETED_FALLBACK");
-          setSpeakerResult("fallback_success");
-          setSpeakerMessage("Speaker working (default output — sink routing unsupported)");
+          setSpeakerUiState("fallback_success", "Speaker working (default output — sink routing unsupported)", "Fallback output used");
           break;
         case "blocked":
           logEvent("SPEAKER_TEST_COMPLETED_BLOCKED");
-          setSpeakerResult("blocked");
-          setSpeakerMessage("Browser blocked playback. Click anywhere and retry.");
+          setSpeakerUiState("blocked", "Browser blocked playback. Click anywhere and retry.", "Playback blocked");
           break;
         case "timeout":
           logEvent("SPEAKER_TEST_COMPLETED_TIMEOUT");
-          setSpeakerResult("timeout");
-          setSpeakerMessage("Could not confirm audio playback. Please click once and retry.");
+          setSpeakerUiState("timeout", "Could not confirm audio playback. Please click once and retry.", "Retry needed");
           break;
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       logEvent("SPEAKER_TEST_COMPLETED_FAILED", { error: msg });
-      setSpeakerResult("failed");
-      setSpeakerMessage(`Speaker test failed: ${msg}`);
+      setSpeakerUiState("failed", `Speaker test failed: ${msg}`, "Playback failed");
     } finally {
       setSpeakerTesting(false);
       speakerTestGuard.current = false;
@@ -317,9 +323,9 @@ export function CallReadinessPanel({
           >
             {speakerTesting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Volume2 className="h-3.5 w-3.5" />}
             Test Speaker
-            {(speakerResult === "success" || speakerResult === "fallback_success") && <CheckCircle className="h-3 w-3 text-emerald-500" />}
-            {(speakerResult === "failed" || speakerResult === "blocked") && <XCircle className="h-3 w-3 text-destructive" />}
-            {speakerResult === "timeout" && <CheckCircle className="h-3 w-3 text-amber-500" />}
+            {speakerResult === "success" && <CheckCircle className="h-3 w-3 text-emerald-500" />}
+            {speakerResult === "fallback_success" && <CheckCircle className="h-3 w-3 text-amber-500" />}
+            {(speakerResult === "failed" || speakerResult === "blocked" || speakerResult === "timeout") && <XCircle className="h-3 w-3 text-destructive" />}
           </Button>
 
           <Button
@@ -380,6 +386,28 @@ export function CallReadinessPanel({
 
         <div className="grid gap-2 text-[11px] text-muted-foreground">
           {micMessage && <p>Mic: {micMessage}</p>}
+          {speakerResult !== "idle" && (
+            <Badge
+              variant="outline"
+              className={
+                speakerResult === "success"
+                  ? "w-fit border-emerald-300 text-emerald-600"
+                  : speakerResult === "fallback_success"
+                    ? "w-fit border-amber-300 text-amber-600"
+                    : "w-fit border-destructive/30 text-destructive"
+              }
+            >
+              {speakerResult === "success"
+                ? "Confirmed playback"
+                : speakerResult === "fallback_success"
+                  ? "Fallback output used"
+                  : speakerResult === "blocked"
+                    ? "Playback blocked"
+                    : speakerResult === "timeout"
+                      ? "Retry needed"
+                      : "Playback failed"}
+            </Badge>
+          )}
           {speakerMessage && <p>Speaker: {speakerMessage}</p>}
           {registrationMessage && <p>Registration: {registrationMessage}</p>}
           {tokenMessage && <p>Token: {tokenMessage}</p>}

@@ -31,7 +31,7 @@ export function ClientRouteGuard({ children }: { children?: React.ReactNode }) {
   const { dashboardShell, userType, isAuthResolved } = useAuth();
 
   if (!isAuthResolved) {
-    return null;
+    return children ? <>{children}</> : <Outlet />;
   }
 
   const path = window.location.pathname;
