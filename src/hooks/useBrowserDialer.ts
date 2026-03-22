@@ -549,11 +549,13 @@ function isValidE164(phone: string): boolean {
   return /^\+[1-9]\d{6,14}$/.test(phone);
 }
 
-function getCallerIdForNumber(number: string): string {
-  if (number.startsWith("+91")) return "India caller ID";
-  if (number.startsWith("+61")) return "Australia caller ID";
-  if (number.startsWith("+1")) return "US caller ID";
-  return "Default caller ID";
+function getCallerIdForNumber(number: string): { region: string; label: string } {
+  // NOTE: This is a DISPLAY-ONLY label. The actual E.164 caller ID is resolved
+  // on the backend from environment secrets (PLIVO_CALLER_ID_AU, PLIVO_CALLER_ID_IN, etc.)
+  if (number.startsWith("+91")) return { region: "IN", label: "India (backend-resolved)" };
+  if (number.startsWith("+61")) return { region: "AU", label: "Australia (backend-resolved)" };
+  if (number.startsWith("+1")) return { region: "US", label: "US (backend-resolved)" };
+  return { region: "DEFAULT", label: "Default (backend-resolved)" };
 }
 
 function isClientHealthy(): boolean {
