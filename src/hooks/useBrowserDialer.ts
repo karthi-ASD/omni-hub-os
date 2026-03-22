@@ -667,6 +667,14 @@ function isInActiveCall(): boolean {
 function bindVisibilityRecovery() {
   if (visibilityListenerBound || typeof document === "undefined") return;
   document.addEventListener("visibilitychange", handleVisibilityChange);
+  // Warn on actual tab close during active call — but do NOT auto-destroy
+  window.addEventListener("beforeunload", (e) => {
+    if (isInActiveCall()) {
+      logDialer("BEFOREUNLOAD_DURING_ACTIVE_CALL");
+      e.preventDefault();
+      e.returnValue = "You have an active call. Are you sure you want to leave?";
+    }
+  });
   visibilityListenerBound = true;
 }
 
