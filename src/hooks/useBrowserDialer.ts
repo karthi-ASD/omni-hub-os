@@ -738,11 +738,9 @@ function sanitizeStaleState() {
 async function initializeAudioOutput(): Promise<boolean> {
   try {
     const audio = new Audio();
-    // Tiny silent WAV (44 bytes)
     audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
     audio.volume = 0.01;
 
-    // Try to set output device if supported
     if (typeof (audio as any).setSinkId === "function") {
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
@@ -752,19 +750,26 @@ async function initializeAudioOutput(): Promise<boolean> {
         }
       } catch (sinkErr) {
         logDialer("AUDIO_OUTPUT_SINKID_FALLBACK", { error: sinkErr instanceof Error ? sinkErr.message : String(sinkErr) });
-        // setSinkId not supported — that's fine, continue with default
       }
     }
 
-    await audio.play().catch(() => {});
+    let playbackWorked = false;
+    try {
+      await audio.play();
+      playbackWorked = true;
+    } catch {}
+
+    if (!playbackWorked) {
+      logDialer("AUDIO_OUTPUT_BLOCKED");
+      return false;
+    }
+
     logDialer("AUDIO_OUTPUT_READY");
     setStoreState((c) => ({ ...c, audioReady: true }));
     return true;
   } catch (e) {
     logDialer("AUDIO_OUTPUT_FALLBACK", { error: e instanceof Error ? e.message : String(e) });
-    // Even if play fails, mark as ready — we don't want to block calls for speaker test issues
-    setStoreState((c) => ({ ...c, audioReady: true }));
-    return true;
+    return false;
   }
 }
 
