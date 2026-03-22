@@ -998,17 +998,72 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
 
   instance.client.on("onCallFailed", (cause: string) => {
     if (!guard()) return;
-    logDialer("CALL_FAILED", { reason: cause, destination: storeState.destinationNumber });
+    const reason = (cause || "Unknown").trim();
+    const reasonLower = reason.toLowerCase();
+
+    // Map provider reasons to specific log events and user-friendly messages
+    let userMessage: string;
+    let dbStatus: string = "failed";
+    let logEvent: string = "CALL_FAILED";
+
+    if (reasonLower.includes("busy")) {
+      userMessage = "The number is currently busy. Please try again later.";
+      dbStatus = "busy";
+      logEvent = "CALL_FAILED_BUSY";
+    } else if (reasonLower.includes("no answer") || reasonLower.includes("noanswer")) {
+      userMessage = "The call was not answered.";
+      dbStatus = "no-answer";
+      logEvent = "CALL_FAILED_NO_ANSWER";
+    } else if (reasonLower.includes("reject")) {
+      userMessage = "The call was rejected by the recipient.";
+      dbStatus = "failed";
+      logEvent = "CALL_FAILED_REJECTED";
+    } else if (reasonLower.includes("cancel")) {
+      userMessage = "The call was cancelled.";
+      dbStatus = "ended";
+      logEvent = "CALL_FAILED_CANCELLED";
+    } else {
+      userMessage = `Call could not be completed: ${reason}`;
+      logEvent = "CALL_FAILED";
+    }
+
+    logDialer(logEvent, { reason, destination: storeState.destinationNumber, dbStatus });
     stopRingback();
+
     setStoreState((c) => ({
       ...c,
       status: "failed",
-      lastError: `Call failed: ${cause}`,
-      latestProviderStatus: cause,
+      lastError: userMessage,
+      latestProviderStatus: reason,
       audioPlayable: false,
+      loading: false,
+      dialLock: false,
     }));
-    updateCurrentAttempt({ status: "failed", failureReason: cause, endedAt: new Date().toISOString() });
+    updateCurrentAttempt({ status: dbStatus, failureReason: reason, endedAt: new Date().toISOString() });
+
+    // Update DB session with correct terminal status
+    if (storeState.session?.id) {
+      supabase.from("dialer_sessions").update({ call_status: dbStatus, call_end_time: new Date().toISOString() }).eq("id", storeState.session.id).then(() => {});
+      insertCallEvent(storeState.session.id, logEvent, { reason, dbStatus }).catch(() => {});
+    }
+
     void setAgentAvailability("available");
+
+    // Auto-reset to device_ready after 5 seconds so user can retry
+    setTimeout(() => {
+      setStoreState((c) => {
+        if (c.status !== "failed") return c;
+        logDialer("CALL_STATUS_RESET", { from: "failed", to: c.registered ? "device_ready" : "idle" });
+        return {
+          ...c,
+          status: c.registered ? "device_ready" : "idle",
+          lastError: null,
+          loading: false,
+          dialLock: false,
+          session: null,
+        };
+      });
+    }, 5000);
   });
 
   // Extra raw events for diagnostics
