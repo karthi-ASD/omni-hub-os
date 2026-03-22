@@ -55,6 +55,13 @@ const AppShell = () => {
     : shellInfo.title;
   const hideChatWidget = location.pathname.startsWith("/sales/dialer") || location.pathname.startsWith("/dialer");
 
+  const shellRenderCount = useRef(0);
+  shellRenderCount.current++;
+
+  useEffect(() => {
+    console.log("[DIALER][APP_SHELL_RENDERED]", { renderCount: shellRenderCount.current });
+  });
+
   useEffect(() => {
     console.log("[SHELL RENDER]", {
       dashboardShell,

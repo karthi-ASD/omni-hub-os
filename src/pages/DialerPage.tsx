@@ -101,10 +101,17 @@ function DialerPageContent() {
       return saved ? JSON.parse(saved) : null;
     } catch { return null; }
   });
-  const [followUpDate, setFollowUpDate] = useState<Date | undefined>();
-  const [showFollowUp, setShowFollowUp] = useState(false);
+  const [followUpDate, setFollowUpDate] = useState<Date | undefined>(() => {
+    const saved = sessionStorage.getItem("dialer_followup_draft");
+    return saved ? new Date(saved) : undefined;
+  });
+  const [showFollowUp, setShowFollowUp] = useState(() => {
+    return sessionStorage.getItem("dialer_show_followup") === "true";
+  });
   const [showDiagnostics, setShowDiagnostics] = useState(false);
-  const [rightTab, setRightTab] = useState("transcript");
+  const [rightTab, setRightTab] = useState(() => {
+    return sessionStorage.getItem("dialer_right_tab") || "transcript";
+  });
 
   // Persist drafts to sessionStorage (survives route changes)
   useEffect(() => {
