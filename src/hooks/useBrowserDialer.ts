@@ -1166,6 +1166,11 @@ export function useBrowserDialer() {
 
   const fmtTimer = (s: number) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
 
+  const reconnectVoice = useCallback(() => {
+    logDialer("MANUAL_RECONNECT_TRIGGERED");
+    reinitializeDialer();
+  }, []);
+
   return {
     session: state.session,
     callStatus: state.status,
@@ -1196,5 +1201,6 @@ export function useBrowserDialer() {
     resetDialer,
     requestMicPermission,
     redialLast,
+    reconnectVoice,
   };
 }

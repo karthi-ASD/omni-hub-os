@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { CallReadinessPanel } from "@/components/dialer/CallReadinessPanel";
 import { CallTagging } from "@/components/dialer/CallTagging";
 import {
   Phone, PhoneOff, MicOff, Mic, Clock, User, Building2, Hash,
@@ -126,6 +127,11 @@ function DialerPageContent() {
       registered: dialer.registered,
       status: dialer.callStatus,
     });
+    if (dialer.micPermission !== "granted") {
+      dialer.logEvent("HANDLE_DIAL_BLOCKED_MIC_NOT_GRANTED");
+      toast.error("Please enable microphone before making calls.");
+      return;
+    }
     if (!phoneInput.trim()) {
       dialer.logEvent("HANDLE_DIAL_BLOCKED_EMPTY_INPUT");
       toast.error("Enter a phone number first");
@@ -450,6 +456,19 @@ function DialerPageContent() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Call Readiness Panel */}
+        <CallReadinessPanel
+          registered={dialer.registered}
+          micPermission={dialer.micPermission}
+          clientHealthy={dialer.diagnostics.clientHealthy}
+          audioContextState={dialer.diagnostics.latestBrowserMediaStatus}
+          callStatus={dialer.callStatus}
+          logEvent={dialer.logEvent}
+          startCall={dialer.startCall}
+          onReconnect={dialer.reconnectVoice}
+          requestMicPermission={dialer.requestMicPermission}
+        />
 
         {/* RIGHT PANEL — Disposition */}
         <Card className="lg:col-span-1">
