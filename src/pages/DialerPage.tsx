@@ -88,13 +88,35 @@ function DialerPageContent() {
   const clientId = searchParams.get("clientId") || undefined;
   const { canAccessDialer, isClientUser } = useDialerAccess(clientId);
 
-  const [phoneInput, setPhoneInput] = useState("");
-  const [notesInput, setNotesInput] = useState("");
-  const [leadContext, setLeadContext] = useState<LeadContext | null>(null);
+  const [phoneInput, setPhoneInput] = useState(() => {
+    return sessionStorage.getItem("dialer_phone_draft") || "";
+  });
+  const [notesInput, setNotesInput] = useState(() => {
+    return sessionStorage.getItem("dialer_notes_draft") || "";
+  });
+  const [leadContext, setLeadContext] = useState<LeadContext | null>(() => {
+    try {
+      const saved = sessionStorage.getItem("dialer_lead_context");
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
   const [followUpDate, setFollowUpDate] = useState<Date | undefined>();
   const [showFollowUp, setShowFollowUp] = useState(false);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [rightTab, setRightTab] = useState("transcript");
+
+  // Persist drafts to sessionStorage (survives route changes)
+  useEffect(() => {
+    sessionStorage.setItem("dialer_phone_draft", phoneInput);
+  }, [phoneInput]);
+  useEffect(() => {
+    sessionStorage.setItem("dialer_notes_draft", notesInput);
+  }, [notesInput]);
+  useEffect(() => {
+    if (leadContext) {
+      sessionStorage.setItem("dialer_lead_context", JSON.stringify(leadContext));
+    }
+  }, [leadContext]);
 
   // Live transcript
   const transcript = useCallTranscript({
