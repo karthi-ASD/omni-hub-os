@@ -179,21 +179,25 @@ Deno.serve(async (req) => {
           ? "hangup"
           : "webhook_received";
 
-    await supabase.from("dialer_call_events").insert({
-      session_id: session.id,
-      event_type: eventType,
-      metadata: {
-        leg,
-        call_uuid: p.call_uuid,
-        call_status: p.call_status,
-        hangup_cause: p.hangup_cause,
-        duration: p.duration,
-        bill_duration: p.bill_duration,
-        cost: p.total_cost,
-        recording_url: p.recording_url || null,
-        strict_match: true,
-      },
-    }).catch(() => {});
+    try {
+      await supabase.from("dialer_call_events").insert({
+        session_id: session.id,
+        event_type: eventType,
+        metadata: {
+          leg,
+          call_uuid: p.call_uuid,
+          call_status: p.call_status,
+          hangup_cause: p.hangup_cause,
+          duration: p.duration,
+          bill_duration: p.bill_duration,
+          cost: p.total_cost,
+          recording_url: p.recording_url || null,
+          strict_match: true,
+        },
+      });
+    } catch {
+      // ignore logging failure
+    }
 
     const updates: Record<string, any> = {};
     const currentIsTerminal = TERMINAL_STATES.includes(session.call_status);

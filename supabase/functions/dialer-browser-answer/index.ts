@@ -187,20 +187,24 @@ Deno.serve(async (req) => {
     console.log("SESSION_PROVIDER_CALL_ID_AFTER", { sessionId, provider_call_id: providerCallIdAfter || null });
 
     if (sessionId) {
-      await supabase.from("dialer_call_events").insert({
-        session_id: sessionId,
-        event_type: "browser_answer_xml_served",
-        metadata: {
-          call_uuid: callUuid,
-          destination,
-          caller_id: callerId,
-          direction,
-          previous_provider_call_id: providerCallIdBefore,
-          current_provider_call_id: providerCallIdAfter || null,
-          is_duplicate_call: false,
-          is_reentry: false,
-        },
-      } as never).catch(() => {});
+      try {
+        await supabase.from("dialer_call_events").insert({
+          session_id: sessionId,
+          event_type: "browser_answer_xml_served",
+          metadata: {
+            call_uuid: callUuid,
+            destination,
+            caller_id: callerId,
+            direction,
+            previous_provider_call_id: providerCallIdBefore,
+            current_provider_call_id: providerCallIdAfter || null,
+            is_duplicate_call: false,
+            is_reentry: false,
+          },
+        } as never);
+      } catch {
+        // ignore logging failure
+      }
     }
 
     const xml = buildXml(destination, callerId, sessionId);
