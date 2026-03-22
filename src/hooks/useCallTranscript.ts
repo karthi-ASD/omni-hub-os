@@ -21,7 +21,8 @@ interface UseCallTranscriptOptions {
   sessionId: string | null;
   businessId: string | null;
   userId: string | null;
-  isCallActive: boolean;
+  /** Must be true ONLY when call status is "connected" — not dialing/ringing */
+  isCallConnected: boolean;
   onLog?: (event: string, data?: Record<string, unknown>) => void;
 }
 
