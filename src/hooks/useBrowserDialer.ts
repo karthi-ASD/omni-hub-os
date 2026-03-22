@@ -1228,6 +1228,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
       } catch {}
     }
   } catch {}
+  logDialer("LISTENERS_ATTACH_DONE", { generation });
 }
 
 // ─── Connection health monitor ──────────────────────────────────────
