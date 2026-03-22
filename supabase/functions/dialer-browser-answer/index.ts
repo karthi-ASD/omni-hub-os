@@ -140,19 +140,23 @@ Deno.serve(async (req) => {
         existingProviderCallId: providerCallIdBefore,
       });
 
-      await supabase.from("dialer_call_events").insert({
-        session_id: sessionId,
-        event_type: "duplicate_provider_call_ignored",
-        metadata: {
-          call_uuid: callUuid,
-          existing_provider_call_id: providerCallIdBefore,
-          destination,
-          caller_id: callerId,
-          direction,
-          is_duplicate_call: true,
-          is_reentry: true,
-        },
-      } as never).catch(() => {});
+      try {
+        await supabase.from("dialer_call_events").insert({
+          session_id: sessionId,
+          event_type: "duplicate_provider_call_ignored",
+          metadata: {
+            call_uuid: callUuid,
+            existing_provider_call_id: providerCallIdBefore,
+            destination,
+            caller_id: callerId,
+            direction,
+            is_duplicate_call: true,
+            is_reentry: true,
+          },
+        } as never);
+      } catch {
+        // ignore logging failure
+      }
 
       return new Response(buildSafeExitXml("Duplicate call attempt ignored."), {
         status: 200,

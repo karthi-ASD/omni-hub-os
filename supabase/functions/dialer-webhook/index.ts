@@ -147,19 +147,23 @@ Deno.serve(async (req) => {
         call_status: p.call_status,
       });
 
-      await supabase.from("dialer_call_events").insert({
-        session_id: session.id,
-        event_type: "provider_call_mismatch",
-        metadata: {
-          leg,
-          incoming_call_uuid: p.call_uuid || null,
-          provider_call_id: providerCallId || null,
-          event: p.event || null,
-          call_status: p.call_status || null,
-          hangup_cause: p.hangup_cause || null,
-          strict_match: false,
-        },
-      }).catch(() => {});
+      try {
+        await supabase.from("dialer_call_events").insert({
+          session_id: session.id,
+          event_type: "provider_call_mismatch",
+          metadata: {
+            leg,
+            incoming_call_uuid: p.call_uuid || null,
+            provider_call_id: providerCallId || null,
+            event: p.event || null,
+            call_status: p.call_status || null,
+            hangup_cause: p.hangup_cause || null,
+            strict_match: false,
+          },
+        });
+      } catch {
+        // ignore logging failure
+      }
 
       return new Response(JSON.stringify({ status: "ignored_mismatch", session_id: session.id }), {
         status: 200,
