@@ -3,7 +3,13 @@
  * singleton alive across route changes. Mounts once in AppShell for
  * authenticated users, never unmounts during SPA navigation.
  *
- * BUILD: stability-v17
+ * BUILD: stability-v19
+ *
+ * ROOT CAUSE FIX (v19): Previous versions conditionally switched between
+ * two different component subtrees (<Provider value={null}> vs <DialerProviderInner>)
+ * based on effectiveBusinessId. This caused React to unmount/remount ALL children
+ * whenever business_id flickered (e.g. during mic permission → token refresh).
+ * Fix: ALWAYS render through DialerProviderInner so the component tree is stable.
  */
 
 import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
@@ -17,6 +23,13 @@ const BrowserDialerContext = createContext<DialerContextValue>(null);
 
 let providerMountCount = 0;
 
+/**
+ * Inner component that always calls useBrowserDialer().
+ * Since this is only rendered inside authenticated AppShell,
+ * the hook is safe to call unconditionally.
+ * If business_id is not yet available, the dialer simply won't
+ * initialize its Plivo client (authIdentity will be null).
+ */
 function DialerProviderInner({ children }: { children: ReactNode }) {
   const dialer = useBrowserDialer();
   const location = useLocation();
@@ -76,36 +89,21 @@ function DialerProviderInner({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * STABILITY-V19 FIX:
+ * Always render DialerProviderInner to maintain a STABLE component tree.
+ * 
+ * Previous versions conditionally switched between:
+ *   <Provider value={null}>{children}</Provider>   (no business)
+ *   <DialerProviderInner>{children}</DialerProviderInner>  (has business)
+ * 
+ * This caused React to unmount/remount ALL children on any business_id flicker,
+ * which was the root cause of blank screens after mic permission.
+ * 
+ * Now we ALWAYS render: DialerProviderInner > Provider > children
+ * The dialer hook handles null business gracefully (sets authIdentity=null).
+ */
 export function BrowserDialerProvider({ children }: { children: ReactNode }) {
-  const { profile } = useAuth();
-  const stableBusinessIdRef = useRef<string | null>(profile?.business_id ?? null);
-
-  if (profile?.business_id) {
-    stableBusinessIdRef.current = profile.business_id;
-  }
-
-  const effectiveBusinessId = profile?.business_id ?? stableBusinessIdRef.current;
-
-  // Only activate dialer for users with a business — avoids conditional hook calls
-  if (!effectiveBusinessId) {
-    logDialerEvent("PROVIDER_RENDER_GUARD_REASON", {
-      reason: "no_business_id",
-      route: typeof window !== "undefined" ? window.location.pathname : "unknown",
-    });
-    return (
-      <BrowserDialerContext.Provider value={null}>
-        {children}
-      </BrowserDialerContext.Provider>
-    );
-  }
-
-  if (!profile?.business_id && effectiveBusinessId) {
-    logDialerEvent("BUSINESS_PROFILE_TRANSIENT_CHANGE", {
-      preservedBusinessId: effectiveBusinessId,
-      route: typeof window !== "undefined" ? window.location.pathname : "unknown",
-    });
-  }
-
   return <DialerProviderInner>{children}</DialerProviderInner>;
 }
 

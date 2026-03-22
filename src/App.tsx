@@ -17,6 +17,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import { ClientRouteGuard } from "@/components/guards/ClientRouteGuard";
+import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import LoginV2 from "./pages/LoginV2";
@@ -364,11 +365,13 @@ const App = () => (
             {/* Protected app shell */}
             <Route
               element={
-                <ProtectedRoute>
-                  <ClientRouteGuard>
-                    <AppShell />
-                  </ClientRouteGuard>
-                </ProtectedRoute>
+                <AppErrorBoundary>
+                  <ProtectedRoute>
+                    <ClientRouteGuard>
+                      <AppShell />
+                    </ClientRouteGuard>
+                  </ProtectedRoute>
+                </AppErrorBoundary>
               }
             >
               <Route path="/dashboard" element={<Dashboard />} />
