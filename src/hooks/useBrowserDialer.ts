@@ -306,13 +306,20 @@ function getSnapshot() {
   return storeState;
 }
 
+// ─── Timer: timestamp-based elapsed calculation (survives background throttling) ──
+let callConnectedTimestamp: number = 0;
+
 function transitionStatus(nextStatus: BrowserDialerStatus) {
   const prev = storeState.status;
-  // Start timer on connected
+  // Start timer on connected — use timestamp-based approach
   if (prev !== "connected" && nextStatus === "connected" && !timerRef) {
+    callConnectedTimestamp = Date.now();
     timerRef = setInterval(() => {
-      storeState = { ...storeState, callTimer: storeState.callTimer + 1 };
-      emitChange();
+      if (callConnectedTimestamp > 0) {
+        const elapsed = Math.floor((Date.now() - callConnectedTimestamp) / 1000);
+        storeState = { ...storeState, callTimer: elapsed };
+        emitChange();
+      }
     }, 1000);
   }
   // Stop timer leaving connected
@@ -323,6 +330,7 @@ function transitionStatus(nextStatus: BrowserDialerStatus) {
   // Reset timer on terminal states
   if (["idle", "ended", "failed"].includes(nextStatus)) {
     if (timerRef) { clearInterval(timerRef); timerRef = null; }
+    callConnectedTimestamp = 0;
     storeState = { ...storeState, callTimer: 0 };
   }
 }

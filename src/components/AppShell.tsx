@@ -90,43 +90,46 @@ const AppShell = () => {
   }
 
   return (
-    <BusinessThemeProvider>
-      <SidebarProvider>
-        <div className="min-h-screen flex w-full bg-background">
-          <AppSidebar />
-          <div className="flex-1 flex flex-col min-w-0">
-            <header className="sticky top-0 z-40 h-14 flex items-center justify-between px-4 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-              <div className="flex items-center gap-3 min-w-0">
-                <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
-                <div className="min-w-0 hidden md:block">
-                  <p className="text-sm font-semibold text-foreground truncate">{shellTitle}</p>
-                  <p className="text-[11px] text-muted-foreground truncate">{shellInfo.subtitle}</p>
+    <BrowserDialerProvider>
+      <BusinessThemeProvider>
+        <SidebarProvider>
+          <div className="min-h-screen flex w-full bg-background">
+            <AppSidebar />
+            <div className="flex-1 flex flex-col min-w-0">
+              <ActiveCallBar />
+              <header className="sticky top-0 z-40 h-14 flex items-center justify-between px-4 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+                <div className="flex items-center gap-3 min-w-0">
+                  <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+                  <div className="min-w-0 hidden md:block">
+                    <p className="text-sm font-semibold text-foreground truncate">{shellTitle}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{shellInfo.subtitle}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <GlobalSearch />
-                <ThemeToggle />
-                <NotificationBell />
-              </div>
-            </header>
-            <main className="flex-1 p-6 overflow-y-auto gradient-mesh">
-              <div className="max-w-[1400px] mx-auto">
-                <Outlet />
-              </div>
-            </main>
+                <div className="flex items-center gap-1">
+                  <GlobalSearch />
+                  <ThemeToggle />
+                  <NotificationBell />
+                </div>
+              </header>
+              <main className="flex-1 p-6 overflow-y-auto gradient-mesh">
+                <div className="max-w-[1400px] mx-auto">
+                  <Outlet />
+                </div>
+              </main>
+            </div>
+            <FloatingDialer />
+            <BroadcastPopup />
+            {businessId && !hideChatWidget && (
+              <ChatWidget
+                businessId={businessId}
+                title="AI Support"
+                subtitle="Powered by AI • Ask anything"
+              />
+            )}
           </div>
-          <FloatingDialer />
-          <BroadcastPopup />
-          {businessId && !hideChatWidget && (
-            <ChatWidget
-              businessId={businessId}
-              title="AI Support"
-              subtitle="Powered by AI • Ask anything"
-            />
-          )}
-        </div>
-      </SidebarProvider>
-    </BusinessThemeProvider>
+        </SidebarProvider>
+      </BusinessThemeProvider>
+    </BrowserDialerProvider>
   );
 };
 
