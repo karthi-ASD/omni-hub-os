@@ -45,6 +45,7 @@ const STATUS_LABELS: Record<BrowserDialerStatus, string> = {
   ended: "Call ended",
   failed: "Call failed",
   permission_denied: "Microphone access denied",
+  auth_required: "🔒 Login required",
 };
 
 const STATUS_COLORS: Record<string, string> = {
