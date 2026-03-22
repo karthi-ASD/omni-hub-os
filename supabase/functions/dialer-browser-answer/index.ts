@@ -36,10 +36,17 @@ function normalizeDestination(raw: string): string {
   return destination.replace(/[^\d+]/g, "");
 }
 
-function buildXml(destination: string, callerId: string) {
+function buildXml(destination: string, callerId: string, sessionId: string) {
+  const webhookSecret = Deno.env.get("PLIVO_WEBHOOK_SECRET") || "";
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+  // Recording callback — fires when recording is ready
+  const recordingCallbackUrl = `${supabaseUrl}/functions/v1/dialer-webhook?leg=recording&session_id=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(webhookSecret)}`;
+  // Hangup callback — fires when call ends
+  const hangupUrl = `${supabaseUrl}/functions/v1/dialer-webhook?leg=customer&session_id=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(webhookSecret)}`;
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Dial answerOnBridge="true" callerId="${callerId}" ringTone="us">
+  <Dial answerOnBridge="true" callerId="${callerId}" record="true" recordingCallbackUrl="${recordingCallbackUrl}" recordingCallbackMethod="POST" action="${hangupUrl}" method="POST" ringTone="us">
     <Number>${destination}</Number>
   </Dial>
 </Response>`;
@@ -128,8 +135,8 @@ Deno.serve(async (req) => {
         .then(() => {}, () => {});
     }
 
-    // Return XML — bridge WebRTC to PSTN
-    const xml = buildXml(destination, callerId);
+    // Return XML — bridge WebRTC to PSTN with recording enabled
+    const xml = buildXml(destination, callerId, sessionId);
 
     console.log("[DIALER_XML] Returning XML:", xml);
 

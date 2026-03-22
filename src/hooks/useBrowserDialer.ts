@@ -197,8 +197,8 @@ const INITIAL_STATE: BrowserDialerStoreState = {
   audioPlayable: false,
 };
 
-const BUILD_VERSION = "stability-v11";
-const DEPLOYED_AT = "2026-03-22T04:40:00Z";
+const BUILD_VERSION = "stability-v12";
+const DEPLOYED_AT = "2026-03-22T06:00:00Z";
 type DialerIdentity = { businessId: string; userId: string } | null;
 
 // ─── Global singletons ──────────────────────────────────────────────
@@ -625,6 +625,10 @@ function bindPermissionListener() {
 }
 
 // ─── Visibility recovery (Tab switch fix) ───────────────────────────
+function isInActiveCall(): boolean {
+  return ["dialing", "ringing", "connected", "ending"].includes(storeState.status);
+}
+
 function bindVisibilityRecovery() {
   if (visibilityListenerBound || typeof document === "undefined") return;
   document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -633,15 +637,30 @@ function bindVisibilityRecovery() {
 
 function handleVisibilityChange() {
   const visible = document.visibilityState === "visible";
-  logDialer("TAB_VISIBILITY_CHANGE", { visibilityState: document.visibilityState });
+  const activeCall = isInActiveCall();
+  logDialer("TAB_VISIBILITY_CHANGE", { visibilityState: document.visibilityState, activeCall });
   setStoreState((c) => ({ ...c, tabVisibilityState: document.visibilityState }));
 
-  if (!visible) return; // Nothing to do when hiding
+  // ── CRITICAL: If there is an active call, do NOT trigger any recovery/reinit ──
+  if (!visible) {
+    if (activeCall) {
+      logDialer("TAB_HIDDEN_DURING_ACTIVE_CALL");
+    }
+    return;
+  }
+
+  // Tab became visible again
+  if (activeCall) {
+    logDialer("TAB_VISIBLE_DURING_ACTIVE_CALL");
+    // Only resume audio context — never touch client/registration
+    void resumeAudioContext().catch(() => {});
+    return;
+  }
 
   // Resume audio safely
   void resumeAudioContext().catch(() => {});
 
-  // Check client health
+  // Check client health — only when NOT in an active call
   const healthy = isClientHealthy();
   const currentStatus = storeState.status;
   const isTransient = ["dialing", "ringing", "connected"].includes(currentStatus);
@@ -652,9 +671,6 @@ function handleVisibilityChange() {
     currentStatus,
     hasClient: !!plivoInstanceRef?.client,
   });
-
-  // If in an active call, just resume audio — don't touch state
-  if (isTransient && healthy) return;
 
   // If client is dead and we're not in an active call, try recovery
   if (!healthy && !isTransient && !recoveryInProgress) {
@@ -814,6 +830,11 @@ function isActivePlivoClient(instance: PlivoBrowserSDK, gen: number) {
 
 function destroyPlivoClient() {
   if (!plivoInstanceRef?.client) return;
+  // ── CRITICAL: Block destruction during active calls ──
+  if (isInActiveCall()) {
+    logDialer("CLIENT_DESTROY_BLOCKED_ACTIVE_CALL", { status: storeState.status });
+    return;
+  }
   logDialer("LISTENERS_DETACHED");
   try { plivoInstanceRef.client.hangup(); } catch {}
   try { plivoInstanceRef.client.logout(); } catch {}
@@ -909,10 +930,14 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
 
     if (connState === "disconnected") {
       logDialer("PLIVO_DISCONNECTED_DETECTED");
-      // If not in an active call, force re-login after delay
-      const isInCall = ["dialing", "ringing", "connected"].includes(storeState.status);
+      const activeCall = isInActiveCall();
       loginInProgress = false;
-      if (!isInCall && lastLoginCredentials && !recoveryInProgress) {
+      if (activeCall) {
+        // ── CRITICAL: Do NOT force relogin during active call ──
+        logDialer("REINIT_BLOCKED_ACTIVE_CALL", { status: storeState.status });
+        return;
+      }
+      if (lastLoginCredentials && !recoveryInProgress) {
         logDialer("FORCE_RELOGIN", { reason: "connection_disconnected" });
         setStoreState((c) => ({ ...c, registered: false, status: "idle", plivoClientInitStatus: "disconnected" }));
         scheduleRelogin("connection_disconnected");
@@ -1021,6 +1046,10 @@ function stopConnectionHealthMonitor() {
 function reinitializeDialer() {
   if (recoveryInProgress) {
     logDialer("INIT_SKIPPED", { reason: "recovery_in_progress" });
+    return;
+  }
+  if (isInActiveCall()) {
+    logDialer("REINIT_BLOCKED_ACTIVE_CALL", { status: storeState.status });
     return;
   }
   recoveryInProgress = true;
@@ -1223,6 +1252,11 @@ export function useBrowserDialer() {
       if (activeHookConsumers === 0) {
         consumerCleanupTimer = window.setTimeout(() => {
           if (activeHookConsumers > 0) return;
+          // ── CRITICAL: Do NOT destroy client during an active call ──
+          if (isInActiveCall()) {
+            logDialer("CLIENT_DESTROY_BLOCKED_ACTIVE_CALL", { reason: "cleanup_timer_during_call" });
+            return;
+          }
           stopConnectionHealthMonitor();
           sessionUnsubRef?.();
           sessionUnsubRef = null;
