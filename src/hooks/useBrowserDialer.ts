@@ -1248,9 +1248,13 @@ async function executeOutboundCall(intent: PendingDialIntent) {
 
     startTestAttempt(normalizedPhone);
 
-    const selectedCallerId = getCallerIdForNumber(normalizedPhone);
-    logDialer("CALLER_ID_SELECTED", { callerId: selectedCallerId, destination: normalizedPhone });
+    const callerIdInfo = getCallerIdForNumber(normalizedPhone);
+    logDialer("CALLER_ID_MAPPING_INPUT", { destination: normalizedPhone });
+    logDialer("CALLER_ID_MAPPING_RESULT", { region: callerIdInfo.region, label: callerIdInfo.label, note: "Actual E.164 caller ID is resolved on the backend from environment secrets" });
 
+    // Pre-call state reset — clear any stale state from previous attempts
+    logDialer("PRECALL_STATE_RESET", { previousStatus: storeState.status, previousSession: storeState.session?.id ?? null, previousError: storeState.lastError });
+    
     addCallAttempt({
       id: crypto.randomUUID(),
       destinationRaw: intent.phoneNumber,
@@ -1266,14 +1270,17 @@ async function executeOutboundCall(intent: PendingDialIntent) {
     setStoreState((c) => ({
       ...c,
       destinationNumber: normalizedPhone,
-      selectedCallerId,
+      selectedCallerId: callerIdInfo.label,
       status: "dialing",
       isMuted: false,
       callTimer: 0,
       lastCalledNumber: normalizedPhone,
+      lastError: null,
       recentNumbers: [normalizedPhone, ...c.recentNumbers.filter((n) => n !== normalizedPhone)].slice(0, 10),
       latestProviderStatus: "dialing",
     }));
+    logDialer("PREVIOUS_FAILED_SESSION_CLEARED");
+    logDialer("NEW_ATTEMPT_CONTEXT_READY", { destination: normalizedPhone, callerIdRegion: callerIdInfo.region });
 
     logDialer("OUTBOUND_CALL_SESSION_CREATING", { destination: normalizedPhone });
     const sess = await createDialerSession({
