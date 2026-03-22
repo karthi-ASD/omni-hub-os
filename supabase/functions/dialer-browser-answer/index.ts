@@ -110,7 +110,7 @@ function buildStaticTestXml(destination: string, callerId: string) {
 function buildSafeExitXml(message = "This call attempt is no longer valid.") {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Speak>${message}</Speak>
+  <Speak>${escapeXmlText(message)}</Speak>
   <Hangup reason="rejected" />
 </Response>`;
 }
