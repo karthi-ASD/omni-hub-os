@@ -221,9 +221,9 @@ let modulePendingDial: PendingDialIntent | null = null;
 let recoveryInProgress = false;
 let initPromise: Promise<void> | null = null;
 let loginInProgress = false;
-let reloginTimeoutRef: ReturnType<typeof setTimeout> | null = null;
+let reloginTimeoutRef: number | null = null;
 let activeHookConsumers = 0;
-let consumerCleanupTimer: ReturnType<typeof setTimeout> | null = null;
+let consumerCleanupTimer: number | null = null;
 let currentAccessToken: string | null = null;
 
 // ─── Connection health monitor ──────────────────────────────────────
@@ -1092,7 +1092,7 @@ async function initializeVoiceClient() {
     logDialer("CLIENT_CREATED", { generation });
     bindPlivoEvents(instance, generation);
 
-    setStoreState((c) => ({ ...c, sdkReady: true, status: "registering", plivoClientInitStatus: "client_created" }));
+    setStoreState((c) => ({ ...c, sdkReady: true, status: "registering", plivoClientInitStatus: "client_created", connectionState: "connecting" }));
     logDialer("PLIVO_CLIENT_INIT_SUCCESS");
 
     await resumeAudioContext();
@@ -1406,6 +1406,24 @@ export function useBrowserDialer() {
     lastEvent: state.lastEvent,
     pendingDialNumber: state.pendingDialIntent?.phoneNumber || null,
     clientHealthy: isClientHealthy(),
+    connectionState: state.connectionState,
+    tabVisibilityState: state.tabVisibilityState,
+    plivoClientInitStatus: state.plivoClientInitStatus,
+    lastTokenFetchStatus: state.lastTokenFetchStatus,
+    lastTokenUsername: state.lastTokenUsername,
+    lastTokenAppId: state.lastTokenAppId,
+    lastTokenHasPassword: state.lastTokenHasPassword,
+    lastAnswerXmlStatus: state.lastAnswerXmlStatus,
+    lastAnswerXmlContentType: state.lastAnswerXmlContentType,
+    lastAnswerXmlBody: state.lastAnswerXmlBody,
+    buildVersion: BUILD_VERSION,
+    deployedAt: DEPLOYED_AT,
+    environment: getEnvironmentLabel(),
+    userIdentifier: state.userIdentifier,
+    hasAccessToken: state.hasAccessToken,
+    hasActiveCall: ["dialing", "ringing", "connected"].includes(state.status),
+    audioElementsAttached: state.audioElementsAttached,
+    audioPlayable: state.audioPlayable,
   };
 
   const fmtTimer = (s: number) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
