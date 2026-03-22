@@ -1173,6 +1173,7 @@ function shouldRunPostCallAI(session: DialerSession | null, callAttempts: CallAt
 }
 
 async function executeOutboundCall(intent: PendingDialIntent) {
+  const callFlowStartMs = Date.now();
   logDialer("EXECUTE_OUTBOUND_CALL_ENTERED", {
     raw: intent.phoneNumber,
     audioReady: storeState.audioReady,
@@ -1180,6 +1181,7 @@ async function executeOutboundCall(intent: PendingDialIntent) {
     registered: storeState.registered,
     connectionState: storeState.connectionState,
     dialLock: storeState.dialLock,
+    CALL_START_TIME: callFlowStartMs,
   });
 
   if (!authIdentity) {
@@ -1294,17 +1296,18 @@ async function executeOutboundCall(intent: PendingDialIntent) {
     activeProviderInvocation = { sessionId: sess.id, destination: normalizedPhone, startedAt: Date.now() };
     await setAgentAvailability("on_call");
 
-    logDialer("CALL_DIAL_START", { destinationNumber: normalizedPhone, sessionId: sess.id });
+    logDialer("CALL_DIAL_START", { destinationNumber: normalizedPhone, sessionId: sess.id, elapsedMs: Date.now() - callFlowStartMs });
 
     // Stability delay — let WebRTC settle before invoking call
     await new Promise((res) => setTimeout(res, 500));
-    logDialer("CALL_STABILITY_DELAY_DONE");
+    logDialer("CALL_STABILITY_DELAY_DONE", { elapsedMs: Date.now() - callFlowStartMs });
 
     // Record call start timestamp for false-busy detection
     callStartTimestamp = Date.now();
 
     // ── ACTUAL PLIVO CALL INVOCATION ──
-    logDialer("PLIVO_CALL_REQUEST_START", { destination: normalizedPhone, sessionId: sess.id });
+    const plivoCallStartMs = Date.now();
+    logDialer("PLIVO_CALL_REQUEST_START", { destination: normalizedPhone, sessionId: sess.id, elapsedMs: plivoCallStartMs - callFlowStartMs });
     try {
       if (activeProviderInvocation?.sessionId === sess.id && Date.now() - activeProviderInvocation.startedAt < 20000 && activeProviderInvocation.destination === normalizedPhone) {
         const providerCallReturn = plivoInstanceRef.client.call(normalizedPhone, { "X-PH-SessionId": sess.id });
@@ -1312,6 +1315,8 @@ async function executeOutboundCall(intent: PendingDialIntent) {
           destination: normalizedPhone,
           sessionId: sess.id,
           returnType: providerCallReturn === undefined ? "void" : typeof providerCallReturn,
+          plivoCallDurationMs: Date.now() - plivoCallStartMs,
+          totalElapsedMs: Date.now() - callFlowStartMs,
         });
         logDialer("OUTBOUND_CALL_PROVIDER_BIND_SUCCESS", { sessionId: sess.id, destination: normalizedPhone, clientAlive: true });
         logDialer("SESSION_PROVIDER_CORRELATION_CONFIRMED", { sessionId: sess.id, destination: normalizedPhone, bindHeader: "X-PH-SessionId" });
@@ -1319,13 +1324,13 @@ async function executeOutboundCall(intent: PendingDialIntent) {
         throw new Error("Provider call binding guard rejected duplicate invocation.");
       }
     } catch (callErr) {
-      logDialer("PLIVO_CALL_REQUEST_FAILURE", { error: callErr instanceof Error ? callErr.message : String(callErr), sessionId: sess.id, destination: normalizedPhone });
+      logDialer("PLIVO_CALL_REQUEST_FAILURE", { error: callErr instanceof Error ? callErr.message : String(callErr), sessionId: sess.id, destination: normalizedPhone, totalElapsedMs: Date.now() - callFlowStartMs });
       logDialer("OUTBOUND_CALL_PROVIDER_BIND_FAILURE", { error: callErr instanceof Error ? callErr.message : String(callErr), sessionId: sess.id, destination: normalizedPhone });
       endTestAttempt("failed", { sessionId: sess.id, destination: normalizedPhone, reason: callErr instanceof Error ? callErr.message : String(callErr) });
       throw callErr;
     }
 
-    logDialer("PLIVO_CALL_INVOKED", { destinationNumber: normalizedPhone });
+    logDialer("PLIVO_CALL_INVOKED", { destinationNumber: normalizedPhone, totalElapsedMs: Date.now() - callFlowStartMs });
     await insertCallEvent(sess.id, "browser_call_initiated", { destination: normalizedPhone, call_mode: "browser" });
     toast.info(`Calling ${normalizedPhone}`);
 
@@ -1548,7 +1553,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   instance.client.on("onCallRemoteRinging", async (callInfo: Plivo.CallInfo) => {
     if (!guardEvent("onCallRemoteRinging")) return;
     const prevState = storeState.status;
-    logDialer("CALL_REMOTE_RINGING", { callInfoState: callInfo.state || "ringing" });
+    logDialer("CALL_REMOTE_RINGING", { callInfoState: callInfo.state || "ringing", timeSinceCallStartMs: callStartTimestamp ? Date.now() - callStartTimestamp : null });
     logDialer("PROVIDER_RINGING_EVENT", {
       prevState,
       nextState: "ringing",
@@ -1569,7 +1574,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   instance.client.on("onCallAnswered", async (callInfo: Plivo.CallInfo) => {
     if (!guardEvent("onCallAnswered")) return;
     const prevState = storeState.status;
-    logDialer("CALL_ANSWERED", { callInfoState: callInfo.state || "answered" });
+    logDialer("CALL_ANSWERED", { callInfoState: callInfo.state || "answered", timeSinceCallStartMs: callStartTimestamp ? Date.now() - callStartTimestamp : null });
     logDialer("PROVIDER_ANSWERED_EVENT", {
       prevState,
       nextState: "connected",
@@ -1603,7 +1608,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   instance.client.on("onCallTerminated", (callInfo: Plivo.CallInfo) => {
     if (!guardEvent("onCallTerminated")) return;
     const prevState = storeState.status;
-    logDialer("CALL_TERMINATED", { callInfoState: callInfo.state || "terminated" });
+    logDialer("CALL_TERMINATED", { callInfoState: callInfo.state || "terminated", timeSinceCallStartMs: callStartTimestamp ? Date.now() - callStartTimestamp : null });
     logDialer("PROVIDER_HANGUP_EVENT", { prevState, nextState: "ended", providerStatus: callInfo.state || "terminated", sessionId: storeState.session?.id ?? null, callId: callInfo.callUUID ?? null, clientAlive: !!plivoInstanceRef?.client });
     stopRingback();
     setStoreState((c) => ({ ...c, status: "ended", latestProviderStatus: "terminated", audioPlayable: false }));
@@ -1692,7 +1697,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
         instance.client.on(evt, (...args: unknown[]) => {
           if (!guardEvent(evt)) return;
           if (evt === "onCalling") {
-            logDialer("PROVIDER_CALLING_EVENT", {
+            logDialer("PROVIDER_CALLING_EVENT", { timeSinceCallStartMs: callStartTimestamp ? Date.now() - callStartTimestamp : null,
               prevState: storeState.status,
               nextState: storeState.status,
               providerStatus: evt,
