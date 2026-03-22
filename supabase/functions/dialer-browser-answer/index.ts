@@ -35,6 +35,10 @@ function normalizeDestination(raw: string): string {
   return destination.replace(/[^\d+]/g, "");
 }
 
+// STATIC_XML_TEST: Set to true to bypass all dynamic logic and return hardcoded XML
+// This isolates whether the issue is in our logic vs Plivo app config
+const STATIC_XML_TEST = false;
+
 function buildXml(destination: string, callerId: string, sessionId: string) {
   const webhookSecret = Deno.env.get("PLIVO_WEBHOOK_SECRET") || "";
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -43,7 +47,17 @@ function buildXml(destination: string, callerId: string, sessionId: string) {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Dial answerOnBridge="true" callerId="${callerId}" record="true" recordingCallbackUrl="${recordingCallbackUrl}" recordingCallbackMethod="POST" action="${hangupUrl}" method="POST" ringTone="us">
+  <Dial callerId="${callerId}" answerOnBridge="true" record="true" recordingCallbackUrl="${recordingCallbackUrl}" recordingCallbackMethod="POST" action="${hangupUrl}" method="POST">
+    <Number>${destination}</Number>
+  </Dial>
+</Response>`;
+}
+
+function buildStaticTestXml(destination: string, callerId: string) {
+  // Minimal Plivo XML — no webhooks, no recording, no extras
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Dial callerId="${callerId}">
     <Number>${destination}</Number>
   </Dial>
 </Response>`;
@@ -108,7 +122,20 @@ Deno.serve(async (req) => {
     }
 
     const callerId = getCallerIdForNumber(destination);
-    console.log("[DIALER_XML] CallerId", { callerId, destination, sessionId, callUuid });
+    console.log("[DIALER_XML] CallerId", { callerId, callerIdEmpty: !callerId, destination, sessionId, callUuid });
+
+    if (!callerId) {
+      console.error("CALLER_ID_MISSING", { destination, sessionId, callUuid, envKeys: {
+        PLIVO_CALLER_ID_AU: !!Deno.env.get("PLIVO_CALLER_ID_AU"),
+        PLIVO_CALLER_ID_IN: !!Deno.env.get("PLIVO_CALLER_ID_IN"),
+        PLIVO_CALLER_ID_DEFAULT: !!Deno.env.get("PLIVO_CALLER_ID_DEFAULT"),
+        PLIVO_CALLER_ID: !!Deno.env.get("PLIVO_CALLER_ID"),
+      }});
+      return new Response(buildSafeExitXml("No caller ID configured for this destination."), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "text/xml" },
+      });
+    }
 
     let session: { provider_call_id: string | null; call_status: string | null } | null = null;
     if (sessionId) {
@@ -207,12 +234,28 @@ Deno.serve(async (req) => {
       }
     }
 
-    const xml = buildXml(destination, callerId, sessionId);
-    console.log("[DIALER_XML] Returning XML", { sessionId, callUuid, destination, provider_call_id: providerCallIdAfter || null });
+    // Choose between static test XML or full dynamic XML
+    const xml = STATIC_XML_TEST
+      ? buildStaticTestXml(destination, callerId)
+      : buildXml(destination, callerId, sessionId);
+
+    // CRITICAL: Log the EXACT XML being returned to Plivo
+    console.log("FINAL_XML_OUTPUT", xml);
+    console.log("FINAL_XML_META", {
+      sessionId,
+      callUuid,
+      destination,
+      callerId,
+      callerIdEmpty: !callerId,
+      callerIdLength: callerId.length,
+      destinationLength: destination.length,
+      staticTestMode: STATIC_XML_TEST,
+      provider_call_id: providerCallIdAfter || null,
+    });
 
     return new Response(xml, {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "text/xml; charset=utf-8" },
+      headers: { ...corsHeaders, "Content-Type": "text/xml" },
     });
   } catch (err) {
     console.error("[DIALER_XML] Error", err);
