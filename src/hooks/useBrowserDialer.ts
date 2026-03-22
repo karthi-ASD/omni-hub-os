@@ -1,13 +1,14 @@
 /**
  * Browser-based Plivo dialer — single source of truth via useSyncExternalStore.
  *
- * BUILD: call-exec-v8
+ * BUILD: stability-v9
  *
  * Key invariants:
+ *  - Mic permission is HARD REQUIRED before Plivo init proceeds.
+ *  - Connection health is monitored; stale connections trigger re-login.
+ *  - Registration failures retry up to 3 times automatically.
+ *  - Tab visibility changes trigger health checks, audio resume & recovery.
  *  - Status is ONLY set from real SDK events or explicit user actions.
- *  - On mount, stale transient states are reset to "idle".
- *  - Tab visibility changes trigger health checks & recovery.
- *  - Plivo events are bound once per client generation.
  *  - Pending dial survives re-renders via module-level variable.
  */
 
