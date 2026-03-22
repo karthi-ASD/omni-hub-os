@@ -648,20 +648,53 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
 
   instance.client.on("onLoginFailed", (cause: string) => {
     if (!guard()) return;
-    setStoreState((c) => ({
-      ...c,
-      registered: false,
-      status: "failed",
-      lastError: `Voice registration failed: ${cause}`,
-      latestProviderStatus: "registration_failed",
-      pendingDialIntent: null,
-    }));
-    logDialer("VOICE_REGISTRATION_FAILED", { reason: cause });
+    logDialer("VOICE_REGISTRATION_FAILED_FULL", { reason: cause, retryCount: registrationRetryCount });
+
+    if (registrationRetryCount < MAX_REGISTRATION_RETRIES && lastLoginCredentials) {
+      registrationRetryCount++;
+      logDialer("REGISTRATION_FAILED_RETRY", { attempt: registrationRetryCount, maxRetries: MAX_REGISTRATION_RETRIES });
+      try { instance.client.logout(); } catch {}
+      setTimeout(() => {
+        if (!guard() || !lastLoginCredentials) return;
+        logDialer("REGISTRATION_RETRY_LOGIN", { attempt: registrationRetryCount });
+        instance.client.login(lastLoginCredentials.username, lastLoginCredentials.password);
+      }, 2000);
+    } else {
+      setStoreState((c) => ({
+        ...c,
+        registered: false,
+        status: "failed",
+        lastError: `Voice registration failed: ${cause} (after ${registrationRetryCount} retries)`,
+        latestProviderStatus: "registration_failed",
+        pendingDialIntent: null,
+      }));
+    }
   });
 
   instance.client.on("onConnectionChange", (conn) => {
     if (!guard()) return;
-    logDialer("PLIVO_CONNECTION_CHANGE", { state: conn?.state || "unknown" });
+    const connState = conn?.state || "unknown";
+    logDialer("PLIVO_CONNECTION_CHANGE", { state: connState });
+
+    if (connState === "connected") {
+      lastConnectedAt = Date.now();
+    }
+
+    if (connState === "disconnected") {
+      logDialer("PLIVO_DISCONNECTED_DETECTED");
+      // If not in an active call, force re-login after delay
+      const isInCall = ["dialing", "ringing", "connected"].includes(storeState.status);
+      if (!isInCall && lastLoginCredentials) {
+        logDialer("FORCE_RELOGIN", { reason: "connection_disconnected" });
+        setStoreState((c) => ({ ...c, registered: false, status: "idle" }));
+        try { instance.client.logout(); } catch {}
+        setTimeout(() => {
+          if (!guard() || !lastLoginCredentials) return;
+          logDialer("RELOGIN_ATTEMPT_AFTER_DISCONNECT");
+          instance.client.login(lastLoginCredentials.username, lastLoginCredentials.password);
+        }, 1000);
+      }
+    }
   });
 
   instance.client.on("onMediaPermission", (result: { status: boolean }) => {
