@@ -269,10 +269,28 @@ function logDialer(event: string, data?: Record<string, unknown>) {
 }
 
 // ─── Global error handlers ──────────────────────────────────────────
+let userInteractionBound = false;
 function bindGlobalErrorHandlers() {
   if (globalErrorsBound || typeof window === "undefined") return;
   globalErrorsBound = true;
   window.addEventListener("error", (e) => logDialer("GLOBAL_ERROR", { message: e.message, filename: e.filename }));
+  // Resume AudioContext on first user interaction (browser autoplay policy)
+  if (!userInteractionBound) {
+    userInteractionBound = true;
+    document.addEventListener("click", async () => {
+      try {
+        const ctx = getAudioContext();
+        if (ctx && ctx.state !== "running") {
+          await ctx.resume();
+          logDialer("AUDIO_CONTEXT_RESUMED_USER_INTERACTION");
+        }
+        // Pre-warm audio readiness on first click
+        if (!storeState.audioReady) {
+          await initializeAudioOutput();
+        }
+      } catch {}
+    }, { once: true });
+  }
   window.addEventListener("unhandledrejection", (e) => logDialer("PROMISE_REJECTION", { reason: String(e.reason) }));
 }
 
@@ -738,11 +756,9 @@ function sanitizeStaleState() {
 async function initializeAudioOutput(): Promise<boolean> {
   try {
     const audio = new Audio();
-    // Tiny silent WAV (44 bytes)
     audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
     audio.volume = 0.01;
 
-    // Try to set output device if supported
     if (typeof (audio as any).setSinkId === "function") {
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
@@ -752,19 +768,26 @@ async function initializeAudioOutput(): Promise<boolean> {
         }
       } catch (sinkErr) {
         logDialer("AUDIO_OUTPUT_SINKID_FALLBACK", { error: sinkErr instanceof Error ? sinkErr.message : String(sinkErr) });
-        // setSinkId not supported — that's fine, continue with default
       }
     }
 
-    await audio.play().catch(() => {});
+    let playbackWorked = false;
+    try {
+      await audio.play();
+      playbackWorked = true;
+    } catch {}
+
+    if (!playbackWorked) {
+      logDialer("AUDIO_OUTPUT_BLOCKED");
+      return false;
+    }
+
     logDialer("AUDIO_OUTPUT_READY");
     setStoreState((c) => ({ ...c, audioReady: true }));
     return true;
   } catch (e) {
     logDialer("AUDIO_OUTPUT_FALLBACK", { error: e instanceof Error ? e.message : String(e) });
-    // Even if play fails, mark as ready — we don't want to block calls for speaker test issues
-    setStoreState((c) => ({ ...c, audioReady: true }));
-    return true;
+    return false;
   }
 }
 
@@ -778,6 +801,7 @@ function canPlaceCall(): { ready: boolean; reason: string } {
   if (["initializing", "registering"].includes(storeState.status)) return { ready: false, reason: `status_${storeState.status}` };
   if (recoveryInProgress) return { ready: false, reason: "recovery_in_progress" };
   if (loginInProgress) return { ready: false, reason: "login_in_progress" };
+  if (!storeState.audioReady) return { ready: false, reason: "audio_not_ready" };
   return { ready: true, reason: "ok" };
 }
 
@@ -806,8 +830,14 @@ async function executeOutboundCall(intent: PendingDialIntent) {
   try {
     await resumeAudioContext();
 
-    // Initialize audio output before call
-    await initializeAudioOutput();
+    // Initialize audio output before call — hard block if fails
+    const audioOk = await initializeAudioOutput();
+    if (!audioOk) {
+      logDialer("CALL_BLOCKED_AUDIO_PLAYBACK_FAILED");
+      toast.error("Audio blocked by browser. Click anywhere and retry.");
+      setStoreState((c) => ({ ...c, loading: false, dialLock: false }));
+      return;
+    }
 
     let resolvedPhone = intent.phoneNumber;
     if (intent.leadId) {
@@ -1084,11 +1114,17 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
     const reason = (cause || "Unknown").trim();
     const reasonLower = reason.toLowerCase();
 
-    // ── FALSE BUSY DETECTION: Ignore "Busy" if it arrives < 3s after call start ──
+    // ── FALSE BUSY DETECTION: If "Busy" arrives < 3s, auto-retry once ──
     const elapsed = callStartTimestamp > 0 ? Date.now() - callStartTimestamp : Infinity;
     if (reasonLower.includes("busy") && elapsed < 3000) {
-      logDialer("FALSE_BUSY_IGNORED", { elapsed, reason, destination: storeState.destinationNumber });
-      // Don't treat this as a real failure — the call may still be routing
+      logDialer("FALSE_BUSY_RETRYING", { elapsed, reason, destination: storeState.destinationNumber });
+      setTimeout(() => {
+        if (storeState.destinationNumber && plivoInstanceRef?.client && isInActiveCall()) {
+          plivoInstanceRef.client.call(storeState.destinationNumber, storeState.session?.id ? { "X-PH-SessionId": storeState.session.id } : {});
+          callStartTimestamp = Date.now();
+          logDialer("RETRY_CALL_AFTER_FALSE_BUSY");
+        }
+      }, 1000);
       return;
     }
 
