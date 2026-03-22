@@ -27,8 +27,8 @@ interface UseCallTranscriptOptions {
   onLog?: (event: string, data?: Record<string, unknown>) => void;
 }
 
-const MAX_RECOVERY_ATTEMPTS = 5;
-const RECOVERY_DELAY_MS = 1000;
+const MAX_RECOVERY_ATTEMPTS = 10;
+const RECOVERY_DELAY_MS = 800;
 
 export function useCallTranscript({
   sessionId,
