@@ -1,7 +1,7 @@
 /**
  * Browser-based Plivo dialer — single source of truth via useSyncExternalStore.
  *
- * BUILD: stability-v7
+ * BUILD: call-exec-v8
  *
  * Key invariants:
  *  - Status is ONLY set from real SDK events or explicit user actions.
