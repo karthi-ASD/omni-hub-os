@@ -625,6 +625,10 @@ function bindPermissionListener() {
 }
 
 // ─── Visibility recovery (Tab switch fix) ───────────────────────────
+function isInActiveCall(): boolean {
+  return ["dialing", "ringing", "connected", "ending"].includes(storeState.status);
+}
+
 function bindVisibilityRecovery() {
   if (visibilityListenerBound || typeof document === "undefined") return;
   document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -633,15 +637,30 @@ function bindVisibilityRecovery() {
 
 function handleVisibilityChange() {
   const visible = document.visibilityState === "visible";
-  logDialer("TAB_VISIBILITY_CHANGE", { visibilityState: document.visibilityState });
+  const activeCall = isInActiveCall();
+  logDialer("TAB_VISIBILITY_CHANGE", { visibilityState: document.visibilityState, activeCall });
   setStoreState((c) => ({ ...c, tabVisibilityState: document.visibilityState }));
 
-  if (!visible) return; // Nothing to do when hiding
+  // ── CRITICAL: If there is an active call, do NOT trigger any recovery/reinit ──
+  if (!visible) {
+    if (activeCall) {
+      logDialer("TAB_HIDDEN_DURING_ACTIVE_CALL");
+    }
+    return;
+  }
+
+  // Tab became visible again
+  if (activeCall) {
+    logDialer("TAB_VISIBLE_DURING_ACTIVE_CALL");
+    // Only resume audio context — never touch client/registration
+    void resumeAudioContext().catch(() => {});
+    return;
+  }
 
   // Resume audio safely
   void resumeAudioContext().catch(() => {});
 
-  // Check client health
+  // Check client health — only when NOT in an active call
   const healthy = isClientHealthy();
   const currentStatus = storeState.status;
   const isTransient = ["dialing", "ringing", "connected"].includes(currentStatus);
@@ -652,9 +671,6 @@ function handleVisibilityChange() {
     currentStatus,
     hasClient: !!plivoInstanceRef?.client,
   });
-
-  // If in an active call, just resume audio — don't touch state
-  if (isTransient && healthy) return;
 
   // If client is dead and we're not in an active call, try recovery
   if (!healthy && !isTransient && !recoveryInProgress) {
