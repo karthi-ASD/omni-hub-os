@@ -19,6 +19,15 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
 
+  // Show sign-out success message if redirected from sign-out
+  React.useEffect(() => {
+    const msg = sessionStorage.getItem("signout_message");
+    if (msg) {
+      sessionStorage.removeItem("signout_message");
+      toast.success(msg);
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);

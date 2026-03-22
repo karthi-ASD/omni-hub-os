@@ -108,6 +108,12 @@ export function useCallTranscript({
         const text = result[0].transcript.trim();
         if (!text) continue;
 
+        if (result.isFinal) {
+          log("TRANSCRIPT_FINAL_RECEIVED", { text: text.slice(0, 60), confidence: result[0].confidence });
+        } else {
+          log("TRANSCRIPT_PARTIAL_RECEIVED", { text: text.slice(0, 40) });
+        }
+
         const line: TranscriptLine = {
           id: `${Date.now()}-${i}`,
           speaker: "agent",

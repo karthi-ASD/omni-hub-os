@@ -140,11 +140,29 @@ export function PostCallIntelligence({ session, coaching, transcriptLines }: Pos
             </p>
           </div>
         ) : pollFailed ? (
-          <div className="text-center py-4">
-            <p className="text-xs text-muted-foreground">AI analysis not available for this call.</p>
-            <p className="text-[10px] text-muted-foreground mt-1">
-              The call may have been too short or the analysis timed out.
-            </p>
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground text-center">AI analysis not available for this call.</p>
+            {/* Still show recording/transcript even if AI failed */}
+            {recordingUrl && (
+              <div>
+                <p className="text-[10px] font-medium text-muted-foreground">Recording</p>
+                <audio controls className="w-full h-8" src={recordingUrl} preload="none" />
+              </div>
+            )}
+            {duration != null && duration > 0 && (
+              <div>
+                <p className="text-[10px] font-medium text-muted-foreground">Duration</p>
+                <p className="text-xs font-mono">{Math.floor(duration / 60)}:{String(duration % 60).padStart(2, "0")}</p>
+              </div>
+            )}
+            {finalLines.length > 0 && (
+              <div>
+                <p className="text-[10px] font-medium text-muted-foreground">
+                  Transcript ({finalLines.length} segments)
+                </p>
+                <Badge variant="outline" className="text-[10px]">Available for review</Badge>
+              </div>
+            )}
           </div>
         ) : null}
       </CardContent>
