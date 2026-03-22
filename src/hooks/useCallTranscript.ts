@@ -34,7 +34,7 @@ export function useCallTranscript({
 }: UseCallTranscriptOptions) {
   const [lines, setLines] = useState<TranscriptLine[]>([]);
   const [status, setStatus] = useState<TranscriptStatus>("idle");
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
   const startTimeRef = useRef<number>(0);
   const linesRef = useRef<TranscriptLine[]>([]);
   const shouldRestartRef = useRef(false);
