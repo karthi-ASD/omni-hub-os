@@ -21,7 +21,8 @@ interface UseCallTranscriptOptions {
   sessionId: string | null;
   businessId: string | null;
   userId: string | null;
-  isCallActive: boolean;
+  /** Must be true ONLY when call status is "connected" — not dialing/ringing */
+  isCallConnected: boolean;
   onLog?: (event: string, data?: Record<string, unknown>) => void;
 }
 
@@ -29,7 +30,7 @@ export function useCallTranscript({
   sessionId,
   businessId,
   userId,
-  isCallActive,
+  isCallConnected,
   onLog,
 }: UseCallTranscriptOptions) {
   const [lines, setLines] = useState<TranscriptLine[]>([]);
@@ -202,15 +203,41 @@ export function useCallTranscript({
     }
   }, [sessionId, businessId, userId, log]);
 
-  // Auto-start/stop based on call state
+  // Auto-start ONLY after call is connected (with delay), stop when disconnected
+  const startDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (isCallActive && sessionId && status === "idle") {
-      startTranscription();
+    // Clear any pending delayed start
+    if (startDelayRef.current) {
+      clearTimeout(startDelayRef.current);
+      startDelayRef.current = null;
     }
-    if (!isCallActive && status !== "idle" && status !== "stopped") {
+
+    if (isCallConnected && sessionId && status === "idle") {
+      // Delay transcript start by 1.5s to let WebRTC audio stabilize
+      log("TRANSCRIPT_BLOCKED_PRECALL");
+      startDelayRef.current = setTimeout(() => {
+        log("TRANSCRIPT_DELAYED_START");
+        try {
+          startTranscription();
+          log("TRANSCRIPT_STARTED_POST_CONNECT");
+        } catch (e) {
+          log("TRANSCRIPT_FAILED", { error: String(e) });
+        }
+      }, 1500);
+    }
+
+    if (!isCallConnected && status !== "idle" && status !== "stopped") {
+      log("TRANSCRIPT_STOPPED_ON_CALL_END");
       stopTranscription();
     }
-  }, [isCallActive, sessionId, startTranscription, stopTranscription, status]);
+
+    return () => {
+      if (startDelayRef.current) {
+        clearTimeout(startDelayRef.current);
+        startDelayRef.current = null;
+      }
+    };
+  }, [isCallConnected, sessionId, startTranscription, stopTranscription, status, log]);
 
   const clearTranscript = useCallback(() => {
     setLines([]);
