@@ -930,10 +930,14 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
 
     if (connState === "disconnected") {
       logDialer("PLIVO_DISCONNECTED_DETECTED");
-      // If not in an active call, force re-login after delay
-      const isInCall = ["dialing", "ringing", "connected"].includes(storeState.status);
+      const activeCall = isInActiveCall();
       loginInProgress = false;
-      if (!isInCall && lastLoginCredentials && !recoveryInProgress) {
+      if (activeCall) {
+        // ── CRITICAL: Do NOT force relogin during active call ──
+        logDialer("REINIT_BLOCKED_ACTIVE_CALL", { status: storeState.status });
+        return;
+      }
+      if (lastLoginCredentials && !recoveryInProgress) {
         logDialer("FORCE_RELOGIN", { reason: "connection_disconnected" });
         setStoreState((c) => ({ ...c, registered: false, status: "idle", plivoClientInitStatus: "disconnected" }));
         scheduleRelogin("connection_disconnected");
