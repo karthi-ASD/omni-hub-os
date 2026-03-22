@@ -234,26 +234,33 @@ function DialerPageContent() {
     }
   }, [location.pathname, location.search]);
 
-  // Live transcript — safe when dialer is null
+  // ══════════════════════════════════════════════════════════════════
+  // AI KILL SWITCH — set to false to completely disable AI features
+  // during call lifecycle. Set to true ONLY after base calling works.
+  // ══════════════════════════════════════════════════════════════════
+  const DIALER_AI_ENABLED = false;
+
+  // Live transcript — COMPLETELY DISABLED when kill switch is off
   const noopLog = useRef((_e: string, _d?: Record<string, unknown>) => {}).current;
   const transcript = useCallTranscript({
-    sessionId: dialer?.session?.id || null,
-    businessId: profile?.business_id || null,
-    userId: profile?.user_id || null,
-    isCallConnected: dialer?.callStatus === "connected",
+    sessionId: DIALER_AI_ENABLED ? (dialer?.session?.id || null) : null,
+    businessId: DIALER_AI_ENABLED ? (profile?.business_id || null) : null,
+    userId: DIALER_AI_ENABLED ? (profile?.user_id || null) : null,
+    isCallConnected: DIALER_AI_ENABLED && dialer?.callStatus === "connected",
     onLog: dialer?.logEvent || noopLog,
   });
 
-  // AI assistant
+  // AI assistant — COMPLETELY DISABLED when kill switch is off
   const aiAssistant = useAICallAssistant({
-    sessionId: dialer?.session?.id || null,
-    businessId: profile?.business_id || null,
+    sessionId: DIALER_AI_ENABLED ? (dialer?.session?.id || null) : null,
+    businessId: DIALER_AI_ENABLED ? (profile?.business_id || null) : null,
     onLog: dialer?.logEvent || noopLog,
   });
 
-  // Periodically feed transcript to AI during active call — ONLY when connected
+  // Periodically feed transcript to AI during active call — ONLY when connected AND AI enabled
   const lastAIRequestRef = useRef<number>(0);
   useEffect(() => {
+    if (!DIALER_AI_ENABLED) return; // Kill switch
     // Guard: only process AI when call is actually connected (not just dialing/ringing)
     if (dialer?.callStatus !== "connected") return;
     if (transcript.lines.length === 0) return;
