@@ -5,6 +5,7 @@ import { MobileHeader } from "@/components/mobile/MobileHeader";
 import { ChatWidget } from "@/components/chat/ChatWidget";
 import { AppSidebar } from "@/components/AppSidebar";
 import { FloatingDialer } from "@/components/dialer/FloatingDialer";
+import { PersistentDialerConsumer } from "@/components/dialer/PersistentDialerConsumer";
 import { ActiveCallBar } from "@/components/dialer/ActiveCallBar";
 import { BusinessThemeProvider } from "@/components/business-crm/BusinessThemeProvider";
 import { BrowserDialerProvider } from "@/contexts/BrowserDialerContext";
