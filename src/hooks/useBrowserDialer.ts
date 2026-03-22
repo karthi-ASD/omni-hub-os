@@ -1420,10 +1420,14 @@ export function useBrowserDialer() {
     activeHookConsumers += 1;
     authIdentity = profile?.business_id ? { businessId: profile.business_id, userId: profile.user_id } : null;
     setStoreState((c) => ({ ...c, userIdentifier: maskUserIdentifier(profile?.user_id ?? null) }));
-    logDialer("DIALER_PAGE_MOUNTED", { version: BUILD_VERSION });
+    logDialer("DIALER_PAGE_MOUNTED", { version: BUILD_VERSION, consumers: activeHookConsumers });
 
-    // Reset stale transient state on mount
-    sanitizeStaleState();
+    // Only sanitize stale state if there's NO active call — preserve active calls across remounts
+    if (!isInActiveCall()) {
+      sanitizeStaleState();
+    } else {
+      logDialer("ACTIVE_CALL_STATE_PRESERVED_ON_MOUNT", { status: storeState.status, sessionId: storeState.session?.id });
+    }
 
     if (!singletonInitialized) {
       singletonInitialized = true;
@@ -1433,22 +1437,16 @@ export function useBrowserDialer() {
     return () => {
       activeHookConsumers = Math.max(0, activeHookConsumers - 1);
       logDialer("EFFECT_CLEANUP_RUN", { remainingConsumers: activeHookConsumers });
+      // ── CRITICAL CHANGE (stability-v16): NEVER destroy client on unmount ──
+      // The singleton survives across route changes. Only explicit logout or
+      // reinitializeDialer() may destroy it. This prevents call drops on navigation.
       if (activeHookConsumers === 0) {
-        consumerCleanupTimer = window.setTimeout(() => {
-          if (activeHookConsumers > 0) return;
-          // ── CRITICAL: Do NOT destroy client during an active call ──
-          if (isInActiveCall()) {
-            logDialer("CLIENT_DESTROY_BLOCKED_ACTIVE_CALL", { reason: "cleanup_timer_during_call" });
-            return;
-          }
-          stopConnectionHealthMonitor();
-          sessionUnsubRef?.();
-          sessionUnsubRef = null;
-          sessionSubId = null;
-          destroyPlivoClient();
-          singletonInitialized = false;
-          sdkInitStarted = false;
-        }, 1000);
+        logDialer("ALL_CONSUMERS_UNMOUNTED_CLIENT_KEPT_ALIVE", {
+          activeCall: isInActiveCall(),
+          registered: storeState.registered,
+        });
+        // We intentionally do NOT destroy the client here.
+        // singletonInitialized stays true so re-mount reuses existing client.
       }
     };
   }, [profile?.business_id, profile?.user_id]);
