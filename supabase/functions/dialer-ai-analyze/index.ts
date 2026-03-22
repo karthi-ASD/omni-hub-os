@@ -156,8 +156,18 @@ Deno.serve(async (req) => {
 
     const latestDisp = dispositions?.[0];
 
-    // Build AI prompt — works even with missing data (failsafe)
+    // Fetch transcript if available
+    const { data: transcriptData } = await supabase
+      .from("dialer_call_transcripts")
+      .select("full_transcript")
+      .eq("session_id", session_id)
+      .maybeSingle();
+
+    const transcriptText = (transcriptData as any)?.full_transcript || "";
+
+    // Build AI prompt — uses transcript when available for much better analysis
     const userInput = JSON.stringify({
+      transcript: transcriptText || "No transcript available",
       notes: session.notes || latestDisp?.notes || "No notes provided",
       duration: session.call_duration || 0,
       disposition: session.disposition || latestDisp?.disposition_type || "unknown",

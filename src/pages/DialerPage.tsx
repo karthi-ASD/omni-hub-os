@@ -816,69 +816,11 @@ function DialerPageContent() {
 
           {/* Post-call intelligence preview when call ended */}
           {(isCallEnded && dialer.session) && (
-            <Card className="border-primary/20">
-              <CardHeader className="pb-2 pt-3 px-4">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Brain className="h-4 w-4" /> Post-Call Intelligence
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-3 space-y-2">
-                {dialer.session.ai_summary ? (
-                  <div className="space-y-2">
-                    <div>
-                      <p className="text-[10px] font-medium text-muted-foreground">AI Summary</p>
-                      <p className="text-xs leading-relaxed">{dialer.session.ai_summary}</p>
-                    </div>
-                    {dialer.session.ai_score != null && (
-                      <div>
-                        <p className="text-[10px] font-medium text-muted-foreground">Call Quality Score</p>
-                        <div className="flex items-center gap-2">
-                          <div className="h-2 flex-1 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${
-                                dialer.session.ai_score >= 70 ? "bg-emerald-500" :
-                                dialer.session.ai_score >= 40 ? "bg-amber-500" : "bg-destructive"
-                              }`}
-                              style={{ width: `${dialer.session.ai_score}%` }}
-                            />
-                          </div>
-                          <span className="text-xs font-mono font-bold">{dialer.session.ai_score}/100</span>
-                        </div>
-                      </div>
-                    )}
-                    {/* Coaching summary from AI */}
-                    {aiAssistant.coaching && (
-                      <div className="grid grid-cols-2 gap-2 text-[10px]">
-                        <div className="p-1.5 rounded bg-muted/50">
-                          <span className="text-muted-foreground">Intent:</span> {aiAssistant.coaching.intent}
-                        </div>
-                        <div className="p-1.5 rounded bg-muted/50">
-                          <span className="text-muted-foreground">Sentiment:</span> {aiAssistant.coaching.sentiment}
-                        </div>
-                        <div className="p-1.5 rounded bg-muted/50">
-                          <span className="text-muted-foreground">Risk:</span> {aiAssistant.coaching.risk}
-                        </div>
-                        <div className="p-1.5 rounded bg-muted/50">
-                          <span className="text-muted-foreground">Close:</span> {aiAssistant.coaching.closeReadiness}
-                        </div>
-                      </div>
-                    )}
-                    {/* Transcript summary */}
-                    {transcript.lines.filter(l => l.isFinal).length > 0 && (
-                      <div>
-                        <p className="text-[10px] font-medium text-muted-foreground">Transcript ({transcript.lines.filter(l => l.isFinal).length} segments)</p>
-                        <Badge variant="outline" className="text-[10px]">Available for review</Badge>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-4">
-                    <p className="text-xs text-muted-foreground animate-pulse">Processing AI analysis...</p>
-                    <p className="text-[10px] text-muted-foreground mt-1">Summary will appear shortly after call ends</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <PostCallIntelligence
+              session={dialer.session}
+              coaching={aiAssistant.coaching}
+              transcriptLines={transcript.lines}
+            />
           )}
         </div>
       </div>
