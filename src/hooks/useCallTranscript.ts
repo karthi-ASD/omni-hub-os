@@ -2,6 +2,7 @@
  * Live call transcript using browser SpeechRecognition API.
  * Captures agent-side audio in near real-time during active calls.
  * Non-blocking — failures do not affect the call.
+ * Includes auto-recovery on mid-call failures.
  */
 import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +27,9 @@ interface UseCallTranscriptOptions {
   onLog?: (event: string, data?: Record<string, unknown>) => void;
 }
 
+const MAX_RECOVERY_ATTEMPTS = 5;
+const RECOVERY_DELAY_MS = 1000;
+
 export function useCallTranscript({
   sessionId,
   businessId,
@@ -39,6 +43,7 @@ export function useCallTranscript({
   const startTimeRef = useRef<number>(0);
   const linesRef = useRef<TranscriptLine[]>([]);
   const shouldRestartRef = useRef(false);
+  const recoveryCountRef = useRef(0);
 
   const log = useCallback(
     (event: string, data?: Record<string, unknown>) => {
@@ -49,7 +54,6 @@ export function useCallTranscript({
 
   const addLine = useCallback((line: TranscriptLine) => {
     setLines((prev) => {
-      // Update existing interim line or append
       const existing = prev.findIndex((l) => !l.isFinal && l.speaker === line.speaker);
       let next: TranscriptLine[];
       if (!line.isFinal && existing >= 0) {
@@ -61,7 +65,6 @@ export function useCallTranscript({
       } else {
         next = [...prev, line];
       }
-      // Keep last 200 lines
       if (next.length > 200) next = next.slice(-200);
       linesRef.current = next;
       return next;
@@ -75,10 +78,11 @@ export function useCallTranscript({
       return;
     }
 
-    log("TRANSCRIPT_STREAM_STARTED");
+    log("TRANSCRIPT_STARTED");
     setStatus("connecting");
-    startTimeRef.current = Date.now();
+    startTimeRef.current = startTimeRef.current || Date.now();
     shouldRestartRef.current = true;
+    recoveryCountRef.current = 0;
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
@@ -88,8 +92,9 @@ export function useCallTranscript({
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
-      log("TRANSCRIPT_PROVIDER_CONNECTED");
+      log("TRANSCRIPT_STARTED");
       setStatus("live");
+      recoveryCountRef.current = 0; // Reset on successful start
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
@@ -107,7 +112,6 @@ export function useCallTranscript({
           confidence: result[0].confidence,
         };
 
-        log("TRANSCRIPT_CHUNK_RECEIVED", { isFinal: result.isFinal, length: text.length });
         addLine(line);
 
         // Save final results to DB
@@ -124,16 +128,16 @@ export function useCallTranscript({
               is_final: true,
               confidence: result[0].confidence,
             } as any)
-            .then(() => log("TRANSCRIPT_SAVED"));
+            .then(() => {});
         }
       }
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      log("TRANSCRIPT_STREAM_FAILED", { error: event.error });
-      if (event.error === "no-speech" || event.error === "aborted") {
-        // These are recoverable - just restart
+      log("TRANSCRIPT_ERROR", { error: event.error, recoveryCount: recoveryCountRef.current });
+      if (event.error === "no-speech" || event.error === "aborted" || event.error === "network") {
         setStatus("delayed");
+        // These are recoverable — auto-recovery handles restart
       } else {
         setStatus("failed");
         shouldRestartRef.current = false;
@@ -141,15 +145,26 @@ export function useCallTranscript({
     };
 
     recognition.onend = () => {
-      // Auto-restart if call is still active
+      // Auto-restart with recovery counter
       if (shouldRestartRef.current) {
-        try {
-          setTimeout(() => {
-            if (shouldRestartRef.current && recognitionRef.current) {
+        recoveryCountRef.current++;
+        if (recoveryCountRef.current > MAX_RECOVERY_ATTEMPTS) {
+          log("TRANSCRIPT_ERROR", { reason: "Max recovery attempts exceeded" });
+          setStatus("failed");
+          shouldRestartRef.current = false;
+          return;
+        }
+        const delay = RECOVERY_DELAY_MS * Math.min(recoveryCountRef.current, 3);
+        log("TRANSCRIPT_AUTO_RECOVERED", { attempt: recoveryCountRef.current, delayMs: delay });
+        setTimeout(() => {
+          if (shouldRestartRef.current && recognitionRef.current) {
+            try {
               recognitionRef.current.start();
+            } catch {
+              // Will retry on next onend
             }
-          }, 300);
-        } catch {}
+          }
+        }, delay);
       }
     };
 
@@ -171,6 +186,7 @@ export function useCallTranscript({
       recognitionRef.current = null;
     }
     setStatus("stopped");
+    log("TRANSCRIPT_STOPPED");
 
     // Save finalized transcript
     if (sessionId && businessId && linesRef.current.length > 0) {
@@ -198,7 +214,6 @@ export function useCallTranscript({
           } as any,
           { onConflict: "session_id" }
         );
-        log("TRANSCRIPT_SAVED");
       } catch {}
     }
   }, [sessionId, businessId, userId, log]);
@@ -206,28 +221,22 @@ export function useCallTranscript({
   // Auto-start ONLY after call is connected (with delay), stop when disconnected
   const startDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    // Clear any pending delayed start
     if (startDelayRef.current) {
       clearTimeout(startDelayRef.current);
       startDelayRef.current = null;
     }
 
     if (isCallConnected && sessionId && status === "idle") {
-      // Delay transcript start by 1.5s to let WebRTC audio stabilize
-      log("TRANSCRIPT_BLOCKED_PRECALL");
       startDelayRef.current = setTimeout(() => {
-        log("TRANSCRIPT_DELAYED_START");
         try {
           startTranscription();
-          log("TRANSCRIPT_STARTED_POST_CONNECT");
         } catch (e) {
-          log("TRANSCRIPT_FAILED", { error: String(e) });
+          log("TRANSCRIPT_ERROR", { error: String(e) });
         }
       }, 1500);
     }
 
     if (!isCallConnected && status !== "idle" && status !== "stopped") {
-      log("TRANSCRIPT_STOPPED_ON_CALL_END");
       stopTranscription();
     }
 
@@ -243,6 +252,8 @@ export function useCallTranscript({
     setLines([]);
     linesRef.current = [];
     setStatus("idle");
+    recoveryCountRef.current = 0;
+    startTimeRef.current = 0;
   }, []);
 
   return {

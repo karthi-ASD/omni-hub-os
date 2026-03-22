@@ -29,27 +29,39 @@ Deno.serve(async (req) => {
       );
     }
 
-    const systemPrompt = `You are a real-time AI sales coach analyzing a live call transcript. The transcript has [agent] and [customer] labels.
+    const systemPrompt = `You are an expert real-time AI sales coach analyzing a live call transcript. The transcript has [agent] and [customer] labels.
+
+CRITICAL RULES:
+- Focus on the LAST 2-3 lines of the transcript to understand the current moment
+- Detect the conversation stage: opening, discovery, objection, negotiation, closing
+- Suggestions must be SPECIFIC to what was just said — never generic
+- Each suggestion must be something the agent can say RIGHT NOW in this exact conversation
+- Coach tips must be ONE strong actionable instruction, not vague advice
+
+BANNED SUGGESTIONS (never generate these):
+- "Thanks for your time"
+- "Is there anything else I can help with?"
+- "That's a great question"
+- Any greeting or pleasantry
+- Anything the agent already said
 
 Return a JSON object with two keys:
-1. "suggestions" - Array of 3-5 suggested responses the agent could say next. Each has:
-   - "type": one of "reply", "objection", "close", "question", "follow_up"
-   - "text": the actual response text (conversational, concise, human-sounding)
-   - "confidence": 0-1 how appropriate this response is
 
-2. "coaching" - Real-time coaching insights:
-   - "intent": what the customer wants (1 sentence)
+1. "suggestions" - Array of exactly 2 suggested responses. Each has:
+   - "type": one of "reply", "objection", "close", "question", "follow_up"
+   - "text": the exact words to say (conversational, max 25 words, ready to speak aloud)
+   - "confidence": 0-1 how appropriate this is right now
+
+2. "coaching" - Real-time coaching:
+   - "intent": what the customer wants RIGHT NOW (max 10 words)
    - "sentiment": "positive", "neutral", or "negative"
    - "risk": "low", "medium", or "high" - risk of losing this prospect
-   - "opportunity": current opportunity to advance the sale (1 sentence)
-   - "tips": array of 2-3 short actionable coaching tips for the agent right now
-   - "missed_opportunities": array of 0-2 things the agent could have done better
+   - "opportunity": ONE specific thing the agent should do next (max 15 words)
+   - "tips": array of exactly 1 strong actionable coaching instruction (max 20 words)
+   - "missed_opportunities": array of 0-1 things the agent missed (max 15 words each)
    - "talk_listen_balance": "agent_heavy", "balanced", or "customer_heavy"
    - "close_readiness": "not_ready", "warming", or "ready"
 
-Keep suggestions conversational, practical, and ready to speak aloud.
-Keep coaching actionable and brief.
-Never hallucinate pricing, promises, or commitments.
 ${disposition ? `Current disposition stage: ${disposition}` : ""}`;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -62,7 +74,7 @@ ${disposition ? `Current disposition stage: ${disposition}` : ""}`;
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Live call transcript:\n${transcript}\n\nProvide suggestions and coaching.` },
+          { role: "user", content: `Live call transcript (focus on the last 2-3 lines):\n${transcript}\n\nProvide 2 specific suggestions and 1 strong coaching instruction for this exact moment.` },
         ],
         tools: [
           {
@@ -128,6 +140,26 @@ ${disposition ? `Current disposition stage: ${disposition}` : ""}`;
         typeof toolCall.function.arguments === "string"
           ? JSON.parse(toolCall.function.arguments)
           : toolCall.function.arguments;
+
+      // Filter out generic suggestions
+      const BANNED_PHRASES = [
+        "thanks for your time", "great question", "anything else",
+        "how can i help", "nice to meet", "pleasure speaking",
+        "have a great day", "thank you for calling",
+      ];
+
+      if (parsed.suggestions) {
+        parsed.suggestions = parsed.suggestions.filter((s: any) => {
+          const lower = (s.text || "").toLowerCase();
+          return !BANNED_PHRASES.some(bp => lower.includes(bp));
+        }).slice(0, 2); // Max 2 suggestions
+      }
+
+      // Ensure tips is max 1 strong instruction
+      if (parsed.coaching?.tips) {
+        parsed.coaching.tips = parsed.coaching.tips.slice(0, 1);
+      }
+
       result = parsed;
     }
 
