@@ -490,6 +490,10 @@ function DialerPageContent() {
       <Card className="border-border/50 bg-card/80">
         <CardContent className="py-3 px-4 space-y-2">
           <div className="flex items-center gap-3 flex-wrap text-xs font-mono">
+            <Badge variant="secondary" className="text-[10px] font-bold bg-amber-500/15 text-amber-700 border-amber-300">
+              TEST CASE 101
+            </Badge>
+            <Separator orientation="vertical" className="h-4" />
             <div className="flex items-center gap-1.5">
               <Activity className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-muted-foreground">Build:</span>
