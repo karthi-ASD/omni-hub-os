@@ -269,10 +269,28 @@ function logDialer(event: string, data?: Record<string, unknown>) {
 }
 
 // ─── Global error handlers ──────────────────────────────────────────
+let userInteractionBound = false;
 function bindGlobalErrorHandlers() {
   if (globalErrorsBound || typeof window === "undefined") return;
   globalErrorsBound = true;
   window.addEventListener("error", (e) => logDialer("GLOBAL_ERROR", { message: e.message, filename: e.filename }));
+  // Resume AudioContext on first user interaction (browser autoplay policy)
+  if (!userInteractionBound) {
+    userInteractionBound = true;
+    document.addEventListener("click", async () => {
+      try {
+        const ctx = getAudioContext();
+        if (ctx && ctx.state !== "running") {
+          await ctx.resume();
+          logDialer("AUDIO_CONTEXT_RESUMED_USER_INTERACTION");
+        }
+        // Pre-warm audio readiness on first click
+        if (!storeState.audioReady) {
+          await initializeAudioOutput();
+        }
+      } catch {}
+    }, { once: true });
+  }
   window.addEventListener("unhandledrejection", (e) => logDialer("PROMISE_REJECTION", { reason: String(e.reason) }));
 }
 
