@@ -1261,7 +1261,7 @@ function reinitializeDialer() {
   recoveryInProgress = true;
   logDialer("DIALER_REINIT_MANUAL_START");
   logDialer("DIALER_CLEANUP_OLD_CLIENT");
-  destroyPlivoClient();
+  destroyPlivoClient("manual_reinit");
   sdkInitStarted = false;
   initPromise = null;
   singletonInitialized = false;
