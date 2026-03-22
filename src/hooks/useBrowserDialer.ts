@@ -1697,7 +1697,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
         instance.client.on(evt, (...args: unknown[]) => {
           if (!guardEvent(evt)) return;
           if (evt === "onCalling") {
-            logDialer("PROVIDER_CALLING_EVENT", {
+            logDialer("PROVIDER_CALLING_EVENT", { timeSinceCallStartMs: callStartTimestamp ? Date.now() - callStartTimestamp : null,
               prevState: storeState.status,
               nextState: storeState.status,
               providerStatus: evt,
