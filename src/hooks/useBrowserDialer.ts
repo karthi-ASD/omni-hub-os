@@ -420,8 +420,8 @@ function handleVisibilityChange() {
 
   if (!visible) return; // Nothing to do when hiding
 
-  // Resume audio
-  void resumeAudioContext();
+  // Resume audio safely
+  void resumeAudioContext().catch(() => {});
 
   // Check client health
   const healthy = isClientHealthy();
@@ -435,17 +435,33 @@ function handleVisibilityChange() {
     hasClient: !!plivoInstanceRef?.client,
   });
 
+  // If in an active call, just resume audio — don't touch state
+  if (isTransient && healthy) return;
+
   // If client is dead and we're not in an active call, try recovery
   if (!healthy && !isTransient && !recoveryInProgress) {
     logDialer("DIALER_STATE_RECOVERY_START", { reason: "client_missing_on_tab_resume" });
     recoveryInProgress = true;
     sdkInitStarted = false;
     singletonInitialized = false;
+    registrationRetryCount = 0;
     setStoreState((c) => ({ ...c, registered: false, status: "idle", sdkReady: false }));
     void initializeVoiceClient().finally(() => {
       recoveryInProgress = false;
       logDialer("DIALER_STATE_RECOVERY_DONE");
     });
+    return;
+  }
+
+  // If not registered but client exists, force re-login
+  if (!storeState.registered && healthy && !recoveryInProgress && lastLoginCredentials) {
+    logDialer("REINIT_AFTER_TAB_RETURN", { reason: "not_registered_but_client_exists" });
+    try { plivoInstanceRef?.client?.logout(); } catch {}
+    setTimeout(() => {
+      if (lastLoginCredentials && plivoInstanceRef?.client) {
+        plivoInstanceRef.client.login(lastLoginCredentials.username, lastLoginCredentials.password);
+      }
+    }, 1000);
     return;
   }
 
