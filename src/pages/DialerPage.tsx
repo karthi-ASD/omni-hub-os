@@ -126,6 +126,7 @@ function DialerPageContent() {
   });
   const [audioUnlocking, setAudioUnlocking] = useState(false);
   const logViewportRef = useRef<HTMLDivElement | null>(null);
+  const buildMarker = `TEST CASE 101 • ${dialer?.buildVersion ?? "unknown-build"} • deployed at ${dialer?.deployedAt ? format(new Date(dialer.deployedAt), "HH:mm") : "--:--"}`;
 
   useEffect(() => {
     const route = `${location.pathname}${location.search}`;
@@ -233,6 +234,29 @@ function DialerPageContent() {
       console.error("DIALER_VIEW_RESTORE_FAILED", { error: error instanceof Error ? error.message : String(error) });
     }
   }, [location.pathname, location.search]);
+
+  const filteredLogs = useMemo(() => {
+    if (!dialer) return [];
+    if (logFilter === "all") return dialer.debugLogs;
+    if (logFilter === "error") {
+      return dialer.debugLogs.filter((log) => log.category === "error" || log.event.includes("FAIL") || log.event.includes("ERROR") || log.event.includes("DENIED"));
+    }
+    return dialer.debugLogs.filter((log) => log.category === logFilter);
+  }, [dialer, logFilter]);
+
+  useEffect(() => {
+    if (pauseLogAutoscroll) return;
+    const viewport = logViewportRef.current;
+    if (!viewport) return;
+    viewport.scrollTop = viewport.scrollHeight;
+  }, [filteredLogs, pauseLogAutoscroll]);
+
+  useEffect(() => {
+    if (!dialer) return;
+    dialer.logEvent("UI_BUILD_MARKER_RENDERED", { buildMarker });
+    dialer.logEvent("UI_BUILD_VERSION_VISIBLE", { buildVersion: dialer.buildVersion, deployedAt: dialer.deployedAt });
+    dialer.logEvent("UI_TEST_CASE_VISIBLE", { testCase: "101", buildVersion: dialer.buildVersion });
+  }, [dialer, buildMarker]);
 
   // ══════════════════════════════════════════════════════════════════
   // AI FEATURES — enabled but strictly isolated from call lifecycle.
@@ -443,21 +467,6 @@ function DialerPageContent() {
     return null;
   };
 
-  const filteredLogs = useMemo(() => {
-    if (logFilter === "all") return dialer.debugLogs;
-    if (logFilter === "error") {
-      return dialer.debugLogs.filter((log) => log.category === "error" || log.event.includes("FAIL") || log.event.includes("ERROR") || log.event.includes("DENIED"));
-    }
-    return dialer.debugLogs.filter((log) => log.category === logFilter);
-  }, [dialer.debugLogs, logFilter]);
-
-  useEffect(() => {
-    if (pauseLogAutoscroll) return;
-    const viewport = logViewportRef.current;
-    if (!viewport) return;
-    viewport.scrollTop = viewport.scrollHeight;
-  }, [filteredLogs, pauseLogAutoscroll]);
-
   const copyLogs = async () => {
     const text = filteredLogs.map((l) => `[${l.timestamp}] ${l.event} status=${l.status} session=${l.sessionId ?? "-"} call=${l.callId ?? "-"} destination=${l.destination ?? "-"} ${l.payloadPreview ?? ""}`).join("\n");
     await navigator.clipboard.writeText(text);
@@ -540,6 +549,11 @@ function DialerPageContent() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">AI Sales Command Center</h1>
           <p className="text-sm text-muted-foreground">Browser-based calling with live AI coaching & transcription</p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className="font-mono text-xs border-primary/30 text-primary">
+              {buildMarker}
+            </Badge>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className={`${dialer.registered ? "border-emerald-500 text-emerald-600" : dialer.callStatus === "registering" ? "border-amber-500 text-amber-600" : "border-destructive text-destructive"}`}>
@@ -600,7 +614,7 @@ function DialerPageContent() {
                   <RotateCcw className="h-3 w-3 mr-1" /> Retry Call
                 </Button>
               )}
-              <Button variant="outline" size="sm" onClick={dialer.resetDialer}>Dismiss</Button>
+              <Button variant="outline" size="sm" onClick={dialer.resetDialer}>Reset Dialer</Button>
             </div>
           </CardContent>
         </Card>
@@ -662,6 +676,23 @@ function DialerPageContent() {
               <div className="flex gap-2">
                 <Input value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} placeholder="+61 4XX XXX XXX" className="font-mono text-base text-center tracking-wider" disabled={isCallActive || isAuthRequired} onKeyDown={(e) => { if (e.key === "Enter" && canDial) handleDial(); }} />
                 <Button variant="ghost" size="icon" onClick={() => setPhoneInput((p) => p.slice(0, -1))} disabled={isCallActive || isAuthRequired}><Delete className="h-4 w-4" /></Button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-muted/40 p-2 text-xs">
+                <Badge variant="outline" className="font-mono border-primary/30 text-primary">TEST CASE 101</Badge>
+                <span className="text-muted-foreground">AU-only debug path</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ml-auto"
+                  disabled={!dialer.registered || isCallActive || isAuthRequired || dialer.loading}
+                  onClick={async () => {
+                    setPhoneInput("+61468280069");
+                    await dialer.startAuTestCall();
+                  }}
+                >
+                  AU TEST CALL
+                </Button>
               </div>
 
               <div className="grid grid-cols-3 gap-1.5">
@@ -901,7 +932,7 @@ function DialerPageContent() {
             audioContextState={dialer.diagnostics.latestBrowserMediaStatus}
             callStatus={dialer.callStatus}
             logEvent={dialer.logEvent}
-            startCall={dialer.startCall}
+            startAuTestCall={dialer.startAuTestCall}
             onReconnect={dialer.reconnectVoice}
             requestMicPermission={dialer.requestMicPermission}
             onTestRegistration={dialer.testRegistration}
