@@ -303,8 +303,6 @@ function DialerPageContent() {
     return "Call";
   };
 
-  const [audioUnlocking, setAudioUnlocking] = useState(false);
-
   const handleUnlockAudio = async () => {
     console.log("AUDIO_ENABLE_BUTTON_CLICKED");
     setAudioUnlocking(true);
