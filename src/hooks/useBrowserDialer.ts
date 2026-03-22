@@ -954,65 +954,96 @@ function sanitizeStaleState() {
 }
 
 // ─── Execute outbound call ──────────────────────────────────────────
-// ─── Audio output initialization ────────────────────────────────────
-async function initializeAudioOutput(): Promise<boolean> {
+// ─── Audio output initialization (single-flight + timeout) ──────────
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
+async function initializeAudioOutputInternal(): Promise<boolean> {
   try {
     logDialer("AUDIO_UNLOCK_STARTED");
+
+    // FAST PATH: If AudioContext is running + mic granted, mark as degraded-ready immediately
+    // This prevents audio.play() from ever blocking the call path
+    const ctx = getAudioContext();
+    if (canUseDegradedAudioMode(ctx)) {
+      // Still try the speaker test, but don't block on it
+      const speakerTestResult = await withTimeout(
+        (async () => {
+          try {
+            const audio = new Audio();
+            audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+            audio.volume = 0.01;
+            if (typeof (audio as any).setSinkId === "function") {
+              try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const speaker = devices.find((d) => d.kind === "audiooutput");
+                if (speaker?.deviceId) await (audio as any).setSinkId(speaker.deviceId);
+              } catch {}
+            }
+            await audio.play();
+            return "full" as const;
+          } catch {
+            return "degraded" as const;
+          }
+        })(),
+        2000,
+        "timeout" as const
+      );
+
+      if (speakerTestResult === "full") {
+        logDialer("AUDIO_OUTPUT_READY");
+        logDialer("AUDIO_READY_CONFIRMED");
+        logDialer("AUDIO_OUTPUT_TEST_RESULT", { status: "success" });
+        setStoreState((c) => ({ ...c, audioReady: true, audioStatus: "audio_ready", latestBrowserMediaStatus: "audio_output_ready" }));
+        logDialer("AUDIO_UNLOCK_FINAL_STATE", { ready: true, mode: "success" });
+        void maybeResumeQueuedCall("audio_output_ready");
+        return true;
+      }
+
+      // Speaker test timed out or failed — use degraded mode (call still works)
+      logDialer("AUDIO_OUTPUT_TEST_RESULT", { status: speakerTestResult === "timeout" ? "timeout_degraded" : "blocked_but_degraded_ready", audioContextState: ctx?.state ?? "unknown" });
+      logDialer("AUDIO_GATE_TOO_STRICT", { enabledFallback: true, speakerTestResult });
+      setStoreState((c) => ({
+        ...c,
+        audioReady: true,
+        audioStatus: "audio_ready_degraded",
+        audioElementsAttached: true,
+        audioPlayable: false,
+        latestBrowserMediaStatus: "audio_output_degraded",
+      }));
+      logDialer("AUDIO_UNLOCK_FINAL_STATE", { ready: true, mode: "degraded" });
+      void maybeResumeQueuedCall("audio_output_degraded_ready");
+      return true;
+    }
+
+    // SLOW PATH: No AudioContext running or mic not granted — try full init
     const audio = new Audio();
     audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
     audio.volume = 0.01;
 
-    if (typeof (audio as any).setSinkId === "function") {
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const speaker = devices.find((d) => d.kind === "audiooutput");
-        if (speaker?.deviceId) {
-          await (audio as any).setSinkId(speaker.deviceId);
-        }
-      } catch (sinkErr) {
-        logDialer("AUDIO_OUTPUT_SINKID_FALLBACK", { error: sinkErr instanceof Error ? sinkErr.message : String(sinkErr) });
-      }
+    const playResult = await withTimeout(
+      audio.play().then(() => true).catch(() => false),
+      2000,
+      false
+    );
+
+    if (playResult) {
+      logDialer("AUDIO_OUTPUT_READY");
+      logDialer("AUDIO_READY_CONFIRMED");
+      setStoreState((c) => ({ ...c, audioReady: true, audioStatus: "audio_ready", latestBrowserMediaStatus: "audio_output_ready" }));
+      logDialer("AUDIO_UNLOCK_FINAL_STATE", { ready: true, mode: "success" });
+      void maybeResumeQueuedCall("audio_output_ready");
+      return true;
     }
 
-    let playbackWorked = false;
-    try {
-      await audio.play();
-      playbackWorked = true;
-    } catch {}
-
-    if (!playbackWorked) {
-      const ctx = getAudioContext();
-      if (canUseDegradedAudioMode(ctx)) {
-        setStoreState((c) => ({
-          ...c,
-          audioReady: true,
-          audioStatus: "audio_ready_degraded",
-          audioElementsAttached: true,
-          audioPlayable: false,
-          latestBrowserMediaStatus: "audio_output_degraded",
-        }));
-        logDialer("AUDIO_OUTPUT_TEST_RESULT", { status: "blocked_but_degraded_ready", audioContextState: ctx?.state ?? "unknown" });
-        logDialer("AUDIO_GATE_TOO_STRICT", { enabledFallback: true });
-        logDialer("AUDIO_UNLOCK_FINAL_STATE", { ready: true, mode: "degraded" });
-        void maybeResumeQueuedCall("audio_output_degraded_ready");
-        return true;
-      }
-
-      setStoreState((c) => ({ ...c, audioReady: false, audioStatus: "audio_blocked_by_browser", latestBrowserMediaStatus: "audio_output_blocked" }));
-      logDialer("AUDIO_OUTPUT_TEST_RESULT", { status: "blocked", audioContextState: ctx?.state ?? "unknown" });
-      logDialer("AUDIO_BLOCKED_BY_BROWSER");
-      logDialer("AUDIO_OUTPUT_BLOCKED");
-      logDialer("AUDIO_UNLOCK_FINAL_STATE", { ready: false, mode: "blocked" });
-      return false;
-    }
-
-    logDialer("AUDIO_OUTPUT_READY");
-    logDialer("AUDIO_READY_CONFIRMED");
-    logDialer("AUDIO_OUTPUT_TEST_RESULT", { status: "success" });
-    setStoreState((c) => ({ ...c, audioReady: true, audioStatus: "audio_ready", latestBrowserMediaStatus: "audio_output_ready" }));
-    logDialer("AUDIO_UNLOCK_FINAL_STATE", { ready: true, mode: "success" });
-    void maybeResumeQueuedCall("audio_output_ready");
-    return true;
+    setStoreState((c) => ({ ...c, audioReady: false, audioStatus: "audio_blocked_by_browser", latestBrowserMediaStatus: "audio_output_blocked" }));
+    logDialer("AUDIO_BLOCKED_BY_BROWSER");
+    logDialer("AUDIO_UNLOCK_FINAL_STATE", { ready: false, mode: "blocked" });
+    return false;
   } catch (e) {
     const ctx = getAudioContext();
     if (canUseDegradedAudioMode(ctx)) {
@@ -1024,17 +1055,28 @@ async function initializeAudioOutput(): Promise<boolean> {
         audioPlayable: false,
         latestBrowserMediaStatus: "audio_output_exception_degraded",
       }));
-      logDialer("AUDIO_OUTPUT_TEST_RESULT", { status: "exception_degraded", error: e instanceof Error ? e.message : String(e) });
-      logDialer("AUDIO_GATE_TOO_STRICT", { enabledFallback: true, reason: "exception" });
       logDialer("AUDIO_UNLOCK_FINAL_STATE", { ready: true, mode: "degraded" });
       void maybeResumeQueuedCall("audio_output_exception_degraded");
       return true;
     }
-
     logDialer("AUDIO_OUTPUT_FALLBACK", { error: e instanceof Error ? e.message : String(e) });
     logDialer("AUDIO_UNLOCK_FINAL_STATE", { ready: false, mode: "failed" });
     return false;
   }
+}
+
+// Single-flight wrapper — prevents duplicate audio unlock runs
+async function initializeAudioOutput(): Promise<boolean> {
+  if (audioInitInFlight && audioInitPromise) {
+    logDialer("AUDIO_INIT_DEDUPED", { reason: "already_in_flight" });
+    return audioInitPromise;
+  }
+  audioInitInFlight = true;
+  audioInitPromise = initializeAudioOutputInternal().finally(() => {
+    audioInitInFlight = false;
+    audioInitPromise = null;
+  });
+  return audioInitPromise;
 }
 
 function canPlaceCall(): { ready: boolean; reason: string } {
