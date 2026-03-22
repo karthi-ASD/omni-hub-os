@@ -16,16 +16,22 @@ export function PersistentDialerConsumer() {
   const dialer = useDialerContext();
 
   useEffect(() => {
-    if (!dialer) return;
-    dialer.logEvent("SHELL_CONSUMER_MOUNTED", {
+    if (!dialer) {
+      console.error("SHELL_CONSUMER_MISSING_CONTEXT", {
+        route: window.location.pathname,
+      });
+      return;
+    }
+
+    console.log("SHELL_CONSUMER_MOUNTED", {
       route: window.location.pathname,
     });
     return () => {
-      dialer.logEvent("SHELL_CONSUMER_UNMOUNTED", {
+      console.warn("SHELL_CONSUMER_UNMOUNTED", {
         route: window.location.pathname,
       });
     };
-  }, [dialer?.logEvent]);
+  }, []);
 
   return null;
 }

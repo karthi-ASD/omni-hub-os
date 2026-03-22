@@ -17,7 +17,6 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { BroadcastPopup } from "@/components/notifications/BroadcastPopup";
 import { useActivityTracking } from "@/hooks/useActivityTracking";
-import { logDialerEvent } from "@/hooks/useBrowserDialer";
 import { useEffect, useRef } from "react";
 
 const shellMeta = {
@@ -64,23 +63,47 @@ const AppShell = () => {
   shellRenderCount.current++;
 
   useEffect(() => {
-    logDialerEvent("APP_SHELL_RENDER_START", { renderCount: shellRenderCount.current, dashboardShell, pathname: window.location.pathname, isAuthResolved, businessId });
+    console.log("APP_SHELL_RENDER_START", {
+      renderCount: shellRenderCount.current,
+      dashboardShell,
+      pathname: window.location.pathname,
+      isAuthResolved,
+      businessId,
+    });
     if (isAuthResolved) {
       hasStableShellRef.current = true;
       stableShellRef.current = { shell: dashboardShell, businessId, businessName: activeBusinessName };
-      logDialerEvent("APP_SHELL_RENDER_SUCCESS", { renderCount: shellRenderCount.current, dashboardShell, pathname: window.location.pathname });
+      console.log("APP_SHELL_RENDER_SUCCESS", {
+        renderCount: shellRenderCount.current,
+        dashboardShell,
+        pathname: window.location.pathname,
+      });
     } else if (hasStableShellRef.current) {
-      logDialerEvent("APP_SHELL_BLANK_SCREEN_GUARD_TRIGGERED", { pathname: window.location.pathname });
+      console.warn("APP_SHELL_BLANK_SCREEN_GUARD_TRIGGERED", {
+        pathname: window.location.pathname,
+      });
     } else {
-      logDialerEvent("APP_SHELL_RENDER_BLOCKED_REASON", { reason: "auth_not_resolved_initial", pathname: window.location.pathname });
+      console.log("APP_SHELL_RENDER_BLOCKED_REASON", {
+        reason: "auth_not_resolved_initial",
+        pathname: window.location.pathname,
+      });
     }
   }, [dashboardShell, businessId, activeBusinessName, isAuthResolved]);
 
   useEffect(() => {
     if (prevPathRef.current !== location.pathname) {
-      logDialerEvent("ROUTE_CHANGE_DETECTED", { from: prevPathRef.current, to: location.pathname });
-      logDialerEvent("APP_SHELL_STILL_MOUNTED_AFTER_ROUTE_CHANGE", { renderCount: shellRenderCount.current, to: location.pathname });
-      logDialerEvent("ROUTE_TREE_REBUILT", { from: prevPathRef.current, to: location.pathname });
+      console.log("ROUTE_CHANGE_DETECTED", {
+        from: prevPathRef.current,
+        to: location.pathname,
+      });
+      console.log("APP_SHELL_STILL_MOUNTED_AFTER_ROUTE_CHANGE", {
+        renderCount: shellRenderCount.current,
+        to: location.pathname,
+      });
+      console.log("ROUTE_TREE_REBUILT", {
+        from: prevPathRef.current,
+        to: location.pathname,
+      });
       prevPathRef.current = location.pathname;
     }
   }, [location.pathname]);
