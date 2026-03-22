@@ -206,8 +206,8 @@ const INITIAL_STATE: BrowserDialerStoreState = {
   audioStatus: "audio_not_initialized",
 };
 
-const BUILD_VERSION = "stability-v19";
-const DEPLOYED_AT = "2026-03-22T23:00:00Z";
+const BUILD_VERSION = "stability-v20";
+const DEPLOYED_AT = "2026-03-22T10:50:00Z";
 type DialerIdentity = { businessId: string; userId: string } | null;
 
 // ─── Global singletons ──────────────────────────────────────────────
