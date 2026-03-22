@@ -1267,13 +1267,29 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   instance.client.on("onConnectionChange", (conn) => {
     if (!guard()) return;
     const connState = conn?.state || "unknown";
-    logDialer("PLIVO_CONNECTION_CHANGE", { state: connState });
+    logDialer("PLIVO_CONNECTION_CHANGE", { state: connState, wasRegistered: storeState.registered, wasLoginInProgress: loginInProgress });
     setStoreState((c) => ({ ...c, connectionState: connState }));
 
     if (connState === "connected") {
       lastConnectedAt = Date.now();
-      loginInProgress = false;
       clearReloginTimeout();
+      // ── CRITICAL FIX: If connection is "connected", the SIP registration succeeded.
+      // The SDK may not fire onLogin again if it was "Already registered".
+      // Force registered=true if not already set. ──
+      if (!storeState.registered) {
+        logDialer("CONNECTION_CONNECTED_FORCE_REGISTERED", { wasLoginInProgress: loginInProgress });
+        loginInProgress = false;
+        if (loginSafetyTimeoutRef) { clearTimeout(loginSafetyTimeoutRef); loginSafetyTimeoutRef = null; }
+        setStoreState((c) => ({
+          ...c,
+          registered: true,
+          status: c.micPermission === "granted" ? "device_ready" : "registered",
+          lastError: null,
+          plivoClientInitStatus: "registered",
+        }));
+      } else {
+        loginInProgress = false;
+      }
       void maybeResumeQueuedCall("connection_connected");
     }
 
