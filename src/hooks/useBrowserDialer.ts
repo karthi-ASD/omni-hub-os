@@ -1879,6 +1879,8 @@ export function useBrowserDialer() {
   }, []);
 
   const startCall = useCallback(async (phoneNumber: string, leadId?: string, clientId?: string) => {
+    logDialer("CALL_BUTTON_CLICKED", { phoneNumber, leadId: leadId ?? null });
+
     const readiness = canPlaceCall();
     logDialer("START_CALL_ENTERED", {
       rawPhoneNumber: phoneNumber,
@@ -1886,6 +1888,8 @@ export function useBrowserDialer() {
       registered: storeState.registered,
       status: storeState.status,
       loading: storeState.loading,
+      audioReady: storeState.audioReady,
+      audioStatus: storeState.audioStatus,
       canPlaceCall: readiness.ready,
       readinessReason: readiness.reason,
     });
@@ -1904,7 +1908,6 @@ export function useBrowserDialer() {
       toast.warning("A call is already active.");
       return;
     }
-    // Block during registering/initializing — these are NOT ready states
     if (["registering", "initializing"].includes(storeState.status)) {
       logDialer("CALL_BLOCKED_STATUS_REGISTERING", { status: storeState.status });
       toast.warning("Voice service still connecting. Please wait.");
@@ -1918,18 +1921,46 @@ export function useBrowserDialer() {
 
     // Check mic
     if (storeState.micPermission !== "granted") {
+      logDialer("START_CALL_MIC_CHECK");
       const granted = await requestMicrophonePermissionInternal();
       if (!granted) return;
     }
 
     const intent: PendingDialIntent = { phoneNumber: phoneNumber.trim(), leadId, clientId };
-    if (!storeState.audioReady) {
-      await resumeAudioContext();
-      await initializeAudioOutput();
-    }
-    const finalReadiness = canPlaceCall();
 
-    // Full readiness check — not just registered boolean
+    // ── AUDIO UNLOCK: Try once with timeout, but don't permanently block ──
+    if (!storeState.audioReady) {
+      logDialer("START_CALL_AUDIO_UNLOCK_ATTEMPT");
+      await resumeAudioContext();
+      const audioOk = await withTimeout(initializeAudioOutput(), 3000, false);
+      logDialer("START_CALL_AUDIO_UNLOCK_RESULT", { audioOk, audioReady: storeState.audioReady, audioStatus: storeState.audioStatus });
+
+      // If audio init timed out but we can use degraded mode, force it
+      if (!storeState.audioReady) {
+        const ctx = getAudioContext();
+        if (canUseDegradedAudioMode(ctx)) {
+          logDialer("START_CALL_FORCE_DEGRADED_AUDIO", { audioContextState: ctx?.state });
+          setStoreState((c) => ({
+            ...c,
+            audioReady: true,
+            audioStatus: "audio_ready_degraded",
+            latestBrowserMediaStatus: "audio_forced_degraded_for_call",
+          }));
+        }
+      }
+    }
+
+    // ── FINAL READINESS CHECK ──
+    // Check everything needed for the call
+    const finalReadiness = canPlaceCall();
+    logDialer("START_CALL_VALIDATION_RESULT", {
+      ready: finalReadiness.ready,
+      reason: finalReadiness.reason,
+      audioReady: storeState.audioReady,
+      registered: storeState.registered,
+      connectionState: storeState.connectionState,
+    });
+
     if (!finalReadiness.ready) {
       logDialer("CALL_QUEUED_BEFORE_REGISTER", { destination: phoneNumber.trim(), reason: finalReadiness.reason });
       storeQueuedCall(intent, finalReadiness.reason);
