@@ -593,16 +593,9 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
 
   instance.client.on("onLogin", () => {
     if (!guard()) return;
+    // Capture pending BEFORE clearing — read both sources
     const pending = modulePendingDial || storeState.pendingDialIntent;
     modulePendingDial = null;
-
-    setStoreState((c) => ({
-      ...c,
-      registered: true,
-      status: c.micPermission === "granted" ? "device_ready" : "registered",
-      lastError: null,
-      pendingDialIntent: null,
-    }));
 
     logDialer("VOICE_REGISTERED", {
       providerStatus: "registered",
@@ -610,9 +603,22 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
       pendingNumber: pending?.phoneNumber || null,
     });
 
+    // Update state — keep pendingDialIntent if we have a pending call to execute
+    setStoreState((c) => ({
+      ...c,
+      registered: true,
+      status: c.micPermission === "granted" ? "device_ready" : "registered",
+      lastError: null,
+      pendingDialIntent: pending ? c.pendingDialIntent : null,
+    }));
+
     if (pending) {
       logDialer("AUTO_DIAL_AFTER_REGISTER", { destination: pending.phoneNumber });
-      setTimeout(() => void executeOutboundCall(pending), 300);
+      // Clear pendingDialIntent only when execution starts
+      setTimeout(() => {
+        setStoreState((c) => ({ ...c, pendingDialIntent: null }));
+        void executeOutboundCall(pending);
+      }, 300);
     }
   });
 
