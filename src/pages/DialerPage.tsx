@@ -89,15 +89,6 @@ function DialerPageContent() {
   const clientId = searchParams.get("clientId") || undefined;
   const { canAccessDialer, isClientUser } = useDialerAccess(clientId);
 
-  // If provider not ready yet (no auth/business), show loading
-  if (!dialer) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-
   const [phoneInput, setPhoneInput] = useState(() => {
     return sessionStorage.getItem("dialer_phone_draft") || "";
   });
