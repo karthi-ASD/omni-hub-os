@@ -6,7 +6,7 @@
  * BUILD: stability-v16
  */
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useEffect, type ReactNode } from "react";
 import { useBrowserDialer } from "@/hooks/useBrowserDialer";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -16,6 +16,23 @@ const BrowserDialerContext = createContext<DialerContextValue>(null);
 
 function DialerProviderInner({ children }: { children: ReactNode }) {
   const dialer = useBrowserDialer();
+
+  useEffect(() => {
+    console.log("[DIALER_PROVIDER] PROVIDER_MOUNTED");
+    return () => {
+      console.log("[DIALER_PROVIDER] PROVIDER_UNMOUNTED");
+    };
+  }, []);
+
+  useEffect(() => {
+    if (dialer.registered && dialer.diagnostics.clientHealthy) {
+      console.log("[DIALER_PROVIDER] CLIENT_SINGLETON_REUSED", {
+        registered: dialer.registered,
+        status: dialer.callStatus,
+      });
+    }
+  }, [dialer.registered]);
+
   return (
     <BrowserDialerContext.Provider value={dialer}>
       {children}

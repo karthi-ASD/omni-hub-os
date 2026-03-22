@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useBrowserDialer, type BrowserDialerStatus } from "@/hooks/useBrowserDialer";
+import { useDialerContext } from "@/contexts/BrowserDialerContext";
+import type { BrowserDialerStatus } from "@/hooks/useBrowserDialer";
 import { useCallTranscript } from "@/hooks/useCallTranscript";
 import { useAICallAssistant } from "@/hooks/useAICallAssistant";
 import { useDialerAccess } from "@/hooks/useDialerAccess";
@@ -83,7 +84,7 @@ interface LeadContext {
 function DialerPageContent() {
   const [searchParams] = useSearchParams();
   const { profile } = useAuth();
-  const dialer = useBrowserDialer();
+  const dialer = useDialerContext();
 
   const clientId = searchParams.get("clientId") || undefined;
   const { canAccessDialer, isClientUser } = useDialerAccess(clientId);
@@ -118,40 +119,41 @@ function DialerPageContent() {
     }
   }, [leadContext]);
 
-  // Live transcript
+  // Live transcript — safe when dialer is null
+  const noopLog = useRef((_e: string, _d?: Record<string, unknown>) => {}).current;
   const transcript = useCallTranscript({
-    sessionId: dialer.session?.id || null,
+    sessionId: dialer?.session?.id || null,
     businessId: profile?.business_id || null,
     userId: profile?.user_id || null,
-    isCallConnected: dialer.callStatus === "connected",
-    onLog: dialer.logEvent,
+    isCallConnected: dialer?.callStatus === "connected",
+    onLog: dialer?.logEvent || noopLog,
   });
 
   // AI assistant
   const aiAssistant = useAICallAssistant({
-    sessionId: dialer.session?.id || null,
+    sessionId: dialer?.session?.id || null,
     businessId: profile?.business_id || null,
-    onLog: dialer.logEvent,
+    onLog: dialer?.logEvent || noopLog,
   });
 
   // Periodically feed transcript to AI during active call
   const lastAIRequestRef = useRef<number>(0);
   useEffect(() => {
-    if (!dialer.isCallActive || transcript.lines.length === 0) return;
+    if (!dialer?.isCallActive || transcript.lines.length === 0) return;
     const finalLines = transcript.lines.filter((l) => l.isFinal);
-    if (finalLines.length < 2) return; // Wait for at least 2 final lines
+    if (finalLines.length < 2) return;
     const now = Date.now();
-    if (now - lastAIRequestRef.current < 10000) return; // Max every 10s
+    if (now - lastAIRequestRef.current < 10000) return;
     lastAIRequestRef.current = now;
     aiAssistant.requestAIAssist(transcript.lines);
-  }, [transcript.lines, dialer.isCallActive]);
+  }, [transcript.lines, dialer?.isCallActive]);
 
   // Reset AI on call end
   useEffect(() => {
-    if (!dialer.isCallActive && transcript.status === "stopped") {
+    if (!dialer?.isCallActive && transcript.status === "stopped") {
       // Don't reset immediately - let user review
     }
-  }, [dialer.isCallActive]);
+  }, [dialer?.isCallActive]);
 
   // Load lead context from URL params
   useEffect(() => {
@@ -163,9 +165,18 @@ function DialerPageContent() {
     if (phone) setPhoneInput(phone);
     if (leadId && name) {
       setLeadContext({ id: leadId, name: name || "", phone: phone || "", company: company || "", clientId });
-      dialer.loadLeadHistory(leadId);
+      dialer?.loadLeadHistory(leadId);
     }
   }, [searchParams]);
+
+  // ── GATE: If provider not ready, show loading (after all hooks) ──
+  if (!dialer) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   // Permission gate
   if (!canAccessDialer) {
