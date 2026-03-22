@@ -248,17 +248,20 @@ function DialerPageContent() {
     onLog: dialer?.logEvent || noopLog,
   });
 
-  // Periodically feed transcript to AI during active call
+  // Periodically feed transcript to AI during active call — ONLY when connected
   const lastAIRequestRef = useRef<number>(0);
   useEffect(() => {
-    if (!dialer?.isCallActive || transcript.lines.length === 0) return;
+    // Guard: only process AI when call is actually connected (not just dialing/ringing)
+    if (dialer?.callStatus !== "connected") return;
+    if (transcript.lines.length === 0) return;
     const finalLines = transcript.lines.filter((l) => l.isFinal);
     if (finalLines.length < 2) return;
     const now = Date.now();
     if (now - lastAIRequestRef.current < 10000) return;
     lastAIRequestRef.current = now;
+    dialer?.logEvent("POSTCALL_PIPELINE_GUARD_RESULT", { hadSession: !!dialer?.session, hadConnectedState: true, shouldProcessAI: true });
     aiAssistant.requestAIAssist(transcript.lines);
-  }, [transcript.lines, dialer?.isCallActive]);
+  }, [transcript.lines, dialer?.callStatus]);
 
   // UI rebind safety — detect if we're mounting into an active call
   useEffect(() => {
