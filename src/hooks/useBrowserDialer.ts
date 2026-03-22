@@ -1048,6 +1048,10 @@ function reinitializeDialer() {
     logDialer("INIT_SKIPPED", { reason: "recovery_in_progress" });
     return;
   }
+  if (isInActiveCall()) {
+    logDialer("REINIT_BLOCKED_ACTIVE_CALL", { status: storeState.status });
+    return;
+  }
   recoveryInProgress = true;
   logDialer("DIALER_REINIT_MANUAL_START");
   logDialer("DIALER_CLEANUP_OLD_CLIENT");
