@@ -135,8 +135,8 @@ Deno.serve(async (req) => {
         .then(() => {}, () => {});
     }
 
-    // Return XML — bridge WebRTC to PSTN
-    const xml = buildXml(destination, callerId);
+    // Return XML — bridge WebRTC to PSTN with recording enabled
+    const xml = buildXml(destination, callerId, sessionId);
 
     console.log("[DIALER_XML] Returning XML:", xml);
 
