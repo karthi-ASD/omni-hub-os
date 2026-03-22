@@ -1553,7 +1553,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   instance.client.on("onCallRemoteRinging", async (callInfo: Plivo.CallInfo) => {
     if (!guardEvent("onCallRemoteRinging")) return;
     const prevState = storeState.status;
-    logDialer("CALL_REMOTE_RINGING", { callInfoState: callInfo.state || "ringing" });
+    logDialer("CALL_REMOTE_RINGING", { callInfoState: callInfo.state || "ringing", timeSinceCallStartMs: callStartTimestamp ? Date.now() - callStartTimestamp : null });
     logDialer("PROVIDER_RINGING_EVENT", {
       prevState,
       nextState: "ringing",
