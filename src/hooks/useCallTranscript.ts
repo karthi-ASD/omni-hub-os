@@ -111,7 +111,7 @@ export function useCallTranscript({
 
         // Save final results to DB
         if (result.isFinal && sessionId && businessId) {
-          supabase
+          void supabase
             .from("dialer_transcripts")
             .insert({
               session_id: sessionId,
@@ -123,8 +123,7 @@ export function useCallTranscript({
               is_final: true,
               confidence: result[0].confidence,
             } as any)
-            .then(() => log("TRANSCRIPT_SAVED"))
-            .catch(() => {});
+            .then(() => log("TRANSCRIPT_SAVED"));
         }
       }
     };
