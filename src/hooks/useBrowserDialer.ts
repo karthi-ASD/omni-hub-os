@@ -227,6 +227,7 @@ let reloginTimeoutRef: number | null = null;
 let activeHookConsumers = 0;
 let consumerCleanupTimer: number | null = null;
 let currentAccessToken: string | null = null;
+let callStartTimestamp: number = 0;
 
 // ─── Connection health monitor ──────────────────────────────────────
 let lastConnectedAt = Date.now();
