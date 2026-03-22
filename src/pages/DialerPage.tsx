@@ -10,6 +10,7 @@ import { DialerErrorBoundary } from "@/components/dialer/DialerErrorBoundary";
 import { LiveTranscriptPanel } from "@/components/dialer/LiveTranscriptPanel";
 import { AISuggestionsPanel } from "@/components/dialer/AISuggestionsPanel";
 import { AICoachPanel } from "@/components/dialer/AICoachPanel";
+import { PostCallIntelligence } from "@/components/dialer/PostCallIntelligence";
 import { CallStatusBar } from "@/components/dialer/CallStatusBar";
 import { CallReadinessPanel } from "@/components/dialer/CallReadinessPanel";
 import { CallTagging } from "@/components/dialer/CallTagging";
