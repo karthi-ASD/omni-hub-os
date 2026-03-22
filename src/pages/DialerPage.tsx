@@ -394,8 +394,8 @@ function DialerPageContent() {
         </Card>
 
         {/* CENTER PANEL — Dialer */}
-        <Card className="lg:col-span-1">
-          <CardHeader className="pb-3">
+        <div className="lg:col-span-1 space-y-4">
+        <Card>
             <CardTitle className="text-base flex items-center gap-2"><Phone className="h-4 w-4" /> Browser Dialer</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
