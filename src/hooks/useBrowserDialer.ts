@@ -1239,6 +1239,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   instance.client.on("onLoginFailed", (cause: string) => {
     if (!guard()) return;
     loginInProgress = false;
+    if (loginSafetyTimeoutRef) { clearTimeout(loginSafetyTimeoutRef); loginSafetyTimeoutRef = null; }
     logDialer("VOICE_REGISTRATION_FAILED_FULL", { reason: cause, retryCount: registrationRetryCount });
 
     if (registrationRetryCount < MAX_REGISTRATION_RETRIES && lastLoginCredentials) {
