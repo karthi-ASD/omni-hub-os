@@ -30,7 +30,7 @@ export function useCallTranscript({
   sessionId,
   businessId,
   userId,
-  isCallActive,
+  isCallConnected,
   onLog,
 }: UseCallTranscriptOptions) {
   const [lines, setLines] = useState<TranscriptLine[]>([]);

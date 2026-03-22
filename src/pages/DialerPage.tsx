@@ -101,7 +101,7 @@ function DialerPageContent() {
     sessionId: dialer.session?.id || null,
     businessId: profile?.business_id || null,
     userId: profile?.user_id || null,
-    isCallActive: dialer.isCallActive,
+    isCallConnected: dialer.status === "connected",
     onLog: dialer.logEvent,
   });
 
