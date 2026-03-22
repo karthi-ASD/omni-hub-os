@@ -1465,7 +1465,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
       logDialer("REGISTRATION_FAILED_RETRY", { attempt: registrationRetryCount, maxRetries: MAX_REGISTRATION_RETRIES });
       try { instance.client.logout(); } catch {}
       window.setTimeout(() => {
-        if (!guard() || !lastLoginCredentials) return;
+        if (!guardEvent("registration_retry_check") || !lastLoginCredentials) return;
         logDialer("REGISTRATION_RETRY_LOGIN", { attempt: registrationRetryCount });
         scheduleLogin("registration_retry", lastLoginCredentials.username, lastLoginCredentials.password);
       }, 2000);
