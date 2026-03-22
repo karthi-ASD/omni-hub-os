@@ -17,6 +17,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppShell from "@/components/AppShell";
 import { ClientRouteGuard } from "@/components/guards/ClientRouteGuard";
+import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import LoginV2 from "./pages/LoginV2";
