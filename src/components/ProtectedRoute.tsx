@@ -18,10 +18,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRoles
   const hasSettledAccessRef = useRef(false);
 
   useEffect(() => {
-    if (!session) {
-      hasSettledAccessRef.current = false;
-      return;
-    }
+    // Only PROMOTE to settled — never demote back to false.
+    // Clearing this on transient session null (token refresh, tab return)
+    // causes a redirect to /login on the next render cycle.
+    if (!session) return;
 
     if (!loading && !tenantValidationError && securityCheck !== "loading") {
       hasSettledAccessRef.current = true;
