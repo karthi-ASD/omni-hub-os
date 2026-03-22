@@ -16,7 +16,7 @@ interface CallReadinessPanelProps {
   audioContextState: string | null;
   callStatus: string;
   logEvent: (event: string, data?: Record<string, unknown>) => void;
-  startAuTestCall: () => Promise<void>;
+  startCall: (number: string) => Promise<void>;
   onReconnect: () => void;
   requestMicPermission: () => Promise<boolean>;
   onTestRegistration: () => Promise<void>;
@@ -34,7 +34,7 @@ export function CallReadinessPanel({
   audioContextState,
   callStatus,
   logEvent,
-  startAuTestCall,
+  startCall,
   onReconnect,
   requestMicPermission,
   onTestRegistration,
@@ -267,8 +267,11 @@ export function CallReadinessPanel({
       const granted = await requestMicPermission();
       if (!granted) return;
     }
-    logEvent("TEST_CASE_101_CONFIRMED", { path: "diagnostics_panel" });
-    await startAuTestCall();
+    const testNumber = "+919902328888";
+    logEvent("TEST_CALL_TRIGGERED");
+    logEvent("TEST_CALL_START", { number: testNumber });
+    logEvent("TEST_CALL_REQUEST_SENT", { number: testNumber });
+    await startCall(testNumber);
   };
 
   const handleReconnect = () => {
@@ -393,7 +396,7 @@ export function CallReadinessPanel({
             disabled={!registered || isCallActive || disabledForAuth}
           >
             <Phone className="h-3.5 w-3.5" />
-            AU Test Call
+            Test Call
           </Button>
 
           <Button
