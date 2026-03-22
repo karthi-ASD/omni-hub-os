@@ -197,7 +197,7 @@ function DialerPageContent() {
             <div className="flex items-center gap-1.5">
               <Activity className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-muted-foreground">Build:</span>
-              <span className="font-semibold">stability-v9</span>
+              <span className="font-semibold">stability-v10</span>
             </div>
             <Separator orientation="vertical" className="h-4" />
             <div>
