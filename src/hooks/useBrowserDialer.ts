@@ -1,7 +1,7 @@
 /**
  * Browser-based Plivo dialer — single source of truth via useSyncExternalStore.
  *
- * BUILD: stability-v7
+ * BUILD: call-exec-v8
  *
  * Key invariants:
  *  - Status is ONLY set from real SDK events or explicit user actions.
@@ -149,7 +149,7 @@ const INITIAL_STATE: BrowserDialerStoreState = {
   lastActionAt: null,
 };
 
-const BUILD_VERSION = "stability-v7";
+const BUILD_VERSION = "call-exec-v8";
 type DialerIdentity = { businessId: string; userId: string } | null;
 
 // ─── Global singletons ──────────────────────────────────────────────
@@ -551,6 +551,7 @@ async function executeOutboundCall(intent: PendingDialIntent) {
     await setAgentAvailability("on_call");
 
     logDialer("CALL_DIAL_START", { destinationNumber: normalizedPhone, sessionId: sess.id });
+    logDialer("PLIVO_CALL_INVOKING_NOW", { destination: normalizedPhone });
 
     plivoInstanceRef.client.call(normalizedPhone, { "X-PH-SessionId": sess.id });
 
@@ -592,16 +593,9 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
 
   instance.client.on("onLogin", () => {
     if (!guard()) return;
+    // Capture pending BEFORE clearing — read both sources
     const pending = modulePendingDial || storeState.pendingDialIntent;
     modulePendingDial = null;
-
-    setStoreState((c) => ({
-      ...c,
-      registered: true,
-      status: c.micPermission === "granted" ? "device_ready" : "registered",
-      lastError: null,
-      pendingDialIntent: null,
-    }));
 
     logDialer("VOICE_REGISTERED", {
       providerStatus: "registered",
@@ -609,9 +603,22 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
       pendingNumber: pending?.phoneNumber || null,
     });
 
+    // Update state — keep pendingDialIntent if we have a pending call to execute
+    setStoreState((c) => ({
+      ...c,
+      registered: true,
+      status: c.micPermission === "granted" ? "device_ready" : "registered",
+      lastError: null,
+      pendingDialIntent: pending ? c.pendingDialIntent : null,
+    }));
+
     if (pending) {
       logDialer("AUTO_DIAL_AFTER_REGISTER", { destination: pending.phoneNumber });
-      setTimeout(() => void executeOutboundCall(pending), 300);
+      // Clear pendingDialIntent only when execution starts
+      setTimeout(() => {
+        setStoreState((c) => ({ ...c, pendingDialIntent: null }));
+        void executeOutboundCall(pending);
+      }, 300);
     }
   });
 
@@ -924,6 +931,7 @@ export function useBrowserDialer() {
       return;
     }
 
+    logDialer("START_CALL_REGISTERED_PATH", { number: phoneNumber.trim() });
     await executeOutboundCall(intent);
   }, [profile]);
 
