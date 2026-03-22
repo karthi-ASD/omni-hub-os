@@ -92,7 +92,6 @@ export function CallReadinessPanel({
   const speakerTestGuard = useRef(false);
 
   const handleTestSpeaker = async () => {
-    // Prevent concurrent tests
     if (speakerTestGuard.current) {
       logEvent("SPEAKER_TEST_CONCURRENT_BLOCKED");
       return;
@@ -104,55 +103,70 @@ export function CallReadinessPanel({
     logEvent("SPEAKER_TEST_START");
 
     const TIMEOUT_MS = 4000;
+    let sinkIdWorked = true;
 
     try {
-      const result = await Promise.race<"success" | "fallback" | "timeout">([
-        // Actual test
+      const result = await Promise.race<"success" | "fallback" | "blocked" | "timeout">([
         (async () => {
           const audio = new Audio();
           audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
           audio.volume = 0.5;
 
-          // Try setSinkId but don't fail if unsupported
           if (typeof (audio as any).setSinkId === "function") {
             try {
               const devices = await navigator.mediaDevices.enumerateDevices();
-              const speaker = devices.find((d) => d.kind === "audiooutput");
+              const speaker = devices.find((d: MediaDeviceInfo) => d.kind === "audiooutput");
               if (speaker?.deviceId) {
                 await (audio as any).setSinkId(speaker.deviceId);
               }
-            } catch (sinkErr) {
-              logEvent("SPEAKER_SINKID_FALLBACK", { error: sinkErr instanceof Error ? sinkErr.message : String(sinkErr) });
+            } catch {
+              sinkIdWorked = false;
+              logEvent("SPEAKER_SINKID_UNSUPPORTED");
             }
+          } else {
+            sinkIdWorked = false;
           }
 
           logEvent("SPEAKER_TEST_PLAYING");
-          await audio.play();
-          logEvent("SPEAKER_TEST_PLAYED");
-          return "success" as const;
-        })().catch(() => "fallback" as const),
-        // Hard timeout
+          try {
+            await audio.play();
+            logEvent("SPEAKER_TEST_PLAYED");
+            return sinkIdWorked ? ("success" as const) : ("fallback" as const);
+          } catch (playErr) {
+            logEvent("SPEAKER_TEST_PLAY_BLOCKED", { error: playErr instanceof Error ? playErr.message : String(playErr) });
+            return "blocked" as const;
+          }
+        })(),
         new Promise<"timeout">((resolve) => setTimeout(() => resolve("timeout"), TIMEOUT_MS)),
       ]);
 
-      if (result === "timeout") {
-        logEvent("SPEAKER_TEST_TIMEOUT");
-        setSpeakerResult("success");
-        setSpeakerMessage("Speaker test completed (timeout fallback — audio likely works)");
-      } else if (result === "success") {
-        logEvent("SPEAKER_TEST_COMPLETED");
-        setSpeakerResult("success");
-        setSpeakerMessage("Speaker working — playback successful");
-      } else {
-        logEvent("SPEAKER_TEST_SUCCESS_FALLBACK");
-        setSpeakerResult("success");
-        setSpeakerMessage("Speaker test passed (fallback mode)");
+      switch (result) {
+        case "success":
+          logEvent("SPEAKER_TEST_COMPLETED_SUCCESS");
+          setSpeakerResult("success");
+          setSpeakerMessage("Speaker working — playback successful");
+          break;
+        case "fallback":
+          logEvent("SPEAKER_TEST_COMPLETED_FALLBACK");
+          setSpeakerResult("fallback_success");
+          setSpeakerMessage("Speaker working (default output — sink routing unsupported)");
+          break;
+        case "blocked":
+          logEvent("SPEAKER_TEST_COMPLETED_BLOCKED");
+          setSpeakerResult("blocked");
+          setSpeakerMessage("Browser blocked playback. Click anywhere and retry.");
+          break;
+        case "timeout":
+          logEvent("SPEAKER_TEST_COMPLETED_TIMEOUT");
+          setSpeakerResult("timeout");
+          setSpeakerMessage("Speaker test timed out. Audio may still work — try a test call.");
+          break;
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      logEvent("SPEAKER_TEST_FAILED_REAL", { error: msg });
+      logEvent("SPEAKER_TEST_COMPLETED_FAILED", { error: msg });
       setSpeakerResult("failed");
-      setSpeakerMessage("Browser blocked playback. Click once and retry.");
+      setSpeakerMessage(`Speaker test failed: ${msg}`);
     } finally {
       setSpeakerTesting(false);
       speakerTestGuard.current = false;
