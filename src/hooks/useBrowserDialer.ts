@@ -731,13 +731,33 @@ function sanitizeStaleState() {
 }
 
 // ─── Execute outbound call ──────────────────────────────────────────
+function canPlaceCall(): { ready: boolean; reason: string } {
+  if (!plivoInstanceRef?.client) return { ready: false, reason: "no_client" };
+  if (!isClientHealthy()) return { ready: false, reason: "client_unhealthy" };
+  if (storeState.connectionState !== "connected") return { ready: false, reason: `connection_${storeState.connectionState}` };
+  if (storeState.plivoClientInitStatus !== "registered") return { ready: false, reason: `init_${storeState.plivoClientInitStatus}` };
+  if (!storeState.registered) return { ready: false, reason: "not_registered" };
+  if (["initializing", "registering"].includes(storeState.status)) return { ready: false, reason: `status_${storeState.status}` };
+  if (recoveryInProgress) return { ready: false, reason: "recovery_in_progress" };
+  if (loginInProgress) return { ready: false, reason: "login_in_progress" };
+  return { ready: true, reason: "ok" };
+}
+
 async function executeOutboundCall(intent: PendingDialIntent) {
   logDialer("EXECUTE_OUTBOUND_CALL_ENTERED", { raw: intent.phoneNumber });
 
-  if (!authIdentity || !plivoInstanceRef?.client) {
-    logDialer("EXECUTE_CALL_BLOCKED", { reason: "no_auth_or_client" });
+  if (!authIdentity) {
+    logDialer("EXECUTE_CALL_BLOCKED", { reason: "no_auth" });
     return;
   }
+
+  const readiness = canPlaceCall();
+  if (!readiness.ready) {
+    logDialer("CALL_BLOCKED_NOT_READY", { reason: readiness.reason, status: storeState.status, connectionState: storeState.connectionState, initStatus: storeState.plivoClientInitStatus });
+    toast.warning("Voice service still connecting. Please wait.");
+    return;
+  }
+
   if (storeState.dialLock) {
     logDialer("EXECUTE_CALL_BLOCKED", { reason: "dial_lock_active" });
     return;
