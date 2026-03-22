@@ -221,6 +221,8 @@ function DialerPageContent() {
     await dialer.submitDisposition("callback_later", notesInput, followUpDate?.toISOString());
     dialer.resetDialer();
     setNotesInput("");
+    sessionStorage.removeItem("dialer_notes_draft");
+    sessionStorage.removeItem("dialer_phone_draft");
     setFollowUpDate(undefined);
     setShowFollowUp(false);
   };
