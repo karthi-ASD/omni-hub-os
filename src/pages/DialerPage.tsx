@@ -332,7 +332,14 @@ function DialerPageContent() {
               </p>
               <p className="text-xs text-muted-foreground">{dialer.lastError}</p>
             </div>
-            <Button variant="outline" size="sm" onClick={dialer.resetDialer} className="shrink-0">Clear</Button>
+            <div className="flex items-center gap-2 shrink-0">
+              {dialer.callStatus === "failed" && phoneInput.trim() && (
+                <Button variant="default" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => { dialer.resetDialer(); setTimeout(() => handleDial(), 300); }}>
+                  <RotateCcw className="h-3 w-3 mr-1" /> Retry Call
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={dialer.resetDialer}>Dismiss</Button>
+            </div>
           </CardContent>
         </Card>
       )}
