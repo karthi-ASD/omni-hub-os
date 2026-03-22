@@ -1096,11 +1096,17 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
     const reason = (cause || "Unknown").trim();
     const reasonLower = reason.toLowerCase();
 
-    // ── FALSE BUSY DETECTION: Ignore "Busy" if it arrives < 3s after call start ──
+    // ── FALSE BUSY DETECTION: If "Busy" arrives < 3s, auto-retry once ──
     const elapsed = callStartTimestamp > 0 ? Date.now() - callStartTimestamp : Infinity;
     if (reasonLower.includes("busy") && elapsed < 3000) {
-      logDialer("FALSE_BUSY_IGNORED", { elapsed, reason, destination: storeState.destinationNumber });
-      // Don't treat this as a real failure — the call may still be routing
+      logDialer("FALSE_BUSY_RETRYING", { elapsed, reason, destination: storeState.destinationNumber });
+      setTimeout(() => {
+        if (storeState.destinationNumber && plivoInstanceRef?.client && isInActiveCall()) {
+          plivoInstanceRef.client.call(storeState.destinationNumber, storeState.session?.id ? { "X-PH-SessionId": storeState.session.id } : {});
+          callStartTimestamp = Date.now();
+          logDialer("RETRY_CALL_AFTER_FALSE_BUSY");
+        }
+      }, 1000);
       return;
     }
 
