@@ -25,7 +25,7 @@ export function PersistentDialerConsumer() {
         route: window.location.pathname,
       });
     };
-  }, [dialer]);
+  }, [dialer?.logEvent]);
 
   return null;
 }
