@@ -7,6 +7,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
  */
 
 // Region-aware caller ID selection
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
 function getCallerIdForNumber(number: string): string {
   if (number.startsWith("+91")) {
     return Deno.env.get("PLIVO_CALLER_ID_IN") || Deno.env.get("PLIVO_CALLER_ID_DEFAULT") || Deno.env.get("PLIVO_CALLER_ID") || "";
@@ -20,12 +25,38 @@ function getCallerIdForNumber(number: string): string {
   return Deno.env.get("PLIVO_CALLER_ID_DEFAULT") || Deno.env.get("PLIVO_CALLER_ID") || "";
 }
 
+function normalizeDestination(raw: string): string {
+  let destination = raw || "";
+  if (destination.startsWith("sip:")) {
+    destination = destination.replace(/^sip:/, "").split("@")[0];
+  }
+  if (destination && !destination.startsWith("+")) {
+    destination = "+" + destination;
+  }
+  return destination.replace(/[^\d+]/g, "");
+}
+
+function buildXml(destination: string, callerId: string) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Dial answerOnBridge="true" callerId="${callerId}" ringTone="us">
+    <Number>${destination}</Number>
+  </Dial>
+</Response>`;
+}
+
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceKey);
 
   try {
+    const requestUrl = new URL(req.url);
+
     // Parse body — Plivo sends form-encoded or JSON
     let body: Record<string, string> = {};
     const contentType = req.headers.get("content-type") || "";
@@ -47,7 +78,7 @@ Deno.serve(async (req) => {
 
     // Extract destination — Plivo WebRTC sends the dialed number in "To"
     // It may come as "sip:+61xxx@..." so we clean it
-    let destination = body.To || body.to || body.ForwardTo || "";
+    let destination = requestUrl.searchParams.get("number") || body.To || body.to || body.ForwardTo || "";
     const callUuid = body.CallUUID || body.RequestUUID || "";
     const from = body.From || "";
     const direction = body.Direction || "";
@@ -58,23 +89,16 @@ Deno.serve(async (req) => {
                       body["X-PH-SESSIONID"] || "";
 
     // Clean destination: strip sip: prefix and @domain
-    if (destination.startsWith("sip:")) {
-      destination = destination.replace(/^sip:/, "").split("@")[0];
-    }
-    // Ensure E.164
-    if (destination && !destination.startsWith("+")) {
-      destination = "+" + destination;
-    }
-    // Strip any non-phone characters except +
-    destination = destination.replace(/[^\d+]/g, "");
+    destination = normalizeDestination(destination);
 
     console.log("[DIALER_XML] Parsed:", { destination, callUuid, from, direction, sessionId });
+    console.log("PLIVO_ANSWER_HIT", destination);
 
     if (!destination || destination.length < 8) {
       console.error("[DIALER_XML] INVALID/MISSING destination:", { raw_to: body.To, destination });
       return new Response(
         `<?xml version="1.0" encoding="UTF-8"?>\n<Response><Speak>Unable to connect your call. Invalid destination.</Speak><Hangup reason="rejected" /></Response>`,
-        { status: 200, headers: { "Content-Type": "text/xml" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "text/xml; charset=utf-8" } }
       );
     }
 
@@ -105,24 +129,19 @@ Deno.serve(async (req) => {
     }
 
     // Return XML — bridge WebRTC to PSTN
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Dial answerOnBridge="true" callerId="${callerId}">
-    <Number>${destination}</Number>
-  </Dial>
-</Response>`;
+    const xml = buildXml(destination, callerId);
 
     console.log("[DIALER_XML] Returning XML:", xml);
 
     return new Response(xml, {
       status: 200,
-      headers: { "Content-Type": "text/xml" },
+      headers: { ...corsHeaders, "Content-Type": "text/xml; charset=utf-8" },
     });
   } catch (err) {
     console.error("[DIALER_XML] Error:", err);
     return new Response(
       `<?xml version="1.0" encoding="UTF-8"?>\n<Response><Speak>An error occurred connecting your call.</Speak><Hangup reason="rejected" /></Response>`,
-      { status: 200, headers: { "Content-Type": "text/xml" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "text/xml; charset=utf-8" } }
     );
   }
 });

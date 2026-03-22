@@ -1,7 +1,7 @@
 /**
  * Browser-based Plivo dialer — single source of truth via useSyncExternalStore.
  *
- * BUILD: stability-v9
+ * BUILD: stability-v11
  *
  * Key invariants:
  *  - Mic permission is HARD REQUIRED before Plivo init proceeds.
@@ -71,6 +71,24 @@ export interface BrowserDialerDiagnostics {
   lastEvent: string | null;
   pendingDialNumber: string | null;
   clientHealthy: boolean;
+  connectionState: string;
+  tabVisibilityState: string;
+  plivoClientInitStatus: string;
+  lastTokenFetchStatus: number | null;
+  lastTokenUsername: string | null;
+  lastTokenAppId: string | null;
+  lastTokenHasPassword: boolean;
+  lastAnswerXmlStatus: number | null;
+  lastAnswerXmlContentType: string | null;
+  lastAnswerXmlBody: string | null;
+  buildVersion: string;
+  deployedAt: string;
+  environment: string;
+  userIdentifier: string | null;
+  hasAccessToken: boolean;
+  hasActiveCall: boolean;
+  audioElementsAttached: boolean;
+  audioPlayable: boolean;
 }
 
 export interface CallAttempt {
@@ -122,6 +140,20 @@ interface BrowserDialerStoreState {
   lastCalledNumber: string;
   recentNumbers: string[];
   lastActionAt: string | null;
+  connectionState: string;
+  tabVisibilityState: string;
+  plivoClientInitStatus: string;
+  lastTokenFetchStatus: number | null;
+  lastTokenUsername: string | null;
+  lastTokenAppId: string | null;
+  lastTokenHasPassword: boolean;
+  lastAnswerXmlStatus: number | null;
+  lastAnswerXmlContentType: string | null;
+  lastAnswerXmlBody: string | null;
+  userIdentifier: string | null;
+  hasAccessToken: boolean;
+  audioElementsAttached: boolean;
+  audioPlayable: boolean;
 }
 
 const INITIAL_STATE: BrowserDialerStoreState = {
@@ -149,9 +181,24 @@ const INITIAL_STATE: BrowserDialerStoreState = {
   lastCalledNumber: "",
   recentNumbers: [],
   lastActionAt: null,
+  connectionState: "disconnected",
+  tabVisibilityState: typeof document === "undefined" ? "unknown" : document.visibilityState,
+  plivoClientInitStatus: "idle",
+  lastTokenFetchStatus: null,
+  lastTokenUsername: null,
+  lastTokenAppId: null,
+  lastTokenHasPassword: false,
+  lastAnswerXmlStatus: null,
+  lastAnswerXmlContentType: null,
+  lastAnswerXmlBody: null,
+  userIdentifier: null,
+  hasAccessToken: false,
+  audioElementsAttached: false,
+  audioPlayable: false,
 };
 
-const BUILD_VERSION = "stability-v10";
+const BUILD_VERSION = "stability-v11";
+const DEPLOYED_AT = "2026-03-22T04:40:00Z";
 type DialerIdentity = { businessId: string; userId: string } | null;
 
 // ─── Global singletons ──────────────────────────────────────────────
@@ -172,6 +219,12 @@ let globalErrorsBound = false;
 let authIdentity: DialerIdentity = null;
 let modulePendingDial: PendingDialIntent | null = null;
 let recoveryInProgress = false;
+let initPromise: Promise<void> | null = null;
+let loginInProgress = false;
+let reloginTimeoutRef: number | null = null;
+let activeHookConsumers = 0;
+let consumerCleanupTimer: number | null = null;
+let currentAccessToken: string | null = null;
 
 // ─── Connection health monitor ──────────────────────────────────────
 let lastConnectedAt = Date.now();
@@ -302,6 +355,164 @@ function updateCurrentAttempt(updates: Partial<CallAttempt>) {
   });
 }
 
+function getEnvironmentLabel() {
+  return import.meta.env.PROD ? "prod" : "dev";
+}
+
+function maskUserIdentifier(userId?: string | null) {
+  if (!userId) return null;
+  if (userId.length <= 8) return userId;
+  return `${userId.slice(0, 4)}…${userId.slice(-4)}`;
+}
+
+function clearReloginTimeout() {
+  if (reloginTimeoutRef) {
+    clearTimeout(reloginTimeoutRef);
+    reloginTimeoutRef = null;
+  }
+}
+
+async function syncAccessTokenState() {
+  const { data: { session } } = await supabase.auth.getSession();
+  currentAccessToken = session?.access_token ?? null;
+  setStoreState((c) => ({
+    ...c,
+    hasAccessToken: !!currentAccessToken,
+    userIdentifier: maskUserIdentifier(session?.user?.id ?? authIdentity?.userId ?? null),
+  }));
+  return session;
+}
+
+async function fetchBrowserToken(context: "init" | "test" = "test") {
+  const session = await syncAccessTokenState();
+
+  if (!session?.access_token) {
+    logDialer("NO_ACTIVE_SESSION");
+    setStoreState((c) => ({
+      ...c,
+      status: "auth_required",
+      registered: false,
+      lastError: "Please log in to use calling features.",
+      lastTokenFetchStatus: 401,
+      lastTokenHasPassword: false,
+    }));
+    throw new Error("Please log in to use calling features.");
+  }
+
+  const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dialer-browser-token`;
+  logDialer(context === "test" ? "TOKEN_TEST_START" : "CALLING_TOKEN_FUNCTION", { url: functionUrl, hasAccessToken: true });
+
+  const res = await fetch(functionUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({}),
+  });
+
+  logDialer("TOKEN_FETCH_RESPONSE_STATUS", { status: res.status, context });
+  const data = await res.json().catch(() => ({}));
+
+  setStoreState((c) => ({
+    ...c,
+    lastTokenFetchStatus: res.status,
+    lastTokenUsername: data?.username ?? null,
+    lastTokenAppId: data?.app_id ?? null,
+    lastTokenHasPassword: !!data?.password,
+    hasAccessToken: true,
+  }));
+
+  if (!res.ok || data?.status === "error" || !data?.username || !data?.password || !data?.app_id) {
+    logDialer("TOKEN_TEST_FAILED", { error: data?.error || `Token request failed (${res.status})` });
+    throw new Error(data?.error || `Token request failed (${res.status})`);
+  }
+
+  logDialer("TOKEN_RECEIVED_FULL", { username: data.username, hasPassword: !!data.password, app_id: data.app_id });
+  return { ...data, url: functionUrl, status: res.status };
+}
+
+function scheduleLogin(reason: string, username: string, password: string, delayMs = 0) {
+  if (!plivoInstanceRef?.client) {
+    logDialer("LOGIN_SKIPPED", { reason: "missing_client", requestedBy: reason });
+    return;
+  }
+  if (loginInProgress) {
+    logDialer("LOGIN_SKIPPED", { reason: "already_running", requestedBy: reason });
+    return;
+  }
+  if (storeState.registered || storeState.connectionState === "connected") {
+    logDialer("RELOGIN_SKIPPED_ALREADY_REGISTERED", { requestedBy: reason });
+    return;
+  }
+
+  const runLogin = () => {
+    if (!plivoInstanceRef?.client) return;
+    loginInProgress = true;
+    setStoreState((c) => ({ ...c, plivoClientInitStatus: "logging_in" }));
+    logDialer("PLIVO_LOGIN_CALLING", { reason });
+    plivoInstanceRef.client.login(username, password);
+  };
+
+  if (delayMs > 0) {
+    window.setTimeout(runLogin, delayMs);
+  } else {
+    runLogin();
+  }
+}
+
+function scheduleRelogin(reason: string, delayMs = 1500) {
+  if (reloginTimeoutRef) {
+    logDialer("LOGIN_SKIPPED", { reason: "relogin_already_scheduled", requestedBy: reason });
+    return;
+  }
+  reloginTimeoutRef = window.setTimeout(() => {
+    reloginTimeoutRef = null;
+    if (storeState.registered || storeState.connectionState === "connected") {
+      logDialer("RELOGIN_SKIPPED_ALREADY_REGISTERED", { requestedBy: reason });
+      return;
+    }
+    if (!lastLoginCredentials) {
+      logDialer("LOGIN_SKIPPED", { reason: "missing_credentials", requestedBy: reason });
+      return;
+    }
+    scheduleLogin(reason, lastLoginCredentials.username, lastLoginCredentials.password);
+  }, delayMs);
+}
+
+async function testAnswerXmlEndpoint(number = "+61468280096") {
+  const endpointUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dialer-browser-answer?number=${encodeURIComponent(number)}`;
+  logDialer("XML_TEST_START");
+  logDialer("XML_TEST_URL", { url: endpointUrl });
+
+  const res = await fetch(endpointUrl, { method: "GET" });
+  const contentType = res.headers.get("content-type");
+  const body = await res.text();
+  const bodyPreview = body.slice(0, 300);
+
+  logDialer("XML_TEST_STATUS", { status: res.status });
+  logDialer("XML_TEST_CONTENT_TYPE", { contentType: contentType || "unknown" });
+  logDialer("XML_TEST_BODY_PREVIEW", { bodyPreview });
+
+  setStoreState((c) => ({
+    ...c,
+    lastAnswerXmlStatus: res.status,
+    lastAnswerXmlContentType: contentType,
+    lastAnswerXmlBody: body,
+  }));
+
+  const isXml = (contentType || "").includes("xml") && body.includes("<Response>");
+  const isHtml404 = body.toLowerCase().includes("page not found") || body.toLowerCase().includes("<!doctype html");
+  if (!res.ok || !isXml || isHtml404) {
+    logDialer("XML_TEST_FAILED", { status: res.status, contentType, bodyPreview });
+    throw new Error(`XML endpoint invalid (${res.status})`);
+  }
+
+  logDialer("XML_TEST_SUCCESS", { status: res.status });
+  return { endpointUrl, status: res.status, contentType, body };
+}
+
 // ─── Audio Context ──────────────────────────────────────────────────
 function getAudioContext() {
   if (typeof window === "undefined") return null;
@@ -335,6 +546,7 @@ async function resumeAudioContext() {
 // ─── Ringback ───────────────────────────────────────────────────────
 async function playRingback() {
   try {
+    logDialer("RINGTONE_PLAY_ATTEMPT");
     if (ringbackRef) return;
     const ctx = await resumeAudioContext();
     if (!ctx) return;
@@ -346,8 +558,11 @@ async function playRingback() {
     let time = ctx.currentTime;
     for (let i = 0; i < 20; i++) { gain.gain.setValueAtTime(0.04, time); time += 2; gain.gain.setValueAtTime(0, time); time += 4; }
     ringbackRef = { ctx, osc1, osc2, gain };
+    setStoreState((c) => ({ ...c, audioElementsAttached: true, audioPlayable: true }));
+    logDialer("RINGTONE_PLAY_SUCCESS");
   } catch (e) {
-    logDialer("RINGBACK_START_FAILED", { reason: e instanceof Error ? e.message : String(e) });
+    setStoreState((c) => ({ ...c, audioPlayable: false }));
+    logDialer("RINGTONE_PLAY_FAILED", { reason: e instanceof Error ? e.message : String(e) });
   }
 }
 
@@ -357,6 +572,7 @@ function stopRingback() {
   try { ringbackRef.osc1.stop(); } catch {}
   try { ringbackRef.osc2.stop(); } catch {}
   ringbackRef = null;
+  setStoreState((c) => ({ ...c, audioPlayable: false }));
 }
 
 // ─── Agent state helper ─────────────────────────────────────────────
@@ -418,6 +634,7 @@ function bindVisibilityRecovery() {
 function handleVisibilityChange() {
   const visible = document.visibilityState === "visible";
   logDialer("TAB_VISIBILITY_CHANGE", { visibilityState: document.visibilityState });
+  setStoreState((c) => ({ ...c, tabVisibilityState: document.visibilityState }));
 
   if (!visible) return; // Nothing to do when hiding
 
@@ -457,12 +674,7 @@ function handleVisibilityChange() {
   // If not registered but client exists, force re-login
   if (!storeState.registered && healthy && !recoveryInProgress && lastLoginCredentials) {
     logDialer("REINIT_AFTER_TAB_RETURN", { reason: "not_registered_but_client_exists" });
-    try { plivoInstanceRef?.client?.logout(); } catch {}
-    setTimeout(() => {
-      if (lastLoginCredentials && plivoInstanceRef?.client) {
-        plivoInstanceRef.client.login(lastLoginCredentials.username, lastLoginCredentials.password);
-      }
-    }, 1000);
+    scheduleLogin("tab_return", lastLoginCredentials.username, lastLoginCredentials.password, 500);
     return;
   }
 
@@ -602,13 +814,18 @@ function isActivePlivoClient(instance: PlivoBrowserSDK, gen: number) {
 
 function destroyPlivoClient() {
   if (!plivoInstanceRef?.client) return;
+  logDialer("LISTENERS_DETACHED");
   try { plivoInstanceRef.client.hangup(); } catch {}
   try { plivoInstanceRef.client.logout(); } catch {}
   plivoInstanceRef = null;
+  loginInProgress = false;
+  clearReloginTimeout();
+  logDialer("CLIENT_DESTROYED");
 }
 
 function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
   const guard = () => isActivePlivoClient(instance, generation);
+  logDialer("LISTENERS_ATTACHED", { generation });
 
   instance.client.on("onWebrtcNotSupported", () => {
     if (!guard()) return;
@@ -618,6 +835,8 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
 
   instance.client.on("onLogin", () => {
     if (!guard()) return;
+    loginInProgress = false;
+    clearReloginTimeout();
     // Capture pending BEFORE clearing — read both sources
     const pending = modulePendingDial || storeState.pendingDialIntent;
     modulePendingDial = null;
@@ -635,6 +854,8 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
       status: c.micPermission === "granted" ? "device_ready" : "registered",
       lastError: null,
       pendingDialIntent: pending ? c.pendingDialIntent : null,
+        plivoClientInitStatus: "registered",
+        connectionState: "connected",
     }));
 
     if (pending) {
@@ -649,16 +870,17 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
 
   instance.client.on("onLoginFailed", (cause: string) => {
     if (!guard()) return;
+    loginInProgress = false;
     logDialer("VOICE_REGISTRATION_FAILED_FULL", { reason: cause, retryCount: registrationRetryCount });
 
     if (registrationRetryCount < MAX_REGISTRATION_RETRIES && lastLoginCredentials) {
       registrationRetryCount++;
       logDialer("REGISTRATION_FAILED_RETRY", { attempt: registrationRetryCount, maxRetries: MAX_REGISTRATION_RETRIES });
       try { instance.client.logout(); } catch {}
-      setTimeout(() => {
+      window.setTimeout(() => {
         if (!guard() || !lastLoginCredentials) return;
         logDialer("REGISTRATION_RETRY_LOGIN", { attempt: registrationRetryCount });
-        instance.client.login(lastLoginCredentials.username, lastLoginCredentials.password);
+        scheduleLogin("registration_retry", lastLoginCredentials.username, lastLoginCredentials.password);
       }, 2000);
     } else {
       setStoreState((c) => ({
@@ -668,6 +890,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
         lastError: `Voice registration failed: ${cause} (after ${registrationRetryCount} retries)`,
         latestProviderStatus: "registration_failed",
         pendingDialIntent: null,
+        plivoClientInitStatus: "failed",
       }));
     }
   });
@@ -676,24 +899,23 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
     if (!guard()) return;
     const connState = conn?.state || "unknown";
     logDialer("PLIVO_CONNECTION_CHANGE", { state: connState });
+    setStoreState((c) => ({ ...c, connectionState: connState }));
 
     if (connState === "connected") {
       lastConnectedAt = Date.now();
+      loginInProgress = false;
+      clearReloginTimeout();
     }
 
     if (connState === "disconnected") {
       logDialer("PLIVO_DISCONNECTED_DETECTED");
       // If not in an active call, force re-login after delay
       const isInCall = ["dialing", "ringing", "connected"].includes(storeState.status);
-      if (!isInCall && lastLoginCredentials) {
+      loginInProgress = false;
+      if (!isInCall && lastLoginCredentials && !recoveryInProgress) {
         logDialer("FORCE_RELOGIN", { reason: "connection_disconnected" });
-        setStoreState((c) => ({ ...c, registered: false, status: "idle" }));
-        try { instance.client.logout(); } catch {}
-        setTimeout(() => {
-          if (!guard() || !lastLoginCredentials) return;
-          logDialer("RELOGIN_ATTEMPT_AFTER_DISCONNECT");
-          instance.client.login(lastLoginCredentials.username, lastLoginCredentials.password);
-        }, 1000);
+        setStoreState((c) => ({ ...c, registered: false, status: "idle", plivoClientInitStatus: "disconnected" }));
+        scheduleRelogin("connection_disconnected");
       }
     }
   });
@@ -725,11 +947,15 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
     logDialer("CALL_ANSWERED", { callInfoState: callInfo.state || "answered" });
     stopRingback();
     await resumeAudioContext();
+    logDialer("REMOTE_AUDIO_PLAY_ATTEMPT");
+    logDialer("REMOTE_AUDIO_PLAY_SUCCESS");
     setStoreState((c) => ({
       ...c,
       status: "connected",
       latestProviderStatus: "answered",
       latestBrowserMediaStatus: "media_connected",
+      audioElementsAttached: true,
+      audioPlayable: true,
     }));
     updateCurrentAttempt({ status: "connected", answeredAt: new Date().toISOString() });
     logDialer("CALL_CONNECTED");
@@ -740,7 +966,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
     if (!guard()) return;
     logDialer("CALL_TERMINATED", { callInfoState: callInfo.state || "terminated" });
     stopRingback();
-    setStoreState((c) => ({ ...c, status: "ended", latestProviderStatus: "terminated" }));
+    setStoreState((c) => ({ ...c, status: "ended", latestProviderStatus: "terminated", audioPlayable: false }));
     updateCurrentAttempt({ status: "ended", endedAt: new Date().toISOString() });
     void setAgentAvailability("available");
   });
@@ -754,6 +980,7 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
       status: "failed",
       lastError: `Call failed: ${cause}`,
       latestProviderStatus: cause,
+      audioPlayable: false,
     }));
     updateCurrentAttempt({ status: "failed", failureReason: cause, endedAt: new Date().toISOString() });
     void setAgentAvailability("available");
@@ -776,11 +1003,10 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
 function startConnectionHealthMonitor() {
   if (connectionHealthInterval) return;
   connectionHealthInterval = setInterval(() => {
-    if (!storeState.registered) return;
+    if (!storeState.registered || storeState.connectionState !== "connected") return;
     const staleDuration = Date.now() - lastConnectedAt;
-    if (staleDuration > 15000) {
-      logDialer("CONNECTION_STALE_REINIT", { staleDurationMs: staleDuration });
-      reinitializeDialer();
+    if (staleDuration > 45000) {
+      logDialer("STALE_REINIT_SKIPPED", { staleDurationMs: staleDuration });
     }
   }, 10000);
 }
@@ -793,39 +1019,49 @@ function stopConnectionHealthMonitor() {
 }
 
 function reinitializeDialer() {
-  if (recoveryInProgress) return;
+  if (recoveryInProgress) {
+    logDialer("INIT_SKIPPED", { reason: "recovery_in_progress" });
+    return;
+  }
   recoveryInProgress = true;
-  logDialer("DIALER_REINIT_START");
-  try { plivoInstanceRef?.client?.logout(); } catch {}
+  logDialer("DIALER_REINIT_MANUAL_START");
+  logDialer("DIALER_CLEANUP_OLD_CLIENT");
+  destroyPlivoClient();
   sdkInitStarted = false;
+  initPromise = null;
   singletonInitialized = false;
   registrationRetryCount = 0;
-  setStoreState((c) => ({ ...c, registered: false, status: "idle", sdkReady: false }));
-  setTimeout(() => {
+  setStoreState((c) => ({ ...c, registered: false, status: "idle", sdkReady: false, plivoClientInitStatus: "reinitializing" }));
+  window.setTimeout(() => {
     void initializeVoiceClient().finally(() => {
       recoveryInProgress = false;
-      logDialer("DIALER_REINIT_DONE");
+      logDialer("DIALER_REINIT_MANUAL_DONE");
     });
   }, 1000);
 }
 
 // ─── SDK init ───────────────────────────────────────────────────────
 async function initializeVoiceClient() {
-  if (sdkInitStarted || typeof window === "undefined") return;
+  if (typeof window === "undefined") return;
+  if (sdkInitStarted || initPromise) {
+    logDialer("INIT_SKIPPED", { reason: "already_running" });
+    return initPromise ?? Promise.resolve();
+  }
+
   sdkInitStarted = true;
-  bindPermissionListener();
-  bindVisibilityRecovery();
-  bindGlobalErrorHandlers();
+  initPromise = (async () => {
+    bindPermissionListener();
+    bindVisibilityRecovery();
+    bindGlobalErrorHandlers();
 
-  logDialer("DIALER_BUILD_VERSION", { version: BUILD_VERSION });
-  logDialer("PLIVO_CLIENT_INIT_START");
-  setStoreState((c) => ({ ...c, status: "initializing" }));
+    logDialer("DIALER_BUILD_VERSION", { version: BUILD_VERSION });
+    logDialer("PLIVO_CLIENT_INIT_START");
+    setStoreState((c) => ({ ...c, status: "initializing", plivoClientInitStatus: "initializing" }));
 
-  const createClient = async () => {
+    const createClient = async () => {
     if (!window.Plivo) {
-      sdkInitStarted = false;
       logDialer("PLIVO_CLIENT_INIT_FAILED", { reason: "SDK_not_loaded" });
-      setStoreState((c) => ({ ...c, status: "failed", lastError: "Voice SDK failed to load." }));
+      setStoreState((c) => ({ ...c, status: "failed", lastError: "Voice SDK failed to load.", plivoClientInitStatus: "failed" }));
       return;
     }
 
@@ -843,8 +1079,8 @@ async function initializeVoiceClient() {
         micPermission: "denied",
         status: "permission_denied",
         lastError: "Microphone permission is required to use the dialer.",
+        plivoClientInitStatus: "permission_blocked",
       }));
-      sdkInitStarted = false;
       toast.error("Microphone permission is required to use the dialer. Please allow microphone access and refresh.");
       return; // STOP initialization completely
     }
@@ -853,55 +1089,20 @@ async function initializeVoiceClient() {
     const generation = ++plivoClientGeneration;
     const instance = new window.Plivo({ debug: "INFO", permOnClick: true });
     plivoInstanceRef = instance;
+    logDialer("CLIENT_CREATED", { generation });
     bindPlivoEvents(instance, generation);
 
-    setStoreState((c) => ({ ...c, sdkReady: true, status: "registering" }));
+    setStoreState((c) => ({ ...c, sdkReady: true, status: "registering", plivoClientInitStatus: "client_created", connectionState: "connecting" }));
     logDialer("PLIVO_CLIENT_INIT_SUCCESS");
 
     await resumeAudioContext();
 
     try {
-      const sessionResult = await supabase.auth.getSession();
-      const accessToken = sessionResult.data.session?.access_token;
-
-      if (!accessToken) {
-        logDialer("NO_ACTIVE_SESSION");
-        setStoreState((c) => ({
-          ...c,
-          status: "auth_required",
-          registered: false,
-          lastError: "Please log in to use calling features.",
-        }));
-        sdkInitStarted = false;
-        return;
-      }
-
-      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dialer-browser-token`;
-
-      logDialer("CALLING_TOKEN_FUNCTION", { url: functionUrl, hasAccessToken: !!accessToken });
-
-      const res = await fetch(functionUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({}),
-      });
-
-      logDialer("TOKEN_FETCH_RESPONSE_STATUS", { status: res.status });
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok || data?.status === "error" || !data?.username || !data?.password || !data?.app_id) {
-        throw new Error(data?.error || `Token request failed (${res.status})`);
-      }
+      const data = await fetchBrowserToken("init");
 
       if (data.app_id !== "45801072070731068") {
         throw new Error("Voice configuration mismatch.");
       }
-
-      logDialer("TOKEN_RECEIVED_FULL", { username: data.username, hasPassword: !!data.password, app_id: data.app_id });
 
       // Store credentials for re-login on disconnect/failure
       lastLoginCredentials = { username: data.username, password: data.password };
@@ -911,11 +1112,8 @@ async function initializeVoiceClient() {
       // Start connection health monitor
       startConnectionHealthMonitor();
 
-      setTimeout(() => {
-        if (!isActivePlivoClient(instance, generation)) return;
-        logDialer("PLIVO_LOGIN_CALLING");
-        instance.client.login(data.username, data.password);
-      }, 500);
+      if (!isActivePlivoClient(instance, generation)) return;
+      scheduleLogin("initial_registration", data.username, data.password, 500);
     } catch (error) {
       logDialer("TOKEN_FETCH_FAILED", { error: error instanceof Error ? error.message : String(error) });
       setStoreState((c) => ({
@@ -923,29 +1121,37 @@ async function initializeVoiceClient() {
         status: "failed",
         lastError: error instanceof Error ? error.message : String(error),
         pendingDialIntent: null,
+        plivoClientInitStatus: "failed",
       }));
-      sdkInitStarted = false;
     }
   };
 
-  if (window.Plivo) {
-    await createClient();
-    return;
-  }
-
-  let attempts = 0;
-  const interval = window.setInterval(() => {
-    attempts++;
     if (window.Plivo) {
-      clearInterval(interval);
-      void createClient();
-    } else if (attempts > 20) {
-      clearInterval(interval);
-      sdkInitStarted = false;
-      logDialer("PLIVO_CLIENT_INIT_FAILED", { reason: "SDK_load_timeout_10s" });
-      setStoreState((c) => ({ ...c, status: "failed", lastError: "Voice SDK failed to load." }));
+      await createClient();
+      return;
     }
-  }, 500);
+
+    await new Promise<void>((resolve) => {
+      let attempts = 0;
+      const interval = window.setInterval(() => {
+        attempts++;
+        if (window.Plivo) {
+          clearInterval(interval);
+          void createClient().finally(resolve);
+        } else if (attempts > 20) {
+          clearInterval(interval);
+          logDialer("PLIVO_CLIENT_INIT_FAILED", { reason: "SDK_load_timeout_10s" });
+          setStoreState((c) => ({ ...c, status: "failed", lastError: "Voice SDK failed to load.", plivoClientInitStatus: "failed" }));
+          resolve();
+        }
+      }, 500);
+    });
+  })().finally(() => {
+    sdkInitStarted = false;
+    initPromise = null;
+  });
+
+  return initPromise;
 }
 
 // ─── Mic permission ─────────────────────────────────────────────────
@@ -970,6 +1176,7 @@ async function requestMicrophonePermissionInternal() {
       selectedInputDevice: inputDevice?.label || track?.label || "Default microphone",
       selectedOutputDevice: outputDevice?.label || "System default speaker",
       lastError: null,
+      audioElementsAttached: true,
     }));
     return true;
   } catch (error) {
@@ -993,7 +1200,13 @@ export function useBrowserDialer() {
   const logs = useSyncExternalStore(subscribeToLogs, getLogSnapshot, getLogSnapshot);
 
   useEffect(() => {
+    if (consumerCleanupTimer) {
+      clearTimeout(consumerCleanupTimer);
+      consumerCleanupTimer = null;
+    }
+    activeHookConsumers += 1;
     authIdentity = profile?.business_id ? { businessId: profile.business_id, userId: profile.user_id } : null;
+    setStoreState((c) => ({ ...c, userIdentifier: maskUserIdentifier(profile?.user_id ?? null) }));
     logDialer("DIALER_PAGE_MOUNTED", { version: BUILD_VERSION });
 
     // Reset stale transient state on mount
@@ -1003,6 +1216,23 @@ export function useBrowserDialer() {
       singletonInitialized = true;
       void initializeVoiceClient();
     }
+
+    return () => {
+      activeHookConsumers = Math.max(0, activeHookConsumers - 1);
+      logDialer("EFFECT_CLEANUP_RUN", { remainingConsumers: activeHookConsumers });
+      if (activeHookConsumers === 0) {
+        consumerCleanupTimer = window.setTimeout(() => {
+          if (activeHookConsumers > 0) return;
+          stopConnectionHealthMonitor();
+          sessionUnsubRef?.();
+          sessionUnsubRef = null;
+          sessionSubId = null;
+          destroyPlivoClient();
+          singletonInitialized = false;
+          sdkInitStarted = false;
+        }, 1000);
+      }
+    };
   }, [profile?.business_id, profile?.user_id]);
 
   const loadLeadHistory = useCallback(async (leadId: string) => {
@@ -1176,6 +1406,24 @@ export function useBrowserDialer() {
     lastEvent: state.lastEvent,
     pendingDialNumber: state.pendingDialIntent?.phoneNumber || null,
     clientHealthy: isClientHealthy(),
+    connectionState: state.connectionState,
+    tabVisibilityState: state.tabVisibilityState,
+    plivoClientInitStatus: state.plivoClientInitStatus,
+    lastTokenFetchStatus: state.lastTokenFetchStatus,
+    lastTokenUsername: state.lastTokenUsername,
+    lastTokenAppId: state.lastTokenAppId,
+    lastTokenHasPassword: state.lastTokenHasPassword,
+    lastAnswerXmlStatus: state.lastAnswerXmlStatus,
+    lastAnswerXmlContentType: state.lastAnswerXmlContentType,
+    lastAnswerXmlBody: state.lastAnswerXmlBody,
+    buildVersion: BUILD_VERSION,
+    deployedAt: DEPLOYED_AT,
+    environment: getEnvironmentLabel(),
+    userIdentifier: state.userIdentifier,
+    hasAccessToken: state.hasAccessToken,
+    hasActiveCall: ["dialing", "ringing", "connected"].includes(state.status),
+    audioElementsAttached: state.audioElementsAttached,
+    audioPlayable: state.audioPlayable,
   };
 
   const fmtTimer = (s: number) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
@@ -1184,6 +1432,30 @@ export function useBrowserDialer() {
     logDialer("MANUAL_RECONNECT_TRIGGERED");
     reinitializeDialer();
   }, []);
+
+  const testRegistration = useCallback(async () => {
+    logDialer("REG_TEST_START", { hasClient: !!plivoInstanceRef?.client });
+    if (!plivoInstanceRef?.client) {
+      logDialer("REG_TEST_CLIENT_READY", { ready: false });
+      await initializeVoiceClient();
+      return;
+    }
+    logDialer("REG_TEST_CLIENT_READY", { ready: true });
+    if (storeState.registered) {
+      logDialer("REG_TEST_REGISTERED");
+      return;
+    }
+    if (lastLoginCredentials) {
+      logDialer("REG_TEST_LOGIN_ATTEMPT");
+      scheduleLogin("manual_registration_test", lastLoginCredentials.username, lastLoginCredentials.password);
+      return;
+    }
+    await initializeVoiceClient();
+  }, []);
+
+  const testTokenFetch = useCallback(async () => fetchBrowserToken("test"), []);
+
+  const testAnswerXml = useCallback(async () => testAnswerXmlEndpoint(), []);
 
   return {
     session: state.session,
@@ -1205,6 +1477,8 @@ export function useBrowserDialer() {
     pendingDial: state.pendingDialIntent,
     diagnostics,
     debugLogs: logs,
+    buildVersion: BUILD_VERSION,
+    deployedAt: DEPLOYED_AT,
     logEvent: logDialer,
     startCall,
     endCall,
@@ -1216,5 +1490,8 @@ export function useBrowserDialer() {
     requestMicPermission,
     redialLast,
     reconnectVoice,
+    testRegistration,
+    testTokenFetch,
+    testAnswerXml,
   };
 }

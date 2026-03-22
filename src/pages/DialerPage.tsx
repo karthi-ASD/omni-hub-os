@@ -86,7 +86,7 @@ function DialerPageContent() {
   const [leadContext, setLeadContext] = useState<LeadContext | null>(null);
   const [followUpDate, setFollowUpDate] = useState<Date | undefined>();
   const [showFollowUp, setShowFollowUp] = useState(false);
-  const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [showDiagnostics, setShowDiagnostics] = useState(true);
 
   // Load lead context from URL params
   useEffect(() => {
@@ -198,7 +198,7 @@ function DialerPageContent() {
             <div className="flex items-center gap-1.5">
               <Activity className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-muted-foreground">Build:</span>
-              <span className="font-semibold">stability-v10</span>
+              <span className="font-semibold">{dialer.buildVersion}</span>
             </div>
             <Separator orientation="vertical" className="h-4" />
             <div>
@@ -476,6 +476,9 @@ function DialerPageContent() {
 
           {/* Call Readiness Panel */}
           <CallReadinessPanel
+            diagnostics={dialer.diagnostics}
+            buildVersion={dialer.buildVersion}
+            deployedAt={dialer.deployedAt}
             registered={dialer.registered}
             micPermission={dialer.micPermission}
             clientHealthy={dialer.diagnostics.clientHealthy}
@@ -485,6 +488,9 @@ function DialerPageContent() {
             startCall={dialer.startCall}
             onReconnect={dialer.reconnectVoice}
             requestMicPermission={dialer.requestMicPermission}
+            onTestRegistration={dialer.testRegistration}
+            onTestToken={dialer.testTokenFetch}
+            onTestXml={dialer.testAnswerXml}
           />
         </div>
 
