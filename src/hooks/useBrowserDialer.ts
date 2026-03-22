@@ -154,6 +154,7 @@ interface BrowserDialerStoreState {
   hasAccessToken: boolean;
   audioElementsAttached: boolean;
   audioPlayable: boolean;
+  audioReady: boolean;
 }
 
 const INITIAL_STATE: BrowserDialerStoreState = {
@@ -195,10 +196,11 @@ const INITIAL_STATE: BrowserDialerStoreState = {
   hasAccessToken: false,
   audioElementsAttached: false,
   audioPlayable: false,
+  audioReady: false,
 };
 
-const BUILD_VERSION = "stability-v14";
-const DEPLOYED_AT = "2026-03-22T12:00:00Z";
+const BUILD_VERSION = "stability-v15";
+const DEPLOYED_AT = "2026-03-22T18:00:00Z";
 type DialerIdentity = { businessId: string; userId: string } | null;
 
 // ─── Global singletons ──────────────────────────────────────────────
@@ -225,6 +227,7 @@ let reloginTimeoutRef: number | null = null;
 let activeHookConsumers = 0;
 let consumerCleanupTimer: number | null = null;
 let currentAccessToken: string | null = null;
+let callStartTimestamp: number = 0;
 
 // ─── Connection health monitor ──────────────────────────────────────
 let lastConnectedAt = Date.now();
@@ -731,12 +734,47 @@ function sanitizeStaleState() {
 }
 
 // ─── Execute outbound call ──────────────────────────────────────────
+// ─── Audio output initialization ────────────────────────────────────
+async function initializeAudioOutput(): Promise<boolean> {
+  try {
+    const audio = new Audio();
+    // Tiny silent WAV (44 bytes)
+    audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+    audio.volume = 0.01;
+
+    // Try to set output device if supported
+    if (typeof (audio as any).setSinkId === "function") {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const speaker = devices.find((d) => d.kind === "audiooutput");
+        if (speaker?.deviceId) {
+          await (audio as any).setSinkId(speaker.deviceId);
+        }
+      } catch (sinkErr) {
+        logDialer("AUDIO_OUTPUT_SINKID_FALLBACK", { error: sinkErr instanceof Error ? sinkErr.message : String(sinkErr) });
+        // setSinkId not supported — that's fine, continue with default
+      }
+    }
+
+    await audio.play().catch(() => {});
+    logDialer("AUDIO_OUTPUT_READY");
+    setStoreState((c) => ({ ...c, audioReady: true }));
+    return true;
+  } catch (e) {
+    logDialer("AUDIO_OUTPUT_FALLBACK", { error: e instanceof Error ? e.message : String(e) });
+    // Even if play fails, mark as ready — we don't want to block calls for speaker test issues
+    setStoreState((c) => ({ ...c, audioReady: true }));
+    return true;
+  }
+}
+
 function canPlaceCall(): { ready: boolean; reason: string } {
   if (!plivoInstanceRef?.client) return { ready: false, reason: "no_client" };
   if (!isClientHealthy()) return { ready: false, reason: "client_unhealthy" };
   if (storeState.connectionState !== "connected") return { ready: false, reason: `connection_${storeState.connectionState}` };
   if (storeState.plivoClientInitStatus !== "registered") return { ready: false, reason: `init_${storeState.plivoClientInitStatus}` };
   if (!storeState.registered) return { ready: false, reason: "not_registered" };
+  if (storeState.micPermission !== "granted") return { ready: false, reason: "mic_not_granted" };
   if (["initializing", "registering"].includes(storeState.status)) return { ready: false, reason: `status_${storeState.status}` };
   if (recoveryInProgress) return { ready: false, reason: "recovery_in_progress" };
   if (loginInProgress) return { ready: false, reason: "login_in_progress" };
@@ -767,6 +805,9 @@ async function executeOutboundCall(intent: PendingDialIntent) {
 
   try {
     await resumeAudioContext();
+
+    // Initialize audio output before call
+    await initializeAudioOutput();
 
     let resolvedPhone = intent.phoneNumber;
     if (intent.leadId) {
@@ -830,8 +871,15 @@ async function executeOutboundCall(intent: PendingDialIntent) {
     await setAgentAvailability("on_call");
 
     logDialer("CALL_DIAL_START", { destinationNumber: normalizedPhone, sessionId: sess.id });
-    logDialer("PLIVO_CALL_INVOKING_NOW", { destination: normalizedPhone });
 
+    // Stability delay — let WebRTC settle before invoking call
+    await new Promise((res) => setTimeout(res, 800));
+    logDialer("CALL_STABILITY_DELAY_DONE");
+
+    // Record call start timestamp for false-busy detection
+    callStartTimestamp = Date.now();
+
+    logDialer("PLIVO_CALL_INVOKING_NOW", { destination: normalizedPhone });
     plivoInstanceRef.client.call(normalizedPhone, { "X-PH-SessionId": sess.id });
 
     logDialer("PLIVO_CALL_INVOKED", { destinationNumber: normalizedPhone });
@@ -1036,6 +1084,14 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
     const reason = (cause || "Unknown").trim();
     const reasonLower = reason.toLowerCase();
 
+    // ── FALSE BUSY DETECTION: Ignore "Busy" if it arrives < 3s after call start ──
+    const elapsed = callStartTimestamp > 0 ? Date.now() - callStartTimestamp : Infinity;
+    if (reasonLower.includes("busy") && elapsed < 3000) {
+      logDialer("FALSE_BUSY_IGNORED", { elapsed, reason, destination: storeState.destinationNumber });
+      // Don't treat this as a real failure — the call may still be routing
+      return;
+    }
+
     // Map provider reasons to specific log events and user-friendly messages
     let userMessage: string;
     let dbStatus: string = "failed";
@@ -1062,7 +1118,8 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
       logEvent = "CALL_FAILED";
     }
 
-    logDialer(logEvent, { reason, destination: storeState.destinationNumber, dbStatus });
+    logDialer(logEvent, { reason, destination: storeState.destinationNumber, dbStatus, elapsed });
+    logDialer("PROVIDER_FAILURE_RAW", { cause, elapsed });
     stopRingback();
 
     setStoreState((c) => ({
@@ -1079,10 +1136,11 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
     // Update DB session with correct terminal status
     if (storeState.session?.id) {
       supabase.from("dialer_sessions").update({ call_status: dbStatus, call_end_time: new Date().toISOString() }).eq("id", storeState.session.id).then(() => {});
-      insertCallEvent(storeState.session.id, logEvent, { reason, dbStatus }).catch(() => {});
+      insertCallEvent(storeState.session.id, logEvent, { reason, dbStatus, elapsed }).catch(() => {});
     }
 
     void setAgentAvailability("available");
+    callStartTimestamp = 0;
 
     // Auto-reset to device_ready after 5 seconds so user can retry
     setTimeout(() => {
