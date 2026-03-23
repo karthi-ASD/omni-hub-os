@@ -1486,6 +1486,8 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
       providerStatus: "registered",
       hasPendingDial: !!pending,
       pendingNumber: pending?.phoneNumber || null,
+      userId: maskUserIdentifier(authIdentity?.userId ?? null),
+      voiceStatus: "registered",
     });
 
     // Update state — keep pendingDialIntent if we have a pending call to execute
