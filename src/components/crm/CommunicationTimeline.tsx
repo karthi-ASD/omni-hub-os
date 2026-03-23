@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Phone, Clock, Mic, FileText, Brain, Play, User } from "lucide-react";
+import { Phone, Clock, Mic, FileText, Brain, Play, User, PhoneForwarded, Tag } from "lucide-react";
 import { format } from "date-fns";
 import {
   getCommunicationTimeline,
@@ -21,6 +21,7 @@ const STATUS_BADGE: Record<string, string> = {
   failed: "bg-destructive/20 text-destructive",
   "no-answer": "bg-amber-100 text-amber-700",
   busy: "bg-amber-100 text-amber-700",
+  initiated: "bg-blue-100 text-blue-700",
 };
 
 export function CommunicationTimeline({ entityType, entityId }: CommunicationTimelineProps) {
@@ -72,7 +73,7 @@ export function CommunicationTimeline({ entityType, entityId }: CommunicationTim
     <div className="space-y-3">
       {/* Stats Summary */}
       {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           <Card className="p-3">
             <p className="text-[10px] text-muted-foreground uppercase">Total Calls</p>
             <p className="text-lg font-bold">{stats.totalCalls}</p>
@@ -80,6 +81,10 @@ export function CommunicationTimeline({ entityType, entityId }: CommunicationTim
           <Card className="p-3">
             <p className="text-[10px] text-muted-foreground uppercase">Connected</p>
             <p className="text-lg font-bold text-emerald-600">{stats.connectedCalls}</p>
+          </Card>
+          <Card className="p-3">
+            <p className="text-[10px] text-muted-foreground uppercase">Connect Rate</p>
+            <p className="text-lg font-bold">{stats.connectRate}%</p>
           </Card>
           <Card className="p-3">
             <p className="text-[10px] text-muted-foreground uppercase">Talk Time</p>
@@ -112,6 +117,11 @@ export function CommunicationTimeline({ entityType, entityId }: CommunicationTim
                   {r.disposition && (
                     <Badge variant="outline" className="text-[9px]">{r.disposition}</Badge>
                   )}
+                  {r.callback_required && (
+                    <Badge variant="outline" className="text-[9px] border-blue-300 text-blue-700">
+                      <PhoneForwarded className="h-2.5 w-2.5 mr-0.5" /> Callback
+                    </Badge>
+                  )}
                 </div>
                 <span className="text-muted-foreground text-[10px]">
                   {format(new Date(r.start_time), "dd MMM yyyy HH:mm")}
@@ -138,10 +148,30 @@ export function CommunicationTimeline({ entityType, entityId }: CommunicationTim
                 )}
               </div>
 
+              {/* Auto tags */}
+              {r.auto_tags && r.auto_tags.length > 0 && (
+                <div className="flex items-center gap-1 flex-wrap">
+                  <Tag className="h-3 w-3 text-muted-foreground" />
+                  {r.auto_tags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="text-[8px] h-4 px-1">{tag}</Badge>
+                  ))}
+                </div>
+              )}
+
               {r.ai_synopsis_internal && (
                 <div className="rounded bg-muted/50 p-2 text-[11px]">
                   <div className="flex items-center gap-1 mb-0.5 font-medium">
                     <Brain className="h-3 w-3" /> AI Synopsis
+                    {r.sentiment && (
+                      <Badge variant="outline" className="text-[8px] ml-1">
+                        {r.sentiment}
+                      </Badge>
+                    )}
+                    {r.ai_score != null && (
+                      <Badge variant="outline" className="text-[8px] ml-1">
+                        Score: {r.ai_score}
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-muted-foreground line-clamp-3">{r.ai_synopsis_internal}</p>
                 </div>
@@ -151,6 +181,7 @@ export function CommunicationTimeline({ entityType, entityId }: CommunicationTim
                 <details className="text-[10px]">
                   <summary className="cursor-pointer flex items-center gap-1 text-muted-foreground hover:text-foreground">
                     <FileText className="h-3 w-3" /> View Transcript
+                    <Badge variant="outline" className="text-[8px] ml-1">{r.transcript_status}</Badge>
                   </summary>
                   <div className="mt-1 p-2 rounded bg-muted/30 whitespace-pre-wrap max-h-32 overflow-y-auto">
                     {r.transcript_text}
