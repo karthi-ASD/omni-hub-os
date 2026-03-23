@@ -19,6 +19,7 @@ import AppShell from "@/components/AppShell";
 import { ClientRouteGuard } from "@/components/guards/ClientRouteGuard";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import Index from "./pages/Index";
+import RootRoute from "./pages/RootRoute";
 import Login from "./pages/Login";
 import LoginV2 from "./pages/LoginV2";
 import Signup from "./pages/Signup";
@@ -318,7 +319,7 @@ const App = () => (
             <Routes>
             {/* Public routes with mega-menu layout */}
             <Route element={<PublicLayout />}>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<RootRoute />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
