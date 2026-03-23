@@ -835,6 +835,50 @@ export type Database = {
           },
         ]
       }
+      agent_caller_ids: {
+        Row: {
+          agent_email: string
+          agent_user_id: string
+          business_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_default: boolean
+          label: string
+          plivo_number: string
+        }
+        Insert: {
+          agent_email: string
+          agent_user_id: string
+          business_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          label?: string
+          plivo_number: string
+        }
+        Update: {
+          agent_email?: string
+          agent_user_id?: string
+          business_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          label?: string
+          plivo_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_caller_ids_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_interactions: {
         Row: {
           context_json: Json | null
@@ -9186,6 +9230,7 @@ export type Database = {
           callback_reason: string | null
           callback_required: boolean
           callback_status: string | null
+          caller_id_used: string | null
           client_id: string | null
           connected: boolean
           contact_id: string | null
@@ -9239,6 +9284,7 @@ export type Database = {
           callback_reason?: string | null
           callback_required?: boolean
           callback_status?: string | null
+          caller_id_used?: string | null
           client_id?: string | null
           connected?: boolean
           contact_id?: string | null
@@ -9292,6 +9338,7 @@ export type Database = {
           callback_reason?: string | null
           callback_required?: boolean
           callback_status?: string | null
+          caller_id_used?: string | null
           client_id?: string | null
           connected?: boolean
           contact_id?: string | null
@@ -12552,6 +12599,7 @@ export type Database = {
           call_mode: string | null
           call_start_time: string | null
           call_status: string
+          caller_id_used: string | null
           client_id: string | null
           conference_id: string | null
           created_at: string
@@ -12579,6 +12627,7 @@ export type Database = {
           call_mode?: string | null
           call_start_time?: string | null
           call_status?: string
+          caller_id_used?: string | null
           client_id?: string | null
           conference_id?: string | null
           created_at?: string
@@ -12606,6 +12655,7 @@ export type Database = {
           call_mode?: string | null
           call_start_time?: string | null
           call_status?: string
+          caller_id_used?: string | null
           client_id?: string | null
           conference_id?: string | null
           created_at?: string
