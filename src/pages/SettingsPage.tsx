@@ -79,6 +79,9 @@ const SettingsPage = () => {
         </Card>
       )}
 
+      {/* Caller ID Management (Admin only) */}
+      {(isSuperAdmin || isBusinessAdmin) && <CallerIdManagement />}
+
       {/* Theme Management */}
       <ThemeManagementPanel />
     </div>
