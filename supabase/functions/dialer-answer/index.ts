@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
 
   let finalConferenceId = conferenceId || "fallback-room";
   const recordingCallbackUrl = `${supabaseUrl}/functions/v1/dialer-webhook?leg=recording&session_id=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(PLIVO_WEBHOOK_SECRET)}`;
-  let finalStartConferenceOnEnter = leg === "agent" ? "true" : "false";
+  const finalStartConferenceOnEnter = leg === "agent" ? "true" : "false";
 
   try {
     const body = await parseTelephonyPayload(req);
