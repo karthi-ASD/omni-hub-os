@@ -1,5 +1,9 @@
 import { useAuth } from "@/contexts/AuthContext";
 import ClientDashboardPage from "@/pages/ClientDashboardPage";
+import SalesDashboardPage from "@/pages/SalesDashboardPage";
+import SeoDashboardPage from "@/pages/SeoDashboardPage";
+import AccountsDashboardPage from "@/pages/AccountsDashboardPage";
+import AdminOperationsDashboardPage from "@/pages/AdminOperationsDashboardPage";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
@@ -76,6 +80,23 @@ const Dashboard = () => {
   const deptLower = departmentName?.toLowerCase() ?? "";
   const isFinanceDept = deptLower.includes("finance") || deptLower.includes("accounts");
   const isSeoDept = deptLower.includes("seo");
+  const isSalesDept = deptLower.includes("sales") || deptLower.includes("business development");
+  const isAdminView = isSuperAdmin || hasRole("business_admin");
+
+  console.log("ROLE:", {
+    departmentName,
+    dashboardShell,
+    isClientUser,
+    isAdminView,
+    isFinanceDept,
+    isSeoDept,
+    isSalesDept,
+  });
+
+  if (isAdminView) return <AdminOperationsDashboardPage />;
+  if (isFinanceDept) return <AccountsDashboardPage />;
+  if (isSeoDept) return <SeoDashboardPage />;
+  if (isSalesDept) return <SalesDashboardPage />;
 
   const getStatCards = (): StatCard[] => {
     if (isManager && isFinanceDept) {

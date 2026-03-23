@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useSalesPerformanceDashboard } from "@/hooks/useSalesPerformanceDashboard";
+import { useAuth } from "@/contexts/AuthContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -8,6 +9,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminCommunicationDashboard } from "@/components/crm/AdminCommunicationDashboard";
+import { CallbacksPanel } from "@/components/crm/CallbacksPanel";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   BarChart3, Users, Target, Flame, Snowflake, ThermometerSun,
@@ -24,11 +28,15 @@ const tempColor = (t: string) => t === "hot" ? "destructive" : t === "warm" ? "s
 const SalesDashboardPage = () => {
   usePageTitle("Sales Dashboard");
   const navigate = useNavigate();
+  const { profile, roles } = useAuth();
+  const businessId = profile?.business_id;
   const {
     loading, isAdmin, clientMetrics, leadMetrics, pipelineStages,
     followUpMetrics, proposalMetrics, revenueMetrics, conversionRate,
     hotLeadsPriority, dailyActivity, leaderboard, myAccountsTable, agingLeads,
   } = useSalesPerformanceDashboard();
+
+  console.log("ROLE:", { roles, screen: "sales-dashboard" });
 
   if (loading) return (
     <div className="space-y-4 p-6">
@@ -287,6 +295,21 @@ const SalesDashboardPage = () => {
             </Table>
           </CardContent>
         </Card>
+      )}
+
+      {businessId && (
+        <Tabs defaultValue="communications" className="space-y-4">
+          <TabsList className="flex-wrap">
+            <TabsTrigger value="communications">Communication</TabsTrigger>
+            <TabsTrigger value="callbacks">Callbacks</TabsTrigger>
+          </TabsList>
+          <TabsContent value="communications">
+            <AdminCommunicationDashboard businessId={businessId} />
+          </TabsContent>
+          <TabsContent value="callbacks">
+            <CallbacksPanel businessId={businessId} showAllStatuses />
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );

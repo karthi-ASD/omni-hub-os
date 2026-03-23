@@ -217,6 +217,7 @@ import WorkloadMonitorPage from "./pages/WorkloadMonitorPage";
 import SLAMonitorPage from "./pages/SLAMonitorPage";
 import AccountTimelinePage from "./pages/AccountTimelinePage";
 import AdminOperationsDashboardPage from "./pages/AdminOperationsDashboardPage";
+import AdminCommunicationsPage from "./pages/AdminCommunicationsPage";
 import DailyWorkReportsPage from "./pages/DailyWorkReportsPage";
 import DailyInsightsPage from "./pages/DailyInsightsPage";
 import InternalBroadcastPage from "./pages/InternalBroadcastPage";
@@ -375,6 +376,8 @@ const App = () => (
               }
             >
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/crm" element={<Navigate to="/sales-dashboard" replace />} />
+              <Route path="/accounts" element={<Navigate to="/accounts-dashboard" replace />} />
               <Route path="/sales-dashboard" element={<SalesDashboardPage />} />
               <Route path="/sales-command-center" element={<SalesCommandCenterPage />} />
               <Route path="/cold-calling" element={<ColdCallingPage />} />
@@ -688,6 +691,9 @@ const App = () => (
               <Route path="/account-timeline" element={<AccountTimelinePage />} />
               <Route path="/admin-operations" element={
                 <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AdminOperationsDashboardPage /></ProtectedRoute>
+              } />
+              <Route path="/admin/communications" element={
+                <ProtectedRoute requiredRoles={["super_admin", "business_admin"]}><AdminCommunicationsPage /></ProtectedRoute>
               } />
               <Route path="/ceo-dashboard" element={
                 <ProtectedRoute requiredRoles={["super_admin"]}><CEODashboardPage /></ProtectedRoute>

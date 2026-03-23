@@ -13,6 +13,8 @@ import { useSeoClientMessages } from "@/hooks/useSeoClientMessages";
 import { useSeoMonthlyReports } from "@/hooks/useSeoMonthlyReports";
 import { useSeoAiRecommendations } from "@/hooks/useSeoAiRecommendations";
 import { useSeoKeywords } from "@/hooks/useSeo";
+import { CommunicationTimeline } from "@/components/crm/CommunicationTimeline";
+import { CallbacksPanel } from "@/components/crm/CallbacksPanel";
 import { PerformanceDashboard } from "@/components/clients/access-hub/PerformanceDashboard";
 import { ProjectIntegrationsTab } from "@/components/seo/ProjectIntegrationsTab";
 import { MapsPerformancePanel } from "@/components/seo/MapsPerformancePanel";
@@ -31,7 +33,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import {
   ArrowLeft, Plus, ListChecks, FileText, Globe, MapPin, Share2, MessageSquare,
-  BarChart3, Brain, Send, Sparkles, Instagram, Facebook, Key, Plug,
+  BarChart3, Brain, Send, Sparkles, Instagram, Facebook, Key, Plug, Phone, PhoneForwarded,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -40,6 +42,7 @@ const SeoProjectDetailPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { profile } = useAuth();
+  const businessId = profile?.business_id;
   const { projects } = useSeoProjects();
   const project = projects.find(p => p.id === projectId);
 
@@ -71,6 +74,8 @@ const SeoProjectDetailPage = () => {
   const [msgInput, setMsgInput] = useState("");
   const tabFromUrl = new URLSearchParams(location.search).get("tab");
   const [activeTab, setActiveTab] = useState(tabFromUrl || "tasks");
+
+  console.log("ROLE:", { screen: "seo-project-detail", businessId, projectId });
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -148,6 +153,8 @@ const SeoProjectDetailPage = () => {
           <TabsTrigger value="performance"><BarChart3 className="h-3 w-3 mr-1" /> Performance</TabsTrigger>
           <TabsTrigger value="maps"><MapPin className="h-3 w-3 mr-1" /> Maps Performance</TabsTrigger>
           <TabsTrigger value="integrations"><Plug className="h-3 w-3 mr-1" /> Integrations</TabsTrigger>
+          <TabsTrigger value="communication"><Phone className="h-3 w-3 mr-1" /> Communication</TabsTrigger>
+          <TabsTrigger value="callbacks"><PhoneForwarded className="h-3 w-3 mr-1" /> Callbacks</TabsTrigger>
           <TabsTrigger value="ai"><Brain className="h-3 w-3 mr-1" /> AI Advisor</TabsTrigger>
         </TabsList>
 
@@ -564,6 +571,14 @@ const SeoProjectDetailPage = () => {
           {projectId && project?.business_id && (
             <ProjectIntegrationsTab projectId={projectId} businessId={project.business_id} />
           )}
+        </TabsContent>
+
+        <TabsContent value="communication">
+          <CommunicationTimeline entityType="project" entityId={projectId} />
+        </TabsContent>
+
+        <TabsContent value="callbacks">
+          {businessId && <CallbacksPanel businessId={businessId} entityType="project" entityId={projectId} showAllStatuses />}
         </TabsContent>
 
         <TabsContent value="ai" className="space-y-4">

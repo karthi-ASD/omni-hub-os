@@ -1,10 +1,13 @@
 import React, { useMemo, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminCommunicationDashboard } from "@/components/crm/AdminCommunicationDashboard";
+import { CallbacksPanel } from "@/components/crm/CallbacksPanel";
 import { useClients } from "@/hooks/useClients";
 import { useInvoices } from "@/hooks/useInvoices";
 import { usePayments } from "@/hooks/usePayments";
@@ -24,6 +27,8 @@ import {
 
 const AccountsDashboardPage = () => {
   usePageTitle("Accounts Dashboard");
+  const { profile, roles } = useAuth();
+  const businessId = profile?.business_id;
   const { clients } = useClients();
   const { invoices } = useInvoices();
   const { payments } = usePayments();
@@ -53,6 +58,8 @@ const AccountsDashboardPage = () => {
     [clients]
   );
 
+  console.log("ROLE:", { roles, screen: "accounts-dashboard" });
+
   return (
     <div className="space-y-6">
       <PageHeader title="Accounts Dashboard" subtitle="Financial control center — billing, renewals, commissions & risk management" />
@@ -77,6 +84,8 @@ const AccountsDashboardPage = () => {
           <TabsTrigger value="commissions">Commissions</TabsTrigger>
           <TabsTrigger value="health">Client Health</TabsTrigger>
           <TabsTrigger value="states">State Insights</TabsTrigger>
+          <TabsTrigger value="communications">Communication</TabsTrigger>
+          <TabsTrigger value="callbacks">Callbacks</TabsTrigger>
         </TabsList>
 
         {/* Revenue Forecast Tab */}
@@ -362,6 +371,14 @@ const AccountsDashboardPage = () => {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="communications">
+          {businessId && <AdminCommunicationDashboard businessId={businessId} />}
+        </TabsContent>
+
+        <TabsContent value="callbacks">
+          {businessId && <CallbacksPanel businessId={businessId} showAllStatuses />}
         </TabsContent>
       </Tabs>
     </div>
