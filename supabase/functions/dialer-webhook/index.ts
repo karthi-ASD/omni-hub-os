@@ -383,11 +383,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── CRM communication sync on call end + transcript pipeline trigger ──
+    // ── CRM communication sync on call end (NO AI trigger here — wait for recording) ──
     if (updates.call_status === "ended" || (isTerminalEvent && !currentIsTerminal)) {
       const duration = updates.call_duration || p.duration || 0;
       const hadConnectedState = !!session.customer_connected || !!session.call_start_time || !!updates.customer_connected;
-      const shouldProcessAI = hadConnectedState && duration >= 3;
 
       try {
         const { data: crmComm } = await supabase
@@ -407,13 +406,13 @@ Deno.serve(async (req) => {
           }
           if (updates.recording_url) endUpdates.recording_url = updates.recording_url;
 
-          // Set transcript_status to processing if AI will run
-          if (shouldProcessAI) {
-            endUpdates.transcript_status = "processing";
+          // Only set transcript to "pending" — actual processing waits for recording callback
+          if (hadConnectedState && duration >= 3) {
+            endUpdates.transcript_status = "pending";
           }
 
           await supabase.from("crm_call_communications").update(endUpdates).eq("id", crmComm.id);
-          console.log("CALL_ENDED", { session_id: session.id, communication_id: crmComm.id, duration, shouldProcessAI });
+          console.log("CALL_ENDED", { session_id: session.id, communication_id: crmComm.id, duration });
         }
       } catch (e) {
         console.error("CRM_END_SYNC_FAILED", e);
@@ -427,24 +426,14 @@ Deno.serve(async (req) => {
             hadSession: true,
             hadConnectedState,
             connectedDurationMs: duration * 1000,
-            hadTranscript: false,
             hadRecording: !!(updates.recording_url || session.recording_url),
             endReason: p.hangup_cause || p.call_status || updates.call_status,
-            shouldProcessAI,
+            ai_deferred_to_recording: true,
           },
         });
       } catch { /* ignore */ }
 
-      if (shouldProcessAI) {
-        fetch(`${supabaseUrl}/functions/v1/dialer-ai-analyze`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${serviceKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ session_id: session.id }),
-        }).catch((e) => console.error("[dialer-webhook] AI trigger failed", e));
-      } else {
+      if (!hadConnectedState || duration < 3) {
         try {
           await supabase.from("dialer_call_events").insert({
             session_id: session.id,
