@@ -15,6 +15,15 @@ function jsonRes(body: Record<string, unknown>) {
   });
 }
 
+function sanitizeAlias(name: string) {
+  return name
+    .replace(/[^a-zA-Z0-9_-]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toLowerCase()
+    .slice(0, 40) || "agent";
+}
+
 async function plivoFetch(authId: string, plivoAuth: string, path: string, init?: RequestInit) {
   return fetch(`https://api.plivo.com/v1/Account/${authId}${path}`, {
     ...init,
@@ -54,7 +63,7 @@ Deno.serve(async (req) => {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("business_id, full_name")
+      .select("business_id, full_name, email")
       .eq("user_id", user.id)
       .maybeSingle();
     if (!profile?.business_id) {
@@ -72,11 +81,12 @@ Deno.serve(async (req) => {
     }
 
     const plivoAuth = "Basic " + btoa(`${PLIVO_AUTH_ID}:${PLIVO_AUTH_TOKEN}`);
+    const identity = `agent_${user.id}`;
     const username = `agent${user.id.replace(/-/g, "").slice(0, 6)}${Date.now()}`;
     const password = crypto.randomUUID().replace(/-/g, "").slice(0, 20);
-    const rawAlias = profile.full_name || `Agent ${user.id.slice(0, 8)}`;
-    const alias = rawAlias.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 40);
-    console.log("ALIAS_SANITIZED", { rawAlias, alias });
+    const rawAlias = profile.full_name || profile.email || user.email || user.id;
+    const alias = sanitizeAlias(rawAlias);
+    console.log("ALIAS_SANITIZED", { userId: user.id, email: user.email, rawAlias, alias, identity });
 
     await supabase
       .from("dialer_browser_endpoints")
@@ -116,12 +126,18 @@ Deno.serve(async (req) => {
     } as any, { onConflict: "user_id,business_id" });
 
     console.log("PLIVO_TOKEN_RESPONSE", {
+      userId: user.id,
+      email: user.email,
+      identity,
       username: endpoint.username,
       endpoint_id: endpoint.endpoint_id,
+      token_status: "success",
+      voice_status: "token_created",
     });
 
     return new Response(
       JSON.stringify({
+        identity,
         username: endpoint.username,
         password: endpoint.password,
         app_id: PLIVO_WEBRTC_APP_ID,

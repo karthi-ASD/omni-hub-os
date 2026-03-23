@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { DIALER_LOGOUT_RESET_EVENT } from "@/lib/dialer-events";
 import { resolveAppMode, resolveUserType, detectRoleConflict, assertNoEmployeeClientCrossover, type AppMode, type DashboardShell, type UserType } from "@/lib/role-resolver";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
@@ -498,6 +499,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       : "You have been signed out successfully.";
     sessionStorage.setItem("signout_message", message);
 
+    window.dispatchEvent(new CustomEvent(DIALER_LOGOUT_RESET_EVENT));
+
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
@@ -505,7 +508,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log("SIGN_OUT_SUCCESS");
     console.log("SIGN_OUT_REDIRECT_TARGET", { target: "/login" });
 
-    // Force navigate to login to prevent blank page / stale UI
     console.log("PROTECTED_LAYOUT_UNMOUNTED");
     console.log("BLANK_SIGNOUT_PAGE_PREVENTED");
     window.location.href = "/login";

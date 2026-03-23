@@ -15,6 +15,7 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { DIALER_LOGOUT_RESET_EVENT } from "@/lib/dialer-events";
 import { toast } from "sonner";
 import {
   createDialerSession,
@@ -605,24 +606,46 @@ async function syncAccessTokenState() {
   return session;
 }
 
+function resetDialerStateOnLogout() {
+  lastInitializedUserId = null;
+  singletonInitialized = false;
+  sdkInitStarted = false;
+  initPromise = null;
+  lastLoginCredentials = null;
+  registrationRetryCount = 0;
+  authIdentity = null;
+  lastStableAuthIdentity = null;
+  currentAccessToken = null;
+  logDialer("LOGOUT_DIALER_RESET", { voiceStatus: "logout_reset" });
+  destroyPlivoClient("logout");
+}
+
+
 async function fetchBrowserToken(context: "init" | "test" = "test") {
   const session = await syncAccessTokenState();
 
   if (!session?.access_token) {
-    logDialer("NO_ACTIVE_SESSION");
+    logDialer("NO_ACTIVE_SESSION", { tokenStatus: "missing", voiceStatus: "auth_required" });
     setStoreState((c) => ({
       ...c,
       status: "auth_required",
       registered: false,
-      lastError: "Please log in to use calling features.",
+      lastError: "No active session. Please login.",
       lastTokenFetchStatus: 401,
       lastTokenHasPassword: false,
     }));
-    throw new Error("Please log in to use calling features.");
+    throw new Error("No active session. Please login.");
   }
 
   const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dialer-browser-token`;
-  logDialer(context === "test" ? "TOKEN_TEST_START" : "CALLING_TOKEN_FUNCTION", { url: functionUrl, hasAccessToken: true });
+
+  logDialer(context === "test" ? "TOKEN_TEST_START" : "CALLING_TOKEN_FUNCTION", {
+    url: functionUrl,
+    hasAccessToken: true,
+    userId: maskUserIdentifier(session.user.id),
+    email: session.user.email ?? "unknown",
+    tokenStatus: "requesting",
+  });
 
   const res = await fetch(functionUrl, {
     method: "POST",
@@ -634,7 +657,7 @@ async function fetchBrowserToken(context: "init" | "test" = "test") {
     body: JSON.stringify({}),
   });
 
-  logDialer("TOKEN_FETCH_RESPONSE_STATUS", { status: res.status, context });
+  logDialer("TOKEN_FETCH_RESPONSE_STATUS", { status: res.status, context, userId: maskUserIdentifier(session.user.id) });
   const data = await res.json().catch(() => ({}));
 
   setStoreState((c) => ({
@@ -647,11 +670,27 @@ async function fetchBrowserToken(context: "init" | "test" = "test") {
   }));
 
   if (!res.ok || data?.status === "error" || !data?.username || !data?.password || !data?.app_id) {
-    logDialer("TOKEN_TEST_FAILED", { error: data?.error || `Token request failed (${res.status})` });
+    logDialer("TOKEN_TEST_FAILED", {
+      userId: maskUserIdentifier(session.user.id),
+      email: session.user.email ?? "unknown",
+      alias: data?.alias ?? null,
+      tokenStatus: "failed",
+      voiceStatus: "token_failed",
+      error: data?.error || `Token request failed (${res.status})`,
+    });
     throw new Error(data?.error || `Token request failed (${res.status})`);
   }
 
-  logDialer("TOKEN_RECEIVED_FULL", { username: data.username, hasPassword: !!data.password, app_id: data.app_id });
+  logDialer("TOKEN_RECEIVED_FULL", {
+    userId: maskUserIdentifier(session.user.id),
+    email: session.user.email ?? "unknown",
+    alias: data?.identity ?? data?.username ?? null,
+    username: data.username,
+    hasPassword: !!data.password,
+    app_id: data.app_id,
+    tokenStatus: "received",
+    voiceStatus: "token_received",
+  });
   return { ...data, url: functionUrl, status: res.status };
 }
 
@@ -680,7 +719,8 @@ function scheduleLogin(reason: string, username: string, password: string, delay
   const runLogin = () => {
     if (!plivoInstanceRef?.client) return;
     loginInProgress = true;
-    setStoreState((c) => ({ ...c, plivoClientInitStatus: "logging_in", status: "registering" }));
+    setStoreState((c) => ({ ...c, plivoClientInitStatus: "logging_in", status: "registering", lastError: null }));
+    logDialer("VOICE_REGISTERING", { reason, userId: maskUserIdentifier(authIdentity?.userId ?? null), voiceStatus: "registering" });
     logDialer("PLIVO_LOGIN_CALLING", { reason });
     plivoInstanceRef.client.login(username, password);
 
@@ -1448,6 +1488,8 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
       providerStatus: "registered",
       hasPendingDial: !!pending,
       pendingNumber: pending?.phoneNumber || null,
+      userId: maskUserIdentifier(authIdentity?.userId ?? null),
+      voiceStatus: "registered",
     });
 
     // Update state — keep pendingDialIntent if we have a pending call to execute
@@ -1485,6 +1527,11 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
         scheduleLogin("registration_retry", lastLoginCredentials.username, lastLoginCredentials.password);
       }, 2000);
     } else {
+      logDialer("VOICE_REGISTRATION_FAILED", {
+        cause,
+        userId: maskUserIdentifier(authIdentity?.userId ?? null),
+        voiceStatus: "failed",
+      });
       setStoreState((c) => ({
         ...c,
         registered: false,
@@ -2008,18 +2055,19 @@ export function useBrowserDialer() {
     } else {
       authIdentity = null;
     }
-    setStoreState((c) => ({ ...c, userIdentifier: maskUserIdentifier(profile?.user_id ?? null) }));
 
-    // ── USER CHANGE DETECTION: Force re-init when a different user logs in ──
     const currentUserId = profile?.user_id ?? null;
-    const userChanged = currentUserId && lastInitializedUserId && currentUserId !== lastInitializedUserId;
+    setStoreState((c) => ({ ...c, userIdentifier: maskUserIdentifier(currentUserId) }));
+
+    const userChanged = !!(currentUserId && lastInitializedUserId && currentUserId !== lastInitializedUserId);
     if (userChanged) {
       logDialer("USER_CHANGED_DETECTED", {
         previousUser: maskUserIdentifier(lastInitializedUserId),
         newUser: maskUserIdentifier(currentUserId),
+        email: profile?.email ?? "unknown",
+        voiceStatus: "reset_required",
         action: "force_reinit",
       });
-      // Force full re-initialization for new user
       singletonInitialized = false;
       sdkInitStarted = false;
       initPromise = null;
@@ -2050,6 +2098,8 @@ export function useBrowserDialer() {
         userId: maskUserIdentifier(currentUserId),
         email: profile?.email ?? "unknown",
         businessId: profile?.business_id ?? "none",
+        tokenStatus: currentAccessToken ? "ready" : "pending",
+        voiceStatus: "initializing",
       });
       const persistedPending = readPendingDial();
       if (persistedPending && !modulePendingDial) {
@@ -2208,7 +2258,7 @@ export function useBrowserDialer() {
         logDialer("CALL_BLOCKED_AUDIO_NOT_READY", { audioStatus: storeState.audioStatus });
         toast.error("Browser audio is blocked. Click Enable Browser Audio to continue.");
       } else {
-        toast.info("Call queued. It will auto-dial as soon as the voice service is ready.");
+        toast.error("Voice not ready");
       }
       return;
     }
@@ -2289,6 +2339,13 @@ export function useBrowserDialer() {
     await addCallTag(storeState.session.id, tag, profile.user_id);
     toast.success(`Tagged as ${tag.replace("_", " ")}`);
   }, [profile]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleLogoutReset = () => resetDialerStateOnLogout();
+    window.addEventListener(DIALER_LOGOUT_RESET_EVENT, handleLogoutReset);
+    return () => window.removeEventListener(DIALER_LOGOUT_RESET_EVENT, handleLogoutReset);
+  }, []);
 
   const resetDialer = useCallback(() => {
     logDialer("DIALER_RESET");
