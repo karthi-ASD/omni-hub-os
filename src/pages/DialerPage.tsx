@@ -129,6 +129,7 @@ function DialerPageContent() {
     return sessionStorage.getItem("dialer_wrapup_draft") || "";
   });
   const [audioUnlocking, setAudioUnlocking] = useState(false);
+  const [selectedCallerId, setSelectedCallerId] = useState("");
   const logViewportRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
