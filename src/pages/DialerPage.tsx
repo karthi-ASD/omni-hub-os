@@ -368,6 +368,38 @@ function DialerPageContent() {
     );
   }
 
+  // ── CRM lifecycle tracking (secondary, non-blocking) ──
+  const prevCallStatusRef = useRef<string | null>(null);
+  useEffect(() => {
+    const status = dialer?.callStatus;
+    const prev = prevCallStatusRef.current;
+    prevCallStatusRef.current = status || null;
+    if (!status || status === prev) return;
+
+    // On connected → update CRM comm record
+    if (status === "connected" && crmLink.crmContext.communicationId) {
+      crmLink.onCallConnected().catch(() => {});
+    }
+    // On ended → update CRM comm record with timing
+    if ((status === "ended" || status === "failed") && crmLink.crmContext.communicationId) {
+      const timer = dialer?.formattedTimer;
+      const parts = timer?.split(":").map(Number) || [0, 0];
+      const totalSec = (parts[0] || 0) * 60 + (parts[1] || 0);
+      crmLink.onCallEnded({
+        duration_seconds: totalSec,
+        talk_time_seconds: totalSec,
+        recording_url: dialer?.session?.recording_url || undefined,
+        call_status: status,
+      }).catch(() => {});
+
+      // Auto-save transcript to CRM communication
+      if (transcript.lines.length > 0) {
+        const fullText = transcript.lines.map((l) => `${l.speaker || "?"}: ${l.text}`).join("\n");
+        crmLink.saveTranscript(fullText).catch(() => {});
+      }
+    }
+  }, [dialer?.callStatus]);
+
   const handleDial = async () => {
     dialer.logEvent("CALL_BUTTON_CLICKED", { phoneInput, registered: dialer.registered, status: dialer.callStatus });
     if (dialer.micPermission !== "granted") {
@@ -380,7 +412,18 @@ function DialerPageContent() {
     }
     transcript.clearTranscript();
     aiAssistant.resetAssistant();
-    await dialer.startCall(phoneInput.trim(), leadContext?.id, leadContext?.clientId);
+
+    // CRM phone lookup (non-blocking — fire and proceed)
+    const phone = phoneInput.trim();
+    crmLink.lookupPhone(phone).then(async (matches) => {
+      // Create communication record after dial starts
+      const sessionId = dialer?.session?.id;
+      await crmLink.onCallStarted(phone, sessionId, matches[0] || null);
+    }).catch((err) => {
+      console.error("CRM_LINK_LOOKUP_ERROR", err);
+    });
+
+    await dialer.startCall(phone, leadContext?.id, leadContext?.clientId);
   };
 
   const handleDialPadPress = (digit: string) => setPhoneInput((p) => p + digit);
