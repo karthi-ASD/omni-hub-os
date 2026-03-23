@@ -182,6 +182,14 @@ const AdminOperationsDashboardPage = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="communications">
+          {businessId && <AdminCommunicationDashboard businessId={businessId} />}
+        </TabsContent>
+
+        <TabsContent value="callbacks">
+          {businessId && <CallbacksPanel businessId={businessId} showAllStatuses />}
+        </TabsContent>
       </Tabs>
     </div>
   );
