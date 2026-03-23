@@ -126,8 +126,13 @@ Deno.serve(async (req) => {
     } as any, { onConflict: "user_id,business_id" });
 
     console.log("PLIVO_TOKEN_RESPONSE", {
+      userId: user.id,
+      email: user.email,
+      identity,
       username: endpoint.username,
       endpoint_id: endpoint.endpoint_id,
+      token_status: "success",
+      voice_status: "token_created",
     });
 
     return new Response(
