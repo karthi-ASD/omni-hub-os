@@ -574,6 +574,54 @@ export async function updateCallbackStatus(
 
   if (error) {
     console.error("CALLBACK_STATUS_UPDATE_FAILED", { callbackId, error });
+  } else {
+    console.log("CALLBACK_COMPLETED", { callbackId, status, completedCommunicationId });
+  }
+}
+
+// ─── Auto-complete pending callbacks when calling same entity/phone ──
+export async function autoCompletePendingCallbacks(
+  businessId: string,
+  phoneNormalized: string,
+  entityId?: string,
+  newCommunicationId?: string
+) {
+  try {
+    // Find pending callbacks matching this phone or entity
+    let query = db
+      .from("crm_callbacks")
+      .select("id, communication_id, entity_id")
+      .eq("business_id", businessId)
+      .eq("status", "pending");
+
+    const { data: callbacks, error } = await query;
+    if (error || !callbacks?.length) return;
+
+    // Match by entity_id or by phone in the linked communication
+    for (const cb of callbacks) {
+      let shouldComplete = false;
+
+      if (entityId && cb.entity_id === entityId) {
+        shouldComplete = true;
+      } else if (cb.communication_id) {
+        // Check if the callback's communication has matching phone
+        const { data: comm } = await db
+          .from("crm_call_communications")
+          .select("phone_number_normalized")
+          .eq("id", cb.communication_id)
+          .maybeSingle();
+
+        if (comm?.phone_number_normalized === phoneNormalized) {
+          shouldComplete = true;
+        }
+      }
+
+      if (shouldComplete) {
+        await updateCallbackStatus(cb.id, "completed", newCommunicationId);
+      }
+    }
+  } catch (err) {
+    console.error("CALLBACK_AUTO_COMPLETE_FAILED", { businessId, phoneNormalized, error: err });
   }
 }
 
