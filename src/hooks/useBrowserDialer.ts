@@ -1822,6 +1822,8 @@ function reinitializeDialer() {
   sdkInitStarted = false;
   initPromise = null;
   singletonInitialized = false;
+  lastInitializedUserId = null;
+  lastLoginCredentials = null;
   registrationRetryCount = 0;
   setStoreState((c) => ({ ...c, registered: false, status: "idle", sdkReady: false, plivoClientInitStatus: "reinitializing" }));
   window.setTimeout(() => {
