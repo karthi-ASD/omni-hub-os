@@ -81,11 +81,12 @@ Deno.serve(async (req) => {
     }
 
     const plivoAuth = "Basic " + btoa(`${PLIVO_AUTH_ID}:${PLIVO_AUTH_TOKEN}`);
+    const identity = `agent_${user.id}`;
     const username = `agent${user.id.replace(/-/g, "").slice(0, 6)}${Date.now()}`;
     const password = crypto.randomUUID().replace(/-/g, "").slice(0, 20);
-    const rawAlias = profile.full_name || `Agent ${user.id.slice(0, 8)}`;
-    const alias = rawAlias.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 40);
-    console.log("ALIAS_SANITIZED", { rawAlias, alias });
+    const rawAlias = profile.full_name || profile.email || user.email || user.id;
+    const alias = sanitizeAlias(rawAlias);
+    console.log("ALIAS_SANITIZED", { userId: user.id, email: user.email, rawAlias, alias, identity });
 
     await supabase
       .from("dialer_browser_endpoints")
