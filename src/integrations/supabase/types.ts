@@ -29049,6 +29049,10 @@ export type Database = {
         Args: { _business_id: string; _email: string }
         Returns: string
       }
+      find_entity_by_phone: {
+        Args: { _business_id: string; _phone: string }
+        Returns: Json
+      }
       get_client_id_for_user: { Args: { _user_id: string }; Returns: string }
       get_dialer_caller_metrics: {
         Args: {

@@ -7,6 +7,8 @@ import { useAICallAssistant } from "@/hooks/useAICallAssistant";
 import { useDialerAccess } from "@/hooks/useDialerAccess";
 import { useAuth } from "@/contexts/AuthContext";
 import { DialerErrorBoundary } from "@/components/dialer/DialerErrorBoundary";
+import { useDialerCrmLink } from "@/hooks/useDialerCrmLink";
+import { PostCallCrmPanel } from "@/components/dialer/PostCallCrmPanel";
 import { LiveTranscriptPanel } from "@/components/dialer/LiveTranscriptPanel";
 import { AISuggestionsPanel } from "@/components/dialer/AISuggestionsPanel";
 import { AICoachPanel } from "@/components/dialer/AICoachPanel";
@@ -87,6 +89,7 @@ function DialerPageContent() {
   const location = useLocation();
   const { profile } = useAuth();
   const dialer = useDialerContext();
+  const crmLink = useDialerCrmLink();
 
   const clientId = searchParams.get("clientId") || undefined;
   const { canAccessDialer, isClientUser } = useDialerAccess(clientId);
@@ -335,6 +338,35 @@ function DialerPageContent() {
     }
   }, [searchParams]);
 
+  // ── CRM lifecycle tracking (secondary, non-blocking) ──
+  const prevCallStatusRef = useRef<string | null>(null);
+  useEffect(() => {
+    const status = dialer?.callStatus;
+    const prev = prevCallStatusRef.current;
+    prevCallStatusRef.current = status || null;
+    if (!status || status === prev) return;
+
+    if (status === "connected" && crmLink.crmContext.communicationId) {
+      crmLink.onCallConnected().catch(() => {});
+    }
+    if ((status === "ended" || status === "failed") && crmLink.crmContext.communicationId) {
+      const timer = dialer?.formattedTimer;
+      const parts = timer?.split(":").map(Number) || [0, 0];
+      const totalSec = (parts[0] || 0) * 60 + (parts[1] || 0);
+      crmLink.onCallEnded({
+        duration_seconds: totalSec,
+        talk_time_seconds: totalSec,
+        recording_url: dialer?.session?.recording_url || undefined,
+        call_status: status,
+      }).catch(() => {});
+
+      if (transcript.lines.length > 0) {
+        const fullText = transcript.lines.map((l) => `${l.speaker || "?"}: ${l.text}`).join("\n");
+        crmLink.saveTranscript(fullText).catch(() => {});
+      }
+    }
+  }, [dialer?.callStatus]);
+
   // ── GATE: If provider not ready, show loading (after all hooks) ──
   if (!dialer) {
     return (
@@ -364,7 +396,6 @@ function DialerPageContent() {
       </div>
     );
   }
-
   const handleDial = async () => {
     dialer.logEvent("CALL_BUTTON_CLICKED", { phoneInput, registered: dialer.registered, status: dialer.callStatus });
     if (dialer.micPermission !== "granted") {
@@ -377,7 +408,18 @@ function DialerPageContent() {
     }
     transcript.clearTranscript();
     aiAssistant.resetAssistant();
-    await dialer.startCall(phoneInput.trim(), leadContext?.id, leadContext?.clientId);
+
+    // CRM phone lookup (non-blocking — fire and proceed)
+    const phone = phoneInput.trim();
+    crmLink.lookupPhone(phone).then(async (matches) => {
+      // Create communication record after dial starts
+      const sessionId = dialer?.session?.id;
+      await crmLink.onCallStarted(phone, sessionId, matches[0] || null);
+    }).catch((err) => {
+      console.error("CRM_LINK_LOOKUP_ERROR", err);
+    });
+
+    await dialer.startCall(phone, leadContext?.id, leadContext?.clientId);
   };
 
   const handleDialPadPress = (digit: string) => setPhoneInput((p) => p + digit);
