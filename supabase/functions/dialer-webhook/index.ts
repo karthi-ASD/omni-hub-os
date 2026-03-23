@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
       try {
         const { data: crmComm } = await supabase
           .from("crm_call_communications")
-          .select("id, connected, duration_seconds, processing_status, retry_count")
+          .select("id, connected, duration_seconds, processing_status, retry_count, processing_started_at")
           .eq("dialer_session_id", session.id)
           .maybeSingle();
 
@@ -235,16 +235,42 @@ Deno.serve(async (req) => {
           }
           console.log("RECORDING_MAPPED", { session_id: session.id, communication_id: crmComm.id });
 
+          // ── TIMEOUT RECOVERY: reset stuck processing after 5 min ──
+          let effectiveStatus = crmComm.processing_status;
+          if (effectiveStatus === "processing" && crmComm.processing_started_at) {
+            const startedAt = new Date(crmComm.processing_started_at).getTime();
+            const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+            if (startedAt < fiveMinAgo) {
+              const newRetry = (crmComm.retry_count || 0) + 1;
+              if (newRetry >= 3) {
+                await supabase.from("crm_call_communications").update({
+                  processing_status: "failed",
+                  retry_count: newRetry,
+                }).eq("id", crmComm.id);
+                console.log("PROCESSING_PERMANENT_FAILURE", { communication_id: crmComm.id, retry_count: newRetry });
+                effectiveStatus = "failed";
+              } else {
+                await supabase.from("crm_call_communications").update({
+                  processing_status: "idle",
+                  retry_count: newRetry,
+                }).eq("id", crmComm.id);
+                console.log("PROCESSING_TIMEOUT_RESET", { communication_id: crmComm.id, retry_count: newRetry });
+                effectiveStatus = "idle";
+              }
+            }
+          }
+
           // ── AI PIPELINE TRIGGER (from recording callback ONLY) ──
           const duration = crmComm.duration_seconds || p.duration || 0;
           const hasRecording = !!(p.recording_url && p.recording_url.startsWith("http"));
           const isConnected = !!crmComm.connected;
-          const isIdle = crmComm.processing_status === "idle";
+          const isIdle = effectiveStatus === "idle";
 
           if (hasRecording && duration >= 3 && isConnected && isIdle) {
-            // Lock processing
+            // Lock processing with timestamp
             await supabase.from("crm_call_communications").update({
               processing_status: "processing",
+              processing_started_at: new Date().toISOString(),
               transcript_status: "processing",
             }).eq("id", crmComm.id);
 

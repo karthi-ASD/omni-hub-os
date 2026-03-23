@@ -9210,6 +9210,7 @@ export type Database = {
           matched_name: string | null
           phone_number_normalized: string
           phone_number_raw: string
+          processing_started_at: string | null
           processing_status: string
           project_id: string | null
           recording_url: string | null
@@ -9262,6 +9263,7 @@ export type Database = {
           matched_name?: string | null
           phone_number_normalized: string
           phone_number_raw: string
+          processing_started_at?: string | null
           processing_status?: string
           project_id?: string | null
           recording_url?: string | null
@@ -9314,6 +9316,7 @@ export type Database = {
           matched_name?: string | null
           phone_number_normalized?: string
           phone_number_raw?: string
+          processing_started_at?: string | null
           processing_status?: string
           project_id?: string | null
           recording_url?: string | null
