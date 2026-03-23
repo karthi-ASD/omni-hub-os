@@ -9171,6 +9171,243 @@ export type Database = {
           },
         ]
       }
+      crm_call_communications: {
+        Row: {
+          account_id: string | null
+          ai_score: number | null
+          ai_synopsis_customer_safe: string | null
+          ai_synopsis_internal: string | null
+          answer_time: string | null
+          auto_tags: string[] | null
+          business_id: string
+          call_direction: string
+          call_status: string
+          callback_datetime: string | null
+          callback_reason: string | null
+          callback_required: boolean
+          callback_status: string | null
+          client_id: string | null
+          connected: boolean
+          contact_id: string | null
+          conversion_status: string | null
+          created_at: string
+          customer_safe_summary: string | null
+          customer_visibility_level: string
+          dialer_session_id: string | null
+          disposition: string | null
+          disposition_notes: string | null
+          disposition_subtype: string | null
+          duration_seconds: number
+          end_time: string | null
+          entity_id: string | null
+          entity_id_snapshot: string | null
+          entity_name_snapshot: string | null
+          entity_type: string | null
+          entity_type_snapshot: string | null
+          id: string
+          lead_id: string | null
+          matched_business_name: string | null
+          matched_name: string | null
+          phone_number_normalized: string
+          phone_number_raw: string
+          project_id: string | null
+          recording_url: string | null
+          sentiment: string | null
+          source_type: string
+          start_time: string
+          talk_time_seconds: number
+          transcript_status: string
+          transcript_text: string | null
+          updated_at: string
+          user_id: string
+          visible_to_customer: boolean
+        }
+        Insert: {
+          account_id?: string | null
+          ai_score?: number | null
+          ai_synopsis_customer_safe?: string | null
+          ai_synopsis_internal?: string | null
+          answer_time?: string | null
+          auto_tags?: string[] | null
+          business_id: string
+          call_direction?: string
+          call_status?: string
+          callback_datetime?: string | null
+          callback_reason?: string | null
+          callback_required?: boolean
+          callback_status?: string | null
+          client_id?: string | null
+          connected?: boolean
+          contact_id?: string | null
+          conversion_status?: string | null
+          created_at?: string
+          customer_safe_summary?: string | null
+          customer_visibility_level?: string
+          dialer_session_id?: string | null
+          disposition?: string | null
+          disposition_notes?: string | null
+          disposition_subtype?: string | null
+          duration_seconds?: number
+          end_time?: string | null
+          entity_id?: string | null
+          entity_id_snapshot?: string | null
+          entity_name_snapshot?: string | null
+          entity_type?: string | null
+          entity_type_snapshot?: string | null
+          id?: string
+          lead_id?: string | null
+          matched_business_name?: string | null
+          matched_name?: string | null
+          phone_number_normalized: string
+          phone_number_raw: string
+          project_id?: string | null
+          recording_url?: string | null
+          sentiment?: string | null
+          source_type?: string
+          start_time?: string
+          talk_time_seconds?: number
+          transcript_status?: string
+          transcript_text?: string | null
+          updated_at?: string
+          user_id: string
+          visible_to_customer?: boolean
+        }
+        Update: {
+          account_id?: string | null
+          ai_score?: number | null
+          ai_synopsis_customer_safe?: string | null
+          ai_synopsis_internal?: string | null
+          answer_time?: string | null
+          auto_tags?: string[] | null
+          business_id?: string
+          call_direction?: string
+          call_status?: string
+          callback_datetime?: string | null
+          callback_reason?: string | null
+          callback_required?: boolean
+          callback_status?: string | null
+          client_id?: string | null
+          connected?: boolean
+          contact_id?: string | null
+          conversion_status?: string | null
+          created_at?: string
+          customer_safe_summary?: string | null
+          customer_visibility_level?: string
+          dialer_session_id?: string | null
+          disposition?: string | null
+          disposition_notes?: string | null
+          disposition_subtype?: string | null
+          duration_seconds?: number
+          end_time?: string | null
+          entity_id?: string | null
+          entity_id_snapshot?: string | null
+          entity_name_snapshot?: string | null
+          entity_type?: string | null
+          entity_type_snapshot?: string | null
+          id?: string
+          lead_id?: string | null
+          matched_business_name?: string | null
+          matched_name?: string | null
+          phone_number_normalized?: string
+          phone_number_raw?: string
+          project_id?: string | null
+          recording_url?: string | null
+          sentiment?: string | null
+          source_type?: string
+          start_time?: string
+          talk_time_seconds?: number
+          transcript_status?: string
+          transcript_text?: string | null
+          updated_at?: string
+          user_id?: string
+          visible_to_customer?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_call_communications_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_callbacks: {
+        Row: {
+          assigned_user_id: string
+          business_id: string
+          callback_datetime: string
+          callback_reason: string | null
+          client_id: string | null
+          communication_id: string | null
+          completed_communication_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          lead_id: string | null
+          project_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_user_id: string
+          business_id: string
+          callback_datetime: string
+          callback_reason?: string | null
+          client_id?: string | null
+          communication_id?: string | null
+          completed_communication_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          lead_id?: string | null
+          project_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_user_id?: string
+          business_id?: string
+          callback_datetime?: string
+          callback_reason?: string | null
+          client_id?: string | null
+          communication_id?: string | null
+          completed_communication_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          lead_id?: string | null
+          project_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_callbacks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_callbacks_communication_id_fkey"
+            columns: ["communication_id"]
+            isOneToOne: false
+            referencedRelation: "crm_call_communications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_callbacks_completed_communication_id_fkey"
+            columns: ["completed_communication_id"]
+            isOneToOne: false
+            referencedRelation: "crm_call_communications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_communications: {
         Row: {
           action_required: boolean | null
