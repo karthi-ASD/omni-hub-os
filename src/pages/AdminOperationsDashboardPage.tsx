@@ -1,12 +1,15 @@
 import { useAdminOperations } from "@/hooks/useAdminOperations";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { AdminCommunicationDashboard } from "@/components/crm/AdminCommunicationDashboard";
+import { CallbacksPanel } from "@/components/crm/CallbacksPanel";
 import {
   Building2, Users, Briefcase, Target, FolderKanban, Ticket,
-  ListChecks, CheckCircle, Clock, TrendingUp, BarChart2,
+  ListChecks, CheckCircle, Clock, TrendingUp, BarChart2, Radio, PhoneForwarded,
 } from "lucide-react";
 
 const AdminOperationsDashboardPage = () => {
