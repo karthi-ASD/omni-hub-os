@@ -247,7 +247,6 @@ export async function updateCommunicationOnEnded(
     console.log("CALL_ENDED", { commId, duration: params.duration_seconds, transcript: "pending_for_recording" });
   }
 }
-}
 
 // ─── Save disposition (with auto callback trigger) ─────────────
 export async function saveCommunicationDisposition(
