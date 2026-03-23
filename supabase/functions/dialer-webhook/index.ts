@@ -47,8 +47,8 @@ function normalizePayload(body: Record<string, string>): NormalizedPayload {
     request_uuid: body.RequestUUID || body.request_uuid || "",
     call_status: body.CallStatus || body.Status || "",
     dial_status: body.DialStatus || body.DialBLegStatus || "",
-    recording_url: body.RecordUrl || body.RecordingUrl || body.recording_url || "",
-    duration: parseInt(body.Duration || body.CallDuration || body.ConferenceDuration || "0") || 0,
+    recording_url: body.RecordUrl || body.RecordingUrl || body.recording_url || body.record_url || "",
+    duration: parseInt(body.RecordingDuration || body.Duration || body.CallDuration || body.ConferenceDuration || body.recording_duration || "0") || 0,
     bill_duration: parseInt(body.BillDuration || body.BilledDuration || "0") || 0,
     total_cost: parseFloat(body.TotalCost || body.Cost || body.TotalAmount || "0") || 0,
     hangup_cause: body.HangupCause || body.hangup_cause || body.Reason || "",
@@ -94,8 +94,9 @@ Deno.serve(async (req) => {
       call_uuid: p.call_uuid,
       call_status: p.call_status,
       hangup_cause: p.hangup_cause,
-      recording_url: p.recording_url ? "present" : "none",
+      recording_url: p.recording_url ? p.recording_url.substring(0, 60) : "none",
       duration: p.duration,
+      all_body_keys: Object.keys(body).join(","),
     });
 
     let session: any = null;

@@ -216,6 +216,48 @@ Deno.serve(async (req) => {
       })
       .eq("id", session_id);
 
+    // ── CRITICAL: Update crm_call_communications with AI results ──
+    const { data: crmComm } = await supabase
+      .from("crm_call_communications")
+      .select("id")
+      .eq("dialer_session_id", session_id)
+      .maybeSingle();
+
+    if (crmComm?.id) {
+      const crmAiUpdates: Record<string, any> = {
+        ai_synopsis_internal: analysis.summary,
+        ai_synopsis_customer_safe: `Call quality: ${analysis.sentiment}. ${analysis.next_action}`,
+        ai_score: analysis.score,
+        sentiment: analysis.sentiment,
+        processing_status: "completed",
+        transcript_status: "completed",
+        customer_visibility_level: "summary_only",
+        visible_to_customer: true,
+        customer_safe_summary: `Call quality: ${analysis.sentiment}. ${analysis.next_action}`,
+      };
+      if (analysis.auto_tag) {
+        crmAiUpdates.auto_tags = [analysis.auto_tag];
+      }
+
+      const { error: crmErr } = await supabase
+        .from("crm_call_communications")
+        .update(crmAiUpdates)
+        .eq("id", crmComm.id);
+
+      if (crmErr) {
+        console.error("CRM_AI_UPDATE_FAILED", { communication_id: crmComm.id, error: crmErr });
+      } else {
+        console.log("AI_SUMMARY_COMPLETED", {
+          communication_id: crmComm.id,
+          session_id,
+          sentiment: analysis.sentiment,
+          score: analysis.score,
+        });
+      }
+    } else {
+      console.warn("CRM_COMM_NOT_FOUND_FOR_AI", { session_id });
+    }
+
     // Update lead priority_score if lead_id exists
     if (session.lead_id) {
       const { count: callCount } = await supabase
