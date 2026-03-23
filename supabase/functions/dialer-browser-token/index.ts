@@ -45,14 +45,24 @@ Deno.serve(async (req) => {
 
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) return jsonRes({ status: "error", error: "Invalid token" });
+    if (authError || !user) {
+      console.log("TOKEN_AUTH_FAILED", { error: authError?.message ?? "no user" });
+      return jsonRes({ status: "error", error: "Invalid token" });
+    }
+
+    console.log("TOKEN_USER_AUTHENTICATED", { userId: user.id, email: user.email });
 
     const { data: profile } = await supabase
       .from("profiles")
       .select("business_id, full_name")
       .eq("user_id", user.id)
       .maybeSingle();
-    if (!profile?.business_id) return jsonRes({ status: "error", error: "No business profile found" });
+    if (!profile?.business_id) {
+      console.log("TOKEN_NO_BUSINESS_PROFILE", { userId: user.id, email: user.email });
+      return jsonRes({ status: "error", error: "No business profile found" });
+    }
+
+    console.log("TOKEN_PROFILE_RESOLVED", { userId: user.id, email: user.email, businessId: profile.business_id, fullName: profile.full_name });
 
     const PLIVO_AUTH_ID = Deno.env.get("PLIVO_AUTH_ID");
     const PLIVO_AUTH_TOKEN = Deno.env.get("PLIVO_AUTH_TOKEN");
