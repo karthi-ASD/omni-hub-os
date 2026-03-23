@@ -165,8 +165,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    const callerId = getCallerIdForNumber(destination);
-    console.log("[DIALER_XML] CallerId", { callerId, callerIdEmpty: !callerId, destination, sessionId, callUuid });
+    // Agent-specific caller ID: check DB first, then fall back to env-based region mapping
+    let callerId = "";
+    // We'll resolve after session lookup below — placeholder for now
+    const regionFallbackCallerId = getCallerIdForNumber(destination);
+    console.log("[DIALER_XML] RegionFallbackCallerId", { regionFallbackCallerId, destination, sessionId, callUuid });
 
     if (!callerId) {
       console.error("CALLER_ID_MISSING", { destination, sessionId, callUuid, envKeys: {
