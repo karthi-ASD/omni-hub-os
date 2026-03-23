@@ -637,6 +637,8 @@ async function fetchBrowserToken(context: "init" | "test" = "test") {
     throw new Error("No active session. Please login.");
   }
 
+  const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dialer-browser-token`;
+
   logDialer(context === "test" ? "TOKEN_TEST_START" : "CALLING_TOKEN_FUNCTION", {
     url: functionUrl,
     hasAccessToken: true,
