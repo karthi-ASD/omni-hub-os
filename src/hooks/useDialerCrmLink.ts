@@ -11,6 +11,7 @@ import {
   attachSynopsisToCommunication,
   createCallbackFromDisposition,
   createLeadFromColdCall,
+  autoCompletePendingCallbacks,
   type PhoneMatchResult,
   type CommunicationRecord,
 } from "@/services/crmCommunicationService";
@@ -70,7 +71,7 @@ export function useDialerCrmLink() {
     }
   }, [profile?.business_id]);
 
-  // ── On call start: create communication record ───────────────
+  // ── On call start: create communication record + auto-complete callbacks ──
   const onCallStarted = useCallback(async (
     phoneRaw: string,
     dialerSessionId?: string,
@@ -100,6 +101,14 @@ export function useDialerCrmLink() {
     if (comm) {
       commIdRef.current = comm.id;
       setCrmContext((c) => ({ ...c, communicationId: comm.id }));
+
+      // Auto-complete any pending callbacks for this phone/entity
+      autoCompletePendingCallbacks(
+        profile.business_id,
+        norm,
+        selectedMatch?.entity_id,
+        comm.id
+      ).catch((e) => console.error("CALLBACK_AUTO_COMPLETE_ERROR", e));
     }
     return comm;
   }, [profile, crmContext.selectedMatch]);

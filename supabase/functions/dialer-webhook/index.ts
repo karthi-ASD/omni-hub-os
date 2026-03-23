@@ -209,7 +209,6 @@ Deno.serve(async (req) => {
     }
 
     if (leg === "recording") {
-      // Also capture duration/cost from recording callback if available
       if (p.duration > 0 && !session.call_duration) updates.call_duration = p.duration;
       if (p.bill_duration > 0 && !session.bill_duration) updates.bill_duration = p.bill_duration;
       if (p.total_cost > 0 && !session.call_cost) updates.call_cost = p.total_cost;
@@ -217,6 +216,27 @@ Deno.serve(async (req) => {
       if (Object.keys(updates).length > 0) {
         const { error: recErr } = await supabase.from("dialer_sessions").update(updates).eq("id", session.id);
         if (recErr) console.error("RECORDING_SAVE_FAILED", recErr);
+      }
+
+      // ── Sync recording to CRM communication ──
+      try {
+        const { data: crmComm } = await supabase
+          .from("crm_call_communications")
+          .select("id")
+          .eq("dialer_session_id", session.id)
+          .maybeSingle();
+
+        if (crmComm?.id) {
+          const crmUpdates: Record<string, any> = {};
+          if (p.recording_url && p.recording_url.startsWith("http")) crmUpdates.recording_url = p.recording_url;
+          if (p.duration > 0) crmUpdates.duration_seconds = p.duration;
+          if (Object.keys(crmUpdates).length > 0) {
+            await supabase.from("crm_call_communications").update(crmUpdates).eq("id", crmComm.id);
+          }
+          console.log("RECORDING_MAPPED", { session_id: session.id, communication_id: crmComm.id });
+        }
+      } catch (e) {
+        console.error("CRM_RECORDING_SYNC_FAILED", e);
       }
 
       try {
@@ -267,7 +287,6 @@ Deno.serve(async (req) => {
       else if (cs === "no-answer" || cs === "cancel" || p.hangup_cause === "NO_ANSWER" || p.hangup_cause === "ORIGINATOR_CANCEL") terminalStatus = "no-answer";
       else if (cs === "failed" || cs === "rejected" || p.hangup_cause === "CALL_REJECTED") terminalStatus = "failed";
 
-      // Check customer_connected from DB or from this same webhook update
       const wasConnected = !!session.customer_connected || !!updates.customer_connected || !!session.call_start_time;
 
       if (!wasConnected) {
@@ -277,7 +296,6 @@ Deno.serve(async (req) => {
       } else {
         updates.call_status = "ended";
         updates.call_end_time = new Date().toISOString();
-        // Compute duration from start_time if provider didn't give us one
         const startTime = session.call_start_time || (updates.call_start_time as string);
         if (p.duration > 0) {
           updates.call_duration = p.duration;
@@ -303,10 +321,63 @@ Deno.serve(async (req) => {
 
     const finalStatus = updates.call_status || session.call_status;
 
-    if (updates.call_status === "ended") {
+    // ── CRM communication sync on connected ──
+    if (updates.call_status === "connected") {
+      try {
+        const { data: crmComm } = await supabase
+          .from("crm_call_communications")
+          .select("id")
+          .eq("dialer_session_id", session.id)
+          .maybeSingle();
+
+        if (crmComm?.id) {
+          await supabase.from("crm_call_communications").update({
+            call_status: "connected",
+            answer_time: new Date().toISOString(),
+            connected: true,
+          }).eq("id", crmComm.id);
+          console.log("CALL_CONNECTED", { session_id: session.id, communication_id: crmComm.id });
+        }
+      } catch (e) {
+        console.error("CRM_CONNECTED_SYNC_FAILED", e);
+      }
+    }
+
+    // ── CRM communication sync on call end + transcript pipeline trigger ──
+    if (updates.call_status === "ended" || (isTerminalEvent && !currentIsTerminal)) {
       const duration = updates.call_duration || p.duration || 0;
-      const hadConnectedState = !!session.customer_connected || !!session.call_start_time;
+      const hadConnectedState = !!session.customer_connected || !!session.call_start_time || !!updates.customer_connected;
       const shouldProcessAI = hadConnectedState && duration >= 3;
+
+      try {
+        const { data: crmComm } = await supabase
+          .from("crm_call_communications")
+          .select("id")
+          .eq("dialer_session_id", session.id)
+          .maybeSingle();
+
+        if (crmComm?.id) {
+          const endUpdates: Record<string, any> = {
+            call_status: updates.call_status || "ended",
+            end_time: new Date().toISOString(),
+            duration_seconds: duration,
+          };
+          if (hadConnectedState && session.call_start_time) {
+            endUpdates.talk_time_seconds = Math.max(0, Math.round((Date.now() - new Date(session.call_start_time).getTime()) / 1000));
+          }
+          if (updates.recording_url) endUpdates.recording_url = updates.recording_url;
+
+          // Set transcript_status to processing if AI will run
+          if (shouldProcessAI) {
+            endUpdates.transcript_status = "processing";
+          }
+
+          await supabase.from("crm_call_communications").update(endUpdates).eq("id", crmComm.id);
+          console.log("CALL_ENDED", { session_id: session.id, communication_id: crmComm.id, duration, shouldProcessAI });
+        }
+      } catch (e) {
+        console.error("CRM_END_SYNC_FAILED", e);
+      }
 
       try {
         await supabase.from("dialer_call_events").insert({
@@ -322,9 +393,7 @@ Deno.serve(async (req) => {
             shouldProcessAI,
           },
         });
-      } catch {
-        // ignore logging failure
-      }
+      } catch { /* ignore */ }
 
       if (shouldProcessAI) {
         fetch(`${supabaseUrl}/functions/v1/dialer-ai-analyze`, {
@@ -342,9 +411,7 @@ Deno.serve(async (req) => {
             event_type: "early_disconnect",
             metadata: { duration, reason: hadConnectedState ? "call_ended_within_3s" : "call_never_connected" },
           });
-        } catch {
-          // ignore logging failure
-        }
+        } catch { /* ignore */ }
       }
     }
 
@@ -361,9 +428,7 @@ Deno.serve(async (req) => {
             hangup_cause: p.hangup_cause,
           },
         });
-      } catch {
-        // ignore system event logging failure
-      }
+      } catch { /* ignore */ }
     }
 
     console.log("[dialer-webhook] Done", {
