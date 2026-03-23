@@ -137,6 +137,7 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({
+        identity,
         username: endpoint.username,
         password: endpoint.password,
         app_id: PLIVO_WEBRTC_APP_ID,
