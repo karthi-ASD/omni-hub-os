@@ -181,11 +181,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    let session: { provider_call_id: string | null; call_status: string | null } | null = null;
+    let session: { provider_call_id: string | null; call_status: string | null; user_id: string | null; business_id: string | null; caller_id_used: string | null } | null = null;
     if (sessionId) {
       const { data } = await supabase
         .from("dialer_sessions")
-        .select("provider_call_id, call_status")
+        .select("provider_call_id, call_status, user_id, business_id, caller_id_used")
         .eq("id", sessionId)
         .maybeSingle();
       session = data;
