@@ -16,6 +16,7 @@ import { PostCallIntelligence } from "@/components/dialer/PostCallIntelligence";
 import { CallStatusBar } from "@/components/dialer/CallStatusBar";
 import { CallReadinessPanel } from "@/components/dialer/CallReadinessPanel";
 import { CallTagging } from "@/components/dialer/CallTagging";
+import { CallerIdSelector } from "@/components/dialer/CallerIdSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
