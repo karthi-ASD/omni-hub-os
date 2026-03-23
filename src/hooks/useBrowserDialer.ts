@@ -2170,8 +2170,8 @@ export function useBrowserDialer() {
     return { ready: false, status: storeState.audioStatus };
   }, []);
 
-  const startCall = useCallback(async (phoneNumber: string, leadId?: string, clientId?: string) => {
-    logDialer("CALL_BUTTON_CLICKED", { phoneNumber, leadId: leadId ?? null });
+  const startCall = useCallback(async (phoneNumber: string, leadId?: string, clientId?: string, callerIdUsed?: string) => {
+    logDialer("CALL_BUTTON_CLICKED", { phoneNumber, leadId: leadId ?? null, callerIdUsed: callerIdUsed ?? null });
 
     const readiness = canPlaceCall();
     logDialer("START_CALL_ENTERED", {
