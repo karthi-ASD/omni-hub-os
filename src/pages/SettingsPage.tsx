@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Save, Settings2 } from "lucide-react";
 import ThemeManagementPanel from "@/components/theme/ThemeManagementPanel";
+import { CallerIdManagement } from "@/components/admin/CallerIdManagement";
 
 interface Setting { id: string; key: string; value: string | null; }
 
