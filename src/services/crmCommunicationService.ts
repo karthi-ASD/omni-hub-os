@@ -95,6 +95,7 @@ export interface CreateCommunicationPayload {
   call_direction?: string;
   matched_name?: string;
   matched_business_name?: string;
+  caller_id_used?: string;
 }
 
 export interface CommunicationRecord {
