@@ -407,6 +407,7 @@ Deno.serve(async (req) => {
       customer_call_id: customerCallId,
       conference_id: conferenceId,
       call_status: "ringing",
+      caller_id_used: effectiveCallerId,
     }).eq("id", session_id);
 
     await supabase.from("dialer_call_events").insert({
