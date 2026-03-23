@@ -574,11 +574,15 @@ const SeoProjectDetailPage = () => {
         </TabsContent>
 
         <TabsContent value="communication">
-          <CommunicationTimeline entityType="project" entityId={projectId} />
+          {businessId && projectId && (
+            <CommunicationTimeline entityType="project" entityId={projectId} />
+          )}
         </TabsContent>
 
         <TabsContent value="callbacks">
-          {businessId && <CallbacksPanel businessId={businessId} entityType="project" entityId={projectId} showAllStatuses />}
+          {businessId && projectId && (
+            <CallbacksPanel businessId={businessId} entityType="project" entityId={projectId} showAllStatuses />
+          )}
         </TabsContent>
 
         <TabsContent value="ai" className="space-y-4">

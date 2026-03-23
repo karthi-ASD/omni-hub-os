@@ -85,6 +85,10 @@ const ClientProfilePage = () => {
   const [fetchState, setFetchState] = useState<ClientFetchState>("loading");
   const { profile, isSuperAdmin } = useAuth();
 
+  console.log("ROLE:", { screen: "client-profile" });
+  console.log("businessId:", profile?.business_id);
+  console.log("entityId:", id);
+
   const fetchClientDirectAdmin = useCallback(async (routeClientId: string) => {
     try {
       console.log("[FORCE ADMIN FETCH] Fetching:", routeClientId);
@@ -602,12 +606,16 @@ const ClientProfilePage = () => {
         </TabsContent>
 
         <TabsContent value="communication">
-          {id && <CommunicationTimeline entityType="client" entityId={id} />}
+          {id && profile?.business_id && (
+            <CommunicationTimeline entityType="client" entityId={id} />
+          )}
         </TabsContent>
 
         {/* ── Callbacks ── */}
         <TabsContent value="callbacks">
-          {profile?.business_id && id ? <CallbacksPanel businessId={profile.business_id} entityType="client" entityId={id} showAllStatuses /> : null}
+          {id && profile?.business_id && (
+            <CallbacksPanel businessId={profile.business_id} entityType="client" entityId={id} showAllStatuses />
+          )}
         </TabsContent>
 
         {/* ── Onboarding Checklist ── */}

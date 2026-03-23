@@ -37,6 +37,7 @@ const SalesDashboardPage = () => {
   } = useSalesPerformanceDashboard();
 
   console.log("ROLE:", { roles, screen: "sales-dashboard" });
+  console.log("businessId:", businessId);
 
   if (loading) return (
     <div className="space-y-4 p-6">
