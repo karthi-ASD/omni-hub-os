@@ -717,7 +717,8 @@ function scheduleLogin(reason: string, username: string, password: string, delay
   const runLogin = () => {
     if (!plivoInstanceRef?.client) return;
     loginInProgress = true;
-    setStoreState((c) => ({ ...c, plivoClientInitStatus: "logging_in", status: "registering" }));
+    setStoreState((c) => ({ ...c, plivoClientInitStatus: "logging_in", status: "registering", lastError: null }));
+    logDialer("VOICE_REGISTERING", { reason, userId: maskUserIdentifier(authIdentity?.userId ?? null), voiceStatus: "registering" });
     logDialer("PLIVO_LOGIN_CALLING", { reason });
     plivoInstanceRef.client.login(username, password);
 
