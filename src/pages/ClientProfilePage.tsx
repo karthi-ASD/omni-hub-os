@@ -40,6 +40,8 @@ import { ClientProfileTab } from "@/components/clients/ClientProfileTab";
 import { ClientWhatsAppHistoryTab } from "@/components/clients/ClientWhatsAppHistoryTab";
 import { ContactFormCreationTab } from "@/components/clients/ContactFormCreationTab";
 import { useSalesTeam } from "@/hooks/useSalesTeam";
+import { CommunicationTimeline } from "@/components/crm/CommunicationTimeline";
+import { CallbacksPanel } from "@/components/crm/CallbacksPanel";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, parseISO, isToday, isTomorrow, isPast } from "date-fns";
 import { toast } from "sonner";
@@ -531,6 +533,7 @@ const ClientProfilePage = () => {
           <TabsTrigger value="profile"><User className="h-3.5 w-3.5 mr-1" />Profile</TabsTrigger>
           <TabsTrigger value="website-tree"><GitBranch className="h-3.5 w-3.5 mr-1" />Site Map</TabsTrigger>
           <TabsTrigger value="conversations"><MessageSquare className="h-3.5 w-3.5 mr-1" />Notes</TabsTrigger>
+          <TabsTrigger value="communication"><Phone className="h-3.5 w-3.5 mr-1" />Communication</TabsTrigger>
           <TabsTrigger value="callbacks"><PhoneCall className="h-3.5 w-3.5 mr-1" />Callbacks</TabsTrigger>
           <TabsTrigger value="onboarding"><ClipboardCheck className="h-3.5 w-3.5 mr-1" />Onboarding</TabsTrigger>
           <TabsTrigger value="finance"><DollarSign className="h-3.5 w-3.5 mr-1" />Finance</TabsTrigger>
@@ -598,40 +601,13 @@ const ClientProfilePage = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="communication">
+          {id && <CommunicationTimeline entityType="client" entityId={id} />}
+        </TabsContent>
+
         {/* ── Callbacks ── */}
         <TabsContent value="callbacks">
-          <Card className="rounded-xl">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <PhoneCall className="h-4 w-4" /> Callback Schedule
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {clientCallbacks.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-6 text-center">No callbacks scheduled for this client</p>
-              ) : (
-                <div className="space-y-2">
-                  {clientCallbacks.map(cb => (
-                    <div key={cb.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border">
-                      <PhoneCall className="h-4 w-4 text-primary shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{cb.notes || "Callback"}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(parseISO(cb.callback_date), "dd MMM yyyy")}
-                          {cb.callback_time && ` · ${cb.callback_time}`}
-                        </p>
-                        {cb.result && <p className="text-xs text-foreground mt-1">Result: {cb.result}</p>}
-                        {cb.next_step && <p className="text-xs text-primary">Next: {cb.next_step}</p>}
-                      </div>
-                      <Badge variant={cb.status === "completed" ? "default" : cb.status === "missed" ? "destructive" : "secondary"} className="text-xs">
-                        {cb.status}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {profile?.business_id && id ? <CallbacksPanel businessId={profile.business_id} entityType="client" entityId={id} showAllStatuses /> : null}
         </TabsContent>
 
         {/* ── Onboarding Checklist ── */}
