@@ -606,6 +606,21 @@ async function syncAccessTokenState() {
   return session;
 }
 
+function resetDialerStateOnLogout() {
+  lastInitializedUserId = null;
+  singletonInitialized = false;
+  sdkInitStarted = false;
+  initPromise = null;
+  lastLoginCredentials = null;
+  registrationRetryCount = 0;
+  authIdentity = null;
+  lastStableAuthIdentity = null;
+  currentAccessToken = null;
+  logDialer("LOGOUT_DIALER_RESET", { voiceStatus: "logout_reset" });
+  destroyPlivoClient("logout");
+}
+
+
 async function fetchBrowserToken(context: "init" | "test" = "test") {
   const session = await syncAccessTokenState();
 
