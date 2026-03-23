@@ -637,8 +637,13 @@ async function fetchBrowserToken(context: "init" | "test" = "test") {
     throw new Error("No active session. Please login.");
   }
 
-  const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dialer-browser-token`;
-  logDialer(context === "test" ? "TOKEN_TEST_START" : "CALLING_TOKEN_FUNCTION", { url: functionUrl, hasAccessToken: true });
+  logDialer(context === "test" ? "TOKEN_TEST_START" : "CALLING_TOKEN_FUNCTION", {
+    url: functionUrl,
+    hasAccessToken: true,
+    userId: maskUserIdentifier(session.user.id),
+    email: session.user.email ?? "unknown",
+    tokenStatus: "requesting",
+  });
 
   const res = await fetch(functionUrl, {
     method: "POST",
@@ -650,7 +655,7 @@ async function fetchBrowserToken(context: "init" | "test" = "test") {
     body: JSON.stringify({}),
   });
 
-  logDialer("TOKEN_FETCH_RESPONSE_STATUS", { status: res.status, context });
+  logDialer("TOKEN_FETCH_RESPONSE_STATUS", { status: res.status, context, userId: maskUserIdentifier(session.user.id) });
   const data = await res.json().catch(() => ({}));
 
   setStoreState((c) => ({
@@ -663,11 +668,27 @@ async function fetchBrowserToken(context: "init" | "test" = "test") {
   }));
 
   if (!res.ok || data?.status === "error" || !data?.username || !data?.password || !data?.app_id) {
-    logDialer("TOKEN_TEST_FAILED", { error: data?.error || `Token request failed (${res.status})` });
+    logDialer("TOKEN_TEST_FAILED", {
+      userId: maskUserIdentifier(session.user.id),
+      email: session.user.email ?? "unknown",
+      alias: data?.alias ?? null,
+      tokenStatus: "failed",
+      voiceStatus: "token_failed",
+      error: data?.error || `Token request failed (${res.status})`,
+    });
     throw new Error(data?.error || `Token request failed (${res.status})`);
   }
 
-  logDialer("TOKEN_RECEIVED_FULL", { username: data.username, hasPassword: !!data.password, app_id: data.app_id });
+  logDialer("TOKEN_RECEIVED_FULL", {
+    userId: maskUserIdentifier(session.user.id),
+    email: session.user.email ?? "unknown",
+    alias: data?.identity ?? data?.username ?? null,
+    username: data.username,
+    hasPassword: !!data.password,
+    app_id: data.app_id,
+    tokenStatus: "received",
+    voiceStatus: "token_received",
+  });
   return { ...data, url: functionUrl, status: res.status };
 }
 
