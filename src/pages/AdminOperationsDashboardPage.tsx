@@ -19,6 +19,7 @@ const AdminOperationsDashboardPage = () => {
 
   console.log("ROLE:", { screen: "admin-operations" });
   console.log("businessId:", businessId);
+  console.log("Rendering Communication", businessId);
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
