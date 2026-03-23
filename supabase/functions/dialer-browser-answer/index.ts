@@ -165,8 +165,52 @@ Deno.serve(async (req) => {
       });
     }
 
-    const callerId = getCallerIdForNumber(destination);
-    console.log("[DIALER_XML] CallerId", { callerId, callerIdEmpty: !callerId, destination, sessionId, callUuid });
+    // Fetch session first (needed for agent caller ID lookup)
+    let session: { provider_call_id: string | null; call_status: string | null; user_id: string | null; business_id: string | null; caller_id_used: string | null } | null = null;
+    if (sessionId) {
+      const { data } = await supabase
+        .from("dialer_sessions")
+        .select("provider_call_id, call_status, user_id, business_id, caller_id_used")
+        .eq("id", sessionId)
+        .maybeSingle();
+      session = data;
+    }
+
+    // Agent-specific caller ID resolution:
+    // 1. Check if session already has caller_id_used (set by dialer-initiate)
+    // 2. Look up agent's assigned number from agent_caller_ids table
+    // 3. Fall back to region-based env var
+    let callerId = "";
+    
+    if (session?.caller_id_used) {
+      callerId = session.caller_id_used;
+      console.log("[DIALER_XML] Using session.caller_id_used:", callerId);
+    }
+    
+    if (!callerId && session?.user_id && session?.business_id) {
+      const { data: agentCid } = await supabase
+        .from("agent_caller_ids")
+        .select("plivo_number")
+        .eq("agent_user_id", session.user_id)
+        .eq("business_id", session.business_id)
+        .eq("is_active", true)
+        .order("is_default", { ascending: false })
+        .limit(1);
+      
+      if (agentCid && agentCid.length > 0) {
+        callerId = agentCid[0].plivo_number;
+        console.log("[DIALER_XML] Using agent_caller_ids:", callerId);
+        // Save to session for future reference
+        await supabase.from("dialer_sessions").update({ caller_id_used: callerId } as any).eq("id", sessionId);
+      }
+    }
+    
+    if (!callerId) {
+      callerId = getCallerIdForNumber(destination);
+      console.log("[DIALER_XML] Using region fallback:", callerId);
+    }
+    
+    console.log("[DIALER_XML] Final CallerId", { callerId, callerIdEmpty: !callerId, destination, sessionId, callUuid });
 
     if (!callerId) {
       console.error("CALLER_ID_MISSING", { destination, sessionId, callUuid, envKeys: {
@@ -179,16 +223,6 @@ Deno.serve(async (req) => {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "text/xml" },
       });
-    }
-
-    let session: { provider_call_id: string | null; call_status: string | null } | null = null;
-    if (sessionId) {
-      const { data } = await supabase
-        .from("dialer_sessions")
-        .select("provider_call_id, call_status")
-        .eq("id", sessionId)
-        .maybeSingle();
-      session = data;
     }
 
     const providerCallIdBefore = session?.provider_call_id || null;

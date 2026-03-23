@@ -24,7 +24,7 @@ function formatToE164(phone: string): string | null {
   return null;
 }
 
-// Region-aware caller ID selection
+// Region-aware caller ID selection (fallback only)
 function getCallerIdForNumber(number: string): string {
   if (number.startsWith("+91")) {
     return Deno.env.get("PLIVO_CALLER_ID_IN") || Deno.env.get("PLIVO_CALLER_ID_DEFAULT") || Deno.env.get("PLIVO_CALLER_ID") || "";
@@ -36,6 +36,23 @@ function getCallerIdForNumber(number: string): string {
     return Deno.env.get("PLIVO_CALLER_ID_US") || Deno.env.get("PLIVO_CALLER_ID_DEFAULT") || Deno.env.get("PLIVO_CALLER_ID") || "";
   }
   return Deno.env.get("PLIVO_CALLER_ID_DEFAULT") || Deno.env.get("PLIVO_CALLER_ID") || "";
+}
+
+// Fetch agent-specific caller ID from DB
+async function getAgentCallerId(supabase: any, userId: string, businessId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from("agent_caller_ids")
+    .select("plivo_number, is_default")
+    .eq("agent_user_id", userId)
+    .eq("business_id", businessId)
+    .eq("is_active", true)
+    .order("is_default", { ascending: false })
+    .limit(1);
+  
+  if (data && data.length > 0) {
+    return data[0].plivo_number;
+  }
+  return null;
 }
 
 async function createPlivoCall(params: {
@@ -76,7 +93,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { session_id, action, agent_phone, agentPhone } = body;
+    const { session_id, action, agent_phone, agentPhone, caller_id_override } = body;
 
     if (!session_id) {
       return jsonResponse({ status: "error", error: "Missing session_id" });
@@ -181,9 +198,42 @@ Deno.serve(async (req) => {
     // Generate unique conference ID
     const conferenceId = `dialer-${session_id}`;
 
-    // Region-aware caller IDs
-    const agentCallerId = getCallerIdForNumber(formattedAgentPhone);
-    const customerCallerId = getCallerIdForNumber(formattedCustomerPhone);
+    // AGENT-SPECIFIC CALLER ID: Priority order:
+    // 1. caller_id_override from request (validated against DB)
+    // 2. Agent's default caller ID from agent_caller_ids table
+    // 3. Region-aware fallback from env vars
+    let agentSpecificCallerId: string | null = null;
+
+    if (caller_id_override) {
+      // Validate the override belongs to this agent
+      const { data: validCid } = await supabase
+        .from("agent_caller_ids")
+        .select("plivo_number")
+        .eq("agent_user_id", session.user_id)
+        .eq("business_id", session.business_id)
+        .eq("plivo_number", caller_id_override)
+        .eq("is_active", true)
+        .maybeSingle();
+      
+      if (validCid) {
+        agentSpecificCallerId = validCid.plivo_number;
+        console.log("[dialer-initiate] Using validated caller_id_override:", agentSpecificCallerId);
+      } else {
+        console.warn("[dialer-initiate] caller_id_override rejected — not assigned to agent:", caller_id_override);
+      }
+    }
+
+    if (!agentSpecificCallerId) {
+      agentSpecificCallerId = await getAgentCallerId(supabase, session.user_id, session.business_id);
+      if (agentSpecificCallerId) {
+        console.log("[dialer-initiate] Using agent DB caller ID:", agentSpecificCallerId);
+      }
+    }
+
+    // Final caller IDs
+    const effectiveCallerId = agentSpecificCallerId || getCallerIdForNumber(formattedCustomerPhone) || PLIVO_CALLER_ID;
+    const agentCallerId = agentSpecificCallerId || getCallerIdForNumber(formattedAgentPhone) || PLIVO_CALLER_ID;
+    const customerCallerId = effectiveCallerId;
 
     console.log("[dialer-initiate] CONFERENCE FLOW", {
       session_id,
@@ -192,6 +242,7 @@ Deno.serve(async (req) => {
       customer_phone: formattedCustomerPhone,
       agent_caller_id: agentCallerId,
       customer_caller_id: customerCallerId,
+      agent_specific: !!agentSpecificCallerId,
     });
 
     // Build answer URLs for both legs
@@ -356,6 +407,7 @@ Deno.serve(async (req) => {
       customer_call_id: customerCallId,
       conference_id: conferenceId,
       call_status: "ringing",
+      caller_id_used: effectiveCallerId,
     }).eq("id", session_id);
 
     await supabase.from("dialer_call_events").insert({

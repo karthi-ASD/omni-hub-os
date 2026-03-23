@@ -16,6 +16,7 @@ import { PostCallIntelligence } from "@/components/dialer/PostCallIntelligence";
 import { CallStatusBar } from "@/components/dialer/CallStatusBar";
 import { CallReadinessPanel } from "@/components/dialer/CallReadinessPanel";
 import { CallTagging } from "@/components/dialer/CallTagging";
+import { CallerIdSelector } from "@/components/dialer/CallerIdSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -129,6 +130,7 @@ function DialerPageContent() {
     return sessionStorage.getItem("dialer_wrapup_draft") || "";
   });
   const [audioUnlocking, setAudioUnlocking] = useState(false);
+  const [selectedCallerId, setSelectedCallerId] = useState("");
   const logViewportRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -705,6 +707,13 @@ function DialerPageContent() {
                 </Badge>
                 {isCallActive && <p className="text-2xl font-mono font-bold mt-1 tabular-nums">{dialer.formattedTimer}</p>}
               </div>
+
+              {/* Caller ID Selector */}
+              <CallerIdSelector
+                selectedCallerId={selectedCallerId}
+                onSelect={setSelectedCallerId}
+                disabled={isCallActive}
+              />
 
               <div className="flex gap-2">
                 <Input value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} placeholder="+61 4XX XXX XXX" className="font-mono text-base text-center tracking-wider" disabled={isCallActive || isAuthRequired} onKeyDown={(e) => { if (e.key === "Enter" && canDial) handleDial(); }} />
