@@ -421,7 +421,8 @@ function DialerPageContent() {
       console.error("CRM_LINK_LOOKUP_ERROR", err);
     });
 
-    await dialer.startCall(phone, leadContext?.id, leadContext?.clientId);
+    console.log("AGENT_EMAIL:", profile?.email, "CALLER_ID_SELECTED:", selectedCallerId);
+    await dialer.startCall(phone, leadContext?.id, leadContext?.clientId, selectedCallerId || undefined);
   };
 
   const handleDialPadPress = (digit: string) => setPhoneInput((p) => p + digit);

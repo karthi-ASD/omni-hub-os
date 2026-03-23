@@ -2218,7 +2218,7 @@ export function useBrowserDialer() {
       if (!granted) return;
     }
 
-    const intent: PendingDialIntent = { phoneNumber: phoneNumber.trim(), leadId, clientId };
+    const intent: PendingDialIntent = { phoneNumber: phoneNumber.trim(), leadId, clientId, callerIdUsed };
 
     // ── AUDIO UNLOCK: Try once with timeout, but don't permanently block ──
     if (!storeState.audioReady) {
