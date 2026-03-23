@@ -35,6 +35,63 @@ function normalizeDestination(raw: string): string {
   return destination.replace(/[^\d+]/g, "");
 }
 
+function buildEmailVariants(email?: string | null, fullName?: string | null) {
+  const variants = new Set<string>();
+  const normalizedEmail = email?.trim().toLowerCase();
+  if (normalizedEmail) variants.add(normalizedEmail);
+
+  const domain = normalizedEmail?.split("@")[1];
+  const nameParts = fullName?.trim().toLowerCase().split(/\s+/).filter(Boolean) ?? [];
+  if (domain && nameParts.length > 0) {
+    variants.add(`${nameParts[0]}@${domain}`);
+    if (nameParts.length > 1) {
+      variants.add(`${nameParts[0]}.${nameParts[nameParts.length - 1]}@${domain}`);
+    }
+  }
+
+  return [...variants];
+}
+
+async function getAssignedCallerId(supabase: ReturnType<typeof createClient>, userId: string, businessId: string) {
+  const { data: directMatch } = await supabase
+    .from("agent_caller_ids")
+    .select("plivo_number")
+    .eq("agent_user_id", userId)
+    .eq("business_id", businessId)
+    .eq("is_active", true)
+    .order("is_default", { ascending: false })
+    .limit(1);
+
+  if (directMatch?.length) {
+    return { callerId: directMatch[0].plivo_number, source: "agent_user_id" };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("email, full_name")
+    .eq("user_id", userId)
+    .eq("business_id", businessId)
+    .maybeSingle();
+
+  const emailVariants = buildEmailVariants(profile?.email, profile?.full_name);
+  if (!emailVariants.length) return null;
+
+  const { data: emailMatch } = await supabase
+    .from("agent_caller_ids")
+    .select("plivo_number, agent_email")
+    .eq("business_id", businessId)
+    .eq("is_active", true)
+    .in("agent_email", emailVariants)
+    .order("is_default", { ascending: false })
+    .limit(1);
+
+  if (emailMatch?.length) {
+    return { callerId: emailMatch[0].plivo_number, source: `agent_email:${emailMatch[0].agent_email}` };
+  }
+
+  return null;
+}
+
 // STATIC_XML_TEST: Set to true to bypass all dynamic logic and return hardcoded XML
 // This isolates whether the issue is in our logic vs Plivo app config
 const STATIC_XML_TEST = false;
@@ -188,38 +245,20 @@ Deno.serve(async (req) => {
     }
     
     if (!callerId && session?.user_id && session?.business_id) {
-      const { data: agentCid } = await supabase
-        .from("agent_caller_ids")
-        .select("plivo_number")
-        .eq("agent_user_id", session.user_id)
-        .eq("business_id", session.business_id)
-        .eq("is_active", true)
-        .order("is_default", { ascending: false })
-        .limit(1);
-      
-      if (agentCid && agentCid.length > 0) {
-        callerId = agentCid[0].plivo_number;
-        console.log("[DIALER_XML] Using agent_caller_ids:", callerId);
-        // Save to session for future reference
+      const assignedCallerId = await getAssignedCallerId(supabase, session.user_id, session.business_id);
+
+      if (assignedCallerId) {
+        callerId = assignedCallerId.callerId;
+        console.log("[DIALER_XML] Using assigned caller ID", assignedCallerId);
         await supabase.from("dialer_sessions").update({ caller_id_used: callerId } as any).eq("id", sessionId);
       }
-    }
-    
-    if (!callerId) {
-      callerId = getCallerIdForNumber(destination);
-      console.log("[DIALER_XML] Using region fallback:", callerId);
     }
     
     console.log("[DIALER_XML] Final CallerId", { callerId, callerIdEmpty: !callerId, destination, sessionId, callUuid });
 
     if (!callerId) {
-      console.error("CALLER_ID_MISSING", { destination, sessionId, callUuid, envKeys: {
-        PLIVO_CALLER_ID_AU: !!Deno.env.get("PLIVO_CALLER_ID_AU"),
-        PLIVO_CALLER_ID_IN: !!Deno.env.get("PLIVO_CALLER_ID_IN"),
-        PLIVO_CALLER_ID_DEFAULT: !!Deno.env.get("PLIVO_CALLER_ID_DEFAULT"),
-        PLIVO_CALLER_ID: !!Deno.env.get("PLIVO_CALLER_ID"),
-      }});
-      return new Response(buildSafeExitXml("No caller ID configured for this destination."), {
+      console.error("CALLER_ID_MISSING", { destination, sessionId, callUuid, reason: "no_assigned_caller_id" });
+      return new Response(buildSafeExitXml("No outgoing number assigned. Contact admin."), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "text/xml" },
       });

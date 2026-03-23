@@ -17,10 +17,10 @@ function jsonRes(body: Record<string, unknown>) {
 
 function sanitizeAlias(name: string) {
   return name
-    .replace(/[^a-zA-Z0-9_-]/g, "_")
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, "_")
     .replace(/_+/g, "_")
     .replace(/^_+|_+$/g, "")
-    .toLowerCase()
     .slice(0, 40) || "agent";
 }
 
@@ -84,8 +84,10 @@ Deno.serve(async (req) => {
     const identity = `agent_${user.id}`;
     const username = `agent${user.id.replace(/-/g, "").slice(0, 6)}${Date.now()}`;
     const password = crypto.randomUUID().replace(/-/g, "").slice(0, 20);
-    const rawAlias = profile.full_name || profile.email || user.email || user.id;
+    const rawAlias = user.email || profile.email || user.id;
     const alias = sanitizeAlias(rawAlias);
+    console.log("TOKEN_USER:", user.email ?? null);
+    console.log("ALIAS:", alias);
     console.log("ALIAS_SANITIZED", { userId: user.id, email: user.email, rawAlias, alias, identity });
 
     await supabase
@@ -138,6 +140,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         identity,
+        alias,
         username: endpoint.username,
         password: endpoint.password,
         app_id: PLIVO_WEBRTC_APP_ID,
