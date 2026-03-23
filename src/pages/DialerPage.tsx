@@ -413,10 +413,11 @@ function DialerPageContent() {
 
     // CRM phone lookup (non-blocking — fire and proceed)
     const phone = phoneInput.trim();
+    const callerIdForCrm = selectedCallerId;
     crmLink.lookupPhone(phone).then(async (matches) => {
       // Create communication record after dial starts
       const sessionId = dialer?.session?.id;
-      await crmLink.onCallStarted(phone, sessionId, matches[0] || null);
+      await crmLink.onCallStarted(phone, sessionId, matches[0] || null, callerIdForCrm || undefined);
     }).catch((err) => {
       console.error("CRM_LINK_LOOKUP_ERROR", err);
     });
