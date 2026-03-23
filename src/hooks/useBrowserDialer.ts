@@ -2338,6 +2338,13 @@ export function useBrowserDialer() {
     toast.success(`Tagged as ${tag.replace("_", " ")}`);
   }, [profile]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleLogoutReset = () => resetDialerStateOnLogout();
+    window.addEventListener(DIALER_LOGOUT_RESET_EVENT, handleLogoutReset);
+    return () => window.removeEventListener(DIALER_LOGOUT_RESET_EVENT, handleLogoutReset);
+  }, []);
+
   const resetDialer = useCallback(() => {
     logDialer("DIALER_RESET");
     stopRingback();
