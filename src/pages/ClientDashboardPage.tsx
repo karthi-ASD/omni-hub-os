@@ -485,6 +485,9 @@ const ClientDashboardPage = () => {
           </div>
         </div>
 
+        {/* ══════════════════ COMMUNICATION SUMMARY ══════════════════ */}
+        {data.clientId && <CustomerCommunicationSummary clientId={data.clientId} />}
+
         {/* ══════════════════ 10. SUPPORT BLOCK ══════════════════ */}
         <Card className="rounded-2xl border-0 shadow-elevated bg-gradient-to-r from-primary/5 to-accent/5">
           <CardContent className="p-5 flex flex-col md:flex-row items-center justify-between gap-4">
