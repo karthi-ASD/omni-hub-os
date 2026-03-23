@@ -139,6 +139,31 @@ export function CommunicationTimeline({ entityType, entityId }: CommunicationTim
                       <PhoneForwarded className="h-2.5 w-2.5 mr-0.5" /> Callback
                     </Badge>
                   )}
+                  {/* Processing status */}
+                  {r.processing_status === "processing" && (
+                    <Badge variant="outline" className="text-[9px] border-primary/40 text-primary">
+                      <Loader2 className="h-2.5 w-2.5 mr-0.5 animate-spin" /> Processing
+                    </Badge>
+                  )}
+                  {r.processing_status === "completed" && (
+                    <Badge variant="outline" className="text-[9px] border-emerald-400 text-emerald-600">✓ AI Done</Badge>
+                  )}
+                  {r.processing_status === "failed" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-5 px-1.5 text-[9px] text-destructive border-destructive/40"
+                      disabled={retrying === r.id}
+                      onClick={() => handleRetry(r.id)}
+                    >
+                      {retrying === r.id ? (
+                        <Loader2 className="h-2.5 w-2.5 mr-0.5 animate-spin" />
+                      ) : (
+                        <RotateCcw className="h-2.5 w-2.5 mr-0.5" />
+                      )}
+                      Retry AI
+                    </Button>
+                  )}
                 </div>
                 <span className="text-muted-foreground text-[10px]">
                   {format(new Date(r.start_time), "dd MMM yyyy HH:mm")}
