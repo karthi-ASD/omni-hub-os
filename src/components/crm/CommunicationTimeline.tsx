@@ -30,6 +30,21 @@ export function CommunicationTimeline({ entityType, entityId }: CommunicationTim
   const [records, setRecords] = useState<CommunicationRecord[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [retrying, setRetrying] = useState<string | null>(null);
+
+  const handleRetry = async (commId: string) => {
+    setRetrying(commId);
+    const ok = await retryAIProcessing(commId);
+    if (ok) {
+      toast.success("AI processing retriggered");
+      setRecords((prev) =>
+        prev.map((r) => r.id === commId ? { ...r, processing_status: "processing" } : r)
+      );
+    } else {
+      toast.error("Retry failed — preconditions not met");
+    }
+    setRetrying(null);
+  };
 
   useEffect(() => {
     if (!entityId) return;
