@@ -21,6 +21,9 @@ const SeoDashboardPage = () => {
   const businessId = profile?.business_id;
   const [createOpen, setCreateOpen] = useState(false);
 
+  console.log("ROLE:", { screen: "seo-dashboard" });
+  console.log("businessId:", businessId);
+
   const getClientName = (id: string | null) => {
     if (!id) return "—";
     return clients.find(c => c.id === id)?.contact_name || "Unknown";

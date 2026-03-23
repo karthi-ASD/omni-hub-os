@@ -10,6 +10,7 @@ const AdminCommunicationsPage = () => {
   const businessId = profile?.business_id;
 
   console.log("ROLE:", { roles, screen: "admin-communications" });
+  console.log("businessId:", businessId);
 
   return (
     <div className="space-y-6 animate-fade-in">

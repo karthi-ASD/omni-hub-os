@@ -59,6 +59,7 @@ const AccountsDashboardPage = () => {
   );
 
   console.log("ROLE:", { roles, screen: "accounts-dashboard" });
+  console.log("businessId:", businessId);
 
   return (
     <div className="space-y-6">
