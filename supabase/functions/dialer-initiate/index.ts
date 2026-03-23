@@ -24,7 +24,7 @@ function formatToE164(phone: string): string | null {
   return null;
 }
 
-// Region-aware caller ID selection
+// Region-aware caller ID selection (fallback only)
 function getCallerIdForNumber(number: string): string {
   if (number.startsWith("+91")) {
     return Deno.env.get("PLIVO_CALLER_ID_IN") || Deno.env.get("PLIVO_CALLER_ID_DEFAULT") || Deno.env.get("PLIVO_CALLER_ID") || "";
@@ -36,6 +36,23 @@ function getCallerIdForNumber(number: string): string {
     return Deno.env.get("PLIVO_CALLER_ID_US") || Deno.env.get("PLIVO_CALLER_ID_DEFAULT") || Deno.env.get("PLIVO_CALLER_ID") || "";
   }
   return Deno.env.get("PLIVO_CALLER_ID_DEFAULT") || Deno.env.get("PLIVO_CALLER_ID") || "";
+}
+
+// Fetch agent-specific caller ID from DB
+async function getAgentCallerId(supabase: any, userId: string, businessId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from("agent_caller_ids")
+    .select("plivo_number, is_default")
+    .eq("agent_user_id", userId)
+    .eq("business_id", businessId)
+    .eq("is_active", true)
+    .order("is_default", { ascending: false })
+    .limit(1);
+  
+  if (data && data.length > 0) {
+    return data[0].plivo_number;
+  }
+  return null;
 }
 
 async function createPlivoCall(params: {
