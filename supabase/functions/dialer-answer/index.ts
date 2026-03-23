@@ -39,7 +39,8 @@ Deno.serve(async (req) => {
   const PLIVO_WEBHOOK_SECRET = Deno.env.get("PLIVO_WEBHOOK_SECRET") || "";
 
   let finalConferenceId = conferenceId || "fallback-room";
-  let finalStartConferenceOnEnter = leg === "agent" ? "true" : "false";
+  const recordingCallbackUrl = `${supabaseUrl}/functions/v1/dialer-webhook?leg=recording&session_id=${encodeURIComponent(sessionId)}&token=${encodeURIComponent(PLIVO_WEBHOOK_SECRET)}`;
+  const finalStartConferenceOnEnter = leg === "agent" ? "true" : "false";
 
   try {
     const body = await parseTelephonyPayload(req);
@@ -124,10 +125,15 @@ Deno.serve(async (req) => {
     console.error("[dialer-answer error]", err);
   }
 
+  // Escape & for XML attributes
+  const safeRecordingUrl = recordingCallbackUrl.replace(/&/g, "&amp;");
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Conference startConferenceOnEnter="${finalStartConferenceOnEnter}" endConferenceOnExit="true" stayAlone="false" waitSound="">${finalConferenceId}</Conference>
+  <Conference startConferenceOnEnter="${finalStartConferenceOnEnter}" endConferenceOnExit="true" stayAlone="false" waitSound="" record="true" recordFileFormat="mp3" recordingCallbackUrl="${safeRecordingUrl}" recordingCallbackMethod="POST">${finalConferenceId}</Conference>
 </Response>`;
+
+  console.log("RECORDING_CALLBACK_URL", recordingCallbackUrl);
 
   console.log("[FINAL XML RESPONSE]", xml);
 
