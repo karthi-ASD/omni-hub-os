@@ -1,16 +1,21 @@
 import { useAdminOperations } from "@/hooks/useAdminOperations";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { AdminCommunicationDashboard } from "@/components/crm/AdminCommunicationDashboard";
+import { CallbacksPanel } from "@/components/crm/CallbacksPanel";
 import {
   Building2, Users, Briefcase, Target, FolderKanban, Ticket,
-  ListChecks, CheckCircle, Clock, TrendingUp, BarChart2,
+  ListChecks, CheckCircle, Clock, TrendingUp, BarChart2, Radio, PhoneForwarded,
 } from "lucide-react";
 
 const AdminOperationsDashboardPage = () => {
   const { metrics, departments, employeeActivities, loading } = useAdminOperations();
+  const { profile } = useAuth();
+  const businessId = profile?.business_id;
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
@@ -55,6 +60,8 @@ const AdminOperationsDashboardPage = () => {
           <TabsTrigger value="departments"><Building2 className="h-4 w-4 mr-1" /> Departments</TabsTrigger>
           <TabsTrigger value="employees"><Users className="h-4 w-4 mr-1" /> Employee Activity</TabsTrigger>
           <TabsTrigger value="workload"><BarChart2 className="h-4 w-4 mr-1" /> Workload Distribution</TabsTrigger>
+          <TabsTrigger value="communications"><Radio className="h-4 w-4 mr-1" /> Communications</TabsTrigger>
+          <TabsTrigger value="callbacks"><PhoneForwarded className="h-4 w-4 mr-1" /> Callbacks</TabsTrigger>
         </TabsList>
 
         <TabsContent value="departments">
@@ -174,6 +181,14 @@ const AdminOperationsDashboardPage = () => {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="communications">
+          {businessId && <AdminCommunicationDashboard businessId={businessId} />}
+        </TabsContent>
+
+        <TabsContent value="callbacks">
+          {businessId && <CallbacksPanel businessId={businessId} showAllStatuses />}
         </TabsContent>
       </Tabs>
     </div>

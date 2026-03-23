@@ -2,6 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useClientDashboardData } from "@/hooks/useClientDashboardData";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
+import { CustomerCommunicationSummary } from "@/components/crm/CustomerCommunicationSummary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,7 +31,7 @@ const RankBadge = ({ current, previous }: { current: number | null; previous: nu
 /* ─── main ─── */
 const ClientDashboardPage = () => {
   usePageTitle("Dashboard", "Your business growth dashboard");
-  const { profile } = useAuth();
+  const { profile, clientId } = useAuth();
   const { data, loading } = useClientDashboardData();
   const navigate = useNavigate();
 
@@ -483,6 +484,9 @@ const ClientDashboardPage = () => {
             ))}
           </div>
         </div>
+
+        {/* ══════════════════ COMMUNICATION SUMMARY ══════════════════ */}
+        {clientId && <CustomerCommunicationSummary clientId={clientId} />}
 
         {/* ══════════════════ 10. SUPPORT BLOCK ══════════════════ */}
         <Card className="rounded-2xl border-0 shadow-elevated bg-gradient-to-r from-primary/5 to-accent/5">
