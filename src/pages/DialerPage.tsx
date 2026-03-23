@@ -7,6 +7,8 @@ import { useAICallAssistant } from "@/hooks/useAICallAssistant";
 import { useDialerAccess } from "@/hooks/useDialerAccess";
 import { useAuth } from "@/contexts/AuthContext";
 import { DialerErrorBoundary } from "@/components/dialer/DialerErrorBoundary";
+import { useDialerCrmLink } from "@/hooks/useDialerCrmLink";
+import { PostCallCrmPanel } from "@/components/dialer/PostCallCrmPanel";
 import { LiveTranscriptPanel } from "@/components/dialer/LiveTranscriptPanel";
 import { AISuggestionsPanel } from "@/components/dialer/AISuggestionsPanel";
 import { AICoachPanel } from "@/components/dialer/AICoachPanel";
