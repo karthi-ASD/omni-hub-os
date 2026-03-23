@@ -24,6 +24,7 @@ const SeoDashboardPage = () => {
   console.log("ROLE:", { screen: "seo-dashboard" });
   console.log("businessId:", businessId);
   console.log("Rendering Communication", businessId);
+  console.log("RENDERED COMPONENT", businessId);
 
   const getClientName = (id: string | null) => {
     if (!id) return "—";

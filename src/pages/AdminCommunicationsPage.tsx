@@ -12,6 +12,7 @@ const AdminCommunicationsPage = () => {
   console.log("ROLE:", { roles, screen: "admin-communications" });
   console.log("businessId:", businessId);
   console.log("Rendering Communication", businessId);
+  console.log("RENDERED COMPONENT", businessId);
 
   return (
     <div className="space-y-6 animate-fade-in">

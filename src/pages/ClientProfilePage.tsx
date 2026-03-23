@@ -89,6 +89,7 @@ const ClientProfilePage = () => {
   console.log("businessId:", profile?.business_id);
   console.log("entityId:", id);
   console.log("Rendering Communication", profile?.business_id);
+  console.log("RENDERED COMPONENT", profile?.business_id);
 
   const fetchClientDirectAdmin = useCallback(async (routeClientId: string) => {
     try {
@@ -607,16 +608,16 @@ const ClientProfilePage = () => {
         </TabsContent>
 
         <TabsContent value="communication">
-          {id && profile?.business_id ? (
+          {id && profile?.business_id && (
             <CommunicationTimeline entityType="client" entityId={id} />
-          ) : null}
+          )}
         </TabsContent>
 
         {/* ── Callbacks ── */}
         <TabsContent value="callbacks">
-          {id && profile?.business_id ? (
+          {id && profile?.business_id && (
             <CallbacksPanel businessId={profile.business_id} entityType="client" entityId={id} showAllStatuses />
-          ) : null}
+          )}
         </TabsContent>
 
         {/* ── Onboarding Checklist ── */}
