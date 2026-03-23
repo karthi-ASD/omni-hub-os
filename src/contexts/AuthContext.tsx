@@ -499,6 +499,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       : "You have been signed out successfully.";
     sessionStorage.setItem("signout_message", message);
 
+    window.dispatchEvent(new CustomEvent(DIALER_LOGOUT_RESET_EVENT));
+
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
@@ -506,7 +508,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log("SIGN_OUT_SUCCESS");
     console.log("SIGN_OUT_REDIRECT_TARGET", { target: "/login" });
 
-    // Force navigate to login to prevent blank page / stale UI
     console.log("PROTECTED_LAYOUT_UNMOUNTED");
     console.log("BLANK_SIGNOUT_PAGE_PREVENTED");
     window.location.href = "/login";

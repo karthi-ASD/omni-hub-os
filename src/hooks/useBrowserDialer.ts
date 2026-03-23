@@ -2256,7 +2256,7 @@ export function useBrowserDialer() {
         logDialer("CALL_BLOCKED_AUDIO_NOT_READY", { audioStatus: storeState.audioStatus });
         toast.error("Browser audio is blocked. Click Enable Browser Audio to continue.");
       } else {
-        toast.info("Call queued. It will auto-dial as soon as the voice service is ready.");
+        toast.error("Voice not ready");
       }
       return;
     }
