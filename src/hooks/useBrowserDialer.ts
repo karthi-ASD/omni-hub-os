@@ -15,6 +15,7 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { DIALER_LOGOUT_RESET_EVENT } from "@/lib/dialer-events";
 import { toast } from "sonner";
 import {
   createDialerSession,
