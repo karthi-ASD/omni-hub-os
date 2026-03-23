@@ -121,6 +121,7 @@ interface PendingDialIntent {
   phoneNumber: string;
   leadId?: string;
   clientId?: string;
+  callerIdUsed?: string;
   blockedReason?: string;
   queuedAt?: number;
   expiresAt?: number;
@@ -1330,6 +1331,7 @@ async function executeOutboundCall(intent: PendingDialIntent) {
       phoneNumber: normalizedPhone,
       leadId: intent.leadId,
       clientId: intent.clientId,
+      callerIdUsed: intent.callerIdUsed,
     });
 
     if (!sess) {
@@ -2168,8 +2170,8 @@ export function useBrowserDialer() {
     return { ready: false, status: storeState.audioStatus };
   }, []);
 
-  const startCall = useCallback(async (phoneNumber: string, leadId?: string, clientId?: string) => {
-    logDialer("CALL_BUTTON_CLICKED", { phoneNumber, leadId: leadId ?? null });
+  const startCall = useCallback(async (phoneNumber: string, leadId?: string, clientId?: string, callerIdUsed?: string) => {
+    logDialer("CALL_BUTTON_CLICKED", { phoneNumber, leadId: leadId ?? null, callerIdUsed: callerIdUsed ?? null });
 
     const readiness = canPlaceCall();
     logDialer("START_CALL_ENTERED", {
@@ -2216,7 +2218,7 @@ export function useBrowserDialer() {
       if (!granted) return;
     }
 
-    const intent: PendingDialIntent = { phoneNumber: phoneNumber.trim(), leadId, clientId };
+    const intent: PendingDialIntent = { phoneNumber: phoneNumber.trim(), leadId, clientId, callerIdUsed };
 
     // ── AUDIO UNLOCK: Try once with timeout, but don't permanently block ──
     if (!storeState.audioReady) {

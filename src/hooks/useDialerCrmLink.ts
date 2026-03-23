@@ -75,7 +75,8 @@ export function useDialerCrmLink() {
   const onCallStarted = useCallback(async (
     phoneRaw: string,
     dialerSessionId?: string,
-    match?: PhoneMatchResult | null
+    match?: PhoneMatchResult | null,
+    callerIdUsed?: string
   ) => {
     if (!profile?.business_id) return null;
     const norm = normalizePhoneNumber(phoneRaw);
@@ -96,6 +97,7 @@ export function useDialerCrmLink() {
       source_type: selectedMatch ? "existing_customer_call" : "cold_call",
       matched_name: selectedMatch?.matched_name || undefined,
       matched_business_name: selectedMatch?.matched_business_name || undefined,
+      caller_id_used: callerIdUsed || undefined,
     });
 
     if (comm) {

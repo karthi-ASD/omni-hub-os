@@ -95,6 +95,7 @@ export interface CreateCommunicationPayload {
   call_direction?: string;
   matched_name?: string;
   matched_business_name?: string;
+  caller_id_used?: string;
 }
 
 export interface CommunicationRecord {
@@ -223,10 +224,10 @@ export async function createCommunicationRecord(
       call_direction: payload.call_direction || "outbound",
       matched_name: payload.matched_name || null,
       matched_business_name: payload.matched_business_name || null,
-      // Snapshot for historical consistency
       entity_name_snapshot: payload.matched_name || null,
       entity_type_snapshot: payload.entity_type || null,
       entity_id_snapshot: payload.entity_id || null,
+      caller_id_used: payload.caller_id_used || null,
     })
     .select()
     .single();

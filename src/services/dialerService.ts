@@ -48,17 +48,24 @@ export async function createDialerSession(params: {
   phoneNumber: string;
   leadId?: string;
   clientId?: string;
+  callerIdUsed?: string;
 }): Promise<DialerSession | null> {
+  const insertPayload: Record<string, unknown> = {
+    business_id: params.businessId,
+    user_id: params.userId,
+    phone_number: params.phoneNumber,
+    lead_id: params.leadId || null,
+    client_id: params.clientId || null,
+    call_status: "idle",
+  };
+  if (params.callerIdUsed) {
+    insertPayload.caller_id_used = params.callerIdUsed;
+  }
+  console.log("DIALER_SESSION_CREATE", { ...insertPayload });
+
   const { data, error } = await supabase
     .from("dialer_sessions")
-    .insert({
-      business_id: params.businessId,
-      user_id: params.userId,
-      phone_number: params.phoneNumber,
-      lead_id: params.leadId || null,
-      client_id: params.clientId || null,
-      call_status: "idle",
-    } as any)
+    .insert(insertPayload as any)
     .select()
     .single();
 

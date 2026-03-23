@@ -80,7 +80,7 @@ export function useDialer() {
 
   const isCallActive = callStatus !== "idle" && callStatus !== "ended" && callStatus !== "failed" && callStatus !== "busy" && callStatus !== "no-answer";
 
-  const startCall = useCallback(async (phoneNumber: string, leadId?: string, clientId?: string) => {
+  const startCall = useCallback(async (phoneNumber: string, leadId?: string, clientId?: string, callerIdUsed?: string) => {
     if (!profile?.business_id || loading || isCallActive) return;
 
     // Lead context validation: fetch latest phone from DB
@@ -102,6 +102,7 @@ export function useDialer() {
         phoneNumber: resolvedPhone,
         leadId,
         clientId,
+        callerIdUsed,
       });
       if (!sess) { toast.error("Failed to create call session"); return; }
 
