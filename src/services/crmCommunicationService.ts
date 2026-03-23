@@ -26,7 +26,7 @@ export async function findEntityByPhone(
   if (norm.length < 6) return [];
 
   try {
-    const { data, error } = await supabase.rpc("find_entity_by_phone", {
+    const { data, error } = await supabase.rpc("find_entity_by_phone" as any, {
       _business_id: businessId,
       _phone: norm,
     });
@@ -34,7 +34,7 @@ export async function findEntityByPhone(
       console.error("PHONE_MATCH_ERROR", error);
       return [];
     }
-    const results = (data as PhoneMatchResult[]) || [];
+    const results = (data as unknown as PhoneMatchResult[]) || [];
     console.log(results.length > 0 ? "PHONE_MATCH_FOUND" : "PHONE_MATCH_NOT_FOUND", {
       phone: norm,
       matchCount: results.length,
@@ -108,11 +108,14 @@ export interface CommunicationRecord {
   updated_at: string;
 }
 
+// Helper to access new tables that aren't in generated types yet
+const db = supabase as any;
+
 // ─── Create communication record ──────────────────────────────
 export async function createCommunicationRecord(
   payload: CreateCommunicationPayload
 ): Promise<CommunicationRecord | null> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("crm_call_communications")
     .insert({
       business_id: payload.business_id,
@@ -131,7 +134,7 @@ export async function createCommunicationRecord(
       call_direction: payload.call_direction || "outbound",
       matched_name: payload.matched_name || null,
       matched_business_name: payload.matched_business_name || null,
-    } as any)
+    })
     .select()
     .single();
 
@@ -139,19 +142,19 @@ export async function createCommunicationRecord(
     console.error("COMMUNICATION_CREATE_FAILED", error);
     return null;
   }
-  console.log("COMMUNICATION_CREATED", { id: (data as any)?.id, entity_type: payload.entity_type });
-  return data as unknown as CommunicationRecord;
+  console.log("COMMUNICATION_CREATED", { id: data?.id, entity_type: payload.entity_type });
+  return data as CommunicationRecord;
 }
 
 // ─── Update on answered ────────────────────────────────────────
 export async function updateCommunicationOnAnswered(commId: string) {
-  await supabase
+  await db
     .from("crm_call_communications")
     .update({
       call_status: "connected",
       answer_time: new Date().toISOString(),
       connected: true,
-    } as any)
+    })
     .eq("id", commId);
 }
 
@@ -165,7 +168,7 @@ export async function updateCommunicationOnEnded(
     call_status?: string;
   }
 ) {
-  await supabase
+  await db
     .from("crm_call_communications")
     .update({
       call_status: params.call_status || "ended",
@@ -173,7 +176,7 @@ export async function updateCommunicationOnEnded(
       duration_seconds: params.duration_seconds || 0,
       talk_time_seconds: params.talk_time_seconds || 0,
       recording_url: params.recording_url || null,
-    } as any)
+    })
     .eq("id", commId);
 }
 
@@ -187,7 +190,7 @@ export async function saveCommunicationDisposition(
   callbackReason?: string,
   conversionStatus?: string
 ) {
-  await supabase
+  await db
     .from("crm_call_communications")
     .update({
       disposition,
@@ -196,7 +199,7 @@ export async function saveCommunicationDisposition(
       callback_datetime: callbackDatetime || null,
       callback_reason: callbackReason || null,
       conversion_status: conversionStatus || null,
-    } as any)
+    })
     .eq("id", commId);
   console.log("DISPOSITION_SAVED", { commId, disposition });
 }
@@ -207,12 +210,12 @@ export async function attachTranscriptToCommunication(
   transcript: string,
   status: "completed" | "failed" = "completed"
 ) {
-  await supabase
+  await db
     .from("crm_call_communications")
     .update({
       transcript_text: transcript,
       transcript_status: status,
-    } as any)
+    })
     .eq("id", commId);
   console.log("TRANSCRIPT_ATTACHED", { commId, status });
 }
@@ -225,7 +228,7 @@ export async function attachSynopsisToCommunication(
   aiScore?: number,
   sentiment?: string
 ) {
-  await supabase
+  await db
     .from("crm_call_communications")
     .update({
       ai_synopsis_internal: internalSynopsis,
@@ -234,7 +237,7 @@ export async function attachSynopsisToCommunication(
       sentiment: sentiment || null,
       visible_to_customer: !!customerSafeSynopsis,
       customer_safe_summary: customerSafeSynopsis || null,
-    } as any)
+    })
     .eq("id", commId);
   console.log("SYNOPSIS_ATTACHED", { commId });
 }
@@ -252,7 +255,7 @@ export async function createCallbackFromDisposition(
   clientId?: string,
   projectId?: string
 ) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("crm_callbacks")
     .insert({
       business_id: businessId,
@@ -265,7 +268,7 @@ export async function createCallbackFromDisposition(
       assigned_user_id: assignedUserId,
       callback_datetime: callbackDatetime,
       callback_reason: callbackReason || null,
-    } as any)
+    })
     .select()
     .single();
 
@@ -273,7 +276,7 @@ export async function createCallbackFromDisposition(
     console.error("CALLBACK_CREATE_FAILED", error);
     return null;
   }
-  console.log("CALLBACK_CREATED", { id: (data as any)?.id, commId });
+  console.log("CALLBACK_CREATED", { id: data?.id, commId });
   return data;
 }
 
@@ -286,10 +289,10 @@ export async function createLeadFromColdCall(
   name?: string,
   company?: string
 ) {
-  // Duplicate check first
   const norm = normalizePhoneNumber(phone);
   const suffix = norm.replace(/[^0-9]/g, "").slice(-9);
 
+  // Duplicate check
   const { data: existing } = await supabase
     .from("leads")
     .select("id, name")
@@ -299,10 +302,9 @@ export async function createLeadFromColdCall(
     .maybeSingle();
 
   if (existing) {
-    // Attach to existing lead instead of creating duplicate
-    await supabase
+    await db
       .from("crm_call_communications")
-      .update({ lead_id: existing.id, entity_type: "lead", entity_id: existing.id } as any)
+      .update({ lead_id: existing.id, entity_type: "lead", entity_id: existing.id })
       .eq("id", commId);
     console.log("EXISTING_ENTITY_ATTACHED", { leadId: existing.id, commId });
     return existing;
@@ -327,10 +329,9 @@ export async function createLeadFromColdCall(
     return null;
   }
 
-  // Link to communication
-  await supabase
+  await db
     .from("crm_call_communications")
-    .update({ lead_id: (lead as any).id, entity_type: "lead", entity_id: (lead as any).id } as any)
+    .update({ lead_id: (lead as any).id, entity_type: "lead", entity_id: (lead as any).id })
     .eq("id", commId);
 
   console.log("NEW_LEAD_CREATED_FROM_CALL", { leadId: (lead as any).id, commId });
@@ -343,39 +344,27 @@ export async function getCommunicationTimeline(
   entityId: string,
   limit = 50
 ): Promise<CommunicationRecord[]> {
-  let query = supabase
+  const field =
+    entityType === "lead" ? "lead_id" :
+    entityType === "contact" ? "contact_id" :
+    entityType === "client" ? "client_id" :
+    entityType === "account" ? "account_id" :
+    entityType === "project" ? "project_id" :
+    "entity_id";
+
+  const { data } = await db
     .from("crm_call_communications")
     .select("*")
+    .eq(field, entityId)
     .order("start_time", { ascending: false })
     .limit(limit);
 
-  switch (entityType) {
-    case "lead":
-      query = query.eq("lead_id", entityId);
-      break;
-    case "contact":
-      query = query.eq("contact_id", entityId);
-      break;
-    case "client":
-      query = query.eq("client_id", entityId);
-      break;
-    case "account":
-      query = query.eq("account_id", entityId);
-      break;
-    case "project":
-      query = query.eq("project_id", entityId);
-      break;
-    default:
-      query = query.eq("entity_id", entityId);
-  }
-
-  const { data } = await query;
-  return (data as unknown as CommunicationRecord[]) || [];
+  return (data as CommunicationRecord[]) || [];
 }
 
 // ─── Get pending callbacks ────────────────────────────────────
 export async function getPendingCallbacks(businessId: string, userId?: string) {
-  let query = supabase
+  let query = db
     .from("crm_callbacks")
     .select("*")
     .eq("business_id", businessId)
@@ -402,16 +391,16 @@ export async function getEntityCommunicationStats(
     entityType === "account" ? "account_id" :
     "entity_id";
 
-  const { data } = await supabase
+  const { data } = await db
     .from("crm_call_communications")
     .select("id, connected, duration_seconds, talk_time_seconds, disposition, start_time, user_id")
     .eq(field, entityId)
     .order("start_time", { ascending: false });
 
-  const records = data || [];
+  const records: any[] = data || [];
   const total = records.length;
-  const connected = records.filter((r: any) => r.connected).length;
-  const totalTalkTime = records.reduce((sum: number, r: any) => sum + (r.talk_time_seconds || 0), 0);
+  const connected = records.filter((r) => r.connected).length;
+  const totalTalkTime = records.reduce((sum: number, r) => sum + (r.talk_time_seconds || 0), 0);
   const lastCall = records[0] || null;
 
   return {
