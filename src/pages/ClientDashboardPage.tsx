@@ -2,6 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useClientDashboardData } from "@/hooks/useClientDashboardData";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
+import { CustomerCommunicationSummary } from "@/components/crm/CustomerCommunicationSummary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
