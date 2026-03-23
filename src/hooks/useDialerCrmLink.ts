@@ -11,6 +11,7 @@ import {
   attachSynopsisToCommunication,
   createCallbackFromDisposition,
   createLeadFromColdCall,
+  autoCompletePendingCallbacks,
   type PhoneMatchResult,
   type CommunicationRecord,
 } from "@/services/crmCommunicationService";
