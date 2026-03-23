@@ -76,6 +76,7 @@ const SeoProjectDetailPage = () => {
   const [activeTab, setActiveTab] = useState(tabFromUrl || "tasks");
 
   console.log("ROLE:", { screen: "seo-project-detail", businessId, projectId });
+  console.log("Rendering Communication", businessId);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -574,15 +575,15 @@ const SeoProjectDetailPage = () => {
         </TabsContent>
 
         <TabsContent value="communication">
-          {businessId && projectId && (
+          {businessId && projectId ? (
             <CommunicationTimeline entityType="project" entityId={projectId} />
-          )}
+          ) : null}
         </TabsContent>
 
         <TabsContent value="callbacks">
-          {businessId && projectId && (
+          {businessId && projectId ? (
             <CallbacksPanel businessId={businessId} entityType="project" entityId={projectId} showAllStatuses />
-          )}
+          ) : null}
         </TabsContent>
 
         <TabsContent value="ai" className="space-y-4">

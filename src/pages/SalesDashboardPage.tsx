@@ -38,6 +38,7 @@ const SalesDashboardPage = () => {
 
   console.log("ROLE:", { roles, screen: "sales-dashboard" });
   console.log("businessId:", businessId);
+  console.log("Rendering Communication", businessId);
 
   if (loading) return (
     <div className="space-y-4 p-6">
@@ -298,7 +299,7 @@ const SalesDashboardPage = () => {
         </Card>
       )}
 
-      {businessId && (
+      {businessId ? (
         <Tabs defaultValue="communications" className="space-y-4">
           <TabsList className="flex-wrap">
             <TabsTrigger value="communications">Communication</TabsTrigger>
@@ -311,7 +312,7 @@ const SalesDashboardPage = () => {
             <CallbacksPanel businessId={businessId} showAllStatuses />
           </TabsContent>
         </Tabs>
-      )}
+      ) : null}
     </div>
   );
 };
