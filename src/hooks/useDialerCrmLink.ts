@@ -50,10 +50,14 @@ export function useDialerCrmLink() {
     try {
       const matches = await findEntityByPhone(profile.business_id, phone);
       const isExisting = matches.length > 0;
+
+      // Do NOT auto-pick first match if multiple — require agent selection
+      const autoSelect = matches.length === 1 ? matches[0] : null;
+
       setCrmContext({
         communicationId: null,
         matches,
-        selectedMatch: matches[0] || null,
+        selectedMatch: autoSelect,
         isExistingEntity: isExisting,
         isNewColdCall: !isExisting,
         lookupDone: true,
@@ -119,7 +123,7 @@ export function useDialerCrmLink() {
     }
   }, []);
 
-  // ── Save disposition to CRM communication ────────────────────
+  // ── Save disposition (auto-triggers callback if needed) ──────
   const saveDisposition = useCallback(async (
     disposition: string,
     notes?: string,
@@ -127,7 +131,10 @@ export function useDialerCrmLink() {
     callbackReason?: string
   ) => {
     if (!commIdRef.current || !profile?.business_id) return;
-    const callbackRequired = disposition === "callback_later" || disposition === "follow_up_required";
+    const callbackRequired =
+      disposition === "callback_later" ||
+      disposition === "callback_requested" ||
+      disposition === "follow_up_required";
 
     await saveCommunicationDisposition(
       commIdRef.current,
@@ -139,7 +146,7 @@ export function useDialerCrmLink() {
       disposition === "converted" ? "converted" : undefined
     );
 
-    // Create callback record if needed
+    // Auto-create callback record if needed
     if (callbackRequired && callbackDatetime) {
       const match = crmContext.selectedMatch;
       await createCallbackFromDisposition(
