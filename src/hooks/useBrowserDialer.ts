@@ -1525,6 +1525,11 @@ function bindPlivoEvents(instance: PlivoBrowserSDK, generation: number) {
         scheduleLogin("registration_retry", lastLoginCredentials.username, lastLoginCredentials.password);
       }, 2000);
     } else {
+      logDialer("VOICE_REGISTRATION_FAILED", {
+        cause,
+        userId: maskUserIdentifier(authIdentity?.userId ?? null),
+        voiceStatus: "failed",
+      });
       setStoreState((c) => ({
         ...c,
         registered: false,
