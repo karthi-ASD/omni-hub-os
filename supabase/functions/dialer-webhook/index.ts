@@ -137,7 +137,8 @@ Deno.serve(async (req) => {
       call_status: p.call_status,
     });
 
-    if (!strictMatch) {
+    // For recording callbacks, skip strict match — session_id from URL is sufficient
+    if (!strictMatch && leg !== "recording") {
       console.warn("PROVIDER_CALL_MISMATCH", {
         session_id: session.id,
         incoming_call_uuid: p.call_uuid,
