@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { session_id, action, agent_phone, agentPhone } = body;
+    const { session_id, action, agent_phone, agentPhone, caller_id_override } = body;
 
     if (!session_id) {
       return jsonResponse({ status: "error", error: "Missing session_id" });
