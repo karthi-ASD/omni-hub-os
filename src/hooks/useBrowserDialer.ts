@@ -625,16 +625,16 @@ async function fetchBrowserToken(context: "init" | "test" = "test") {
   const session = await syncAccessTokenState();
 
   if (!session?.access_token) {
-    logDialer("NO_ACTIVE_SESSION");
+    logDialer("NO_ACTIVE_SESSION", { tokenStatus: "missing", voiceStatus: "auth_required" });
     setStoreState((c) => ({
       ...c,
       status: "auth_required",
       registered: false,
-      lastError: "Please log in to use calling features.",
+      lastError: "No active session. Please login.",
       lastTokenFetchStatus: 401,
       lastTokenHasPassword: false,
     }));
-    throw new Error("Please log in to use calling features.");
+    throw new Error("No active session. Please login.");
   }
 
   const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dialer-browser-token`;
