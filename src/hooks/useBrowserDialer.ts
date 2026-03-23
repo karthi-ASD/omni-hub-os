@@ -1331,6 +1331,7 @@ async function executeOutboundCall(intent: PendingDialIntent) {
       phoneNumber: normalizedPhone,
       leadId: intent.leadId,
       clientId: intent.clientId,
+      callerIdUsed: intent.callerIdUsed,
     });
 
     if (!sess) {
