@@ -89,6 +89,7 @@ function DialerPageContent() {
   const location = useLocation();
   const { profile } = useAuth();
   const dialer = useDialerContext();
+  const crmLink = useDialerCrmLink();
 
   const clientId = searchParams.get("clientId") || undefined;
   const { canAccessDialer, isClientUser } = useDialerAccess(clientId);
