@@ -2007,7 +2007,31 @@ export function useBrowserDialer() {
       authIdentity = null;
     }
     setStoreState((c) => ({ ...c, userIdentifier: maskUserIdentifier(profile?.user_id ?? null) }));
-    logDialer("DIALER_PAGE_MOUNTED", { version: BUILD_VERSION, consumers: activeHookConsumers });
+
+    // ── USER CHANGE DETECTION: Force re-init when a different user logs in ──
+    const currentUserId = profile?.user_id ?? null;
+    const userChanged = currentUserId && lastInitializedUserId && currentUserId !== lastInitializedUserId;
+    if (userChanged) {
+      logDialer("USER_CHANGED_DETECTED", {
+        previousUser: maskUserIdentifier(lastInitializedUserId),
+        newUser: maskUserIdentifier(currentUserId),
+        action: "force_reinit",
+      });
+      // Force full re-initialization for new user
+      singletonInitialized = false;
+      sdkInitStarted = false;
+      initPromise = null;
+      lastLoginCredentials = null;
+      registrationRetryCount = 0;
+      destroyPlivoClient("user_changed");
+    }
+
+    logDialer("DIALER_PAGE_MOUNTED", {
+      version: BUILD_VERSION,
+      consumers: activeHookConsumers,
+      userId: maskUserIdentifier(currentUserId),
+      email: profile?.email ?? "unknown",
+    });
     logDialer("CONSUMER_COUNT_CHANGED", { consumers: activeHookConsumers });
 
     // Only sanitize stale state if there's NO active call — preserve active calls across remounts
@@ -2019,6 +2043,12 @@ export function useBrowserDialer() {
 
     if (!singletonInitialized) {
       singletonInitialized = true;
+      lastInitializedUserId = currentUserId;
+      logDialer("DIALER_INIT_FOR_USER", {
+        userId: maskUserIdentifier(currentUserId),
+        email: profile?.email ?? "unknown",
+        businessId: profile?.business_id ?? "none",
+      });
       const persistedPending = readPendingDial();
       if (persistedPending && !modulePendingDial) {
         modulePendingDial = persistedPending;
