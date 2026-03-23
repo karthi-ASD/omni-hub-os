@@ -39,7 +39,24 @@ function getCallerIdForNumber(number: string): string {
 }
 
 // Fetch agent-specific caller ID from DB
-async function getAgentCallerId(supabase: any, userId: string, businessId: string): Promise<string | null> {
+function buildEmailVariants(email?: string | null, fullName?: string | null) {
+  const variants = new Set<string>();
+  const normalizedEmail = email?.trim().toLowerCase();
+  if (normalizedEmail) variants.add(normalizedEmail);
+
+  const domain = normalizedEmail?.split("@")[1];
+  const nameParts = fullName?.trim().toLowerCase().split(/\s+/).filter(Boolean) ?? [];
+  if (domain && nameParts.length > 0) {
+    variants.add(`${nameParts[0]}@${domain}`);
+    if (nameParts.length > 1) {
+      variants.add(`${nameParts[0]}.${nameParts[nameParts.length - 1]}@${domain}`);
+    }
+  }
+
+  return [...variants];
+}
+
+async function getAgentCallerId(supabase: any, userId: string, businessId: string): Promise<{ callerId: string; source: string } | null> {
   const { data } = await supabase
     .from("agent_caller_ids")
     .select("plivo_number, is_default")
@@ -50,8 +67,32 @@ async function getAgentCallerId(supabase: any, userId: string, businessId: strin
     .limit(1);
   
   if (data && data.length > 0) {
-    return data[0].plivo_number;
+    return { callerId: data[0].plivo_number, source: "agent_user_id" };
   }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("email, full_name")
+    .eq("user_id", userId)
+    .eq("business_id", businessId)
+    .maybeSingle();
+
+  const emailVariants = buildEmailVariants(profile?.email, profile?.full_name);
+  if (!emailVariants.length) return null;
+
+  const { data: byEmail } = await supabase
+    .from("agent_caller_ids")
+    .select("plivo_number, agent_email, is_default")
+    .eq("business_id", businessId)
+    .eq("is_active", true)
+    .in("agent_email", emailVariants)
+    .order("is_default", { ascending: false })
+    .limit(1);
+
+  if (byEmail && byEmail.length > 0) {
+    return { callerId: byEmail[0].plivo_number, source: `agent_email:${byEmail[0].agent_email}` };
+  }
+
   return null;
 }
 
@@ -161,10 +202,9 @@ Deno.serve(async (req) => {
     // INITIATE CONFERENCE CALL
     const PLIVO_AUTH_ID = Deno.env.get("PLIVO_AUTH_ID");
     const PLIVO_AUTH_TOKEN = Deno.env.get("PLIVO_AUTH_TOKEN");
-    const PLIVO_CALLER_ID = Deno.env.get("PLIVO_CALLER_ID");
     const PLIVO_WEBHOOK_SECRET = Deno.env.get("PLIVO_WEBHOOK_SECRET") || "";
 
-    if (!PLIVO_AUTH_ID || !PLIVO_AUTH_TOKEN || !PLIVO_CALLER_ID) {
+    if (!PLIVO_AUTH_ID || !PLIVO_AUTH_TOKEN) {
       await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", session_id);
       return jsonResponse({ status: "error", error: "Plivo credentials not configured. Please contact admin." });
     }
@@ -220,19 +260,27 @@ Deno.serve(async (req) => {
         console.log("[dialer-initiate] Using validated caller_id_override:", agentSpecificCallerId);
       } else {
         console.warn("[dialer-initiate] caller_id_override rejected — not assigned to agent:", caller_id_override);
+        await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", session_id);
+        return jsonResponse({ status: "error", error: "Selected caller ID is not assigned to this agent." });
       }
     }
 
     if (!agentSpecificCallerId) {
-      agentSpecificCallerId = await getAgentCallerId(supabase, session.user_id, session.business_id);
-      if (agentSpecificCallerId) {
-        console.log("[dialer-initiate] Using agent DB caller ID:", agentSpecificCallerId);
+      const assignedCallerId = await getAgentCallerId(supabase, session.user_id, session.business_id);
+      if (assignedCallerId) {
+        agentSpecificCallerId = assignedCallerId.callerId;
+        console.log("[dialer-initiate] Using agent DB caller ID:", assignedCallerId);
       }
     }
 
+    if (!agentSpecificCallerId) {
+      await supabase.from("dialer_sessions").update({ call_status: "failed" }).eq("id", session_id);
+      return jsonResponse({ status: "error", error: "❌ No outgoing number assigned. Contact admin." });
+    }
+
     // Final caller IDs
-    const effectiveCallerId = agentSpecificCallerId || getCallerIdForNumber(formattedCustomerPhone) || PLIVO_CALLER_ID;
-    const agentCallerId = agentSpecificCallerId || getCallerIdForNumber(formattedAgentPhone) || PLIVO_CALLER_ID;
+    const effectiveCallerId = agentSpecificCallerId;
+    const agentCallerId = agentSpecificCallerId;
     const customerCallerId = effectiveCallerId;
 
     console.log("[dialer-initiate] CONFERENCE FLOW", {
@@ -271,7 +319,7 @@ Deno.serve(async (req) => {
 
     // CALL 1: Agent
     const agentPayload = {
-      from: agentCallerId || PLIVO_CALLER_ID,
+      from: agentCallerId,
       to: formattedAgentPhone,
       answer_url: agentAnswerUrl,
       answer_method: "POST",
@@ -282,7 +330,7 @@ Deno.serve(async (req) => {
 
     // CALL 2: Customer
     const customerPayload = {
-      from: customerCallerId || PLIVO_CALLER_ID,
+      from: customerCallerId,
       to: formattedCustomerPhone,
       answer_url: customerAnswerUrl,
       answer_method: "POST",
