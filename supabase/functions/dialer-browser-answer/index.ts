@@ -82,7 +82,7 @@ function buildXml(destination: string, callerId: string, sessionId: string) {
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Dial callerId="${safeCallerId}" answerOnBridge="true" record="true" recordingCallbackUrl="${safeRecordingUrl}" recordingCallbackMethod="POST" action="${safeHangupUrl}" method="POST">
+  <Dial callerId="${safeCallerId}" answerOnBridge="true" record="true" recordFileFormat="mp3" recordingCallbackUrl="${safeRecordingUrl}" recordingCallbackMethod="POST" action="${safeHangupUrl}" method="POST">
     <Number>${safeDestination}</Number>
   </Dial>
 </Response>`;

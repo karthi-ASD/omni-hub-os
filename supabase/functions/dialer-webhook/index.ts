@@ -205,14 +205,39 @@ Deno.serve(async (req) => {
 
     if (p.recording_url && p.recording_url.startsWith("http")) {
       updates.recording_url = p.recording_url;
-      console.log("[dialer-webhook] Recording URL captured", { session_id: session.id, url: p.recording_url });
+      console.log("RECORDING_SAVED", { session_id: session.id, url: p.recording_url });
     }
 
     if (leg === "recording") {
+      // Also capture duration/cost from recording callback if available
+      if (p.duration > 0 && !session.call_duration) updates.call_duration = p.duration;
+      if (p.bill_duration > 0 && !session.bill_duration) updates.bill_duration = p.bill_duration;
+      if (p.total_cost > 0 && !session.call_cost) updates.call_cost = p.total_cost;
+
       if (Object.keys(updates).length > 0) {
-        await supabase.from("dialer_sessions").update(updates).eq("id", session.id);
+        const { error: recErr } = await supabase.from("dialer_sessions").update(updates).eq("id", session.id);
+        if (recErr) console.error("RECORDING_SAVE_FAILED", recErr);
       }
-      console.log("[dialer-webhook] Recording leg processed", { session_id: session.id, strict_match: true });
+
+      try {
+        await supabase.from("dialer_call_events").insert({
+          session_id: session.id,
+          event_type: "recording_callback_received",
+          metadata: {
+            recording_url: p.recording_url || null,
+            duration: p.duration,
+            bill_duration: p.bill_duration,
+            cost: p.total_cost,
+            call_uuid: p.call_uuid,
+          },
+        });
+      } catch { /* ignore */ }
+
+      console.log("RECORDING_CALLBACK_RECEIVED", {
+        session_id: session.id,
+        has_url: !!p.recording_url,
+        duration: p.duration,
+      });
       return new Response(JSON.stringify({ status: "ok", session_id: session.id }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
