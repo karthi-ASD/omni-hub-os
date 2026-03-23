@@ -14,6 +14,8 @@ import {
 
 const AdminOperationsDashboardPage = () => {
   const { metrics, departments, employeeActivities, loading } = useAdminOperations();
+  const { profile } = useAuth();
+  const businessId = profile?.business_id;
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
