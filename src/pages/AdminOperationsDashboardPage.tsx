@@ -60,6 +60,8 @@ const AdminOperationsDashboardPage = () => {
           <TabsTrigger value="departments"><Building2 className="h-4 w-4 mr-1" /> Departments</TabsTrigger>
           <TabsTrigger value="employees"><Users className="h-4 w-4 mr-1" /> Employee Activity</TabsTrigger>
           <TabsTrigger value="workload"><BarChart2 className="h-4 w-4 mr-1" /> Workload Distribution</TabsTrigger>
+          <TabsTrigger value="communications"><Radio className="h-4 w-4 mr-1" /> Communications</TabsTrigger>
+          <TabsTrigger value="callbacks"><PhoneForwarded className="h-4 w-4 mr-1" /> Callbacks</TabsTrigger>
         </TabsList>
 
         <TabsContent value="departments">
