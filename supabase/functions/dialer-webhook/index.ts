@@ -94,8 +94,9 @@ Deno.serve(async (req) => {
       call_uuid: p.call_uuid,
       call_status: p.call_status,
       hangup_cause: p.hangup_cause,
-      recording_url: p.recording_url ? "present" : "none",
+      recording_url: p.recording_url ? p.recording_url.substring(0, 60) : "none",
       duration: p.duration,
+      all_body_keys: Object.keys(body).join(","),
     });
 
     let session: any = null;

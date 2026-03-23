@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Phone, Clock, Mic, FileText, Brain, Play, User, PhoneForwarded, Tag, RotateCcw, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   getCommunicationTimeline,
   type CommunicationRecord,
@@ -28,6 +29,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 export function CommunicationTimeline({ entityType, entityId }: CommunicationTimelineProps) {
   const [records, setRecords] = useState<CommunicationRecord[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [retrying, setRetrying] = useState<string | null>(null);
@@ -55,6 +57,22 @@ export function CommunicationTimeline({ entityType, entityId }: CommunicationTim
     ]).then(([timeline, entityStats]) => {
       setRecords(timeline);
       setStats(entityStats);
+
+      // Fetch agent profiles for all user_ids in timeline
+      const userIds = [...new Set(timeline.map((r) => r.user_id).filter(Boolean))];
+      if (userIds.length > 0) {
+        supabase
+          .from("profiles")
+          .select("user_id, full_name, email")
+          .in("user_id", userIds)
+          .then(({ data }) => {
+            const map: Record<string, string> = {};
+            (data || []).forEach((p: any) => {
+              map[p.user_id] = p.full_name || p.email || "Unknown";
+            });
+            setProfiles(map);
+          });
+      }
       setLoading(false);
     });
   }, [entityType, entityId]);
