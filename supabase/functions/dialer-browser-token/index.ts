@@ -15,6 +15,15 @@ function jsonRes(body: Record<string, unknown>) {
   });
 }
 
+function sanitizeAlias(name: string) {
+  return name
+    .replace(/[^a-zA-Z0-9_-]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toLowerCase()
+    .slice(0, 40) || "agent";
+}
+
 async function plivoFetch(authId: string, plivoAuth: string, path: string, init?: RequestInit) {
   return fetch(`https://api.plivo.com/v1/Account/${authId}${path}`, {
     ...init,
