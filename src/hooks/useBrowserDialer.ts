@@ -2096,6 +2096,8 @@ export function useBrowserDialer() {
         userId: maskUserIdentifier(currentUserId),
         email: profile?.email ?? "unknown",
         businessId: profile?.business_id ?? "none",
+        tokenStatus: currentAccessToken ? "ready" : "pending",
+        voiceStatus: "initializing",
       });
       const persistedPending = readPendingDial();
       if (persistedPending && !modulePendingDial) {
