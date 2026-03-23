@@ -708,6 +708,13 @@ function DialerPageContent() {
                 {isCallActive && <p className="text-2xl font-mono font-bold mt-1 tabular-nums">{dialer.formattedTimer}</p>}
               </div>
 
+              {/* Caller ID Selector */}
+              <CallerIdSelector
+                selectedCallerId={selectedCallerId}
+                onSelect={setSelectedCallerId}
+                disabled={isCallActive}
+              />
+
               <div className="flex gap-2">
                 <Input value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} placeholder="+61 4XX XXX XXX" className="font-mono text-base text-center tracking-wider" disabled={isCallActive || isAuthRequired} onKeyDown={(e) => { if (e.key === "Enter" && canDial) handleDial(); }} />
                 <Button variant="ghost" size="icon" onClick={() => setPhoneInput((p) => p.slice(0, -1))} disabled={isCallActive || isAuthRequired}><Delete className="h-4 w-4" /></Button>
