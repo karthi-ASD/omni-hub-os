@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   User, Building2, Phone, PhoneForwarded, PhoneMissed, PhoneOff,
   CheckCircle, XCircle, Calendar as CalendarIcon, UserPlus, AlertCircle,
-  Ban, Headphones, Briefcase, BookOpen,
+  Ban, Headphones, Briefcase, BookOpen, AlertTriangle,
 } from "lucide-react";
 import { format } from "date-fns";
 import type { PhoneMatchResult } from "@/services/crmCommunicationService";
@@ -55,7 +55,7 @@ export function PostCallCrmPanel({
   const [saving, setSaving] = useState(false);
 
   const handleDisposition = async (key: string) => {
-    if (key === "callback_later") {
+    if (key === "callback_later" || key === "callback_requested" || key === "follow_up_required") {
       setShowCallback(true);
       return;
     }
@@ -80,6 +80,8 @@ export function PostCallCrmPanel({
     setShowCreateLead(false);
   };
 
+  const needsMatchSelection = matches.length > 1 && !selectedMatch;
+
   return (
     <Card className="border-primary/20">
       <CardHeader className="pb-2 pt-3 px-4">
@@ -88,16 +90,30 @@ export function PostCallCrmPanel({
         </CardTitle>
       </CardHeader>
       <CardContent className="px-4 pb-4 space-y-3">
+        {/* Multiple matches warning */}
+        {needsMatchSelection && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 p-3 space-y-2">
+            <div className="flex items-center gap-2 text-xs">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <span className="font-medium text-amber-700 dark:text-amber-400">
+                Multiple matches found — please select one
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Entity Match Display */}
         {matches.length > 0 && (
           <div className="space-y-1.5">
-            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Matched Records</p>
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+              Matched Records ({matches.length})
+            </p>
             {matches.map((m, i) => (
               <button
                 key={`${m.entity_type}-${m.entity_id}-${i}`}
                 className={`w-full text-left px-3 py-2 rounded-lg border text-xs transition-colors ${
                   selectedMatch?.entity_id === m.entity_id
-                    ? "border-primary bg-primary/5"
+                    ? "border-primary bg-primary/5 ring-1 ring-primary/30"
                     : "border-border hover:bg-muted/50"
                 }`}
                 onClick={() => onSelectMatch(m)}
