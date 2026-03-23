@@ -144,8 +144,13 @@ export function CommunicationTimeline({ entityType, entityId }: CommunicationTim
         <CardContent className="px-4 pb-3 space-y-2 max-h-[400px] overflow-y-auto">
           {records.map((r) => (
             <div key={r.id} className="rounded-lg border p-3 space-y-1.5 text-xs">
+              {/* Agent + Date row */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-1 text-[10px] font-medium">
+                    <User className="h-3 w-3 text-muted-foreground" />
+                    {profiles[r.user_id] || "Unknown Agent"}
+                  </span>
                   <Badge className={`text-[9px] ${STATUS_BADGE[r.call_status] || "bg-muted"}`}>
                     {r.call_status}
                   </Badge>
