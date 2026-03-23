@@ -144,8 +144,57 @@ export interface CommunicationRecord {
   customer_safe_summary: string | null;
   visible_to_customer: boolean;
   auto_tags: string[] | null;
+  processing_status: string;
   created_at: string;
   updated_at: string;
+}
+
+// ─── Manual retry for failed AI processing ─────────
+export async function retryAIProcessing(communicationId: string): Promise<boolean> {
+  const { error } = await db
+    .from("crm_call_communications")
+    .update({ processing_status: "idle" })
+    .eq("id", communicationId)
+    .eq("processing_status", "failed");
+
+  if (error) {
+    console.error("MANUAL_RETRY_UPDATE_FAILED", error);
+    return false;
+  }
+
+  // Fetch the record to get dialer_session_id for the AI trigger
+  const { data: comm } = await db
+    .from("crm_call_communications")
+    .select("dialer_session_id, recording_url, duration_seconds, connected")
+    .eq("id", communicationId)
+    .maybeSingle();
+
+  if (!comm?.dialer_session_id || !comm.recording_url || !comm.connected || (comm.duration_seconds || 0) < 3) {
+    console.warn("MANUAL_RETRY_SKIPPED_PRECONDITIONS", { communicationId });
+    return false;
+  }
+
+  // Trigger the AI pipeline via edge function
+  try {
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    await fetch(`https://${projectId}.supabase.co/functions/v1/dialer-ai-analyze`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${anonKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        session_id: comm.dialer_session_id,
+        communication_id: communicationId,
+      }),
+    });
+    console.log("MANUAL_RETRY_TRIGGERED", { communicationId });
+    return true;
+  } catch (e) {
+    console.error("MANUAL_RETRY_TRIGGER_FAILED", e);
+    return false;
+  }
 }
 
 // Helper to access new tables not in generated types

@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Phone, Clock, Mic, FileText, Brain, Play, User, PhoneForwarded, Tag } from "lucide-react";
+import { Phone, Clock, Mic, FileText, Brain, Play, User, PhoneForwarded, Tag, RotateCcw, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import {
   getCommunicationTimeline,
   type CommunicationRecord,
   getEntityCommunicationStats,
+  retryAIProcessing,
 } from "@/services/crmCommunicationService";
 
 interface CommunicationTimelineProps {
