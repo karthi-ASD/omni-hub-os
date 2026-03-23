@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Phone, Clock, Mic, FileText, Brain, Play, User, PhoneForwarded, Tag } from "lucide-react";
+import { Phone, Clock, Mic, FileText, Brain, Play, User, PhoneForwarded, Tag, RotateCcw, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import {
   getCommunicationTimeline,
   type CommunicationRecord,
   getEntityCommunicationStats,
+  retryAIProcessing,
 } from "@/services/crmCommunicationService";
 
 interface CommunicationTimelineProps {
@@ -28,6 +30,21 @@ export function CommunicationTimeline({ entityType, entityId }: CommunicationTim
   const [records, setRecords] = useState<CommunicationRecord[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [retrying, setRetrying] = useState<string | null>(null);
+
+  const handleRetry = async (commId: string) => {
+    setRetrying(commId);
+    const ok = await retryAIProcessing(commId);
+    if (ok) {
+      toast.success("AI processing retriggered");
+      setRecords((prev) =>
+        prev.map((r) => r.id === commId ? { ...r, processing_status: "processing" } : r)
+      );
+    } else {
+      toast.error("Retry failed — preconditions not met");
+    }
+    setRetrying(null);
+  };
 
   useEffect(() => {
     if (!entityId) return;
@@ -121,6 +138,31 @@ export function CommunicationTimeline({ entityType, entityId }: CommunicationTim
                     <Badge variant="outline" className="text-[9px] border-blue-300 text-blue-700">
                       <PhoneForwarded className="h-2.5 w-2.5 mr-0.5" /> Callback
                     </Badge>
+                  )}
+                  {/* Processing status */}
+                  {r.processing_status === "processing" && (
+                    <Badge variant="outline" className="text-[9px] border-primary/40 text-primary">
+                      <Loader2 className="h-2.5 w-2.5 mr-0.5 animate-spin" /> Processing
+                    </Badge>
+                  )}
+                  {r.processing_status === "completed" && (
+                    <Badge variant="outline" className="text-[9px] border-emerald-400 text-emerald-600">✓ AI Done</Badge>
+                  )}
+                  {r.processing_status === "failed" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-5 px-1.5 text-[9px] text-destructive border-destructive/40"
+                      disabled={retrying === r.id}
+                      onClick={() => handleRetry(r.id)}
+                    >
+                      {retrying === r.id ? (
+                        <Loader2 className="h-2.5 w-2.5 mr-0.5 animate-spin" />
+                      ) : (
+                        <RotateCcw className="h-2.5 w-2.5 mr-0.5" />
+                      )}
+                      Retry AI
+                    </Button>
                   )}
                 </div>
                 <span className="text-muted-foreground text-[10px]">
