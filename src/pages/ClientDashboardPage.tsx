@@ -31,7 +31,7 @@ const RankBadge = ({ current, previous }: { current: number | null; previous: nu
 /* ─── main ─── */
 const ClientDashboardPage = () => {
   usePageTitle("Dashboard", "Your business growth dashboard");
-  const { profile } = useAuth();
+  const { profile, clientId } = useAuth();
   const { data, loading } = useClientDashboardData();
   const navigate = useNavigate();
 
