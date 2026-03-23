@@ -121,6 +121,7 @@ interface PendingDialIntent {
   phoneNumber: string;
   leadId?: string;
   clientId?: string;
+  callerIdUsed?: string;
   blockedReason?: string;
   queuedAt?: number;
   expiresAt?: number;
