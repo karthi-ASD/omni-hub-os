@@ -195,7 +195,7 @@ export async function createCommunicationRecord(
   return data as CommunicationRecord;
 }
 
-// ─── Update on answered ────────────────────────────────────────
+// ─── Update on answered (only from confirmed CALL_CONNECTED event) ──
 export async function updateCommunicationOnAnswered(commId: string) {
   const { error } = await db
     .from("crm_call_communications")
@@ -208,10 +208,12 @@ export async function updateCommunicationOnAnswered(commId: string) {
 
   if (error) {
     console.error("COMMUNICATION_ANSWER_UPDATE_FAILED", { commId, error });
+  } else {
+    console.log("CALL_CONNECTED", { commId });
   }
 }
 
-// ─── Update on ended ──────────────────────────────────────────
+// ─── Update on ended + trigger transcript pipeline ──────────────
 export async function updateCommunicationOnEnded(
   commId: string,
   params: {
@@ -221,19 +223,70 @@ export async function updateCommunicationOnEnded(
     call_status?: string;
   }
 ) {
+  const shouldTriggerTranscript = (params.duration_seconds || 0) >= 3 && !!params.recording_url;
+
+  const updatePayload: Record<string, any> = {
+    call_status: params.call_status || "ended",
+    end_time: new Date().toISOString(),
+    duration_seconds: params.duration_seconds || 0,
+    talk_time_seconds: params.talk_time_seconds || 0,
+    recording_url: params.recording_url || null,
+  };
+
+  if (shouldTriggerTranscript) {
+    updatePayload.transcript_status = "processing";
+  }
+
   const { error } = await db
     .from("crm_call_communications")
-    .update({
-      call_status: params.call_status || "ended",
-      end_time: new Date().toISOString(),
-      duration_seconds: params.duration_seconds || 0,
-      talk_time_seconds: params.talk_time_seconds || 0,
-      recording_url: params.recording_url || null,
-    })
+    .update(updatePayload)
     .eq("id", commId);
 
   if (error) {
     console.error("COMMUNICATION_END_UPDATE_FAILED", { commId, error });
+  } else {
+    console.log("CALL_ENDED", { commId, duration: params.duration_seconds, transcriptTriggered: shouldTriggerTranscript });
+  }
+
+  // Trigger transcript processing async (non-blocking)
+  if (shouldTriggerTranscript) {
+    startTranscriptProcessing(commId, params.recording_url!).catch((e) => {
+      console.error("TRANSCRIPT_TRIGGER_FAILED", { commId, error: e });
+    });
+  }
+}
+
+// ─── Transcript processing pipeline ──────────────────────────────
+async function startTranscriptProcessing(commId: string, recordingUrl: string) {
+  console.log("TRANSCRIPT_STARTED", { commId, recordingUrl: recordingUrl.substring(0, 50) + "..." });
+
+  try {
+    // Call the AI analyze edge function which handles transcript + AI summary
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    const supabaseUrl = `https://${projectId}.supabase.co`;
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/dialer-ai-analyze`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        communication_id: commId,
+        recording_url: recordingUrl,
+        pipeline: "transcript_then_ai",
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`AI pipeline returned ${response.status}`);
+    }
+
+    console.log("TRANSCRIPT_PIPELINE_TRIGGERED", { commId });
+  } catch (err) {
+    console.error("TRANSCRIPT_PIPELINE_ERROR", { commId, error: String(err) });
+    // Mark as failed so UI shows status
+    await db
+      .from("crm_call_communications")
+      .update({ transcript_status: "failed" })
+      .eq("id", commId);
   }
 }
 
